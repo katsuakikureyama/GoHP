@@ -47,7 +47,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	}
 	for _, f := range p.Functions {
 		n := name(f.Name)
-		if _, ok := g.funcs[n]; ok || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" {
+		if _, ok := g.funcs[n]; ok || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "strtolower" {
 			g.fail(f.Line, "duplicate or reserved function "+n)
 		}
 		g.funcs[n] = len(f.Params)
@@ -159,6 +159,14 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool) {
 				g.fail(s.Line, "top-level return unsupported")
 			}
 			g.emit("return rt.Clone(%s)\n", g.expr(s.Expr, scope))
+		case "if":
+			g.emit("if rt.Bool(%s) {\n", g.expr(s.Expr, scope))
+			inner := map[string]bool{}
+			for k, v := range scope {
+				inner[k] = v
+			}
+			g.stmts(s.Body, inner, inFunc)
+			g.emit("}\n")
 		case "foreach":
 			if s.Value == "this" || s.Key == "this" || s.Key != "" && s.Key == s.Value {
 				g.fail(s.Line, "unsupported foreach bindings")
@@ -208,6 +216,13 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		}
 		return "v[" + strconv.Quote(e.Text) + "]"
 	case "binary":
+		if e.Text == "&&" {
+			// Go's && preserves PHP's left-to-right short-circuit evaluation.
+			return "(rt.Bool(" + g.expr(e.Args[0], scope) + ") && rt.Bool(" + g.expr(e.Args[1], scope) + "))"
+		}
+		if e.Text == "===" {
+			return "rt.Identical(" + args(e.Args) + ")"
+		}
 		op := "Add"
 		if e.Text == "." {
 			op = "Concat"
@@ -215,6 +230,8 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 			g.fail(e.Line, "unsupported operator")
 		}
 		return "rt." + op + "(" + args(e.Args) + ")"
+	case "bool_cast":
+		return "rt.Bool(" + args(e.Args) + ")"
 	case "array":
 		var a []string
 		for _, pair := range e.Args {
@@ -233,6 +250,13 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		return "rt.Get(" + args(e.Args) + ")"
 	case "call":
 		n := name(e.Text)
+		booleanBuiltins := map[string]string{"is_bool": "IsBool", "is_string": "IsString", "strtolower": "StrToLower"}
+		if builtin, ok := booleanBuiltins[n]; ok {
+			if len(e.Args) != 1 {
+				g.fail(e.Line, n+" expects one argument")
+			}
+			return "rt." + builtin + "(" + args(e.Args) + ")"
+		}
 		if n == "count" {
 			if len(e.Args) != 1 {
 				g.fail(e.Line, "count expects one argument")
@@ -256,6 +280,18 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 				g.fail(e.Line, "array_values expects one argument")
 			}
 			return "rt.ArrayValues(" + args(e.Args) + ")"
+		}
+		if n == "rtrim" {
+			if len(e.Args) != 2 {
+				g.fail(e.Line, "rtrim expects two arguments")
+			}
+			if e.Args[1].Kind != "string" {
+				g.fail(e.Line, "rtrim requires a string literal mask")
+			}
+			if strings.Contains(e.Args[1].Text, "..") {
+				g.fail(e.Line, "rtrim character ranges unsupported")
+			}
+			return "rt.RTrim(" + g.expr(e.Args[0], scope) + "," + strconv.Quote(e.Args[1].Text) + ")"
 		}
 		arity, ok := g.funcs[n]
 		if !ok {

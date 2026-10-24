@@ -150,7 +150,9 @@ func lex(s string) ([]token, error) {
 			continue
 		}
 		matched := false
-		for _, op := range []string{"=>", "->"} {
+		// Keep multi-character operators longest-first so === is never split
+		// into the unsupported = token followed by ==.
+		for _, op := range []string{"===", "&&", "=>", "->"} {
 			if strings.HasPrefix(s[i:], op) {
 				ts = append(ts, token{op, ln, "sym"})
 				i += len(op)
@@ -303,6 +305,12 @@ func (p *parser) stmt() ir.Stmt {
 		}
 		p.need(")")
 		s.Body = p.block()
+	case p.accept("if"):
+		s.Kind = "if"
+		p.need("(")
+		s.Expr = p.expr(0)
+		p.need(")")
+		s.Body = p.block()
 	default:
 		if p.peek().kind != "var" {
 			p.fail("unsupported statement")
@@ -317,10 +325,16 @@ func (p *parser) stmt() ir.Stmt {
 }
 func (p *parser) prec(t token) int {
 	if t.kind == "sym" && t.text == "." {
-		return 1
+		return 3
 	}
 	if t.kind == "sym" && t.text == "+" {
+		return 4
+	}
+	if t.kind == "sym" && t.text == "===" {
 		return 2
+	}
+	if t.kind == "sym" && t.text == "&&" {
+		return 1
 	}
 	return 0
 }
@@ -331,6 +345,13 @@ func (p *parser) expr(min int) ir.Expr {
 	case "int", "string", "var":
 		e.Kind = t.kind
 	case "id":
+		// array(...) is a language construct, not a builtin call. Both literal
+		// spellings share the same IR and the existing closed semantic boundary.
+		if strings.EqualFold(t.text, "array") {
+			p.need("(")
+			e = p.arrayLiteral(t.line, ")")
+			break
+		}
 		switch t.text {
 		case "true", "false":
 			e.Kind = "bool"
@@ -349,29 +370,18 @@ func (p *parser) expr(min int) ir.Expr {
 	case "sym":
 		switch t.text {
 		case "(":
-			e = p.expr(0)
-			p.need(")")
-		case "[":
-			e.Kind = "array"
-			e.Text = ""
-			if !p.accept("]") {
-				for {
-					v := p.expr(0)
-					k := ir.Expr{Kind: "auto", Line: v.Line}
-					if p.accept("=>") {
-						k = v
-						v = p.expr(0)
-					}
-					e.Args = append(e.Args, ir.Expr{Kind: "pair", Args: []ir.Expr{k, v}, Line: v.Line})
-					if p.accept("]") {
-						break
-					}
-					p.need(",")
-					if p.accept("]") {
-						break
-					}
-				}
+			// The supported cast spelling is deliberately narrow. Looking ahead
+			// keeps ordinary parenthesized expressions intact.
+			if p.peek().kind == "id" && strings.EqualFold(p.peek().text, "bool") && p.pos+1 < len(p.ts) && p.ts[p.pos+1].text == ")" {
+				p.pop()
+				p.need(")")
+				e = ir.Expr{Kind: "bool_cast", Args: []ir.Expr{p.expr(5)}, Line: t.line}
+			} else {
+				e = p.expr(0)
+				p.need(")")
 			}
+		case "[":
+			e = p.arrayLiteral(t.line, "]")
 		default:
 			p.fail("unsupported expression")
 		}
@@ -402,9 +412,36 @@ func (p *parser) expr(min int) ir.Expr {
 		p.pop()
 		right := p.expr(q + 1)
 		e = ir.Expr{Kind: "binary", Text: op.text, Args: []ir.Expr{e, right}, Line: op.line}
+		if op.text == "===" && p.peek().kind == "sym" && p.peek().text == "===" {
+			p.fail("strict equality is non-associative; use parentheses")
+		}
 	}
 	return e
 }
+
+func (p *parser) arrayLiteral(line int, end string) ir.Expr {
+	e := ir.Expr{Kind: "array", Line: line}
+	if p.accept(end) {
+		return e
+	}
+	for {
+		v := p.expr(0)
+		k := ir.Expr{Kind: "auto", Line: v.Line}
+		if p.accept("=>") {
+			k = v
+			v = p.expr(0)
+		}
+		e.Args = append(e.Args, ir.Expr{Kind: "pair", Args: []ir.Expr{k, v}, Line: v.Line})
+		if p.accept(end) {
+			return e
+		}
+		p.need(",")
+		if p.accept(end) {
+			return e
+		}
+	}
+}
+
 func (p *parser) args(end string) []ir.Expr {
 	var a []ir.Expr
 	if p.accept(end) {

@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"core", "arrays", "max_array_key", "precedence", "strlen", "array_keys", "array_values"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence", "strlen", "array_keys", "array_values", "rtrim", "booleans", "feature_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -82,7 +82,6 @@ func TestDifferential(t *testing.T) {
 				}
 				t.Logf("GOHP_CASE %s", encoded)
 			}()
-
 			file := filepath.Join("fixtures", fixture+".php")
 			src, e := os.ReadFile(file)
 			if e != nil {
@@ -114,12 +113,22 @@ func TestDifferential(t *testing.T) {
 				t.Fatalf("build: %v\n%s\n%s", e, o, generated)
 			}
 			evidence.Phases["go-build"] = phasePass
-			want, e := exec.Command(php, file).Output()
+			phpArgs := []string{file}
+			if fixture == "booleans" {
+				// Set and verify the locale in the same process as the oracle.
+				phpArgs = []string{"-r", "if (setlocale(LC_CTYPE, 'C') !== 'C' || setlocale(LC_CTYPE, 0) !== 'C') { throw new RuntimeException('LC_CTYPE must be C'); } require $argv[1];", "--", file}
+			}
+			want, e := exec.Command(php, phpArgs...).Output()
 			if e != nil {
 				evidence.Phases["differential"] = phaseFail
 				t.Fatal(e)
 			}
 			native := exec.Command(binary)
+			if fixture == "booleans" {
+				// Keep the versioned GOHP_CASE payload unchanged; the raw event
+				// archive retains this separately recorded oracle precondition.
+				t.Log("PHP LC_CTYPE=C selected and verified in the oracle process")
+			}
 			native.Env = []string{"PATH="} // The emitted binary must run without discovering PHP.
 			got, e := native.Output()
 			if e != nil {
@@ -155,12 +164,28 @@ func TestUnsupported(t *testing.T) {
 		{name: "unknown_class", src: "<?php $x = new Missing();"},
 		{name: "function_arity", src: "<?php function x($a) { return $a; } echo x();"},
 		{name: "boolean_array_key", src: "<?php $a = [true => 1];"},
+		{name: "legacy_array_reference", src: "<?php $value = 1; $a = array(&$value);"},
+		{name: "legacy_array_unpacking", src: "<?php $values = [1]; $a = array(...$values);"},
+		{name: "legacy_array_dynamic_key", src: "<?php $key = 'key'; $a = array($key => 1);"},
+		{name: "legacy_array_empty_hole", src: "<?php $a = array(,);"},
+		{name: "legacy_array_mismatched_delimiter", src: "<?php $a = array(1];"},
+		{name: "legacy_array_nested_mismatched_delimiter", src: "<?php $a = array(array(1]);"},
+		{name: "legacy_array_bareword", src: "<?php $a = array;"},
 		{name: "magic_constructor", src: "<?php class X { public function __construct() {} }"},
 		{name: "nondecimal_integer", src: "<?php $a = 012;"},
 		{name: "reference", src: "<?php $a = &$b;"},
 		{name: "array_write", src: "<?php $a = [1]; $a[0] = 2;"},
 		{name: "top_level_return", src: "<?php return 1;"},
 		{name: "count_scalar", src: "<?php echo count(1);"},
+		{name: "rtrim_missing_argument", src: "<?php echo rtrim('x');"},
+		{name: "rtrim_extra_argument", src: "<?php echo rtrim('x', 'x', 'x');"},
+		{name: "rtrim_int_input", src: "<?php echo rtrim(1, '1');"},
+		{name: "rtrim_bool_input", src: "<?php echo rtrim(true, '1');"},
+		{name: "rtrim_null_input", src: "<?php echo rtrim(null, 'x');"},
+		{name: "rtrim_array_input", src: "<?php echo rtrim([], 'x');"},
+		{name: "rtrim_dynamic_mask", src: "<?php $mask = 'x'; echo rtrim('x', $mask);"},
+		{name: "rtrim_range_mask", src: "<?php echo rtrim('xyz', 'a..z');"},
+		{name: "rtrim_redeclare", src: "<?php function RtRiM() { return 'x'; }"},
 		{name: "foreach_scalar", src: "<?php foreach (1 as $value) { echo $value; }"},
 		{name: "index_scalar", src: "<?php $value = 1; echo $value[0];"},
 		{name: "missing_property", src: "<?php class X { public $name = 'x'; } $x = new X(); echo $x->missing;"},
@@ -193,6 +218,28 @@ func TestUnsupported(t *testing.T) {
 		{name: "array_values_extra_args", src: "<?php $values = array_values(['x'], 'extra');"},
 		{name: "array_values_redeclare", src: "<?php function ArRaY_VaLuEs($value) { return $value; }"},
 		{name: "array_values_echo_result", src: "<?php $values = array_values(['x' => 1]); echo $values;"},
+		{name: "if_else", src: "<?php if (true) { echo 'yes'; } else { echo 'no'; }"},
+		{name: "if_elseif", src: "<?php if (false) { echo 'no'; } elseif (true) { echo 'yes'; }"},
+		{name: "if_unbraced", src: "<?php if (true) echo 'yes';"},
+		{name: "cast_int", src: "<?php echo (int) '1';"},
+		{name: "logical_or", src: "<?php echo true || false;"},
+		{name: "loose_equal", src: "<?php echo 1 == '1';"},
+		{name: "strict_equal_array", src: "<?php echo [] === [];"},
+		{name: "strict_equal_chain", src: "<?php echo true === false === false;"},
+		{name: "is_bool_missing_argument", src: "<?php echo is_bool();"},
+		{name: "is_bool_extra_argument", src: "<?php echo is_bool(true, false);"},
+		{name: "is_string_missing_argument", src: "<?php echo is_string();"},
+		{name: "is_string_extra_argument", src: "<?php echo is_string('x', 'y');"},
+		{name: "is_bool_redeclare", src: "<?php function Is_Bool() { return true; }"},
+		{name: "is_string_redeclare", src: "<?php function is_STRING() { return true; }"},
+		{name: "strtolower_missing_argument", src: "<?php echo strtolower();"},
+		{name: "strtolower_extra_argument", src: "<?php echo strtolower('X', 'Y');"},
+		{name: "strtolower_int_input", src: "<?php echo strtolower(1);"},
+		{name: "strtolower_bool_input", src: "<?php echo strtolower(true);"},
+		{name: "strtolower_null_input", src: "<?php echo strtolower(null);"},
+		{name: "strtolower_array_input", src: "<?php echo strtolower([]);"},
+		{name: "strtolower_redeclare", src: "<?php function StRtOlOwEr($value) { return $value; }"},
+		{name: "if_branch_local_variable", src: "<?php if (true) { $inside = 'x'; } echo $inside;"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			p, e := frontend.Parse(tt.src, target)

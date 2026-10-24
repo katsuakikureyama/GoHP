@@ -182,6 +182,75 @@ func ArrayValues(v any) any {
 	return values
 }
 
+func RTrim(v any, mask string) any {
+	s, ok := v.(string)
+	if !ok {
+		panic("rtrim requires string")
+	}
+	if strings.Contains(mask, "..") {
+		panic("rtrim character ranges unsupported")
+	}
+	var trim [256]bool
+	for i := 0; i < len(mask); i++ {
+		trim[mask[i]] = true
+	}
+	end := len(s)
+	for end > 0 && trim[s[end-1]] {
+		end--
+	}
+	return s[:end]
+}
+
+// Bool implements truthiness only for the closed scalar/array value domain.
+// In particular, PHP's string "0" is false but other nonempty strings are true.
+func Bool(v any) bool {
+	switch x := v.(type) {
+	case nil:
+		return false
+	case bool:
+		return x
+	case int64:
+		return x != 0
+	case string:
+		return x != "" && x != "0"
+	case Array:
+		return len(x.Entries) != 0
+	default:
+		panic("boolean conversion outside supported scalar/array subset")
+	}
+}
+
+// Identical intentionally excludes PHP array/object identity semantics.
+func Identical(a, b any) bool {
+	for _, v := range []any{a, b} {
+		switch v.(type) {
+		case nil, bool, int64, string:
+		default:
+			panic("strict equality outside supported scalar subset")
+		}
+	}
+	return a == b
+}
+
+func IsBool(v any) bool   { _, ok := v.(bool); return ok }
+func IsString(v any) bool { _, ok := v.(string); return ok }
+
+// StrToLower uses PHP 8.3 ASCII byte mapping;
+// locale-sensitive case mapping and non-string coercion are not supported.
+func StrToLower(v any) any {
+	s, ok := v.(string)
+	if !ok {
+		panic("strtolower requires string")
+	}
+	b := []byte(s)
+	for i, c := range b {
+		if c >= 'A' && c <= 'Z' {
+			b[i] = c + ('a' - 'A')
+		}
+	}
+	return string(b)
+}
+
 func Args(a []any, n int) {
 	if len(a) != n {
 		panic("unsupported argument count")

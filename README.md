@@ -49,13 +49,18 @@ bonus:5
 The test harness executes native PHP, generates Go, compiles a standalone binary,
 and compares stdout byte for byte, requiring successful exits from both. Other
 fixtures check duplicate/numeric array keys, nested arrays, scalar conversions
-and PHP-version-dependent operator precedence. Unsupported syntax must fail
+and PHP-version-dependent operator precedence. The `legacy_arrays.php` fixture
+also covers `array(...)` syntax, empty returns, mixed nesting with `[]`, trailing
+commas and case-insensitive `array` spelling within the same closed array subset.
+Unsupported syntax must fail
 with a diagnostic; a separate runtime-negative test must fail on a missing key.
 Compilation alone never proves PHP compatibility.
 Builtins currently include `count(array)`, bounded `strlen(string)` (byte
 length only, no implicit non-string coercion), `array_keys(array)` (one argument,
 ordered keys, no value filtering) and `array_values(array)` (ordered values,
-zero-based indexes, no flattening). See the compatibility contract.
+zero-based indexes, no flattening), literal-mask `rtrim`, `is_bool`, `is_string`
+and ASCII `strtolower(string)`. See the compatibility contract and the linked
+string/boolean boundaries; these are partial implementations.
 
 ### Active PHP target
 
@@ -76,6 +81,9 @@ See the [compatibility version policy](docs/compatibility.md#active-php-version-
 
 - [Architecture and decisions](docs/architecture.md)
 - [Compatibility and version matrix](docs/compatibility.md)
+- [Legacy array syntax boundary](docs/legacy-array-syntax.md)
+- [Literal-mask rtrim boundary](docs/rtrim-boundary.md)
+- [Boolean validation subset](docs/boolean-boundary.md)
 - [Function/feature catalog and verification-ledger design](docs/compatibility-registry.md)
 - [Generate and browse function/feature evidence](docs/compatibility-ledger.md)
 - [Read Composer requirements without executing code](docs/compatibility.md#composer-metadata-inventory)
@@ -91,13 +99,17 @@ See the [compatibility version policy](docs/compatibility.md#active-php-version-
 
 PHP を読みやすい Go ソースへ変換する初期 PoC です。関数・配列・クラスを
 含む fixture を実際にビルドし、PHP との標準出力の一致を確認します。
+配列は `[]` と `array(...)` を同じ限定処理へ変換し、空配列や入れ子を比較対象にします。
+`rtrim` は文字列入力＋明示的な固定文字一覧（範囲指定なし）の2引数だけを対象にします。
+単一分岐の `if`、短絡 `&&`、scalar の `===`、限定型の `(bool)` と型判定・ASCII小文字化も比較対象にします。
 参照、クロージャ、継承、Composer や PHP 拡張、WordPress 全体は未対応です。
 未対応を互換性成功とは扱いません。正式ライセンスは監査と所有者判断待ちです。
 初期の互換性対象は PHP **8.3 系のみ**で、native 比較には **8.3 系の 8.3.36 以上**を使います。
 CLI の `-php-version 8.3` はパッチ番号ではなく言語系列の指定です。8.4 以降は未対応で、
 追加時には系列ごとの最低版・固定oracleイメージdigest・専用fixture・検証証拠を別途そろえます。
 最低版の指定だけで、コンパイラや生成物のセキュリティを保証するものではありません。
-組込み関数は `count(array)` と限定的な `strlen(string)`、`array_keys(array)`、`array_values(array)` に対応します。
+組込み関数は `count(array)`、限定的な `strlen(string)`・`array_keys(array)`・`array_values(array)`、
+固定maskの `rtrim`、`is_bool`・`is_string`・ASCIIの `strtolower(string)` を対象にします。
 `strlen` はバイト数を返し、数値・nullなどからの暗黙変換は対象外です。
 `array_keys` は1引数で順序を保ったキー一覧を返します。値による絞り込みは未対応です。
 `array_values` は順序を保った値一覧を0始まりに振り直し、入れ子の配列は平坦化しません。

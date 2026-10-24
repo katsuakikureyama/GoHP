@@ -13,18 +13,31 @@ This table is the current curated summary, not a blanket support claim.
 | PHP 7.4, PHP 8.4+, other series | Not active targets | Historical evidence is retained; a separate policy/matrix is required before a series is enabled |
 | Scalar values | int64, strings, bool, null | `arrays.php`; no float or interpolation |
 | Operators | `+`, `.` and parentheses | Integral coercion only; float promotion unsupported |
+| Boolean control | Braced one-arm `if`, short-circuit `&&`, scalar `===`, `(bool)` | Scalar/array truthiness only; no else/elseif, array/object identity or other comparison operators; [contract](boolean-boundary.md) |
 | Functions | Named functions, fixed value arguments and returns | `core.php`; no optional/typed/by-reference/variadic args |
-| Arrays | Mixed ordered keys/values, reads, nested value copies, foreach | Literal int/string keys; no writes, references or array union |
+| Arrays | `[]` and `array(...)`; mixed ordered keys/values, reads, nested value copies, foreach | Literal int/string keys; no writes, references, unpacking or array union; see [syntax boundary](legacy-array-syntax.md) |
 | Classes | Public scalar defaults, no-arg construction, property reads, methods | `core.php`; no inheritance, constructors, visibility or static members |
 | Closures/callbacks/dynamic calls | Unsupported | Negative closure fixture; no claim of coverage |
 | Exceptions/warnings | Unsupported PHP behavior | Nonzero runtime failures; never functional PASS |
-| Built-ins | `count(array)`, bounded `strlen(string)`, `array_keys(array)`, `array_values(array)` | Other builtin names fail closed; no recursive count, strlen scalar coercion or filtered array_keys |
+| Built-ins | `count(array)`, `strlen(string)`, `array_keys(array)`, `array_values(array)`, restricted `rtrim`, `is_bool`, `is_string`, ASCII `strtolower(string)` | Bounded arities/domains below and in [rtrim](rtrim-boundary.md) / [boolean](boolean-boundary.md); other builtins fail closed |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |
 | mbstring / iconv / cURL / GD | Unsupported | Extension inventory and fixtures needed |
 | XML / PCRE / serialization | Unsupported | Go library behavior must not be assumed equivalent |
 | WordPress / plugins / themes | Not runnable | Independent adapter and pinned oracle required |
+
+## Combined subset validation
+
+`feature_integration.php` composes both feature branches on one compiler/runtime:
+legacy arrays, array keys/values, nested reads, count, guarded string helpers,
+type predicates, conditional assignment and PHP 8.3 operator precedence.
+The native oracle must admit the shared 8.3.36 floor before any fixture runs.
+The catalog links this cross-feature check to `php.builtin.array_values`;
+individual feature checks and unsupported-boundary checks remain separate.
+This is stdout/normal-exit evidence, not typed native return observation or
+validation of Gossip/WordPress source pins. Earlier separate-branch PASS results
+do not constitute a combined revision PASS.
 
 ## Active PHP version policy
 
