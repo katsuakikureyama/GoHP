@@ -20,6 +20,7 @@ This table is the current curated summary, not a blanket support claim.
 | Closures/callbacks/dynamic calls | Unsupported | Negative closure fixture; no claim of coverage |
 | Exceptions/warnings | Unsupported PHP behavior | Nonzero runtime failures; never functional PASS |
 | Built-ins | `count(array)`, `strlen(string)`, `array_keys(array)`, `array_values(array)`, `array_key_exists(int\|string, array)`, `array_is_list(array)`, restricted `rtrim`, `is_bool`, `is_string`, ASCII `strtolower(string)` | Bounded arities/domains below and in [rtrim](rtrim-boundary.md) / [boolean](boolean-boundary.md); other builtins fail closed |
+| String formatting / replacement | `sprintf('%0Ns', string\|int64)` with canonical width 0–4096; `str_replace(string, string, string)` | [Zero-padding boundary](sprintf-boundary.md) / [replacement boundary](str-replace-boundary.md); no general formatting, array substitutions or count reference |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |
@@ -38,6 +39,13 @@ individual feature checks and unsupported-boundary checks remain separate.
 This is stdout/normal-exit evidence, not typed native return observation or
 validation of Gossip/WordPress source pins. Earlier separate-branch PASS results
 do not constitute a combined revision PASS.
+
+`string_array_integration.php` additionally composes the bounded sprintf and
+str_replace implementations with the array helpers (including key existence and
+list checks), guarded string conversion and byte-length observation. Its single
+generated binary is compared with the admitted native PHP 8.3 oracle. Both new
+string entries link the same integration check; it is one measured case, not
+two independent proofs. This does not update or validate Gossip's source pins.
 
 ## Active PHP version policy
 

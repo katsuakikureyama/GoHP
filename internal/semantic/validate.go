@@ -8,6 +8,7 @@ import (
 
 	"github.com/katsuakikureyama/GoHP/internal/ir"
 	"github.com/katsuakikureyama/GoHP/internal/phpversion"
+	"github.com/katsuakikureyama/GoHP/internal/sprintfsubset"
 )
 
 type kind uint8
@@ -331,6 +332,34 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		args, err := v.exprs(expr.Args, scope)
 		if err != nil {
 			return valueType{}, err
+		}
+		if strings.EqualFold(expr.Text, "str_replace") {
+			if len(expr.Args) != 3 {
+				return valueType{}, unsupported(expr.Line, "str_replace expects three arguments")
+			}
+			for _, arg := range args {
+				if arg.kind != stringKind && arg.kind != unknownKind {
+					return valueType{}, unsupported(expr.Line, "str_replace requires three string arguments")
+				}
+			}
+			return valueType{kind: stringKind}, nil
+		}
+		if strings.EqualFold(expr.Text, "sprintf") {
+			if len(expr.Args) != 2 {
+				return valueType{}, unsupported(expr.Line, "sprintf expects two arguments")
+			}
+			if args[0].kind != stringKind && args[0].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "sprintf format requires string")
+			}
+			if expr.Args[0].Kind == "string" {
+				if _, ok := sprintfsubset.Width(expr.Args[0].Text); !ok {
+					return valueType{}, unsupported(expr.Line, "sprintf format outside supported %0Ns subset (width 0..4096)")
+				}
+			}
+			if args[1].kind != stringKind && args[1].kind != intKind && args[1].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "sprintf value requires string or integer")
+			}
+			return valueType{kind: stringKind}, nil
 		}
 		if strings.EqualFold(expr.Text, "count") {
 			if len(args) != 1 {

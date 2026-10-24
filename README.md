@@ -49,7 +49,7 @@ bonus:5
 The test harness executes native PHP, generates Go, compiles a standalone binary,
 and compares stdout byte for byte, requiring successful exits from both. Other
 fixtures check duplicate/numeric array keys, nested arrays, scalar conversions
-and PHP-version-dependent operator precedence. The `legacy_arrays.php` fixture
+and PHP 8.3 operator precedence. The `legacy_arrays.php` fixture
 also covers `array(...)` syntax, empty returns, mixed nesting with `[]`, trailing
 commas and case-insensitive `array` spelling within the same closed array subset.
 Unsupported syntax must fail
@@ -64,6 +64,9 @@ first-level key presence, including null-valued entries, without other key
 coercions. `array_is_list(array)` checks zero-based consecutive integer keys in
 insertion order (empty arrays are lists). See the compatibility contract and the linked
 string/boolean boundaries; these are partial implementations.
+The integrated string subset also includes `sprintf('%0Ns', string|int64)` for
+canonical widths 0–4096 and `str_replace(string, string, string)` only. General
+formatting, array substitutions, coercions and by-reference count are excluded.
 
 ### Active PHP target
 
@@ -86,6 +89,8 @@ See the [compatibility version policy](docs/compatibility.md#active-php-version-
 - [Compatibility and version matrix](docs/compatibility.md)
 - [Legacy array syntax boundary](docs/legacy-array-syntax.md)
 - [Literal-mask rtrim boundary](docs/rtrim-boundary.md)
+- [Bounded `sprintf` zero-padding boundary](docs/sprintf-boundary.md)
+- [Bounded `str_replace` string boundary](docs/str-replace-boundary.md)
 - [Boolean validation subset](docs/boolean-boundary.md)
 - [Function/feature catalog and verification-ledger design](docs/compatibility-registry.md)
 - [Generate and browse function/feature evidence](docs/compatibility-ledger.md)
@@ -104,6 +109,8 @@ PHP を読みやすい Go ソースへ変換する初期 PoC です。関数・�
 含む fixture を実際にビルドし、PHP との標準出力の一致を確認します。
 配列は `[]` と `array(...)` を同じ限定処理へ変換し、空配列や入れ子を比較対象にします。
 `rtrim` は文字列入力＋明示的な固定文字一覧（範囲指定なし）の2引数だけを対象にします。
+`sprintf` は `%0Ns`（N は 0〜4096 の正規十進幅）の文字列／整数値だけを、byte 幅の左ゼロ埋めとして対象にします。
+`str_replace` は3つの文字列だけを、byte 単位・case-sensitive・non-overlap の置換として対象にします。
 単一分岐の `if`、短絡 `&&`、scalar の `===`、限定型の `(bool)` と型判定・ASCII小文字化も比較対象にします。
 参照、クロージャ、継承、Composer や PHP 拡張、WordPress 全体は未対応です。
 未対応を互換性成功とは扱いません。正式ライセンスは監査と所有者判断待ちです。

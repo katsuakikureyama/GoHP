@@ -30,6 +30,12 @@ accepted integration target: adding it requires a separate policy/matrix and
 Gossip-owned compatibility decision. Historical 7.4 archives are readable but
 must not be used to approve a new candidate.
 
+This integration combines the array/builtin stack through PR #20 with the
+bounded sprintf/str_replace stack through PR #21, including the shared 8.3
+oracle policy. Earlier separate-stack evidence does not validate the resulting
+revision. Gossip's original-source units and compiler pins are unchanged here;
+they require independent validation before adopting this integrated revision.
+
 Capability/WebMCP scope: `gohp.cli.generate` is explicitly **excluded** from browser
 WebMCP exposure because it is a local compiler writing caller-owned build files.
 No browser operation, server resource, authentication route or auto-submit is added.
@@ -52,6 +58,16 @@ The legacy `array(...)` frontend addition stays within this excluded local
 compiler capability; it adds no service operation or authentication change.
 The literal-mask `rtrim` addition also stays within this exclusion; it does not
 introduce a browser operation, filesystem path resolver or network call.
+The three-string `str_replace` addition remains the same excluded local
+`gohp.cli.generate` capability, with no UI operation, route or authentication
+change. Array/count/coercion forms remain outside its
+[explicit subset contract](str-replace-boundary.md).
+
+The bounded `sprintf('%0Ns', value)` addition remains the same excluded local
+`gohp.cli.generate` capability: developer-only source translation, no browser
+operation or new service/authentication route. Dynamic formats and values are
+runtime-guarded; see [the subset contract](sprintf-boundary.md).
+
 The boolean-control/type-predicate addition remains the same excluded local
 compiler capability; no authentication or user-facing service action is added.
 
