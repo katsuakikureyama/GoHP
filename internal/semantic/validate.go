@@ -234,6 +234,23 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		}
 		// Code generation owns the established undefined-variable diagnostic.
 		return valueType{kind: unknownKind}, nil
+	case "ternary":
+		if err := require(3); err != nil {
+			return valueType{}, err
+		}
+		// Validate even the unselected arm: laziness is a runtime property,
+		// not permission to accept source outside the closed subset.
+		operands, err := v.exprs(expr.Args, scope)
+		if err != nil {
+			return valueType{}, err
+		}
+		if !isBoolDomain(operands[0]) {
+			return valueType{}, unsupported(expr.Line, "ternary condition requires a supported value")
+		}
+		if operands[1] == operands[2] {
+			return operands[1], nil
+		}
+		return valueType{kind: unknownKind}, nil
 	case "binary":
 		if err := require(2); err != nil {
 			return valueType{}, err
@@ -328,6 +345,19 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 	case "call":
 		if !validName(expr.Text) {
 			return valueType{}, malformed(expr.Line, "invalid function name")
+		}
+		if strings.EqualFold(expr.Text, "stripslashes") {
+			if len(expr.Args) != 1 {
+				return valueType{}, unsupported(expr.Line, "stripslashes expects one argument")
+			}
+			arg, err := v.expr(expr.Args[0], scope)
+			if err != nil {
+				return valueType{}, err
+			}
+			if arg.kind != stringKind && arg.kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "stripslashes requires a string argument")
+			}
+			return valueType{kind: stringKind}, nil
 		}
 		if strings.EqualFold(expr.Text, "str_replace") {
 			if len(expr.Args) != 3 {

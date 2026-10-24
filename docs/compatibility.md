@@ -12,14 +12,14 @@ This table is the current curated summary, not a blanket support claim.
 | PHP 8.3 | Active closed subset; native oracle is >= 8.3.36 | Differential fixtures run against the approved 8.3 oracle |
 | PHP 7.4, PHP 8.4+, other series | Not active targets | Historical evidence is retained; a separate policy/matrix is required before a series is enabled |
 | Scalar values | int64, strings, bool, null | `arrays.php`; no float or interpolation |
-| Operators | `+`, `.` and parentheses | Integral coercion only; float promotion unsupported |
+| Operators | `+`, `.`, parentheses and full ternary | Integral coercion only; float promotion unsupported. Ternary is non-associative; no `?:`, `??` or object truthiness; [contract](ternary-stripslashes-boundary.md) |
 | Boolean control | Braced one-arm `if`, short-circuit `&&`, scalar `===`, `(bool)` | Scalar/array truthiness only; no else/elseif, array/object identity or other comparison operators; [contract](boolean-boundary.md) |
 | Functions | Named functions, fixed value arguments and returns | `core.php`; no optional/typed/by-reference/variadic args |
 | Arrays | `[]` and `array(...)`; mixed ordered keys/values, reads, nested value copies, foreach | Literal int/string keys; no writes, references, unpacking or array union; see [syntax boundary](legacy-array-syntax.md) |
 | Classes | Public scalar defaults, no-arg construction, property reads, methods | `core.php`; no inheritance, constructors, visibility or static members |
 | Closures/callbacks/dynamic calls | Unsupported | Negative closure fixture; no claim of coverage |
 | Exceptions/warnings | Unsupported PHP behavior | Nonzero runtime failures; never functional PASS |
-| Built-ins | `count(array)`, restricted `rtrim`, `is_bool`, `is_string`, string-only ASCII `strtolower` | Exact arities and closed domains; see [rtrim](rtrim-boundary.md) and [boolean](boolean-boundary.md) boundaries. Other builtins fail closed |
+| Built-ins | `count(array)`, restricted `rtrim`, `is_bool`, `is_string`, string-only ASCII `strtolower`, bounded `sprintf`, three-string `str_replace`, string-only `stripslashes` | Exact arities and closed domains; see [rtrim](rtrim-boundary.md), [boolean](boolean-boundary.md), [sprintf](sprintf-boundary.md), [str_replace](str-replace-boundary.md) and [ternary/stripslashes](ternary-stripslashes-boundary.md) boundaries. Other builtins fail closed |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |
