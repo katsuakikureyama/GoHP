@@ -1,0 +1,17 @@
+{
+  "repository": "moriyoshi/php2go",
+  "observed_at": "2026-10-24",
+  "head": "ccbd43f7ea7f9d2530f32fd4618a7dbbbeb5ee44",
+  "files": [
+    {
+      "path": "README.md",
+      "url": "https://raw.githubusercontent.com/moriyoshi/php2go/ccbd43f7ea7f9d2530f32fd4618a7dbbbeb5ee44/README.md",
+      "sha256": "1cd179de82d475696da18479cbf03239a7b65398b2b6a51b05ffe7eb9f9cba44"
+    },
+    {
+      "path": "LICENSE",
+      "url": "https://raw.githubusercontent.com/moriyoshi/php2go/ccbd43f7ea7f9d2530f32fd4618a7dbbbeb5ee44/LICENSE",
+      "sha256": "07e8f62e0c18edc43f826bd8b9dc216f6485cdbed20162fd95c6c2146287438a"
+    }
+  ]
+}

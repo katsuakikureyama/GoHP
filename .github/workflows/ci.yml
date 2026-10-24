@@ -1,0 +1,17 @@
+name: compiler-validation
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  differential:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [test, php74]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Build pinned development image
+        run: docker compose --profile legacy build ${{ matrix.service }}
+      - name: Validate PHP vs compiled Go with no network
+        run: docker compose --profile legacy run --rm ${{ matrix.service }}

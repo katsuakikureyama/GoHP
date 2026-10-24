@@ -1,0 +1,17 @@
+{
+  "repository": "i582/php2go",
+  "observed_at": "2026-10-24",
+  "head": "6a25f697acc7baf06e3750478095827b69a866f8",
+  "files": [
+    {
+      "path": "README.md",
+      "url": "https://raw.githubusercontent.com/i582/php2go/6a25f697acc7baf06e3750478095827b69a866f8/README.md",
+      "sha256": "ef3dd94413e7de8ce2053e94015d4799bae7dc53df0f930607c0c67de66704ce"
+    },
+    {
+      "path": "LICENSE",
+      "url": "https://raw.githubusercontent.com/i582/php2go/6a25f697acc7baf06e3750478095827b69a866f8/LICENSE",
+      "sha256": "f1071cd4b498b5d2fb1f19dcf983874d49fe41dbfa778c235feebc3172695b43"
+    }
+  ]
+}

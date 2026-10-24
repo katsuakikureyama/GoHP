@@ -1,0 +1,17 @@
+{
+  "repository": "VKCOM/kphp",
+  "observed_at": "2026-10-24",
+  "head": "3fd73cbcea99f89f318989bef141b024b08889a5",
+  "files": [
+    {
+      "path": "README.md",
+      "url": "https://raw.githubusercontent.com/VKCOM/kphp/3fd73cbcea99f89f318989bef141b024b08889a5/README.md",
+      "sha256": "dddb33e97225a684d3211f3cf79f6a9f9c23d62829bf9974a9bbf151aede686f"
+    },
+    {
+      "path": "LICENSE",
+      "url": "https://raw.githubusercontent.com/VKCOM/kphp/3fd73cbcea99f89f318989bef141b024b08889a5/LICENSE",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    }
+  ]
+}
