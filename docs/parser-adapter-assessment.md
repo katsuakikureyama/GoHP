@@ -16,7 +16,7 @@ PHP 5/7/8 AST parsing and shows `version.New("8.3")`; its version package
 accepts 7.0--7.4 and 8.0-or-newer. Nodes carry start/end lines and byte
 positions. But that revision declares `go 1.26`, while GoHP declares Go 1.23,
 and its README says it is based on z7zmey. Pin, toolchain, generated-grammar,
-transitive-dependency, licence/provenance, API-stability, and PHP 7.4/8.3
+transitive-dependency, licence/provenance, API-stability, and active-PHP-8.3
 corpus results require an owner-approved audit before use. The observed root
 licence is MIT; that alone is not a full provenance audit.
 
@@ -77,7 +77,7 @@ not a replacement for this artifact contract.
 
 ## Migration gates
 
-1. Freeze a 7.4/8.3 parse corpus: accepted syntax, parse-error locations, and
+1. Freeze an active 8.3 parse corpus: accepted syntax, parse-error locations, and
    current supported fixtures. Record parser revision and toolchains.
 2. Add the frontend interface, spans and diagnostics while the existing parser
    remains default; run the candidate in shadow mode and compare only the
@@ -90,5 +90,5 @@ not a replacement for this artifact contract.
    differential behaviour, map, and negative-boundary tests.
 
 No candidate was installed, built, or benchmarked for this assessment; no
-claim is made that any candidate fully parses or behaves like PHP 7.4/8.3 on
+claim is made that any candidate fully parses or behaves like active PHP 8.3 on
 the GoHP corpus.

@@ -20,8 +20,9 @@ It is not general PHP control flow or object/coercion compatibility.
 - `is_bool` and `is_string` take exactly one value and return type predicates.
 - `strtolower` takes exactly one actual string, mapping ASCII A–Z bytes to a–z
   and leaving other bytes unchanged. No weak coercion or Unicode case folding.
-  PHP 7.4 differential evidence explicitly requires `LC_CTYPE=C`; non-C locale
-  behavior is not supported. PHP 8.3 uses ASCII semantics.
+  Active differential runs use PHP 8.3 >=8.3.36 and explicitly select/verify
+  `LC_CTYPE=C`. Older PHP 7.4 evidence is historical only. PHP 8.3 uses ASCII
+  semantics; non-C PHP 7.4 locale behavior was never supported.
 - New builtin names are case-insensitive and reserved against redeclaration.
 
 PHP references: [boolean conversion](https://www.php.net/manual/en/language.types.boolean.php),
@@ -37,7 +38,7 @@ is a literal true. Semantic types for existing bindings are weakened if a branch
 can change their type. This conservative rule avoids claiming definite assignment
 where a branch might not execute; it is not full PHP data-flow inference.
 
-Operator precedence retains the PHP-target-specific `+`/`.` relationship, above
+Operator precedence retains the PHP 8.3 `+`/`.` relationship, above
 `===`, above `&&`; bool casts bind more tightly. Statement maps cover nested
 conditional headers and bodies. No IR schema fields or report schema change.
 

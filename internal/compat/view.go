@@ -32,11 +32,11 @@ type ViewRun struct {
 	Cases         []CaseEvidence `json:"cases"`
 }
 
-const viewNotice = "Stored run evidence only; no current-release or combined-target support verdict. Internal consistency is checked, not authenticity, source bytes or CI job success. No tests are executed. Differential results cover listed cases and stdout/successful exits only; stderr, exceptions and side effects are not checked. Input order is preserved; no latest/best result is selected."
+const viewNotice = "Stored run evidence only; no current-release or combined-target support verdict. Retired PHP targets and below-policy oracle versions are historical records, not current support. Internal consistency is checked, not authenticity, source bytes or CI job success. No tests are executed. Differential results cover listed cases and stdout/successful exits only; stderr, exceptions and side effects are not checked. Input order is preserved; no latest/best result is selected."
 
 // Validate rejects unknown filter values before any archive is read.
 func (filter ViewFilter) Validate() error {
-	if filter.Target != "" && !oneOf(filter.Target, "7.4", "8.3") {
+	if filter.Target != "" && !knownEvidenceTarget(filter.Target) {
 		return fmt.Errorf("invalid target filter %q", filter.Target)
 	}
 	if filter.Kind != "" && !oneOf(filter.Kind, "syntax", "operator", "type", "builtin", "extension", "tooling", "application") {

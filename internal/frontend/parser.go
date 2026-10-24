@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	"github.com/katsuakikureyama/GoHP/internal/ir"
+	"github.com/katsuakikureyama/GoHP/internal/phpversion"
 )
 
 type token struct {
@@ -213,8 +214,8 @@ func Parse(src, version string) (out ir.Program, err error) {
 			}
 		}
 	}()
-	if version != "7.4" && version != "8.3" {
-		return out, fmt.Errorf("PHP003: supported target versions: 7.4, 8.3")
+	if err := phpversion.ValidateTarget(version); err != nil {
+		return out, fmt.Errorf("PHP003: %w", err)
 	}
 	ts, e := lex(src)
 	if e != nil {
@@ -324,9 +325,6 @@ func (p *parser) stmt() ir.Stmt {
 }
 func (p *parser) prec(t token) int {
 	if t.kind == "sym" && t.text == "." {
-		if p.version == "7.4" {
-			return 4
-		}
 		return 3
 	}
 	if t.kind == "sym" && t.text == "+" {

@@ -137,7 +137,9 @@ func evaluate(c Catalog, events io.Reader, meta Metadata, fixture fixtureLookup)
 }
 
 func validateMetadata(meta Metadata) error {
-	if !oneOf(meta.PHPTarget, "7.4", "8.3") {
+	// Replay retains old oracle versions as historical evidence. The live runner
+	// separately applies the current minimum patch policy before executing tests.
+	if !knownEvidenceTarget(meta.PHPTarget) {
 		return fmt.Errorf("evidence has unsupported PHP target %q", meta.PHPTarget)
 	}
 	if meta.PHPVersion != "" && !strings.HasPrefix(meta.PHPVersion, meta.PHPTarget+".") {

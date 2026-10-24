@@ -14,6 +14,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/katsuakikureyama/GoHP/internal/phpversion"
 )
 
 const modulePath = "github.com/katsuakikureyama/GoHP"
@@ -243,13 +245,20 @@ func oneOf(value string, values ...string) bool {
 	}
 	return false
 }
+
+// knownEvidenceTarget includes retired targets solely for snapshot replay and
+// read-only filtering. Live execution must use phpversion.ValidateOracle.
+func knownEvidenceTarget(target string) bool {
+	return target == "7.4" || phpversion.ValidateTarget(target) == nil
+}
+
 func targets(values []string) error {
 	if len(values) == 0 {
 		return fmt.Errorf("requires php_targets")
 	}
 	seen := make(map[string]bool)
 	for _, value := range values {
-		if !oneOf(value, "7.4", "8.3") || seen[value] {
+		if !knownEvidenceTarget(value) || seen[value] {
 			return fmt.Errorf("invalid or duplicate PHP target %q", value)
 		}
 		seen[value] = true

@@ -22,6 +22,20 @@ not protect against an attacker changing destination directories concurrently.
 and callers must discard any partial stdout on failure. Repeated generation uses
 new candidate paths rather than overwriting a previous build.
 
+`-php-version 8.3` identifies the active language series, not an arbitrary PHP
+patch. Native verification for this contract uses PHP 8.3.36 or newer within
+the 8.3 series and the
+approved immutable oracle digest recorded in run evidence. PHP 8.4+ is not an
+accepted integration target: adding it requires a separate policy/matrix and
+Gossip-owned compatibility decision. Historical 7.4 archives are readable but
+must not be used to approve a new candidate.
+
+The Gossip integration branch backports the policy from commit
+`948647c2903a4a1b22069818861062df1f5bf414` onto the existing legacy-array,
+rtrim and Boolean stack. It does not import the independent Composer inventory,
+strlen, array_keys or array_values implementations. Gossip must measure its
+original-source units again before pinning this combined compiler revision.
+
 Capability/WebMCP scope: `gohp.cli.generate` is explicitly **excluded** from browser
 WebMCP exposure because it is a local compiler writing caller-owned build files.
 No browser operation, server resource, authentication route or auto-submit is added.
@@ -31,6 +45,8 @@ The literal-mask `rtrim` addition also stays within this exclusion; it does not
 introduce a browser operation, filesystem path resolver or network call.
 The boolean-control/type-predicate addition remains the same excluded local
 compiler capability; no authentication or user-facing service action is added.
+Changing the PHP oracle policy or adding a later series likewise adds no browser
+operation, resource, authentication route, WebMCP capability, or auto-submit.
 
 Report schema `gohp.build/v0.1` includes IR/compiler versions, source and generated
 SHA-256, input path, PHP target and `generated` status. Additive fields `output`

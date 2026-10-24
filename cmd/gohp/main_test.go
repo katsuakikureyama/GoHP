@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/katsuakikureyama/GoHP/internal/codegen"
+	"github.com/katsuakikureyama/GoHP/internal/phpversion"
 )
 
 var gohpBinary string
@@ -324,10 +325,10 @@ func phpTarget(t *testing.T) string {
 	t.Helper()
 	target := os.Getenv("GOHP_PHP_TARGET")
 	if target == "" {
-		target = "8.3"
+		target = phpversion.DefaultTarget
 	}
-	if target != "7.4" && target != "8.3" {
-		t.Fatalf("GOHP_PHP_TARGET = %q, want 7.4 or 8.3", target)
+	if err := phpversion.ValidateTarget(target); err != nil {
+		t.Fatal(err)
 	}
 	return target
 }

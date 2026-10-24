@@ -14,11 +14,9 @@ execution has network access disabled.
 ```sh
 docker compose build test
 docker compose run --rm test
-docker compose --profile legacy build php74
-docker compose --profile legacy run --rm php74
 ```
 
-Or use Go **1.23.12** and PHP **8.3** or **7.4** locally:
+Or use Go **1.23.12** and native PHP **8.3.36 or newer within the 8.3 series** locally:
 
 ```sh
 sh scripts/check.sh
@@ -51,12 +49,27 @@ bonus:5
 The test harness executes native PHP, generates Go, compiles a standalone binary,
 and compares stdout byte for byte, requiring successful exits from both. Other
 fixtures check duplicate/numeric array keys, nested arrays, scalar conversions
-and PHP-version-dependent operator precedence. The `legacy_arrays.php` fixture
+and PHP 8.3 operator precedence. The `legacy_arrays.php` fixture
 also covers `array(...)` syntax, empty returns, mixed nesting with `[]`, trailing
 commas and case-insensitive `array` spelling within the same closed array subset.
 Unsupported syntax must fail
 with a diagnostic; a separate runtime-negative test must fail on a missing key.
 Compilation alone never proves PHP compatibility.
+
+### Active PHP target
+
+GoHP's initial compatibility target is the PHP **8.3** language series only.
+Native differential runs require PHP **8.3.36 or newer within 8.3**; the actual
+oracle version is recorded in run evidence, along with the pinned image digest
+in CI (host-PHP runs need no container). The CLI deliberately takes the language-series
+label `-php-version 8.3`, rather than a patch number.
+
+PHP 8.4 and later are not enabled or claimed. Adding a series requires a
+separate policy/matrix entry with its own minimum release, pinned oracle image
+digest, target-specific corpus and passing evidence; it is not a consequence
+of accepting the same CLI flag. The minimum release floor is a maintenance
+rule, not a security guarantee for the compiler, generated binaries or input.
+See the [compatibility version policy](docs/compatibility.md#active-php-version-policy).
 
 ## Scope and documentation
 
@@ -84,6 +97,10 @@ PHP を読みやすい Go ソースへ変換する初期 PoC です。関数・�
 単一分岐の `if`、短絡 `&&`、scalar の `===`、限定型の `(bool)` と型判定・ASCII小文字化も比較対象にします。
 参照、クロージャ、継承、Composer や PHP 拡張、WordPress 全体は未対応です。
 未対応を互換性成功とは扱いません。正式ライセンスは監査と所有者判断待ちです。
+初期の互換性対象は PHP **8.3 系のみ**で、native 比較には **8.3 系の 8.3.36 以上**を使います。
+CLI の `-php-version 8.3` はパッチ番号ではなく言語系列の指定です。8.4 以降は未対応で、
+追加時には系列ごとの最低版・固定oracleイメージdigest・専用fixture・検証証拠を別途そろえます。
+最低版の指定だけで、コンパイラや生成物のセキュリティを保証するものではありません。
 生成レポートには Go の行から PHP の文開始行への対応を含みます。
 列単位の位置情報やエラー表示の自動変換、本格パーサへの切替は未対応です。
 関数・機能の台帳と実テスト結果から、PHP バージョン別の対応状況を JSON／Markdown

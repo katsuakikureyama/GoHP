@@ -21,8 +21,8 @@ identifier must fail. Unknown ordinary function calls still fail closed.
 `tests/fixtures/legacy_arrays.php` is repository-owned differential input;
 it does not vendor or rewrite WordPress. `TestDifferential/legacy_arrays` is
 linked to `php.syntax.array-literal` in the catalog, with explicit negative
-cases. Native PHP 7.4 and 8.3 results are recorded separately by the existing
-CI ledger. A negative-case PASS means rejection, not PHP compatibility.
+cases. New native runs use only PHP 8.3 >=8.3.36; earlier PHP 7.4/8.3 results
+remain historical in the CI ledger. A negative-case PASS means rejection, not PHP compatibility.
 Output/exit comparison does not prove warning, exception or side-effect parity.
 
 The motivation is Gossip's unchanged WordPress `__return_empty_array()` unit,

@@ -27,7 +27,8 @@ output can contain an incomplete UTF-8 sequence, compared as raw stdout bytes.
 This is not a Unicode normalization or path canonicalization operation.
 
 `tests/fixtures/rtrim.php` exercises accepted inputs through the real compiler
-and both native PHP targets. The catalog item `php.builtin.rtrim` links its
+and the active PHP 8.3 >=8.3.36 oracle. Older two-target runs remain historical.
+The catalog item `php.builtin.rtrim` links its
 version-specific differential and rejection/guard checks. Current evidence is
 recorded in the Draft PR and CI ledger; generation alone is not compatibility.
 

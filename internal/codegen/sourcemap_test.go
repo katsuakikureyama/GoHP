@@ -66,7 +66,7 @@ echo '// gohp:end';
 echo 'line
 // gohp:begin 999';
 `
-	for _, target := range []string{"7.4", "8.3"} {
+	for _, target := range []string{"8.3"} {
 		t.Run(target, func(t *testing.T) {
 			p, err := frontend.Parse(php, target)
 			if err != nil {
