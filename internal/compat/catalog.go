@@ -62,6 +62,12 @@ func strictJSON(b []byte, dst any) error {
 }
 
 func (c *Catalog) validate() error {
+	return c.validateCatalog(true)
+}
+
+// Archive validation checks identities and contracts without opening source
+// paths from a historical catalog in the consumer's current checkout.
+func (c *Catalog) validateCatalog(sourceAvailable bool) error {
 	if c.Schema != "gohp.compatibility.catalog/v0.1" {
 		return fmt.Errorf("unsupported catalog schema %q", c.Schema)
 	}
@@ -92,7 +98,7 @@ func (c *Catalog) validate() error {
 			return fmt.Errorf("entry %q: %w", e.ID, err)
 		}
 		for j := range e.Checks {
-			if err := c.validateCheck(e.ID, &e.Checks[j]); err != nil {
+			if err := c.validateCheck(e.ID, &e.Checks[j], sourceAvailable); err != nil {
 				return err
 			}
 		}
@@ -100,7 +106,7 @@ func (c *Catalog) validate() error {
 	return nil
 }
 
-func (c *Catalog) validateCheck(entryID string, check *Check) error {
+func (c *Catalog) validateCheck(entryID string, check *Check, sourceAvailable bool) error {
 	if blank(check.CaseID) || blank(check.Test) || blank(check.File) || len(check.Assertions) == 0 {
 		return fmt.Errorf("entry %q has an incomplete check", entryID)
 	}
@@ -112,7 +118,7 @@ func (c *Catalog) validateCheck(entryID string, check *Check) error {
 			return fmt.Errorf("entry %q check %q has an empty assertion", entryID, check.CaseID)
 		}
 	}
-	file, err := c.checkedPath(check.File)
+	file, err := relativePath(check.File)
 	if err != nil {
 		return fmt.Errorf("entry %q check %q file: %w", entryID, check.CaseID, err)
 	}
@@ -123,12 +129,23 @@ func (c *Catalog) validateCheck(entryID string, check *Check) error {
 		return fmt.Errorf("entry %q check %q requires a fixture", entryID, check.CaseID)
 	}
 	if !blank(check.Fixture) {
-		if _, err := c.checkedPath(check.Fixture); err != nil {
+		if _, err := relativePath(check.Fixture); err != nil {
 			return fmt.Errorf("entry %q check %q fixture: %w", entryID, check.CaseID, err)
 		}
 	}
-	if err := hasTopLevelTest(file, topLevelTest(check.Test)); err != nil {
-		return fmt.Errorf("entry %q check %q: %w", entryID, check.CaseID, err)
+	if sourceAvailable {
+		file, err = c.checkedPath(check.File)
+		if err != nil {
+			return fmt.Errorf("entry %q check %q file: %w", entryID, check.CaseID, err)
+		}
+		if !blank(check.Fixture) {
+			if _, err := c.checkedPath(check.Fixture); err != nil {
+				return fmt.Errorf("entry %q check %q fixture: %w", entryID, check.CaseID, err)
+			}
+		}
+		if err := hasTopLevelTest(file, topLevelTest(check.Test)); err != nil {
+			return fmt.Errorf("entry %q check %q: %w", entryID, check.CaseID, err)
+		}
 	}
 	dir := filepath.ToSlash(filepath.Dir(check.File))
 	pkg := modulePath
@@ -146,13 +163,21 @@ func (c *Catalog) validateCheck(entryID string, check *Check) error {
 	return nil
 }
 
-func (c Catalog) checkedPath(name string) (string, error) {
+func relativePath(name string) (string, error) {
 	if filepath.IsAbs(name) || name == "" || filepath.Clean(name) == "." {
 		return "", fmt.Errorf("must be a non-empty relative file")
 	}
 	clean := filepath.Clean(name)
 	if clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
 		return "", fmt.Errorf("path traversal is not allowed")
+	}
+	return clean, nil
+}
+
+func (c Catalog) checkedPath(name string) (string, error) {
+	clean, err := relativePath(name)
+	if err != nil {
+		return "", err
 	}
 	resolved, err := filepath.EvalSymlinks(filepath.Join(c.root, clean))
 	if err != nil {

@@ -247,6 +247,19 @@
         {"case_id": "negative.runtime_failure", "test": "TestRuntimeFailureIsNotPass", "file": "tests/differential_test.go", "kind": "negative", "fixture": "tests/fixtures/runtime_failure.php", "assertions": ["a real generated Go panic frame resolves to the failing PHP statement"]}
       ],
       "limitations": ["Not Source Map v3", "No columns, multiple source files, debugger integration or PHP semantic guarantee"]
+    },
+    {
+      "id": "gohp.tooling.compatibility-view",
+      "kind": "tooling",
+      "name": "Read-only archived compatibility views",
+      "implementation": "implemented",
+      "contract": "Reads hash-bound catalog/event archives, replays stored verdicts and filters feature rows without merging runs or hiding overall failures.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"case_id": "unit.compat.archive", "test": "TestLoadArchiveReplaysWithoutSourceAndRejectsChangedEvidence", "file": "internal/compat/archive_test.go", "kind": "unit", "assertions": ["pass/fail/skip archives replay without source files", "changed hashes, verdicts, phases, duplicates and escaping symlinks are rejected"]},
+        {"case_id": "unit.compat.view", "test": "TestViewKeepsRunsAndFailureVisibleThroughFilters", "file": "internal/compat/archive_test.go", "kind": "unit", "assertions": ["target and status filters retain each run, its overall failure, configuration and all cases", "archive text cannot insert raw HTML or Markdown links"]}
+      ],
+      "limitations": ["Internal consistency only, not authenticity, source revalidation or CI job success", "No latest/best selection, revision applicability or combined-target support verdict", "No PHP language compatibility claim from these Go-only tooling tests"]
     }
   ]
 }

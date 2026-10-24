@@ -11,8 +11,9 @@ The initial [`compatibility/catalog.json`](../compatibility/catalog.json) now ha
 an experimental executable implementation: validated catalog, stable case IDs,
 single-run test evidence, per-target JSON/Markdown and CI artifacts. See the
 [ledger operation contract](compatibility-ledger.md). The remaining sections
-preserve the design direction; historical applicability, combined views, project
-inventory and consumer APIs are still follow-ups. No dashboard, automatic
+preserve the design direction; read-only multi-run views and target/kind/status
+filters are implemented in `gohp-compat-view`. Historical applicability, combined
+support verdicts, project inventory and service APIs are still follow-ups. No dashboard, automatic
 compatibility promotion or deployment is added.
 
 ## Catalog: what do we implement?
@@ -119,9 +120,10 @@ workspace handoff, not retroactively added to this historical baseline.
 4. Add read-only project inventory from parser callsites and Composer metadata
    as data. Dynamic calls, unresolved names and absent extension contracts are
    unknown. Never execute Composer hooks or applications to inventory them.
-5. Define a versioned consumer query/report API only afterwards. This design adds
-   no operation: `gohp.cli.generate` retains its local-tool WebMCP exclusion.
-   Any future browser/service/MCP surface needs its own capability/auth contract.
+5. Define a service query/report API only afterwards. The local run and view
+   operations have explicit WebMCP exclusions in the ledger operation contract;
+   `gohp.cli.generate` retains its local-tool exclusion. Any future
+   browser/service/MCP surface needs its own capability/auth contract.
 
 Add/update the contract, target-specific positive cases, negative boundaries and
 catalog links in the same function/feature change. Test only the affected scope

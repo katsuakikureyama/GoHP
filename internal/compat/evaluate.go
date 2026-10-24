@@ -59,6 +59,12 @@ type casePayload struct {
 // It deliberately makes absent or contradictory evidence incomplete rather
 // than promoting it to a compatibility pass.
 func Evaluate(c Catalog, events io.Reader, meta Metadata) (Report, error) {
+	return evaluate(c, events, meta, c.fixtureHash)
+}
+
+type fixtureLookup func(Case) (hash, detail string)
+
+func evaluate(c Catalog, events io.Reader, meta Metadata, fixture fixtureLookup) (Report, error) {
 	if err := validateMetadata(meta); err != nil {
 		return Report{}, err
 	}
@@ -115,7 +121,7 @@ func Evaluate(c Catalog, events io.Reader, meta Metadata) (Report, error) {
 		EventSHA256:   hashBytes(raw),
 	}
 	for _, testCase := range sortedCases(c) {
-		report.Cases = append(report.Cases, evaluateCase(c, testCase, lifecycles, payloads, meta))
+		report.Cases = append(report.Cases, evaluateCase(testCase, lifecycles, payloads, meta, fixture))
 	}
 	if overall(nil, lifecycles, meta.TestExit) != "pass" {
 		for i := range report.Cases {
@@ -181,20 +187,26 @@ func parseEvents(raw []byte) ([]testEvent, error) {
 	return result, nil
 }
 
-func evaluateCase(c Catalog, testCase Case, states map[string]*lifecycle, payloads map[string][]loggedPayload, meta Metadata) CaseEvidence {
+func (c Catalog) fixtureHash(testCase Case) (string, string) {
+	fixture, err := c.checkedPath(testCase.Fixture)
+	if err != nil {
+		return "", "fixture no longer resolves beneath repository root"
+	}
+	b, err := os.ReadFile(fixture)
+	if err != nil {
+		return "", "fixture is no longer readable"
+	}
+	return hashBytes(b), ""
+}
+
+func evaluateCase(testCase Case, states map[string]*lifecycle, payloads map[string][]loggedPayload, meta Metadata, fixture fixtureLookup) CaseEvidence {
 	evidence := CaseEvidence{ID: testCase.ID, Test: testCase.Test, Package: testCase.Package, Kind: testCase.Kind, Fixture: testCase.Fixture}
 	if testCase.Fixture != "" {
-		fixture, err := c.checkedPath(testCase.Fixture)
-		if err != nil { // LoadCatalog established it; retain a safe incomplete result if checkout changed.
-			evidence.Status, evidence.Detail = "incomplete", "fixture no longer resolves beneath repository root"
+		evidence.FixtureSHA256, evidence.Detail = fixture(testCase)
+		if evidence.Detail != "" {
+			evidence.Status = "incomplete"
 			return evidence
 		}
-		b, err := os.ReadFile(fixture)
-		if err != nil {
-			evidence.Status, evidence.Detail = "incomplete", "fixture is no longer readable"
-			return evidence
-		}
-		evidence.FixtureSHA256 = hashBytes(b)
 	}
 	var payload casePayload
 	payloadDetail := ""

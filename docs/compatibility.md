@@ -37,9 +37,10 @@ record exact source/dist revisions, transitive requirements, `php`, `ext-*`,
 platform constraints, generated/vendor code, scripts and licenses. Never run
 install/update or arbitrary hooks for metadata inspection. Resolve each requirement
 against a machine-readable registry with `unsupported`, `compile-pass`, and
-`differential-pass` distinct. The inventory reader and historical/query pipeline
-are not implemented; single-run evidence and status
-generation are now available.
+`differential-pass` distinct. The inventory reader and historical applicability
+decisions are not implemented. Single-run evidence and read-only multi-run
+views with target/kind/status filters are available; they do not combine runs
+into a support verdict. See the [ledger contract](compatibility-ledger.md).
 
 The current harness compares stdout and successful exit status. It does **not**
 validate filesystem side effects, DB mutation, PHP exception identity, warnings,
