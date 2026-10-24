@@ -28,6 +28,9 @@ No browser operation, server resource, authentication route or auto-submit is ad
 The same local generation operation now also accepts bounded `strlen(string)`
 calls; its [string-only byte-length contract](compatibility.md#bounded-strlen-contract)
 does not add a service operation or change this WebMCP exclusion.
+The bounded one-argument `array_keys(array)` operation is covered by this same
+exclusion and [array-only contract](compatibility.md#bounded-array_keys-contract);
+it adds no browser/server route, permission, publication or automatic execution.
 
 Report schema `gohp.build/v0.1` includes IR/compiler versions, source and generated
 SHA-256, input path, PHP target and `generated` status. Additive fields `output`

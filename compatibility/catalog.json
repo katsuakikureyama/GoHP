@@ -156,6 +156,31 @@
       "limitations": ["No implicit conversion of integers, booleans, null, arrays or objects; rejection is not PHP warning/exception equivalence", "No character/grapheme count, named arguments or dynamic function names", "String syntax remains the closed frontend subset: no interpolation, hex/octal escapes or mbstring overload configuration claim", "NUL/invalid UTF-8 byte lengths are runtime-unit-tested only, not native differential fixtures"]
     },
     {
+      "id": "php.builtin.array_keys",
+      "kind": "builtin",
+      "name": "array_keys(array)",
+      "implementation": "partial",
+      "contract": "One positional array argument returns its existing keys in insertion order as values of a fresh zero-based array, preserving integer/string key types.",
+      "php_targets": ["7.4","8.3"],
+      "checks": [
+        {"case_id":"diff.array_keys","test":"TestDifferential/array_keys","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_keys.php","assertions":["ordered keys, numeric-string normalization, empty/nested arrays and dynamic array results match native PHP stdout and successful exits"]},
+        {"case_id":"unit.runtime.array_keys_values","test":"TestArrayKeysOrderTypesAndIsolation","file":"runtime/array_keys_test.go","kind":"unit","assertions":["dense int64 output indexes, original key types and order, empty arrays and independent storage; binary keys are runtime-only"]},
+        {"case_id":"unit.runtime.array_keys_types","test":"TestArrayKeysRejectsNonArray","file":"runtime/array_keys_test.go","kind":"unit","assertions":["non-array inputs fail explicitly"]},
+        {"case_id":"negative.array_keys_dynamic","test":"TestArrayKeysRuntimeTypeGuard","file":"tests/differential_test.go","kind":"negative","fixture":"tests/fixtures/array_keys_runtime_failure.php","assertions":["generated code rejects a runtime non-array with nonzero exit; no PHP warning/exception equivalence claim"]},
+        {"case_id":"negative.array_keys_int","test":"TestUnsupported/array_keys_int","file":"tests/differential_test.go","kind":"negative","assertions":["known integer argument is rejected before generation"]},
+        {"case_id":"negative.array_keys_string","test":"TestUnsupported/array_keys_string","file":"tests/differential_test.go","kind":"negative","assertions":["known string argument is rejected before generation"]},
+        {"case_id":"negative.array_keys_bool","test":"TestUnsupported/array_keys_bool","file":"tests/differential_test.go","kind":"negative","assertions":["known boolean argument is rejected before generation"]},
+        {"case_id":"negative.array_keys_null","test":"TestUnsupported/array_keys_null","file":"tests/differential_test.go","kind":"negative","assertions":["known null argument is rejected before generation"]},
+        {"case_id":"negative.array_keys_object","test":"TestUnsupported/array_keys_object","file":"tests/differential_test.go","kind":"negative","assertions":["known object argument is rejected before generation"]},
+        {"case_id":"negative.array_keys_no_args","test":"TestUnsupported/array_keys_no_args","file":"tests/differential_test.go","kind":"negative","assertions":["zero arguments are rejected before generation"]},
+        {"case_id":"negative.array_keys_filter","test":"TestUnsupported/array_keys_filter","file":"tests/differential_test.go","kind":"negative","assertions":["two-argument filtered form is rejected before generation"]},
+        {"case_id":"negative.array_keys_strict","test":"TestUnsupported/array_keys_strict","file":"tests/differential_test.go","kind":"negative","assertions":["three-argument strict form is rejected before generation"]},
+        {"case_id":"negative.array_keys_redeclare","test":"TestUnsupported/array_keys_redeclare","file":"tests/differential_test.go","kind":"negative","assertions":["mixed-case builtin redeclaration is rejected before generation"]},
+        {"case_id":"negative.array_keys_echo_result","test":"TestUnsupported/array_keys_echo_result","file":"tests/differential_test.go","kind":"negative","assertions":["echo of a known array result is rejected before generation"]}
+      ],
+      "limitations": ["No filter_value or strict overload, named arguments or dynamic function names","Only the existing GoHP array/key subset; no new key coercion, reference or write semantics","Non-array rejection is not PHP warning/exception equivalence","Native differential evidence compares stdout and exits; exact key value types and storage isolation are also runtime-unit-tested"]
+    },
+    {
       "id": "php.builtin.array_map",
       "kind": "builtin",
       "name": "array_map",

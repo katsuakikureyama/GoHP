@@ -18,7 +18,7 @@ This table is the current curated summary, not a blanket support claim.
 | Classes | Public scalar defaults, no-arg construction, property reads, methods | `core.php`; no inheritance, constructors, visibility or static members |
 | Closures/callbacks/dynamic calls | Unsupported | Negative closure fixture; no claim of coverage |
 | Exceptions/warnings | Unsupported PHP behavior | Nonzero runtime failures; never functional PASS |
-| Built-ins | `count(array)`, bounded `strlen(string)` | Other builtin names fail closed; no recursive count or strlen scalar coercion |
+| Built-ins | `count(array)`, bounded `strlen(string)`, `array_keys(array)` | Other builtin names fail closed; no recursive count, strlen scalar coercion or filtered array_keys |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |
@@ -50,6 +50,30 @@ no interpolation or hex/octal escape support is implied. Scalar/null/object
 coercions, named arguments, multibyte overload settings, warnings and exceptions
 remain outside this contract. The catalog marks the entry partial and reports
 only case-limited differential results after all linked checks pass.
+
+### Bounded array_keys contract
+
+The one-argument `array_keys(array)` form returns the existing integer/string keys
+in insertion order, as values in a fresh array with consecutive integer indexes
+starting at zero. Empty input returns an empty array. Nested values are not
+traversed, and the input is unchanged. This follows the unfiltered
+[PHP array_keys contract](https://www.php.net/manual/en/function.array-keys.php).
+Key normalization and duplicate-key replacement remain those of the existing
+GoHP array constructor; the builtin does not convert keys a second time.
+
+Calls are case-insensitive; top-level builtin redeclaration, non-array inputs
+known at generation time, and any argument count other than one are rejected.
+Unknown values are guarded at runtime. Return type is known to be an array, so
+it works with count, foreach and indexing, but not scalar echo. No filter-value
+or strict-search overload, named arguments, dynamic function names, new array
+write/reference behavior or PHP-compatible warning/exception behavior is added.
+
+`array_keys.php` covers empty, mixed and normalized keys, duplicates/order,
+nested values, dynamic inputs/results and composition using the existing native
+PHP-vs-generated-Go stdout/exit comparison. Runtime tests additionally check
+exact key/index types and storage isolation; binary keys are runtime-only.
+The catalog stays partial, with a case-limited result requiring every linked
+positive and boundary check to pass, not a general PHP array compatibility claim.
 
 Composer metadata inventory is available below. It records declarations only;
 PHP callsites, generated/vendor code, dependency resolution and historical applicability

@@ -154,6 +154,20 @@ func Strlen(v any) any {
 	return int64(len(s))
 }
 
+// ArrayKeys implements only the one-argument form. Existing normalized keys
+// become values in a fresh, densely indexed array; values are not traversed.
+func ArrayKeys(v any) any {
+	a, ok := v.(Array)
+	if !ok {
+		panic("array_keys requires array")
+	}
+	keys := Array{Entries: make([]Entry, len(a.Entries)), next: int64(len(a.Entries))}
+	for i, e := range a.Entries {
+		keys.Entries[i] = Entry{Key: int64(i), Value: e.Key}
+	}
+	return keys
+}
+
 func Args(a []any, n int) {
 	if len(a) != n {
 		panic("unsupported argument count")

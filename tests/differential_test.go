@@ -60,7 +60,7 @@ func TestDifferential(t *testing.T) {
 	if !strings.HasPrefix(actualPHPVersion, target+".") {
 		t.Fatalf("reference PHP version %s does not match GOHP_PHP_TARGET %s", actualPHPVersion, target)
 	}
-	for _, fixture := range []string{"core", "arrays", "max_array_key", "precedence", "strlen"} {
+	for _, fixture := range []string{"core", "arrays", "max_array_key", "precedence", "strlen", "array_keys"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -173,6 +173,16 @@ func TestUnsupported(t *testing.T) {
 		{name: "strlen_extra_args", src: "<?php echo strlen('x', 'y');"},
 		{name: "strlen_redeclare", src: "<?php function StRlEn($value) { return $value; }"},
 		{name: "strlen_nested", src: "<?php echo strlen(strlen('x'));"},
+		{name: "array_keys_int", src: "<?php $keys = array_keys(1);"},
+		{name: "array_keys_string", src: "<?php $keys = array_keys('x');"},
+		{name: "array_keys_bool", src: "<?php $keys = array_keys(true);"},
+		{name: "array_keys_null", src: "<?php $keys = array_keys(null);"},
+		{name: "array_keys_object", src: "<?php class X {} $x = new X(); $keys = array_keys($x);"},
+		{name: "array_keys_no_args", src: "<?php $keys = array_keys();"},
+		{name: "array_keys_filter", src: "<?php $keys = array_keys(['x' => 1], 1);"},
+		{name: "array_keys_strict", src: "<?php $keys = array_keys(['x' => 1], 1, true);"},
+		{name: "array_keys_redeclare", src: "<?php function ArRaY_KeYs($value) { return $value; }"},
+		{name: "array_keys_echo_result", src: "<?php $keys = array_keys(['x' => 1]); echo $keys;"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			p, e := frontend.Parse(tt.src, target)
@@ -267,6 +277,41 @@ func TestStrlenRuntimeTypeGuard(t *testing.T) {
 	output, err := run.CombinedOutput()
 	if err == nil || !bytes.Contains(output, []byte("strlen requires string")) {
 		t.Fatalf("expected explicit strlen runtime failure, got %v\n%s", err, output)
+	}
+}
+
+// TestArrayKeysRuntimeTypeGuard covers the dynamic boundary permitted by
+// semantic analysis: a function parameter is unknown at generation time, but
+// array_keys must still fail explicitly when it receives a scalar. This has no
+// native-PHP invocation or PHP error-equivalence claim.
+func TestArrayKeysRuntimeTypeGuard(t *testing.T) {
+	target := phpTarget(t)
+	src, err := os.ReadFile("fixtures/array_keys_runtime_failure.php")
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := frontend.Parse(string(src), target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	generated, err := codegen.Generate(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	file := filepath.Join(dir, "main.go")
+	if err := os.WriteFile(file, generated, 0600); err != nil {
+		t.Fatal(err)
+	}
+	binary := filepath.Join(dir, "app")
+	if output, err := exec.Command("go", "build", "-o", binary, file).CombinedOutput(); err != nil {
+		t.Fatalf("build: %v\n%s\n%s", err, output, generated)
+	}
+	run := exec.Command(binary)
+	run.Env = []string{"PATH="}
+	output, err := run.CombinedOutput()
+	if err == nil || !bytes.Contains(output, []byte("array_keys requires array")) {
+		t.Fatalf("expected explicit array_keys runtime failure, got %v\n%s", err, output)
 	}
 }
 
