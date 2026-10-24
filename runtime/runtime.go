@@ -142,6 +142,18 @@ func Count(v any) any {
 	}
 	return int64(len(a.Entries))
 }
+
+// Strlen implements only strlen(string): byte length, not Unicode characters.
+// Do not use String here: PHP's scalar/null/object coercions and diagnostics
+// are outside this bounded contract. Unknown values fail explicitly at runtime.
+func Strlen(v any) any {
+	s, ok := v.(string)
+	if !ok {
+		panic("strlen requires string")
+	}
+	return int64(len(s))
+}
+
 func Args(a []any, n int) {
 	if len(a) != n {
 		panic("unsupported argument count")

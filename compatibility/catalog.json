@@ -134,12 +134,26 @@
     {
       "id": "php.builtin.strlen",
       "kind": "builtin",
-      "name": "strlen",
-      "implementation": "unsupported",
-      "contract": "No lowering is provided.",
+      "name": "strlen(string)",
+      "implementation": "partial",
+      "contract": "One positional string argument returns its byte length as an integer; dynamic inputs are checked at runtime, without implicit coercion.",
       "php_targets": ["7.4", "8.3"],
-      "checks": [],
-      "limitations": ["Not supported"]
+      "checks": [
+        {"case_id": "diff.strlen", "test": "TestDifferential/strlen", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/strlen.php", "assertions": ["empty/ASCII/UTF-8/escaped strings, dynamic string arguments and arithmetic results match native PHP stdout and successful exits"]},
+        {"case_id": "unit.runtime.strlen_bytes", "test": "TestStrlenByteLengthAndIntegerResult", "file": "runtime/strlen_test.go", "kind": "unit", "assertions": ["returns int64 byte length, including combining characters and binary bytes; binary case is runtime-only"]},
+        {"case_id": "unit.runtime.strlen_types", "test": "TestStrlenRejectsNonStringWithoutCoercion", "file": "runtime/strlen_test.go", "kind": "unit", "assertions": ["non-string values fail explicitly without scalar coercion"]},
+        {"case_id": "negative.strlen_dynamic", "test": "TestStrlenRuntimeTypeGuard", "file": "tests/differential_test.go", "kind": "negative", "fixture": "tests/fixtures/strlen_runtime_failure.php", "assertions": ["generated code with a non-string dynamic argument exits nonzero with the runtime guard; no PHP exception-equivalence claim"]},
+        {"case_id": "negative.strlen_int", "test": "TestUnsupported/strlen_int", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["known integer input is rejected before generation"]},
+        {"case_id": "negative.strlen_bool", "test": "TestUnsupported/strlen_bool", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["known boolean input is rejected before generation"]},
+        {"case_id": "negative.strlen_null", "test": "TestUnsupported/strlen_null", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["known null input is rejected before generation"]},
+        {"case_id": "negative.strlen_array", "test": "TestUnsupported/strlen_array", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["known array input is rejected before generation"]},
+        {"case_id": "negative.strlen_object", "test": "TestUnsupported/strlen_object", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["known object input is rejected before generation"]},
+        {"case_id": "negative.strlen_no_args", "test": "TestUnsupported/strlen_no_args", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["zero arguments are rejected"]},
+        {"case_id": "negative.strlen_extra_args", "test": "TestUnsupported/strlen_extra_args", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["extra arguments are rejected"]},
+        {"case_id": "negative.strlen_redeclare", "test": "TestUnsupported/strlen_redeclare", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["mixed-case builtin redeclaration is rejected"]},
+        {"case_id": "negative.strlen_nested", "test": "TestUnsupported/strlen_nested", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["the known integer result cannot be used as another strlen string argument"]}
+      ],
+      "limitations": ["No implicit conversion of integers, booleans, null, arrays or objects; rejection is not PHP warning/exception equivalence", "No character/grapheme count, named arguments or dynamic function names", "String syntax remains the closed frontend subset: no interpolation, hex/octal escapes or mbstring overload configuration claim", "NUL/invalid UTF-8 byte lengths are runtime-unit-tested only, not native differential fixtures"]
     },
     {
       "id": "php.builtin.array_map",

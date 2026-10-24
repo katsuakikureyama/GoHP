@@ -60,7 +60,7 @@ func TestDifferential(t *testing.T) {
 	if !strings.HasPrefix(actualPHPVersion, target+".") {
 		t.Fatalf("reference PHP version %s does not match GOHP_PHP_TARGET %s", actualPHPVersion, target)
 	}
-	for _, fixture := range []string{"core", "arrays", "max_array_key", "precedence"} {
+	for _, fixture := range []string{"core", "arrays", "max_array_key", "precedence", "strlen"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -164,6 +164,15 @@ func TestUnsupported(t *testing.T) {
 		{name: "index_scalar", src: "<?php $value = 1; echo $value[0];"},
 		{name: "missing_property", src: "<?php class X { public $name = 'x'; } $x = new X(); echo $x->missing;"},
 		{name: "method_arity", src: "<?php class X { public function render($value) { return $value; } } $x = new X(); echo $x->render();"},
+		{name: "strlen_int", src: "<?php echo strlen(1);"},
+		{name: "strlen_bool", src: "<?php echo strlen(true);"},
+		{name: "strlen_null", src: "<?php echo strlen(null);"},
+		{name: "strlen_array", src: "<?php echo strlen(['x']);"},
+		{name: "strlen_object", src: "<?php class X {} $x = new X(); echo strlen($x);"},
+		{name: "strlen_no_args", src: "<?php echo strlen();"},
+		{name: "strlen_extra_args", src: "<?php echo strlen('x', 'y');"},
+		{name: "strlen_redeclare", src: "<?php function StRlEn($value) { return $value; }"},
+		{name: "strlen_nested", src: "<?php echo strlen(strlen('x'));"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			p, e := frontend.Parse(tt.src, target)
@@ -224,6 +233,41 @@ func TestRuntimeFailureIsNotPass(t *testing.T) {
 		}
 	}
 	t.Fatalf("runtime failure has no frame mapping to PHP line 3: %s", o)
+}
+
+// TestStrlenRuntimeTypeGuard covers the dynamic boundary permitted by semantic
+// analysis: a function parameter is unknown at generation time, but strlen
+// must still fail explicitly when it receives an array. This deliberately has
+// no native-PHP invocation or PHP error-equivalence claim.
+func TestStrlenRuntimeTypeGuard(t *testing.T) {
+	target := phpTarget(t)
+	src, err := os.ReadFile("fixtures/strlen_runtime_failure.php")
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := frontend.Parse(string(src), target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	generated, err := codegen.Generate(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	file := filepath.Join(dir, "main.go")
+	if err := os.WriteFile(file, generated, 0600); err != nil {
+		t.Fatal(err)
+	}
+	binary := filepath.Join(dir, "app")
+	if output, err := exec.Command("go", "build", "-o", binary, file).CombinedOutput(); err != nil {
+		t.Fatalf("build: %v\n%s\n%s", err, output, generated)
+	}
+	run := exec.Command(binary)
+	run.Env = []string{"PATH="}
+	output, err := run.CombinedOutput()
+	if err == nil || !bytes.Contains(output, []byte("strlen requires string")) {
+		t.Fatalf("expected explicit strlen runtime failure, got %v\n%s", err, output)
+	}
 }
 
 func sha256Hex(b []byte) string { return fmt.Sprintf("%x", sha256.Sum256(b)) }

@@ -298,6 +298,15 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 			return valueType{kind: intKind}, nil
 		}
+		if strings.EqualFold(expr.Text, "strlen") {
+			if len(args) != 1 {
+				return valueType{}, unsupported(expr.Line, "strlen expects one argument")
+			}
+			if args[0].kind != stringKind && args[0].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "strlen requires a string")
+			}
+			return valueType{kind: intKind}, nil
+		}
 		return valueType{kind: unknownKind}, nil
 	case "new":
 		if err := require(0); err != nil {

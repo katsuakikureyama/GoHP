@@ -18,7 +18,7 @@ This table is the current curated summary, not a blanket support claim.
 | Classes | Public scalar defaults, no-arg construction, property reads, methods | `core.php`; no inheritance, constructors, visibility or static members |
 | Closures/callbacks/dynamic calls | Unsupported | Negative closure fixture; no claim of coverage |
 | Exceptions/warnings | Unsupported PHP behavior | Nonzero runtime failures; never functional PASS |
-| Built-ins | `count(array)` only | Everything else fails closed at compile time |
+| Built-ins | `count(array)`, bounded `strlen(string)` | Other builtin names fail closed; no recursive count or strlen scalar coercion |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |
@@ -31,6 +31,25 @@ rejects statically known mismatches such as `count(1)`, scalar `foreach`/indexin
 and a known class receiver using an absent property, method, or wrong arity.
 Values whose type genuinely depends on runtime input remain protected by explicit
 runtime failures; validation success is not a differential compatibility result.
+
+### Bounded strlen contract
+
+`strlen` accepts one positional string and returns an integer byte length, not a
+Unicode character or grapheme count, following the [PHP function contract](https://www.php.net/manual/en/function.strlen.php).
+The runtime returns `int64(len(s))` without converting non-strings. Calls are
+case-insensitive; redeclaring this builtin as a top-level function is rejected.
+Statically known non-string arguments and wrong arity fail before generation.
+Unknown values (parameters, function results, array reads) are guarded at runtime;
+a non-string value fails explicitly, not as a PHP-compatible warning/exception.
+
+`strlen.php` compares empty, ASCII, whitespace, UTF-8 multibyte/emoji and supported
+escaped strings, concatenation, dynamic string values and integer arithmetic
+against both pinned PHP versions. Binary/NUL/invalid UTF-8 cases are runtime unit
+tests only, not end-to-end PHP evidence. The frontend's string syntax is unchanged:
+no interpolation or hex/octal escape support is implied. Scalar/null/object
+coercions, named arguments, multibyte overload settings, warnings and exceptions
+remain outside this contract. The catalog marks the entry partial and reports
+only case-limited differential results after all linked checks pass.
 
 Composer metadata inventory is available below. It records declarations only;
 PHP callsites, generated/vendor code, dependency resolution and historical applicability
