@@ -76,3 +76,30 @@ func TestRTrimRejectsDynamicNonStringAndRanges(t *testing.T) {
 		})
 	}
 }
+
+func TestBoolRejectsUnsupportedValue(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil || !strings.Contains(r.(string), "boolean conversion") {
+			t.Fatalf("Bool did not reject unsupported truthiness value: %v", r)
+		}
+	}()
+	Bool(struct{}{})
+}
+
+func TestIdenticalRejectsArrayValues(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil || !strings.Contains(r.(string), "strict equality") {
+			t.Fatalf("Identical did not reject array identity: %v", r)
+		}
+	}()
+	Identical(NewArray(), NewArray())
+}
+
+func TestStrToLowerRejectsUnsupportedValue(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil || !strings.Contains(r.(string), "strtolower requires string") {
+			t.Fatalf("StrToLower did not reject unsupported input: %v", r)
+		}
+	}()
+	StrToLower(int64(1))
+}

@@ -29,6 +29,8 @@ The legacy `array(...)` frontend addition stays within this excluded local
 compiler capability; it adds no service operation or authentication change.
 The literal-mask `rtrim` addition also stays within this exclusion; it does not
 introduce a browser operation, filesystem path resolver or network call.
+The boolean-control/type-predicate addition remains the same excluded local
+compiler capability; no authentication or user-facing service action is added.
 
 Report schema `gohp.build/v0.1` includes IR/compiler versions, source and generated
 SHA-256, input path, PHP target and `generated` status. Additive fields `output`

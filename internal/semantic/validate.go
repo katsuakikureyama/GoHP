@@ -156,6 +156,26 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType) error {
 					scope[name] = valueType{kind: unknownKind}
 				}
 			}
+		case "if":
+			condition, err := v.expr(stmt.Expr, scope)
+			if err != nil {
+				return err
+			}
+			if !isBoolDomain(condition) {
+				return unsupported(stmt.Line, "if condition requires a supported value")
+			}
+			inner := cloneScope(scope)
+			if err := v.stmts(stmt.Body, inner); err != nil {
+				return err
+			}
+			// A one-arm if body may not execute. Validate it in full, but do not
+			// let branch-only bindings escape and make changed outer bindings
+			// unknown after the conditional.
+			for name, before := range scope {
+				if after := inner[name]; after != before {
+					scope[name] = valueType{kind: unknownKind}
+				}
+			}
 		default:
 			return malformed(stmt.Line, "unsupported IR statement "+stmt.Kind)
 		}
@@ -235,6 +255,16 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 				return valueType{}, unsupported(expr.Line, "concatenation requires supported scalars")
 			}
 			return valueType{kind: stringKind}, nil
+		case "===":
+			if !isScalarOrUnknown(left) || !isScalarOrUnknown(right) {
+				return valueType{}, unsupported(expr.Line, "strict comparison requires supported scalars")
+			}
+			return valueType{kind: boolKind}, nil
+		case "&&":
+			if !isBoolDomain(left) || !isBoolDomain(right) {
+				return valueType{}, unsupported(expr.Line, "logical and requires supported values")
+			}
+			return valueType{kind: boolKind}, nil
 		default:
 			return valueType{}, malformed(expr.Line, "unsupported IR operator "+expr.Text)
 		}
@@ -262,6 +292,18 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 		}
 		return valueType{kind: arrayKind}, nil
+	case "bool_cast":
+		if err := require(1); err != nil {
+			return valueType{}, err
+		}
+		operand, err := v.expr(expr.Args[0], scope)
+		if err != nil {
+			return valueType{}, err
+		}
+		if !isBoolDomain(operand) {
+			return valueType{}, unsupported(expr.Line, "boolean cast requires a supported value")
+		}
+		return valueType{kind: boolKind}, nil
 	case "index":
 		if err := require(2); err != nil {
 			return valueType{}, err
@@ -318,6 +360,28 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 			if strings.Contains(expr.Args[1].Text, "..") {
 				return valueType{}, unsupported(expr.Line, "rtrim character ranges unsupported")
+			}
+			return valueType{kind: stringKind}, nil
+		}
+		if strings.EqualFold(expr.Text, "is_bool") || strings.EqualFold(expr.Text, "is_string") {
+			if len(expr.Args) != 1 {
+				return valueType{}, unsupported(expr.Line, strings.ToLower(expr.Text)+" expects one argument")
+			}
+			if _, err := v.expr(expr.Args[0], scope); err != nil {
+				return valueType{}, err
+			}
+			return valueType{kind: boolKind}, nil
+		}
+		if strings.EqualFold(expr.Text, "strtolower") {
+			if len(expr.Args) != 1 {
+				return valueType{}, unsupported(expr.Line, "strtolower expects one argument")
+			}
+			input, err := v.expr(expr.Args[0], scope)
+			if err != nil {
+				return valueType{}, err
+			}
+			if input.kind != stringKind && input.kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "strtolower requires a string argument")
 			}
 			return valueType{kind: stringKind}, nil
 		}
@@ -423,6 +487,13 @@ func isScalar(t valueType) bool {
 }
 
 func isScalarOrUnknown(t valueType) bool { return isScalar(t) || t.kind == unknownKind }
+
+// PHP truthiness is defined for the supported scalar and array domains. A
+// known object is intentionally excluded until the runtime has an explicit
+// object truthiness contract; unknown values stay dynamically guarded.
+func isBoolDomain(t valueType) bool {
+	return t.kind == nullKind || t.kind == boolKind || t.kind == intKind || t.kind == stringKind || t.kind == arrayKind || t.kind == unknownKind
+}
 
 func isNumericOrUnknown(t valueType) bool {
 	return isScalar(t) || t.kind == unknownKind

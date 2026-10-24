@@ -28,6 +28,7 @@ type differentialEvidence struct {
 	CaseID          string            `json:"case_id"`
 	PHPTarget       string            `json:"php_target"`
 	PHPVersion      string            `json:"php_version"`
+	PHPLCType       string            `json:"php_lc_ctype,omitempty"`
 	FixtureSHA256   string            `json:"fixture_sha256"`
 	GeneratedSHA256 string            `json:"generated_sha256"`
 	Phases          map[string]string `json:"phases"`
@@ -60,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if !strings.HasPrefix(actualPHPVersion, target+".") {
 		t.Fatalf("reference PHP version %s does not match GOHP_PHP_TARGET %s", actualPHPVersion, target)
 	}
-	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence", "rtrim"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence", "rtrim", "booleans"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -81,6 +82,16 @@ func TestDifferential(t *testing.T) {
 				}
 				t.Logf("GOHP_CASE %s", encoded)
 			}()
+			if fixture == "booleans" {
+				locale, err := exec.Command(php, "-r", "echo setlocale(LC_CTYPE, 0);").Output()
+				if err != nil {
+					t.Fatal(err)
+				}
+				evidence.PHPLCType = string(locale)
+				if evidence.PHPLCType != "C" {
+					t.Fatalf("PHP LC_CTYPE = %q, want C for ASCII strtolower validation", evidence.PHPLCType)
+				}
+			}
 
 			file := filepath.Join("fixtures", fixture+".php")
 			src, e := os.ReadFile(file)
@@ -180,6 +191,28 @@ func TestUnsupported(t *testing.T) {
 		{name: "index_scalar", src: "<?php $value = 1; echo $value[0];"},
 		{name: "missing_property", src: "<?php class X { public $name = 'x'; } $x = new X(); echo $x->missing;"},
 		{name: "method_arity", src: "<?php class X { public function render($value) { return $value; } } $x = new X(); echo $x->render();"},
+		{name: "if_else", src: "<?php if (true) { echo 'yes'; } else { echo 'no'; }"},
+		{name: "if_elseif", src: "<?php if (false) { echo 'no'; } elseif (true) { echo 'yes'; }"},
+		{name: "if_unbraced", src: "<?php if (true) echo 'yes';"},
+		{name: "cast_int", src: "<?php echo (int) '1';"},
+		{name: "logical_or", src: "<?php echo true || false;"},
+		{name: "loose_equal", src: "<?php echo 1 == '1';"},
+		{name: "strict_equal_array", src: "<?php echo [] === [];"},
+		{name: "strict_equal_chain", src: "<?php echo true === false === false;"},
+		{name: "is_bool_missing_argument", src: "<?php echo is_bool();"},
+		{name: "is_bool_extra_argument", src: "<?php echo is_bool(true, false);"},
+		{name: "is_string_missing_argument", src: "<?php echo is_string();"},
+		{name: "is_string_extra_argument", src: "<?php echo is_string('x', 'y');"},
+		{name: "is_bool_redeclare", src: "<?php function Is_Bool() { return true; }"},
+		{name: "is_string_redeclare", src: "<?php function is_STRING() { return true; }"},
+		{name: "strtolower_missing_argument", src: "<?php echo strtolower();"},
+		{name: "strtolower_extra_argument", src: "<?php echo strtolower('X', 'Y');"},
+		{name: "strtolower_int_input", src: "<?php echo strtolower(1);"},
+		{name: "strtolower_bool_input", src: "<?php echo strtolower(true);"},
+		{name: "strtolower_null_input", src: "<?php echo strtolower(null);"},
+		{name: "strtolower_array_input", src: "<?php echo strtolower([]);"},
+		{name: "strtolower_redeclare", src: "<?php function StRtOlOwEr($value) { return $value; }"},
+		{name: "if_branch_local_variable", src: "<?php if (true) { $inside = 'x'; } echo $inside;"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			p, e := frontend.Parse(tt.src, target)

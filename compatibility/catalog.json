@@ -115,6 +115,126 @@
       "limitations": ["Only +, . and parentheses are covered"]
     },
     {
+      "id": "php.syntax.if",
+      "kind": "syntax",
+      "name": "Braced one-arm if statements",
+      "implementation": "partial",
+      "contract": "Lowers one-arm if statements with a braced body and preserves writes to variables that were defined before the conditional.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["nested conditions, early returns and assignments to an existing variable match native PHP"]},
+        {"case_id": "negative.if_else", "test": "TestUnsupported/if_else", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["else is rejected"]},
+        {"case_id": "negative.if_elseif", "test": "TestUnsupported/if_elseif", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["elseif is rejected"]},
+        {"case_id": "negative.if_unbraced", "test": "TestUnsupported/if_unbraced", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["unbraced if body is rejected"]},
+        {"case_id": "negative.if_branch_local_variable", "test": "TestUnsupported/if_branch_local_variable", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["a variable first assigned only in an if body is not available outside it"]}
+      ],
+      "limitations": ["No else, elseif, alternative syntax or unbraced body", "Variables first assigned in an if body are not definitely assigned after it"]
+    },
+    {
+      "id": "php.operator.logical-and",
+      "kind": "operator",
+      "name": "Logical &&",
+      "implementation": "partial",
+      "contract": "Evaluates supported truthiness values left-to-right and short-circuits the right operand.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["a marker-producing right operand is skipped for false and evaluated once for true", "guarded strtolower does not receive non-string dynamic values"]},
+        {"case_id": "negative.logical_or", "test": "TestUnsupported/logical_or", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["logical || is rejected"]}
+      ],
+      "limitations": ["No ||, xor, and/or keyword operators or general PHP truthiness"]
+    },
+    {
+      "id": "php.operator.strict-equal",
+      "kind": "operator",
+      "name": "Strict scalar equality ===",
+      "implementation": "partial",
+      "contract": "Compares null, bool, int64 and string values by both type and value.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["integer and string values with the same spelling remain distinct", "strict comparison participates in target-specific precedence"]},
+        {"case_id": "unit.runtime.identical_rejects_array", "test": "TestIdenticalRejectsArrayValues", "file": "runtime/runtime_test.go", "kind": "unit", "assertions": ["runtime rejects array identity semantics explicitly"]},
+        {"case_id": "negative.strict_equal_array", "test": "TestUnsupported/strict_equal_array", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["array strict equality is rejected"]},
+        {"case_id": "negative.strict_equal_chain", "test": "TestUnsupported/strict_equal_chain", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["unparenthesized non-associative strict-equality chain is rejected"]}
+      ],
+      "limitations": ["No array or object identity semantics", "No loose equality"]
+    },
+    {
+      "id": "php.operator.loose-equal",
+      "kind": "operator",
+      "name": "Loose equality ==",
+      "implementation": "unsupported",
+      "contract": "No PHP coercive equality lowering is provided.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"case_id": "negative.loose_equal", "test": "TestUnsupported/loose_equal", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["loose equality is rejected"]}
+      ],
+      "limitations": ["PHP type-juggling equality is unsupported"]
+    },
+    {
+      "id": "php.cast.bool",
+      "kind": "syntax",
+      "name": "(bool) cast",
+      "implementation": "partial",
+      "contract": "Casts supported null, bool, int64, string and array values using the documented GoHP truthiness subset.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["false, null, zero, string zero and empty string are false", "nonempty strings and a nonempty array are true"]},
+        {"case_id": "unit.runtime.bool_rejects_unsupported", "test": "TestBoolRejectsUnsupportedValue", "file": "runtime/runtime_test.go", "kind": "unit", "assertions": ["unsupported truthiness types fail explicitly"]},
+        {"case_id": "negative.cast_int", "test": "TestUnsupported/cast_int", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["non-boolean casts are rejected"]}
+      ],
+      "limitations": ["No object/resource truthiness", "No casts other than (bool)"]
+    },
+    {
+      "id": "php.builtin.is_bool",
+      "kind": "builtin",
+      "name": "is_bool",
+      "implementation": "partial",
+      "contract": "Returns whether a supported dynamic value is bool.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["boolean, string and array predicate results match native PHP"]},
+        {"case_id": "negative.is_bool_missing_argument", "test": "TestUnsupported/is_bool_missing_argument", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["missing argument is rejected"]},
+        {"case_id": "negative.is_bool_extra_argument", "test": "TestUnsupported/is_bool_extra_argument", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["extra argument is rejected"]},
+        {"case_id": "negative.is_bool_redeclare", "test": "TestUnsupported/is_bool_redeclare", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["builtin redeclaration is rejected"]}
+      ],
+      "limitations": ["Exactly one argument", "No PHP extension type values"]
+    },
+    {
+      "id": "php.builtin.is_string",
+      "kind": "builtin",
+      "name": "is_string",
+      "implementation": "partial",
+      "contract": "Returns whether a supported dynamic value is string.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["boolean, string and array predicate results match native PHP"]},
+        {"case_id": "negative.is_string_missing_argument", "test": "TestUnsupported/is_string_missing_argument", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["missing argument is rejected"]},
+        {"case_id": "negative.is_string_extra_argument", "test": "TestUnsupported/is_string_extra_argument", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["extra argument is rejected"]},
+        {"case_id": "negative.is_string_redeclare", "test": "TestUnsupported/is_string_redeclare", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["builtin redeclaration is rejected"]}
+      ],
+      "limitations": ["Exactly one argument", "No PHP extension type values"]
+    },
+    {
+      "id": "php.builtin.strtolower",
+      "kind": "builtin",
+      "name": "strtolower(string)",
+      "implementation": "partial",
+      "contract": "Lowers ASCII byte case conversion for one string argument; PHP 7.4 differential evidence requires LC_CTYPE=C.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["ASCII uppercase strings lower correctly", "is_string guard short-circuits non-string inputs before the runtime string guard"]},
+        {"case_id": "unit.runtime.strtolower_rejects_unsupported", "test": "TestStrToLowerRejectsUnsupportedValue", "file": "runtime/runtime_test.go", "kind": "unit", "assertions": ["runtime rejects non-string input"]},
+        {"case_id": "negative.strtolower_missing_argument", "test": "TestUnsupported/strtolower_missing_argument", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["missing argument is rejected"]},
+        {"case_id": "negative.strtolower_extra_argument", "test": "TestUnsupported/strtolower_extra_argument", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["extra argument is rejected"]},
+        {"case_id": "negative.strtolower_int_input", "test": "TestUnsupported/strtolower_int_input", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["integer input is rejected"]},
+        {"case_id": "negative.strtolower_bool_input", "test": "TestUnsupported/strtolower_bool_input", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["boolean input is rejected"]},
+        {"case_id": "negative.strtolower_null_input", "test": "TestUnsupported/strtolower_null_input", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["null input is rejected"]},
+        {"case_id": "negative.strtolower_array_input", "test": "TestUnsupported/strtolower_array_input", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["array input is rejected"]},
+        {"case_id": "negative.strtolower_redeclare", "test": "TestUnsupported/strtolower_redeclare", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["builtin redeclaration is rejected"]}
+      ],
+      "limitations": ["Exactly one string argument", "ASCII byte mapping only", "No locale-sensitive or Unicode case mapping", "No non-string coercion"]
+    },
+    {
       "id": "php.type.scalar-literals",
       "kind": "type",
       "name": "int64, string, bool and null literals",

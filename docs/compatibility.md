@@ -13,12 +13,13 @@ This table is the current curated summary, not a blanket support claim.
 | PHP 5.6, other 7.x / 8.x minors | Unsupported target | Native reference matrix needed |
 | Scalar values | int64, strings, bool, null | `arrays.php`; no float or interpolation |
 | Operators | `+`, `.` and parentheses | Integral coercion only; float promotion unsupported |
+| Boolean control | Braced one-arm `if`, short-circuit `&&`, scalar `===`, `(bool)` | Scalar/array truthiness only; no else/elseif, array/object identity or other comparison operators; [contract](boolean-boundary.md) |
 | Functions | Named functions, fixed value arguments and returns | `core.php`; no optional/typed/by-reference/variadic args |
 | Arrays | `[]` and `array(...)`; mixed ordered keys/values, reads, nested value copies, foreach | Literal int/string keys; no writes, references, unpacking or array union; see [syntax boundary](legacy-array-syntax.md) |
 | Classes | Public scalar defaults, no-arg construction, property reads, methods | `core.php`; no inheritance, constructors, visibility or static members |
 | Closures/callbacks/dynamic calls | Unsupported | Negative closure fixture; no claim of coverage |
 | Exceptions/warnings | Unsupported PHP behavior | Nonzero runtime failures; never functional PASS |
-| Built-ins | `count(array)` and restricted `rtrim(string, literal-mask)` | rtrim requires exactly two arguments and no `..` mask ranges; see [boundary](rtrim-boundary.md). Other builtins fail closed |
+| Built-ins | `count(array)`, restricted `rtrim`, `is_bool`, `is_string`, string-only ASCII `strtolower` | Exact arities and closed domains; see [rtrim](rtrim-boundary.md) and [boolean](boolean-boundary.md) boundaries. Other builtins fail closed |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |

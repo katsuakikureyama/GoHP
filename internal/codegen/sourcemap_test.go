@@ -13,6 +13,35 @@ import (
 	"github.com/katsuakikureyama/GoHP/internal/ir"
 )
 
+func TestIfStatementSourceMap(t *testing.T) {
+	const php = "<?php\nif (true) {\n echo 'outer';\n if (false) {\n  echo 'inner';\n }\n}\n"
+	p, err := frontend.Parse(php, "8.3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	generated, m, err := GenerateWithMap(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for fragment, want := range map[string]int{
+		"if rt.Bool(true)": 2, `rt.Echo("outer")`: 3,
+		"if rt.Bool(false)": 4, `rt.Echo("inner")`: 5,
+	} {
+		found := false
+		for i, line := range strings.Split(string(generated), "\n") {
+			if strings.Contains(line, fragment) {
+				found = true
+				if got, ok := m.PHPLine(i + 1); !ok || got != want {
+					t.Errorf("%s mapped to %d (%v), want %d", fragment, got, ok, want)
+				}
+			}
+		}
+		if !found {
+			t.Errorf("missing generated fragment %s", fragment)
+		}
+	}
+}
+
 func TestStatementSourceMap(t *testing.T) {
 	const php = `<?php
 function identity($arg) {
