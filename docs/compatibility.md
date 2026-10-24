@@ -9,8 +9,8 @@ This table is the current curated summary, not a blanket support claim.
 
 | Area | Current status | Evidence / gap |
 |---|---|---|
-| PHP 7.4 / 8.3 | Closed shared subset; version-dependent `. / +` precedence | Differential fixtures run against each native version |
-| PHP 5.6, other 7.x / 8.x minors | Unsupported target | Native reference matrix needed |
+| PHP 8.3 | Active closed subset; native oracle is >= 8.3.36 | Differential fixtures run against the approved 8.3 oracle |
+| PHP 7.4, PHP 8.4+, other series | Not active targets | Historical evidence is retained; a separate policy/matrix is required before a series is enabled |
 | Scalar values | int64, strings, bool, null | `arrays.php`; no float or interpolation |
 | Operators | `+`, `.` and parentheses | Integral coercion only; float promotion unsupported |
 | Functions | Named functions, fixed value arguments and returns | `core.php`; no optional/typed/by-reference/variadic args |
@@ -25,6 +25,34 @@ This table is the current curated summary, not a blanket support claim.
 | mbstring / iconv / cURL / GD | Unsupported | Extension inventory and fixtures needed |
 | XML / PCRE / serialization | Unsupported | Go library behavior must not be assumed equivalent |
 | WordPress / plugins / themes | Not runnable | Independent adapter and pinned oracle required |
+
+## Active PHP version policy
+
+The sole active compatibility target is the PHP **8.3** language series. Native
+differential tests must run against PHP **8.3.36 or newer** in that series. The
+compiler target remains the series label `8.3`; a PHP patch version is an oracle
+requirement and evidence attribute, not a CLI/compiler target. Each live evidence
+run records the actual PHP version. CI also records its pinned image digest;
+host-PHP runs have no container image identity unless explicitly supplied.
+
+`internal/phpversion/policy.go` is the compiler-side registry of accepted
+series labels and their minimum oracle version. `.github/workflows/ci.yml`,
+`Dockerfile`, and `compose.yaml` select the fixed PHP 8.3.36 oracle image; its
+resolved digest is asserted by the execution configuration and recorded in run
+evidence. Documentation intentionally does not copy or invent that digest: the
+resolved configuration and resulting run evidence are authoritative. The
+[PHP 8.3.36 release](https://www.php.net/releases/8_3_36.php) and PHP's
+[supported-version policy](https://www.php.net/supported-versions.php) are
+review inputs for approved image-digest updates and EOL decisions.
+
+PHP 7.4 and older 8.3 evidence remain readable historical records only; they
+are not an active test gate or current support claim. PHP 8.4 and later are
+currently disabled. To add a later series, introduce a separate explicit
+policy/matrix entry with a series name, minimum security floor, resolved
+immutable oracle digest, target-specific semantic table/corpus, native
+differential job, and reviewed evidence. It must remain unclaimed until those
+requirements pass. A version floor alone is not a security guarantee for
+GoHP, generated binaries, input, dependencies, or deployment.
 
 Before Go source generation, a semantic pass validates IR operand shape and
 rejects statically known mismatches such as `count(1)`, scalar `foreach`/indexing,
@@ -44,7 +72,7 @@ a non-string value fails explicitly, not as a PHP-compatible warning/exception.
 
 `strlen.php` compares empty, ASCII, whitespace, UTF-8 multibyte/emoji and supported
 escaped strings, concatenation, dynamic string values and integer arithmetic
-against both pinned PHP versions. Binary/NUL/invalid UTF-8 cases are runtime unit
+against the active approved PHP 8.3 oracle. Binary/NUL/invalid UTF-8 cases are runtime unit
 tests only, not end-to-end PHP evidence. The frontend's string syntax is unchanged:
 no interpolation or hex/octal escape support is implied. Scalar/null/object
 coercions, named arguments, multibyte overload settings, warnings and exceptions

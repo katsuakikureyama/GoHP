@@ -1,19 +1,11 @@
 services:
   test:
-    build: .
-    network_mode: none
-    read_only: true
-    tmpfs:
-      - /tmp:exec,size=1g
-      - /src/build:exec,size=128m,mode=1777
-    cap_drop: [ALL]
-    security_opt: [no-new-privileges:true]
-  php74:
-    profiles: [legacy]
     build:
       context: .
       args:
-        PHP_IMAGE: php:7.4.33-cli@sha256:620a6b9f4d4feef2210026172570465e9d0c1de79766418d3affd09190a7fda5
+        PHP_IMAGE: php:8.3.36-cli@sha256:98d555ff97b3865140ad31032508c3ca089fa97a8944b14ca9dc03ea05d788cd
+    environment:
+      GOHP_PHP_TARGET: "8.3"
     network_mode: none
     read_only: true
     tmpfs:

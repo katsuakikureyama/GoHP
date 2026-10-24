@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/katsuakikureyama/GoHP/internal/compat"
+	"github.com/katsuakikureyama/GoHP/internal/phpversion"
 )
 
 func main() {
@@ -181,14 +182,12 @@ func metadata() (compat.Metadata, error) {
 		}
 	}
 	if m.PHPTarget == "" {
-		m.PHPTarget = "8.3"
-		parts := strings.Split(m.PHPVersion, ".")
-		if len(parts) >= 2 {
-			m.PHPTarget = strings.Join(parts[:2], ".")
-		}
+		m.PHPTarget = phpversion.DefaultTarget
 	}
-	if m.PHPTarget != "7.4" && m.PHPTarget != "8.3" {
-		return m, fmt.Errorf("unsupported evidence target %q", m.PHPTarget)
+	// Live admission is separate from historical archive replay. Do not infer a
+	// new supported target from whichever PHP happens to be on PATH.
+	if err := phpversion.ValidateOracle(m.PHPTarget, m.PHPVersion); err != nil {
+		return m, err
 	}
 	return m, nil
 }

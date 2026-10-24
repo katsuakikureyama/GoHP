@@ -152,6 +152,11 @@ does not select runs: an 8.3 run's 7.4 row remains `not-measured` when filtering
 for 7.4. All supplied run headers, original overall results and all case details
 remain visible, including runs with zero matching rows. There is no combined
 compatibility percentage, promotion or current-revision applicability decision.
+The live runner admits PHP 8.3 only when its actual oracle is at least 8.3.36.
+CI additionally supplies its pinned image identity; local host-PHP runs need no
+container and do not imply a verified image digest. The archive reader may
+display legacy 7.4 and older 8.3 runs, but they are historical evidence rather
+than active compatibility gates.
 
 Accepted kinds: `syntax`, `operator`, `type`, `builtin`, `extension`, `tooling`,
 `application`. Accepted statuses: `unsupported`, `unverified`,
@@ -169,6 +174,11 @@ caller-readable archived test evidence. Input schema:
 ```json
 {"type":"object","properties":{"archives":{"type":"array","minItems":1,"items":{"type":"string","minLength":1}},"target":{"enum":["","7.4","8.3"]},"kind":{"enum":["","syntax","operator","type","builtin","extension","tooling","application"]},"status":{"enum":["","unsupported","unverified","compiler-check-pass","differential-pass (case-limited)","failed","incomplete","not-measured"]},"format":{"enum":["markdown","json"]}},"required":["archives"],"additionalProperties":false}
 ```
+
+The `7.4` filter remains solely for inspecting archived legacy evidence; it
+does not add 7.4 to the active compiler or validation policy. A future 8.4
+filter is added only with that series' explicit policy/matrix and archive schema
+support, never by treating all `8.x` records as interchangeable.
 
 `inspect`: read/validate archives and filters. `prepare`: derive a view in memory.
 `save` / `commit`: none. Result: a versioned view with filter, notice and per-run

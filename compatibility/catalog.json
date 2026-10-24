@@ -3,12 +3,27 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "gohp.tooling.php-target-policy",
+      "kind": "tooling",
+      "name": "PHP target and native oracle admission",
+      "implementation": "implemented",
+      "contract": "New compilation targets PHP 8.3; live comparison requires a stable PHP 8.3 release at or above 8.3.36. Newer series require explicit enablement and their own validation.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"unit.policy.oracle_floor","test":"TestOracleSecurityFloor","file":"internal/phpversion/policy_test.go","kind":"unit","assertions":["numeric patch floor, stable release syntax and selected-series identity enforced"]},
+        {"case_id":"unit.policy.enabled_targets","test":"TestTargetsRequireExplicitEnablement","file":"internal/phpversion/policy_test.go","kind":"unit","assertions":["retired and unverified series cannot auto-enable"]},
+        {"case_id":"compiler.policy.disabled_targets","test":"TestDisabledTargetsFailBeforeGeneration","file":"internal/codegen/version_test.go","kind":"compiler","assertions":["frontend and direct IR reject retired and unverified targets without output"]},
+        {"case_id":"compiler.policy.oracle_admission","test":"TestMetadataOracleAdmission","file":"cmd/gohp-compat/main_test.go","kind":"compiler","assertions":["live metadata gate rejects old/mismatched/missing oracles and records admitted identity before tests"]}
+      ],
+      "limitations": ["Admission is not a compatibility or vulnerability-free guarantee for later patches","Only pinned and measured oracle versions have differential evidence","Historical snapshots remain readable with retired targets and older patch versions; no current support inferred"]
+    },
+    {
       "id": "php.syntax.named-function",
       "kind": "syntax",
       "name": "Named functions with fixed value parameters and return",
       "implementation": "partial",
       "contract": "Lowers declared named functions, fixed value arguments and explicit returns in the closed subset.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "diff.core", "test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["native PHP stdout equals generated Go stdout"]}
       ],
@@ -20,7 +35,7 @@
       "name": "foreach over supported arrays",
       "implementation": "partial",
       "contract": "Iterates ordered GoHP arrays and binds value or key/value variables.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "diff.core", "test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["key and value iteration output matches native PHP"]},
         {"case_id": "negative.foreach_scalar", "test": "TestUnsupported/foreach_scalar", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["scalar foreach is rejected with a diagnostic code"]}
@@ -33,7 +48,7 @@
       "name": "Array literals",
       "implementation": "partial",
       "contract": "Lowers ordered arrays with supported integer and string keys and values.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "diff.arrays", "test": "TestDifferential/arrays", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/arrays.php", "assertions": ["mixed keys, nested reads and count output match"]},
         {"case_id": "diff.max_array_key", "test": "TestDifferential/max_array_key", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/max_array_key.php", "assertions": ["explicit maximum integer key behavior matches"]},
@@ -47,7 +62,7 @@
       "name": "Array index reads",
       "implementation": "partial",
       "contract": "Reads supported array values by supported keys.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "diff.arrays", "test": "TestDifferential/arrays", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/arrays.php", "assertions": ["nested and keyed reads match fixture output"]},
         {"case_id": "negative.runtime_failure", "test": "TestRuntimeFailureIsNotPass", "file": "tests/differential_test.go", "kind": "negative", "fixture": "tests/fixtures/runtime_failure.php", "assertions": ["missing key runtime failure is not reported as a pass"]}
@@ -60,7 +75,7 @@
       "name": "Classes, no-argument construction and methods",
       "implementation": "partial",
       "contract": "Lowers classes with public scalar defaults, no-argument construction, property reads and methods in the closed subset.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "diff.core", "test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["method dispatch and public property read output match"]},
         {"case_id": "negative.missing_property", "test": "TestUnsupported/missing_property", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["missing property is rejected"]},
@@ -74,7 +89,7 @@
       "name": "Binary +",
       "implementation": "partial",
       "contract": "Performs supported integral addition and rejects statically known invalid operands.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "diff.core", "test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["integer accumulation output matches"]},
         {"case_id": "unit.runtime.overflow", "test": "TestOverflowFailsExplicitly", "file": "runtime/runtime_test.go", "kind": "unit", "assertions": ["int64 overflow fails explicitly"]}
@@ -87,7 +102,7 @@
       "name": "Binary .",
       "implementation": "partial",
       "contract": "Concatenates supported values using GoHP runtime conversion.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "diff.precedence", "test": "TestDifferential/precedence", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/precedence.php", "assertions": ["target-version precedence output matches"]}
       ],
@@ -98,8 +113,8 @@
       "kind": "syntax",
       "name": "Parentheses and target-specific +/. precedence",
       "implementation": "partial",
-      "contract": "Parses the closed expression grammar and distinguishes PHP 7.4 and 8.3 precedence for addition and concatenation.",
-      "php_targets": ["7.4", "8.3"],
+      "contract": "Parses the closed expression grammar with PHP 8.3 precedence for addition and concatenation.",
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "diff.precedence", "test": "TestDifferential/precedence", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/precedence.php", "assertions": ["generated output equals the selected native PHP target"]},
         {"case_id": "diff.arrays", "test": "TestDifferential/arrays", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/arrays.php", "assertions": ["parenthesized integral addition output matches"]}
@@ -112,7 +127,7 @@
       "name": "int64, string, bool and null literals",
       "implementation": "partial",
       "contract": "Represents the listed scalar literals in the closed subset.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "diff.arrays", "test": "TestDifferential/arrays", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/arrays.php", "assertions": ["bool and null concatenation output matches fixture"]}
       ],
@@ -124,7 +139,7 @@
       "name": "count(array)",
       "implementation": "partial",
       "contract": "Supports one-argument, nonrecursive count for GoHP arrays only.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "diff.core", "test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["array count output matches"]},
         {"case_id": "negative.count_scalar", "test": "TestUnsupported/count_scalar", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["count on a scalar is rejected"]}
@@ -137,7 +152,7 @@
       "name": "strlen(string)",
       "implementation": "partial",
       "contract": "One positional string argument returns its byte length as an integer; dynamic inputs are checked at runtime, without implicit coercion.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "diff.strlen", "test": "TestDifferential/strlen", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/strlen.php", "assertions": ["empty/ASCII/UTF-8/escaped strings, dynamic string arguments and arithmetic results match native PHP stdout and successful exits"]},
         {"case_id": "unit.runtime.strlen_bytes", "test": "TestStrlenByteLengthAndIntegerResult", "file": "runtime/strlen_test.go", "kind": "unit", "assertions": ["returns int64 byte length, including combining characters and binary bytes; binary case is runtime-only"]},
@@ -161,7 +176,7 @@
       "name": "array_keys(array)",
       "implementation": "partial",
       "contract": "One positional array argument returns its existing keys in insertion order as values of a fresh zero-based array, preserving integer/string key types.",
-      "php_targets": ["7.4","8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id":"diff.array_keys","test":"TestDifferential/array_keys","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_keys.php","assertions":["ordered keys, numeric-string normalization, empty/nested arrays and dynamic array results match native PHP stdout and successful exits"]},
         {"case_id":"unit.runtime.array_keys_values","test":"TestArrayKeysOrderTypesAndIsolation","file":"runtime/array_keys_test.go","kind":"unit","assertions":["dense int64 output indexes, original key types and order, empty arrays and independent storage; binary keys are runtime-only"]},
@@ -186,7 +201,7 @@
       "name": "array_map",
       "implementation": "unsupported",
       "contract": "No lowering is provided.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [],
       "limitations": ["Callbacks and closures are unsupported"]
     },
@@ -196,7 +211,7 @@
       "name": "json_encode",
       "implementation": "unsupported",
       "contract": "No lowering is provided.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [],
       "limitations": ["Go JSON behavior must not be assumed PHP-equivalent"]
     },
@@ -206,7 +221,7 @@
       "name": "Closures and callbacks",
       "implementation": "unsupported",
       "contract": "Closure syntax fails closed.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "negative.closure", "test": "TestUnsupported/closure", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["closure source is rejected with a diagnostic code"]}
       ],
@@ -218,7 +233,7 @@
       "name": "Array writes and references",
       "implementation": "unsupported",
       "contract": "Array element assignment and reference assignment fail closed.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "negative.array_write", "test": "TestUnsupported/array_write", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["array element assignment is rejected"]},
         {"case_id": "negative.reference", "test": "TestUnsupported/reference", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["reference assignment is rejected"]}
@@ -231,7 +246,7 @@
       "name": "include and require",
       "implementation": "unsupported",
       "contract": "Include syntax fails closed.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "negative.include", "test": "TestUnsupported/include", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["include source is rejected with a diagnostic code"]}
       ],
@@ -243,7 +258,7 @@
       "name": "Floating-point literals and values",
       "implementation": "unsupported",
       "contract": "Float literals fail closed.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "negative.float", "test": "TestUnsupported/float", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["float literal source is rejected with a diagnostic code"]}
       ],
@@ -255,7 +270,7 @@
       "name": "mysqli, PDO and SQLite extensions",
       "implementation": "unsupported",
       "contract": "No extension bindings or database operations are provided.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [],
       "limitations": ["No credentials, DB writes or extension equivalence claim"]
     },
@@ -265,7 +280,7 @@
       "name": "gohp CLI generation and artifact publication",
       "implementation": "implemented",
       "contract": "Writes fresh generated Go and optional report artifacts without replacing existing or aliased destinations.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "compiler.cli_write_fresh", "test": "TestCLIWritesFreshOutputAndReport", "file": "cmd/gohp/main_test.go", "kind": "compiler", "assertions": ["fresh output and report are written with consistent hashes"]},
         {"case_id": "compiler.cli_reject_alias", "test": "TestCLIRejectsExistingOrAliasedArtifactsWithoutClobbering", "file": "cmd/gohp/main_test.go", "kind": "compiler", "assertions": ["existing and aliased destinations are preserved"]},
@@ -279,7 +294,7 @@
       "name": "Statement-level PHP-to-Go source maps",
       "implementation": "partial",
       "contract": "Publishes final formatted Go line ranges mapped to PHP statement start lines.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "unit.sourcemap.statement", "test": "TestStatementSourceMap", "file": "internal/codegen/sourcemap_test.go", "kind": "unit", "assertions": ["nested statements, methods and formatted output map to expected PHP lines"]},
         {"case_id": "unit.sourcemap.unknown", "test": "TestSourceMapUnknownPositionsAndFailure", "file": "internal/codegen/sourcemap_test.go", "kind": "unit", "assertions": ["unknown positions are omitted and failed generation leaks no map"]},
@@ -293,7 +308,7 @@
       "name": "Read-only archived compatibility views",
       "implementation": "implemented",
       "contract": "Reads hash-bound catalog/event archives, replays stored verdicts and filters feature rows without merging runs or hiding overall failures.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "unit.compat.archive", "test": "TestLoadArchiveReplaysWithoutSourceAndRejectsChangedEvidence", "file": "internal/compat/archive_test.go", "kind": "unit", "assertions": ["pass/fail/skip archives replay without source files", "changed hashes, verdicts, phases, duplicates and escaping symlinks are rejected"]},
         {"case_id": "unit.compat.view", "test": "TestViewKeepsRunsAndFailureVisibleThroughFilters", "file": "internal/compat/archive_test.go", "kind": "unit", "assertions": ["target and status filters retain each run, its overall failure, configuration and all cases", "archive text cannot insert raw HTML or Markdown links"]}
@@ -306,7 +321,7 @@
       "name": "Read-only Composer metadata inventory",
       "implementation": "partial",
       "contract": "Lists manifest and lock declarations without execution or resolution; keeps every dependency's compatibility unverified.",
-      "php_targets": ["7.4", "8.3"],
+      "php_targets": ["8.3"],
       "checks": [
         {"case_id": "unit.inventory.declarations", "test": "TestReadKeepsDeclarationsSeparateWithoutExecuting", "file": "internal/inventory/read_test.go", "kind": "unit", "assertions": ["root, lock, dev and package-link declarations retain their source and relation", "references and false overrides survive; command bodies and URLs are omitted; inputs unchanged"]},
         {"case_id": "unit.inventory.missing_lock", "test": "TestReadMissingLockIsNotCompatibilityEvidence", "file": "internal/inventory/read_test.go", "kind": "unit", "assertions": ["missing lock is explicit and dependencies remain unverified"]},

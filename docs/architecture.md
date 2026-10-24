@@ -40,10 +40,13 @@ source map yet; compile-time diagnostics include original PHP line numbers.
 
 ## Version model
 
-Only `7.4` and `8.3` target labels are accepted. The main grammar is their shared
-subset. Concatenation/addition precedence changes with the target. These labels
-are not full-language support claims. PHP 5.6 and other 7.x/8.x minors require
-separate semantic tables and native reference runners before acceptance.
+Only the `8.3` target label is accepted by the active compiler. It denotes the
+PHP 8.3 language series, while native differential execution enforces the
+separate PHP 8.3.36-or-newer oracle floor. This is not a full-language support
+claim. PHP 7.4 is retained only in historical evidence. PHP 8.4 and later need
+their own policy entry, semantic table, native reference runner and corpus
+before a target label may be accepted; they must not silently inherit 8.3
+results.
 
 ## Next decisions
 

@@ -15,6 +15,7 @@ import (
 
 	"github.com/katsuakikureyama/GoHP/internal/codegen"
 	"github.com/katsuakikureyama/GoHP/internal/frontend"
+	"github.com/katsuakikureyama/GoHP/internal/phpversion"
 )
 
 const (
@@ -38,10 +39,10 @@ func phpTarget(t *testing.T) string {
 	t.Helper()
 	target := os.Getenv("GOHP_PHP_TARGET")
 	if target == "" {
-		target = "8.3"
+		target = phpversion.DefaultTarget
 	}
-	if target != "7.4" && target != "8.3" {
-		t.Fatalf("GOHP_PHP_TARGET = %q, want 7.4 or 8.3", target)
+	if err := phpversion.ValidateTarget(target); err != nil {
+		t.Fatal(err)
 	}
 	return target
 }
@@ -57,8 +58,8 @@ func TestDifferential(t *testing.T) {
 	}
 	actualPHPVersion := string(v)
 	target := phpTarget(t)
-	if !strings.HasPrefix(actualPHPVersion, target+".") {
-		t.Fatalf("reference PHP version %s does not match GOHP_PHP_TARGET %s", actualPHPVersion, target)
+	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
+		t.Fatal(err)
 	}
 	for _, fixture := range []string{"core", "arrays", "max_array_key", "precedence", "strlen", "array_keys"} {
 		t.Run(fixture, func(t *testing.T) {

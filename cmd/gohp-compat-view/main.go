@@ -23,9 +23,9 @@ func run(args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet("gohp-compat-view", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	flags.Usage = func() {
-		fmt.Fprintln(stderr, "usage: gohp-compat-view [-target 7.4|8.3] [-kind KIND] [-status STATUS] [-format markdown|json] ARCHIVE_DIR [ARCHIVE_DIR...]")
+		fmt.Fprintln(stderr, "usage: gohp-compat-view [-target TARGET] [-kind KIND] [-status STATUS] [-format markdown|json] ARCHIVE_DIR [ARCHIVE_DIR...]")
 	}
-	target := flags.String("target", "", "PHP target: 7.4 or 8.3")
+	target := flags.String("target", "", "stored PHP target (7.4 is historical only, not executable support)")
 	kind := flags.String("kind", "", "catalog feature kind")
 	status := flags.String("status", "", "feature status")
 	format := flags.String("format", "markdown", "output format: markdown or json")

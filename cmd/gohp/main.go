@@ -11,12 +11,13 @@ import (
 	"github.com/katsuakikureyama/GoHP/internal/codegen"
 	"github.com/katsuakikureyama/GoHP/internal/frontend"
 	"github.com/katsuakikureyama/GoHP/internal/ir"
+	"github.com/katsuakikureyama/GoHP/internal/phpversion"
 )
 
 func main() {
 	in := flag.String("in", "", "PHP input file")
 	out := flag.String("out", "", "Go output file (stdout if omitted)")
-	version := flag.String("php-version", "8.3", "PHP target: 7.4 or 8.3")
+	version := flag.String("php-version", phpversion.DefaultTarget, "PHP language target: "+phpversion.TargetHelp())
 	report := flag.String("report", "", "optional provenance JSON path")
 	flag.Parse()
 	if *in == "" {

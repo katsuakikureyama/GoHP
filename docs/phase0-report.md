@@ -1,5 +1,9 @@
 # Phase 0 implementation report
 
+> Historical report. The PHP 7.4.33 / 8.3.30 matrix described below predates
+> the active PHP 8.3.36-or-newer policy. Its evidence is preserved for
+> traceability only and is not a current support or security claim.
+
 ## Working development capabilities
 
 The frontend, versioned IR, semantic validator, Go generator and compatibility
@@ -10,7 +14,7 @@ not contain a PHP evaluator or opcode VM. The CLI emits source and a versioned
 provenance report; Gossip can consume that boundary without WordPress-specific
 compiler semantics.
 
-Native PHP 8.3.30 and PHP 7.4.33 reference runs use immutable official image
+At the time of this report, native PHP 8.3.30 and PHP 7.4.33 reference runs used immutable official image
 content digests alongside Go 1.23.12. Both Docker Compose services execute with
 network disabled, a read-only filesystem, temporary build/cache storage and no
 Linux capabilities. The Go module has no external Go dependencies.
@@ -33,7 +37,7 @@ A missing-key runtime case must exit nonzero; it does
 not claim equivalence with PHP warning behavior. The CLI must reject the closure
 fixture without creating a new Go output file.
 
-The `1 . 2 + 10` fixture matches `22` on PHP 7.4 and `112` on PHP 8.3, proving the
+The `1 . 2 + 10` fixture matched `22` on PHP 7.4 and `112` on PHP 8.3, proving the
 version selection affects lowering. The main fixture prints `total=10`, the three
 ordered key/value pairs, and `3`. See `compatibility.md` for precisely bounded
 claims. CI defines the same two container jobs; local execution is evidence of

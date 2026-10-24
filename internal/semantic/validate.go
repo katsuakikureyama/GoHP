@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/katsuakikureyama/GoHP/internal/ir"
+	"github.com/katsuakikureyama/GoHP/internal/phpversion"
 )
 
 type kind uint8
@@ -38,8 +39,8 @@ type validator struct {
 // Validate rejects malformed IR and operations that are statically outside the
 // supported PHP subset. Unknown dynamic values remain guarded by the runtime.
 func Validate(p ir.Program) error {
-	if p.PHPVersion != "7.4" && p.PHPVersion != "8.3" {
-		return fmt.Errorf("PHP003: supported target versions: 7.4, 8.3")
+	if err := phpversion.ValidateTarget(p.PHPVersion); err != nil {
+		return fmt.Errorf("PHP003: %w", err)
 	}
 	v := validator{classes: make(map[string]classInfo, len(p.Classes))}
 	for _, c := range p.Classes {

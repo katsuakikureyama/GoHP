@@ -14,11 +14,9 @@ execution has network access disabled.
 ```sh
 docker compose build test
 docker compose run --rm test
-docker compose --profile legacy build php74
-docker compose --profile legacy run --rm php74
 ```
 
-Or use Go **1.23.12** and PHP **8.3** or **7.4** locally:
+Or use Go **1.23.12** and native PHP **8.3.36 or newer within the 8.3 series** locally:
 
 ```sh
 sh scripts/check.sh
@@ -58,6 +56,21 @@ Builtins currently include `count(array)`, bounded `strlen(string)` (byte
 length only, no implicit non-string coercion) and `array_keys(array)` (one argument,
 ordered keys, no value filtering). See the compatibility contract.
 
+### Active PHP target
+
+GoHP's initial compatibility target is the PHP **8.3** language series only.
+Native differential runs require PHP **8.3.36 or newer within 8.3**; the actual
+oracle version is recorded in run evidence, along with the pinned image digest
+in CI (host-PHP runs need no container). The CLI deliberately takes the language-series
+label `-php-version 8.3`, rather than a patch number.
+
+PHP 8.4 and later are not enabled or claimed. Adding a series requires a
+separate policy/matrix entry with its own minimum release, pinned oracle image
+digest, target-specific corpus and passing evidence; it is not a consequence
+of accepting the same CLI flag. The minimum release floor is a maintenance
+rule, not a security guarantee for the compiler, generated binaries or input.
+See the [compatibility version policy](docs/compatibility.md#active-php-version-policy).
+
 ## Scope and documentation
 
 - [Architecture and decisions](docs/architecture.md)
@@ -79,6 +92,10 @@ PHP を読みやすい Go ソースへ変換する初期 PoC です。関数・�
 含む fixture を実際にビルドし、PHP との標準出力の一致を確認します。
 参照、クロージャ、継承、Composer や PHP 拡張、WordPress 全体は未対応です。
 未対応を互換性成功とは扱いません。正式ライセンスは監査と所有者判断待ちです。
+初期の互換性対象は PHP **8.3 系のみ**で、native 比較には **8.3 系の 8.3.36 以上**を使います。
+CLI の `-php-version 8.3` はパッチ番号ではなく言語系列の指定です。8.4 以降は未対応で、
+追加時には系列ごとの最低版・固定oracleイメージdigest・専用fixture・検証証拠を別途そろえます。
+最低版の指定だけで、コンパイラや生成物のセキュリティを保証するものではありません。
 組込み関数は `count(array)` と限定的な `strlen(string)`、`array_keys(array)` に対応します。
 `strlen` はバイト数を返し、数値・nullなどからの暗黙変換は対象外です。
 `array_keys` は1引数で順序を保ったキー一覧を返します。値による絞り込みは未対応です。

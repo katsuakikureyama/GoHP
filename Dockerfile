@@ -1,6 +1,7 @@
-ARG PHP_IMAGE=php:8.3.30-cli@sha256:92ff31bbd049fd199bf3700719374e4594b2baa7324eefc459bda26d622c3ea9
+ARG PHP_IMAGE=php:8.3.36-cli@sha256:98d555ff97b3865140ad31032508c3ca089fa97a8944b14ca9dc03ea05d788cd
 ARG GO_IMAGE=golang:1.23.12@sha256:60deed95d3888cc5e4d9ff8a10c54e5edc008c6ae3fba6187be6fb592e19e8c0
-# Verified registry content digests: immutable Go toolchain and PHP reference.
+# Immutable Go toolchain and PHP OCI index references. PHP target selection is
+# explicit in CI; add a later minor only after its own compatibility validation.
 FROM ${GO_IMAGE} AS go
 FROM ${PHP_IMAGE}
 COPY --from=go /usr/local/go /usr/local/go

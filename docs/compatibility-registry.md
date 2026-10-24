@@ -44,7 +44,9 @@ Appearing in a fixture does not prove every aspect of a feature.
 
 ## Run ledger: what was checked and passed?
 
-CI should publish a `gohp.compatibility.run/v0.1` JSON artifact per matrix job.
+CI should publish a `gohp.compatibility.run/v0.1` JSON artifact for the active
+PHP 8.3 job. A later PHP series receives a distinct policy/matrix entry and
+artifact only after it is explicitly enabled.
 Keep it outside the source commit: embedding the commit's own SHA in a tracked
 report would require a different commit. Record:
 
@@ -82,7 +84,8 @@ latest applicable result, verified contract, limitations and evidence.
 | `failed` | A required case failed at this revision/target |
 | `incomplete` | A required case skipped, errored or did not run |
 
-Keep PHP 7.4.33 and PHP 8.3.30 evidence separate. A failed/incomplete current run
+Keep historical PHP 7.4.33 and PHP 8.3.30 evidence separate from active PHP
+8.3.36-or-newer evidence. A failed/incomplete current run
 must not be hidden by an older PASS. Historical PASS stays visible with its
 revision but does not automatically apply now. Reuse only exact matching
 revision/configuration results, or an explicitly reviewed unaffected-scope
@@ -98,7 +101,8 @@ builtin rows.
 
 ## Historical baseline evidence
 
-Commit `a09893dee9503aafee3117bde02e9cb36e3e80eb` has two passing pinned matrix
+Historical record — this predates the active PHP 8.3.36-or-newer policy and is
+not a current support claim: commit `a09893dee9503aafee3117bde02e9cb36e3e80eb` has two passing pinned matrix
 jobs in [PR #4 run 40102827264](https://github.com/katsuakikureyama/GoHP/actions/runs/40102827264).
 They ran `scripts/check.sh` with Go 1.23.12 and PHP 7.4.33 / 8.3.30. Positive
 fixtures cover functions/classes/ordered arrays/`count`, nested arrays and scalar
@@ -131,3 +135,10 @@ Add/update the contract, target-specific positive cases, negative boundaries and
 catalog links in the same function/feature change. Test only the affected scope
 locally and use the existing pinned CI matrix once per revision/configuration.
 Green tests are evidence to record, not a reason for another verification cycle.
+
+For a new PHP series, update the version-policy registry's series label and
+minimum oracle version, the matrix's immutable image digest, and the catalog's
+status and required corpus together. Do not infer a support verdict from an
+existing 8.3 run or from a shared fixture. The current active policy is 8.3 with
+a minimum native oracle of 8.3.36; 8.4+ entries are absent/disabled until their
+own requirements are reviewed.
