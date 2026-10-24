@@ -196,6 +196,30 @@
       "limitations": ["No filter_value or strict overload, named arguments or dynamic function names","Only the existing GoHP array/key subset; no new key coercion, reference or write semantics","Non-array rejection is not PHP warning/exception equivalence","Native differential evidence compares stdout and exits; exact key value types and storage isolation are also runtime-unit-tested"]
     },
     {
+      "id": "php.builtin.array_values",
+      "kind": "builtin",
+      "name": "array_values(array)",
+      "implementation": "partial",
+      "contract": "One positional array argument returns its values in insertion order in a fresh zero-based array, preserving supported value types and nested arrays without flattening.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.array_values","test":"TestDifferential/array_values","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_values.php","assertions":["empty, sparse/mixed-key and nested arrays reindex in insertion order; dynamic calls, reads and input preservation match native PHP stdout and successful exits"]},
+        {"case_id":"unit.runtime.array_values_values","test":"TestArrayValuesOrderTypesAndIsolation","file":"runtime/array_values_test.go","kind":"unit","assertions":["dense int64 indexes, exact scalar/nested value types and independent outer/nested array storage"]},
+        {"case_id":"unit.runtime.array_values_types","test":"TestArrayValuesRejectsNonArray","file":"runtime/array_values_test.go","kind":"unit","assertions":["non-array arguments fail explicitly without conversion"]},
+        {"case_id":"negative.array_values_dynamic","test":"TestArrayValuesRuntimeTypeGuard","file":"tests/differential_test.go","kind":"negative","fixture":"tests/fixtures/array_values_runtime_failure.php","assertions":["a generated binary rejects a runtime non-array with nonzero exit; no PHP exception equivalence claim"]},
+        {"case_id":"negative.array_values_int","test":"TestUnsupported/array_values_int","file":"tests/differential_test.go","kind":"negative","assertions":["Known integer argument is rejected before generation"]},
+        {"case_id":"negative.array_values_string","test":"TestUnsupported/array_values_string","file":"tests/differential_test.go","kind":"negative","assertions":["Known string argument is rejected before generation"]},
+        {"case_id":"negative.array_values_bool","test":"TestUnsupported/array_values_bool","file":"tests/differential_test.go","kind":"negative","assertions":["Known boolean argument is rejected before generation"]},
+        {"case_id":"negative.array_values_null","test":"TestUnsupported/array_values_null","file":"tests/differential_test.go","kind":"negative","assertions":["Known null argument is rejected before generation"]},
+        {"case_id":"negative.array_values_object","test":"TestUnsupported/array_values_object","file":"tests/differential_test.go","kind":"negative","assertions":["Known object argument is rejected before generation"]},
+        {"case_id":"negative.array_values_no_args","test":"TestUnsupported/array_values_no_args","file":"tests/differential_test.go","kind":"negative","assertions":["Missing argument is rejected before generation"]},
+        {"case_id":"negative.array_values_extra_args","test":"TestUnsupported/array_values_extra_args","file":"tests/differential_test.go","kind":"negative","assertions":["Extra argument is rejected before generation"]},
+        {"case_id":"negative.array_values_redeclare","test":"TestUnsupported/array_values_redeclare","file":"tests/differential_test.go","kind":"negative","assertions":["Mixed-case builtin redeclaration is rejected before generation"]},
+        {"case_id":"negative.array_values_echo_result","test":"TestUnsupported/array_values_echo_result","file":"tests/differential_test.go","kind":"negative","assertions":["Scalar echo of the known array result is rejected before generation"]}
+      ],
+      "limitations": ["Only the existing GoHP value/array subset; no new coercion, reference, write or copy-on-write implementation","Named arguments and dynamic function names remain unsupported","Object/reference alias semantics and PHP warning/exception equivalence are not established","Native differential evidence compares stdout and exits; exact value types and nested storage isolation are additionally runtime-unit-tested"]
+    },
+    {
       "id": "php.builtin.array_map",
       "kind": "builtin",
       "name": "array_map",

@@ -39,6 +39,8 @@ does not add a service operation or change this WebMCP exclusion.
 The bounded one-argument `array_keys(array)` operation is covered by this same
 exclusion and [array-only contract](compatibility.md#bounded-array_keys-contract);
 it adds no browser/server route, permission, publication or automatic execution.
+The same exclusion applies to the one-argument `array_values(array)` builtin
+and its [bounded value-copy contract](compatibility.md#bounded-array_values-contract).
 Changing the PHP oracle policy or adding a later series likewise adds no browser
 operation, resource, authentication route, WebMCP capability, or auto-submit.
 

@@ -53,8 +53,9 @@ and PHP-version-dependent operator precedence. Unsupported syntax must fail
 with a diagnostic; a separate runtime-negative test must fail on a missing key.
 Compilation alone never proves PHP compatibility.
 Builtins currently include `count(array)`, bounded `strlen(string)` (byte
-length only, no implicit non-string coercion) and `array_keys(array)` (one argument,
-ordered keys, no value filtering). See the compatibility contract.
+length only, no implicit non-string coercion), `array_keys(array)` (one argument,
+ordered keys, no value filtering) and `array_values(array)` (ordered values,
+zero-based indexes, no flattening). See the compatibility contract.
 
 ### Active PHP target
 
@@ -96,9 +97,10 @@ PHP を読みやすい Go ソースへ変換する初期 PoC です。関数・�
 CLI の `-php-version 8.3` はパッチ番号ではなく言語系列の指定です。8.4 以降は未対応で、
 追加時には系列ごとの最低版・固定oracleイメージdigest・専用fixture・検証証拠を別途そろえます。
 最低版の指定だけで、コンパイラや生成物のセキュリティを保証するものではありません。
-組込み関数は `count(array)` と限定的な `strlen(string)`、`array_keys(array)` に対応します。
+組込み関数は `count(array)` と限定的な `strlen(string)`、`array_keys(array)`、`array_values(array)` に対応します。
 `strlen` はバイト数を返し、数値・nullなどからの暗黙変換は対象外です。
 `array_keys` は1引数で順序を保ったキー一覧を返します。値による絞り込みは未対応です。
+`array_values` は順序を保った値一覧を0始まりに振り直し、入れ子の配列は平坦化しません。
 生成レポートには Go の行から PHP の文開始行への対応を含みます。
 列単位の位置情報やエラー表示の自動変換、本格パーサへの切替は未対応です。
 関数・機能の台帳と実テスト結果から、PHP バージョン別の対応状況を JSON／Markdown

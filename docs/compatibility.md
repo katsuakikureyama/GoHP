@@ -18,7 +18,7 @@ This table is the current curated summary, not a blanket support claim.
 | Classes | Public scalar defaults, no-arg construction, property reads, methods | `core.php`; no inheritance, constructors, visibility or static members |
 | Closures/callbacks/dynamic calls | Unsupported | Negative closure fixture; no claim of coverage |
 | Exceptions/warnings | Unsupported PHP behavior | Nonzero runtime failures; never functional PASS |
-| Built-ins | `count(array)`, bounded `strlen(string)`, `array_keys(array)` | Other builtin names fail closed; no recursive count, strlen scalar coercion or filtered array_keys |
+| Built-ins | `count(array)`, bounded `strlen(string)`, `array_keys(array)`, `array_values(array)` | Other builtin names fail closed; no recursive count, strlen scalar coercion or filtered array_keys |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |
@@ -102,6 +102,30 @@ PHP-vs-generated-Go stdout/exit comparison. Runtime tests additionally check
 exact key/index types and storage isolation; binary keys are runtime-only.
 The catalog stays partial, with a case-limited result requiring every linked
 positive and boundary check to pass, not a general PHP array compatibility claim.
+
+### Bounded array_values contract
+
+`array_values(array)` accepts exactly one positional array argument and returns
+the values in insertion order with new integer indexes starting at zero, following
+the [PHP function contract](https://www.php.net/manual/en/function.array-values.php).
+It does not sort by the old keys, flatten nested arrays, convert scalar values,
+or modify its input. Empty input returns an empty array. Nested array values keep
+their keys and use GoHP's existing eager value-copy model. This is not a new
+implementation of PHP references, array writes or copy-on-write behavior.
+
+Calls are case-insensitive; builtin redeclaration, wrong arity and statically
+known non-array arguments fail before generation. Unknown arguments are guarded
+at runtime. The known array return works with count, indexing and foreach, but
+cannot be echoed as a scalar. Named arguments, dynamic function names, general
+object/reference alias semantics and PHP warning/exception equivalence remain
+outside the validated contract.
+
+`array_values.php` compares empty arrays, mixed/sparse keys, duplicate-key
+replacement, scalar/nested values, dynamic inputs/results and composition against
+the pinned PHP 8.3.36 oracle. The native comparison observes stdout and successful
+exits, not a typed serialization. Runtime tests additionally assert exact value
+types and outer/nested storage independence. The catalog stays partial and only
+reports a case-limited result when every linked check passes.
 
 Composer metadata inventory is available below. It records declarations only;
 PHP callsites, generated/vendor code, dependency resolution and historical applicability

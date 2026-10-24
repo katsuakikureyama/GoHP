@@ -317,6 +317,15 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 			return valueType{kind: arrayKind}, nil
 		}
+		if strings.EqualFold(expr.Text, "array_values") {
+			if len(args) != 1 {
+				return valueType{}, unsupported(expr.Line, "array_values expects one argument")
+			}
+			if args[0].kind != arrayKind && args[0].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "array_values requires an array")
+			}
+			return valueType{kind: arrayKind}, nil
+		}
 		return valueType{kind: unknownKind}, nil
 	case "new":
 		if err := require(0); err != nil {

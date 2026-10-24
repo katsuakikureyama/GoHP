@@ -168,6 +168,20 @@ func ArrayKeys(v any) any {
 	return keys
 }
 
+// ArrayValues reindexes only the outer array. Clone keeps nested array values
+// independent using the existing value-copy model; it does not flatten them.
+func ArrayValues(v any) any {
+	a, ok := v.(Array)
+	if !ok {
+		panic("array_values requires array")
+	}
+	values := Array{Entries: make([]Entry, len(a.Entries)), next: int64(len(a.Entries))}
+	for i, e := range a.Entries {
+		values.Entries[i] = Entry{Key: int64(i), Value: Clone(e.Value)}
+	}
+	return values
+}
+
 func Args(a []any, n int) {
 	if len(a) != n {
 		panic("unsupported argument count")
