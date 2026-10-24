@@ -82,17 +82,6 @@ func TestDifferential(t *testing.T) {
 				}
 				t.Logf("GOHP_CASE %s", encoded)
 			}()
-			if fixture == "booleans" {
-				locale, err := exec.Command(php, "-r", "echo setlocale(LC_CTYPE, 0);").Output()
-				if err != nil {
-					t.Fatal(err)
-				}
-				evidence.PHPLCType = string(locale)
-				if evidence.PHPLCType != "C" {
-					t.Fatalf("PHP LC_CTYPE = %q, want C for ASCII strtolower validation", evidence.PHPLCType)
-				}
-			}
-
 			file := filepath.Join("fixtures", fixture+".php")
 			src, e := os.ReadFile(file)
 			if e != nil {
@@ -124,12 +113,20 @@ func TestDifferential(t *testing.T) {
 				t.Fatalf("build: %v\n%s\n%s", e, o, generated)
 			}
 			evidence.Phases["go-build"] = phasePass
-			want, e := exec.Command(php, file).Output()
+			phpArgs := []string{file}
+			if fixture == "booleans" {
+				// Set and verify the locale in the same process as the oracle.
+				phpArgs = []string{"-r", "if (setlocale(LC_CTYPE, 'C') !== 'C' || setlocale(LC_CTYPE, 0) !== 'C') { throw new RuntimeException('LC_CTYPE must be C'); } require $argv[1];", "--", file}
+			}
+			want, e := exec.Command(php, phpArgs...).Output()
 			if e != nil {
 				evidence.Phases["differential"] = phaseFail
 				t.Fatal(e)
 			}
 			native := exec.Command(binary)
+			if fixture == "booleans" {
+				evidence.PHPLCType = "C"
+			}
 			native.Env = []string{"PATH="} // The emitted binary must run without discovering PHP.
 			got, e := native.Output()
 			if e != nil {
