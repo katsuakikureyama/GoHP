@@ -19,7 +19,7 @@ This table is the current curated summary, not a blanket support claim.
 | Classes | Public scalar defaults, no-arg construction, property reads, methods | `core.php`; no inheritance, constructors, visibility or static members |
 | Closures/callbacks/dynamic calls | Unsupported | Negative closure fixture; no claim of coverage |
 | Exceptions/warnings | Unsupported PHP behavior | Nonzero runtime failures; never functional PASS |
-| Built-ins | `count(array)`, `strlen(string)`, `array_keys(array)`, `array_values(array)`, `array_key_exists(int\|string, array)`, restricted `rtrim`, `is_bool`, `is_string`, ASCII `strtolower(string)` | Bounded arities/domains below and in [rtrim](rtrim-boundary.md) / [boolean](boolean-boundary.md); other builtins fail closed |
+| Built-ins | `count(array)`, `strlen(string)`, `array_keys(array)`, `array_values(array)`, `array_key_exists(int\|string, array)`, `array_is_list(array)`, restricted `rtrim`, `is_bool`, `is_string`, ASCII `strtolower(string)` | Bounded arities/domains below and in [rtrim](rtrim-boundary.md) / [boolean](boolean-boundary.md); other builtins fail closed |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |
@@ -166,6 +166,30 @@ strict true/false observations as well as guarded reads. Runtime unit checks
 cover nonmutation and additional binary/int64-boundary keys; these additional
 unit inputs are not end-to-end native evidence. Generated-binary negative tests
 cover both dynamic argument guards. The catalog remains partial.
+
+### Bounded array_is_list contract
+
+`array_is_list(array)` takes exactly one positional array argument and returns
+a boolean. The empty array is a list. Otherwise, outer keys must be integers
+`0, 1, ...` in insertion order, as specified by the [PHP reference](https://www.php.net/manual/en/function.array-is-list.php).
+The same key set in a different order, a nonzero starting key, a gap or a string
+key makes the result false. No sorting, reindexing or key coercion happens here;
+numeric strings already normalized by array construction remain integer keys.
+Duplicate-key replacement retains its existing insertion position.
+
+Values do not affect the result: null/false values and nested associative arrays
+may be elements of a list. Only the outer keys are inspected; neither input nor
+nested values are mutated. Calls are case-insensitive, and the builtin name is
+reserved against redeclaration. Known non-arrays and wrong arity fail before
+generation; unknown values are guarded at runtime. The result is statically bool.
+
+`array_is_list.php` checks these boundaries, both array syntaxes, dynamic calls,
+and composition with `array_keys`/`array_values`, using `is_bool` and strict
+true/false observations. Native evidence is still stdout/normal exits; additional
+negative/extreme/binary-key cases in runtime units are not native PHP evidence.
+The catalog stays partial because the compiler's array construction/value domain
+is bounded; this does not add references, writes, named arguments, recursive
+validation, or PHP warning/exception equivalence.
 
 Composer metadata inventory is available below. It records declarations only;
 PHP callsites, generated/vendor code, dependency resolution and historical applicability

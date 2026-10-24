@@ -61,7 +61,8 @@ ordered keys, no value filtering) and `array_values(array)` (ordered values,
 zero-based indexes, no flattening), literal-mask `rtrim`, `is_bool`, `is_string`
 and ASCII `strtolower(string)`. `array_key_exists(int|string, array)` checks
 first-level key presence, including null-valued entries, without other key
-coercions. See the compatibility contract and the linked
+coercions. `array_is_list(array)` checks zero-based consecutive integer keys in
+insertion order (empty arrays are lists). See the compatibility contract and the linked
 string/boolean boundaries; these are partial implementations.
 
 ### Active PHP target
@@ -117,6 +118,8 @@ CLI の `-php-version 8.3` はパッチ番号ではなく言語系列の指定�
 `array_values` は順序を保った値一覧を0始まりに振り直し、入れ子の配列は平坦化しません。
 `array_key_exists` は整数/文字列キーの存在を判定します。値がnullでも存在と判定し、
 入れ子の再帰検索やbool/nullキーの暗黙変換はしません。
+`array_is_list` は外側のキーが0始まりの連続整数かを順序も含めて判定します。
+空配列はtrue、値や入れ子のキーは判定に影響せず、配列を変更しません。
 生成レポートには Go の行から PHP の文開始行への対応を含みます。
 列単位の位置情報やエラー表示の自動変換、本格パーサへの切替は未対応です。
 関数・機能の台帳と実テスト結果から、PHP バージョン別の対応状況を JSON／Markdown

@@ -44,6 +44,8 @@ and its [bounded value-copy contract](compatibility.md#bounded-array_values-cont
 `array_key_exists(int|string, array)` and its [bounded presence contract](compatibility.md#bounded-array_key_exists-contract)
 also remain within this excluded local generation capability; no browser/server
 operation, authentication route, resource mutation or auto-submit is introduced.
+The one-argument `array_is_list(array)` [list-status check](compatibility.md#bounded-array_is_list-contract)
+has the same local compiler exclusion; it adds no service operation or route.
 Changing the PHP oracle policy or adding a later series likewise adds no browser
 operation, resource, authentication route, WebMCP capability, or auto-submit.
 The legacy `array(...)` frontend addition stays within this excluded local

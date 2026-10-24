@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "rtrim", "booleans", "feature_integration"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "rtrim", "booleans", "feature_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -232,6 +232,15 @@ func TestUnsupported(t *testing.T) {
 		{name: "array_key_exists_arity_three", src: "<?php $exists = array_key_exists('x', [], 'extra');"},
 		{name: "array_key_exists_mixed_case_redeclare", src: "<?php function ArRaY_KeY_ExIsTs($key, $value) { return true; }"},
 		{name: "array_key_exists_alias", src: "<?php $exists = key_exists('x', ['x' => 1]);"},
+		{name: "array_is_list_int", src: "<?php $list = array_is_list(1);"},
+		{name: "array_is_list_string", src: "<?php $list = array_is_list('not an array');"},
+		{name: "array_is_list_bool", src: "<?php $list = array_is_list(true);"},
+		{name: "array_is_list_null", src: "<?php $list = array_is_list(null);"},
+		{name: "array_is_list_object", src: "<?php class X {} $value = new X(); $list = array_is_list($value);"},
+		{name: "array_is_list_no_args", src: "<?php $list = array_is_list();"},
+		{name: "array_is_list_extra_args", src: "<?php $list = array_is_list([], []);"},
+		{name: "array_is_list_redeclare", src: "<?php function ArRaY_Is_LiSt($value) { return true; }"},
+		{name: "array_is_list_result_as_array", src: "<?php $count = count(array_is_list([]));"},
 		{name: "if_else", src: "<?php if (true) { echo 'yes'; } else { echo 'no'; }"},
 		{name: "if_elseif", src: "<?php if (false) { echo 'no'; } elseif (true) { echo 'yes'; }"},
 		{name: "if_unbraced", src: "<?php if (true) echo 'yes';"},
@@ -465,6 +474,41 @@ func TestArrayKeyExistsRuntimeTypeGuard(t *testing.T) {
 				t.Fatalf("expected explicit %s runtime failure, got %v\n%s", tt.name, err, output)
 			}
 		})
+	}
+}
+
+// TestArrayIsListRuntimeTypeGuard covers the dynamic boundary permitted by
+// semantic analysis: a function parameter is unknown at generation time, but
+// array_is_list must still fail explicitly when it receives a scalar. This has
+// no native-PHP invocation or PHP error-equivalence claim.
+func TestArrayIsListRuntimeTypeGuard(t *testing.T) {
+	target := phpTarget(t)
+	src, err := os.ReadFile("fixtures/array_is_list_runtime_failure.php")
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := frontend.Parse(string(src), target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	generated, err := codegen.Generate(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	file := filepath.Join(dir, "main.go")
+	if err := os.WriteFile(file, generated, 0600); err != nil {
+		t.Fatal(err)
+	}
+	binary := filepath.Join(dir, "app")
+	if output, err := exec.Command("go", "build", "-o", binary, file).CombinedOutput(); err != nil {
+		t.Fatalf("build: %v\n%s\n%s", err, output, generated)
+	}
+	run := exec.Command(binary)
+	run.Env = []string{"PATH="}
+	output, err := run.CombinedOutput()
+	if err == nil || !bytes.Contains(output, []byte("array_is_list requires array")) {
+		t.Fatalf("expected explicit array_is_list runtime failure, got %v\n%s", err, output)
 	}
 }
 

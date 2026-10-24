@@ -401,6 +401,30 @@
       "limitations": ["No bool/null/float/resource key coercion; this is narrower than native PHP 8.3","No object second argument, recursive search, named arguments or key_exists alias","No mutation, reference or new array-key semantics","Native evidence compares stdout and exits, including is_bool and strict-bool observations; warning/exception equivalence is not claimed"]
     },
     {
+      "id": "php.builtin.array_is_list",
+      "kind": "builtin",
+      "name": "array_is_list(array)",
+      "implementation": "partial",
+      "contract": "One positional array argument returns true exactly when its outer keys, in insertion order, are consecutive integers starting at zero; the empty array is a list. Values are ignored and input is unchanged.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.array_is_list","test":"TestDifferential/array_is_list","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_is_list.php","assertions":["empty/contiguous keys are lists, gaps/order/string keys are not; normalized and replacement keys, nested values, dynamic calls and composition with array_keys/array_values match native stdout with strict boolean observations"]},
+        {"case_id":"unit.runtime.array_is_list_order","test":"TestArrayIsListOrderAndValues","file":"runtime/array_is_list_test.go","kind":"unit","assertions":["outer integer key order alone decides list status without input mutation; negative/extreme/binary keys additionally checked in runtime units"]},
+        {"case_id":"unit.runtime.array_is_list_types","test":"TestArrayIsListRejectsNonArray","file":"runtime/array_is_list_test.go","kind":"unit","assertions":["non-array inputs are rejected without conversion"]},
+        {"case_id":"negative.array_is_list_dynamic","test":"TestArrayIsListRuntimeTypeGuard","file":"tests/differential_test.go","kind":"negative","fixture":"tests/fixtures/array_is_list_runtime_failure.php","assertions":["generated binary rejects a dynamic non-array with nonzero exit and explicit message; no PHP error equivalence claim"]},
+        {"case_id":"negative.array_is_list_int","test":"TestUnsupported/array_is_list_int","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported int use is rejected before generation"]},
+        {"case_id":"negative.array_is_list_string","test":"TestUnsupported/array_is_list_string","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported string use is rejected before generation"]},
+        {"case_id":"negative.array_is_list_bool","test":"TestUnsupported/array_is_list_bool","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported bool use is rejected before generation"]},
+        {"case_id":"negative.array_is_list_null","test":"TestUnsupported/array_is_list_null","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported null use is rejected before generation"]},
+        {"case_id":"negative.array_is_list_object","test":"TestUnsupported/array_is_list_object","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported object use is rejected before generation"]},
+        {"case_id":"negative.array_is_list_no_args","test":"TestUnsupported/array_is_list_no_args","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported no args use is rejected before generation"]},
+        {"case_id":"negative.array_is_list_extra_args","test":"TestUnsupported/array_is_list_extra_args","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported extra args use is rejected before generation"]},
+        {"case_id":"negative.array_is_list_redeclare","test":"TestUnsupported/array_is_list_redeclare","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported redeclare use is rejected before generation"]},
+        {"case_id":"negative.array_is_list_result_as_array","test":"TestUnsupported/array_is_list_result_as_array","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported result as array use is rejected before generation"]}
+      ],
+      "limitations": ["Only the existing GoHP array/value subset; no new construction, reference or write semantics","No non-array conversion, named arguments or recursive validation","Native evidence compares stdout and normal exits, with is_bool/strict-bool observations; no PHP warning/exception equivalence claim"]
+    },
+    {
       "id": "php.builtin.array_map",
       "kind": "builtin",
       "name": "array_map",

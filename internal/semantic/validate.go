@@ -380,6 +380,15 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 			return valueType{kind: boolKind}, nil
 		}
+		if strings.EqualFold(expr.Text, "array_is_list") {
+			if len(args) != 1 {
+				return valueType{}, unsupported(expr.Line, "array_is_list expects one argument")
+			}
+			if args[0].kind != arrayKind && args[0].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "array_is_list requires an array")
+			}
+			return valueType{kind: boolKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "rtrim") {
 			if len(expr.Args) != 2 {
 				return valueType{}, unsupported(expr.Line, "rtrim expects two arguments")

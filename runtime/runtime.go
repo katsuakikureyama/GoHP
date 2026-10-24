@@ -204,6 +204,22 @@ func ArrayKeyExists(key, value any) bool {
 	return false
 }
 
+// ArrayIsList examines only outer keys in insertion order. Values, including
+// nested arrays, do not affect list status and are neither read nor copied.
+func ArrayIsList(value any) bool {
+	a, ok := value.(Array)
+	if !ok {
+		panic("array_is_list requires array")
+	}
+	for i, entry := range a.Entries {
+		key, ok := entry.Key.(int64)
+		if !ok || key != int64(i) {
+			return false
+		}
+	}
+	return true
+}
+
 func RTrim(v any, mask string) any {
 	s, ok := v.(string)
 	if !ok {
