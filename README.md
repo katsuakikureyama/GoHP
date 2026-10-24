@@ -32,6 +32,11 @@ Generated Go imports this module's `runtime` package; build inside this module,
 or add a dependency on a pinned GoHP commit in the consumer's `go.mod`. Never
 ship an unpinned local checkout replacement as a release dependency.
 
+Use fresh `-out` and `-report` paths for each invocation: existing destinations
+are rejected. A report requires a file output. Builders must wait for successful
+exit and verify report hashes before using either artifact; see the
+[artifact publication contract](docs/integration.md).
+
 `core.php` exercises a user function, integer sum, mixed ordered array,
 `foreach`, public class property, method call and `count`. Its expected output:
 

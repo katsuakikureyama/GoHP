@@ -23,6 +23,9 @@ func main() {
 		flag.Usage()
 		os.Exit(2)
 	}
+	if *report != "" && *out == "" {
+		check(fmt.Errorf("-report requires -out; use fresh candidate paths"))
+	}
 	src, e := os.ReadFile(*in)
 	check(e)
 	p, e := frontend.Parse(string(src), *version)
@@ -31,15 +34,16 @@ func main() {
 	check(e)
 	if *out == "" {
 		_, e = os.Stdout.Write(goSrc)
-	} else {
-		e = os.WriteFile(*out, goSrc, 0644)
+		check(e)
+		return
 	}
-	check(e)
+	files := []artifact{{path: *out, data: goSrc}}
 	if *report != "" {
 		b, e := json.MarshalIndent(map[string]any{"schema": "gohp.build/v0.1", "ir_version": ir.Version, "compiler_version": "0.1.0-dev", "php_target": *version, "source_sha256": fmt.Sprintf("%x", sha256.Sum256(src)), "generated_sha256": fmt.Sprintf("%x", sha256.Sum256(goSrc)), "input": *in, "status": "generated", "compatibility": "not established by compilation"}, "", "  ")
 		check(e)
-		check(os.WriteFile(*report, append(b, '\n'), 0644))
+		files = append(files, artifact{path: *report, data: append(b, '\n')})
 	}
+	check(publishArtifacts(files))
 }
 func check(e error) {
 	if e != nil {

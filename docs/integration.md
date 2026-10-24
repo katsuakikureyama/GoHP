@@ -3,8 +3,28 @@
 Gossip can invoke `gohp -in source.php -out candidate.go -php-version 8.3
 -report candidate.report.json` in an isolated build workspace. The command exits
 nonzero for unsupported syntax or semantic checks and produces no new Go output
-in that case. Use fresh candidate paths: pre-existing output is not deleted on
-failure, and report/write failures must invalidate the candidate.
+in that case. Both destination paths must be fresh and distinct. Existing files,
+directories, symlinks (including dangling links) and hard links are rejected without
+overwriting them. This also protects the input from output-path aliasing.
+
+The CLI stages complete files in each destination directory, then publishes Go
+source followed by the report using exclusive hard links. A reported publication
+failure attempts to remove only files published by this invocation. Errors during
+cleanup are returned, not hidden. Artifacts use private file permissions (0600).
+Destination filesystems must support hard links; no overwriting fallback exists.
+
+This is not crash-atomic across two files: interruption or filesystem failure can
+leave an incomplete pair. Builders must use a private, non-concurrently-mutated
+workspace, require exit code zero, verify both report hashes, and discard any
+failed candidate. A report's presence alone is not a commit marker. The CLI does
+not protect against an attacker changing destination directories concurrently.
+`-report` requires `-out`; stdout-only generation remains available without a report
+and callers must discard any partial stdout on failure. Repeated generation uses
+new candidate paths rather than overwriting a previous build.
+
+Capability/WebMCP scope: `gohp.cli.generate` is explicitly **excluded** from browser
+WebMCP exposure because it is a local compiler writing caller-owned build files.
+No browser operation, server resource, authentication route or auto-submit is added.
 
 Report schema `gohp.build/v0.1` includes IR/compiler versions, source and generated
 SHA-256, input path, PHP target and `generated` status. Consumer must record the
