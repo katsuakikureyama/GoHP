@@ -51,7 +51,10 @@ bonus:5
 The test harness executes native PHP, generates Go, compiles a standalone binary,
 and compares stdout byte for byte, requiring successful exits from both. Other
 fixtures check duplicate/numeric array keys, nested arrays, scalar conversions
-and PHP-version-dependent operator precedence. Unsupported syntax must fail
+and PHP-version-dependent operator precedence. The `legacy_arrays.php` fixture
+also covers `array(...)` syntax, empty returns, mixed nesting with `[]`, trailing
+commas and case-insensitive `array` spelling within the same closed array subset.
+Unsupported syntax must fail
 with a diagnostic; a separate runtime-negative test must fail on a missing key.
 Compilation alone never proves PHP compatibility.
 
@@ -59,6 +62,7 @@ Compilation alone never proves PHP compatibility.
 
 - [Architecture and decisions](docs/architecture.md)
 - [Compatibility and version matrix](docs/compatibility.md)
+- [Legacy array syntax boundary](docs/legacy-array-syntax.md)
 - [Function/feature catalog and verification-ledger design](docs/compatibility-registry.md)
 - [Generate and browse function/feature evidence](docs/compatibility-ledger.md)
 - [Upstream assessment](docs/upstream.md)
@@ -73,6 +77,7 @@ Compilation alone never proves PHP compatibility.
 
 PHP を読みやすい Go ソースへ変換する初期 PoC です。関数・配列・クラスを
 含む fixture を実際にビルドし、PHP との標準出力の一致を確認します。
+配列は `[]` と `array(...)` を同じ限定処理へ変換し、空配列や入れ子を比較対象にします。
 参照、クロージャ、継承、Composer や PHP 拡張、WordPress 全体は未対応です。
 未対応を互換性成功とは扱いません。正式ライセンスは監査と所有者判断待ちです。
 生成レポートには Go の行から PHP の文開始行への対応を含みます。

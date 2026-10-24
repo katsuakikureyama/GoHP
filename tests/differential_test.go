@@ -60,7 +60,7 @@ func TestDifferential(t *testing.T) {
 	if !strings.HasPrefix(actualPHPVersion, target+".") {
 		t.Fatalf("reference PHP version %s does not match GOHP_PHP_TARGET %s", actualPHPVersion, target)
 	}
-	for _, fixture := range []string{"core", "arrays", "max_array_key", "precedence"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -154,6 +154,13 @@ func TestUnsupported(t *testing.T) {
 		{name: "unknown_class", src: "<?php $x = new Missing();"},
 		{name: "function_arity", src: "<?php function x($a) { return $a; } echo x();"},
 		{name: "boolean_array_key", src: "<?php $a = [true => 1];"},
+		{name: "legacy_array_reference", src: "<?php $value = 1; $a = array(&$value);"},
+		{name: "legacy_array_unpacking", src: "<?php $values = [1]; $a = array(...$values);"},
+		{name: "legacy_array_dynamic_key", src: "<?php $key = 'key'; $a = array($key => 1);"},
+		{name: "legacy_array_empty_hole", src: "<?php $a = array(,);"},
+		{name: "legacy_array_mismatched_delimiter", src: "<?php $a = array(1];"},
+		{name: "legacy_array_nested_mismatched_delimiter", src: "<?php $a = array(array(1]);"},
+		{name: "legacy_array_bareword", src: "<?php $a = array;"},
 		{name: "magic_constructor", src: "<?php class X { public function __construct() {} }"},
 		{name: "nondecimal_integer", src: "<?php $a = 012;"},
 		{name: "reference", src: "<?php $a = &$b;"},

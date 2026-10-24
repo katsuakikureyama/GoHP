@@ -333,6 +333,13 @@ func (p *parser) expr(min int) ir.Expr {
 	case "int", "string", "var":
 		e.Kind = t.kind
 	case "id":
+		// array(...) is a language construct, not a builtin call. Both literal
+		// spellings share the same IR and the existing closed semantic boundary.
+		if strings.EqualFold(t.text, "array") {
+			p.need("(")
+			e = p.arrayLiteral(t.line, ")")
+			break
+		}
 		switch t.text {
 		case "true", "false":
 			e.Kind = "bool"
@@ -354,26 +361,7 @@ func (p *parser) expr(min int) ir.Expr {
 			e = p.expr(0)
 			p.need(")")
 		case "[":
-			e.Kind = "array"
-			e.Text = ""
-			if !p.accept("]") {
-				for {
-					v := p.expr(0)
-					k := ir.Expr{Kind: "auto", Line: v.Line}
-					if p.accept("=>") {
-						k = v
-						v = p.expr(0)
-					}
-					e.Args = append(e.Args, ir.Expr{Kind: "pair", Args: []ir.Expr{k, v}, Line: v.Line})
-					if p.accept("]") {
-						break
-					}
-					p.need(",")
-					if p.accept("]") {
-						break
-					}
-				}
-			}
+			e = p.arrayLiteral(t.line, "]")
 		default:
 			p.fail("unsupported expression")
 		}
@@ -407,6 +395,30 @@ func (p *parser) expr(min int) ir.Expr {
 	}
 	return e
 }
+
+func (p *parser) arrayLiteral(line int, end string) ir.Expr {
+	e := ir.Expr{Kind: "array", Line: line}
+	if p.accept(end) {
+		return e
+	}
+	for {
+		v := p.expr(0)
+		k := ir.Expr{Kind: "auto", Line: v.Line}
+		if p.accept("=>") {
+			k = v
+			v = p.expr(0)
+		}
+		e.Args = append(e.Args, ir.Expr{Kind: "pair", Args: []ir.Expr{k, v}, Line: v.Line})
+		if p.accept(end) {
+			return e
+		}
+		p.need(",")
+		if p.accept(end) {
+			return e
+		}
+	}
+}
+
 func (p *parser) args(end string) []ir.Expr {
 	var a []ir.Expr
 	if p.accept(end) {

@@ -30,16 +30,24 @@
     {
       "id": "php.syntax.array-literal",
       "kind": "syntax",
-      "name": "Array literals",
+      "name": "Short and legacy array literals",
       "implementation": "partial",
-      "contract": "Lowers ordered arrays with supported integer and string keys and values.",
+      "contract": "Lowers ordered [] and case-insensitive array(...) literals with supported integer and string keys and values.",
       "php_targets": ["7.4", "8.3"],
       "checks": [
         {"case_id": "diff.arrays", "test": "TestDifferential/arrays", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/arrays.php", "assertions": ["mixed keys, nested reads and count output match"]},
+        {"case_id": "diff.legacy_arrays", "test": "TestDifferential/legacy_arrays", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/legacy_arrays.php", "assertions": ["empty legacy arrays, mixed-case array spelling, literal keys, nested reads, trailing commas, function returns and foreach output match"]},
         {"case_id": "diff.max_array_key", "test": "TestDifferential/max_array_key", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/max_array_key.php", "assertions": ["explicit maximum integer key behavior matches"]},
+        {"case_id": "negative.legacy_array_reference", "test": "TestUnsupported/legacy_array_reference", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["legacy array references are rejected with a diagnostic code"]},
+        {"case_id": "negative.legacy_array_unpacking", "test": "TestUnsupported/legacy_array_unpacking", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["legacy array unpacking is rejected with a diagnostic code"]},
+        {"case_id": "negative.legacy_array_dynamic_key", "test": "TestUnsupported/legacy_array_dynamic_key", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["legacy array dynamic keys are rejected with a diagnostic code"]},
+        {"case_id": "negative.legacy_array_empty_hole", "test": "TestUnsupported/legacy_array_empty_hole", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["legacy array empty holes are rejected with a diagnostic code"]},
+        {"case_id": "negative.legacy_array_mismatched_delimiter", "test": "TestUnsupported/legacy_array_mismatched_delimiter", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["legacy array mismatched delimiters are rejected with a diagnostic code"]},
+        {"case_id": "negative.legacy_array_nested_mismatched_delimiter", "test": "TestUnsupported/legacy_array_nested_mismatched_delimiter", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["nested legacy array mismatched delimiters are rejected with a diagnostic code"]},
+        {"case_id": "negative.legacy_array_bareword", "test": "TestUnsupported/legacy_array_bareword", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["bare legacy array keyword is rejected with a diagnostic code"]},
         {"case_id": "unit.runtime.max_array_key", "test": "TestExplicitMaxArrayKeyOnlyBlocksFollowingAutomaticKey", "file": "runtime/runtime_test.go", "kind": "unit", "assertions": ["automatic key after maximum integer fails explicitly"]}
       ],
-      "limitations": ["No array union or writes", "No references", "Boolean keys are rejected"]
+      "limitations": ["No array union or writes", "No references or unpacking", "Only literal integer/string keys; dynamic and boolean keys are rejected"]
     },
     {
       "id": "php.syntax.array-index-read",
