@@ -4,7 +4,9 @@ function zeroise($number, $threshold) {
 }
 
 echo '[' . zeroise(42, 5) . "]\n";
-echo '[' . zeroise(-42, 5) . "]\n";
+// Negative integer literals are outside the parser subset; Gossip's typed
+// observer supplies negative int64 values directly to the generated function.
+echo '[' . zeroise('-42', 5) . "]\n";
 echo '[' . zeroise('007', 5) . "]\n";
 echo '[' . zeroise('', 3) . "]\n";
 echo '[' . zeroise(0, 0) . "]\n";

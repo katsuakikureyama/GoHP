@@ -30,9 +30,13 @@ or coercion equivalence evidence.
 
 `tests/fixtures/sprintf.php` retains the parameterized dynamic format used by
 `zeroise` and compares native PHP 8.3 >=8.3.36 stdout against the generated
-binary. It covers integer and string values, negative integers, an empty string,
+binary. It covers positive/zero integers, strings including a negative-number
+string, an empty string,
 width zero, no truncation and a multibyte string with byte width. The runtime and
 code-generation tests separately cover the width ceiling and rejected forms.
+Negative integer literals are outside the current parser subset: negative int64
+runtime values are tested directly and through Gossip's typed-input observer,
+not claimed as parsed negative literals in this native fixture.
 The compatibility catalog entry `php.builtin.sprintf-zero-pad` records those
 checks; a generation-only result is not a PHP compatibility pass.
 
