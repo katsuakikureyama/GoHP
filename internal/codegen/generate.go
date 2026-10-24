@@ -21,10 +21,17 @@ type generator struct {
 }
 
 func name(s string) string { return strings.ToLower(s) }
-func Generate(p ir.Program) (out []byte, err error) {
+func Generate(p ir.Program) ([]byte, error) {
+	out, _, err := GenerateWithMap(p)
+	return out, err
+}
+
+// GenerateWithMap returns formatted Go and a statement-level map of those exact bytes.
+func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			if x, ok := e.(error); ok {
+				out, sourceMap = nil, SourceMap{}
 				err = x
 			} else {
 				panic(e)
@@ -33,10 +40,10 @@ func Generate(p ir.Program) (out []byte, err error) {
 	}()
 	g := &generator{p: p, funcs: map[string]int{}, classes: map[string]bool{}, methods: map[string]bool{}}
 	if p.Version != ir.Version {
-		return nil, fmt.Errorf("IR001: unsupported IR version %q", p.Version)
+		return nil, SourceMap{}, fmt.Errorf("IR001: unsupported IR version %q", p.Version)
 	}
 	if err := semantic.Validate(p); err != nil {
-		return nil, err
+		return nil, SourceMap{}, err
 	}
 	for _, f := range p.Functions {
 		n := name(f.Name)
@@ -97,7 +104,15 @@ func Generate(p ir.Program) (out []byte, err error) {
 	g.emit("func main(){ v:=map[string]any{}; _=v\n")
 	g.stmts(p.Body, map[string]bool{}, false)
 	g.emit("}\n")
-	return format.Source([]byte(g.b.String()))
+	out, err = format.Source([]byte(g.b.String()))
+	if err != nil {
+		return nil, SourceMap{}, err
+	}
+	sourceMap, err = mapStatements(out)
+	if err != nil {
+		return nil, SourceMap{}, err
+	}
+	return out, sourceMap, nil
 }
 func (g *generator) emit(s string, a ...any)   { fmt.Fprintf(&g.b, s, a...) }
 func (g *generator) fail(line int, msg string) { panic(fmt.Errorf("PHP004 line %d: %s", line, msg)) }
@@ -128,6 +143,7 @@ func (g *generator) function(f ir.Function, c string) {
 }
 func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool) {
 	for _, s := range ss {
+		g.emit("// gohp:begin %d\n", s.Line)
 		switch s.Kind {
 		case "assign":
 			if s.Name == "this" || s.Name == "GLOBALS" || strings.HasPrefix(s.Name, "_") {
@@ -166,6 +182,7 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool) {
 		default:
 			g.fail(s.Line, "unsupported IR statement "+s.Kind)
 		}
+		g.emit("// gohp:end\n")
 	}
 }
 func (g *generator) expr(e ir.Expr, scope map[string]bool) string {

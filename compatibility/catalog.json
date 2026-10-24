@@ -1,0 +1,250 @@
+{
+  "schema": "gohp.compatibility.catalog/v0.1",
+  "maturity": "draft",
+  "entries": [
+    {
+      "id": "php.syntax.named-function",
+      "kind": "syntax",
+      "name": "Named functions with fixed value parameters and return",
+      "implementation": "partial",
+      "contract": "Lowers declared named functions, fixed value arguments and explicit returns in the closed subset.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["native PHP stdout equals generated Go stdout"]}
+      ],
+      "limitations": ["No optional, typed, variadic or by-reference parameters", "No closures or dynamic calls"]
+    },
+    {
+      "id": "php.syntax.foreach",
+      "kind": "syntax",
+      "name": "foreach over supported arrays",
+      "implementation": "partial",
+      "contract": "Iterates ordered GoHP arrays and binds value or key/value variables.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["key and value iteration output matches native PHP"]},
+        {"test": "TestUnsupported", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["scalar foreach is rejected with a diagnostic code"]}
+      ],
+      "limitations": ["No by-reference iteration", "Only supported array values"]
+    },
+    {
+      "id": "php.syntax.array-literal",
+      "kind": "syntax",
+      "name": "Array literals",
+      "implementation": "partial",
+      "contract": "Lowers ordered arrays with supported integer and string keys and values.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestDifferential/arrays", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/arrays.php", "assertions": ["mixed keys, nested reads and count output match"]},
+        {"test": "TestDifferential/max_array_key", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/max_array_key.php", "assertions": ["explicit maximum integer key behavior matches"]},
+        {"test": "TestExplicitMaxArrayKeyOnlyBlocksFollowingAutomaticKey", "file": "runtime/runtime_test.go", "kind": "unit", "assertions": ["automatic key after maximum integer fails explicitly"]}
+      ],
+      "limitations": ["No array union or writes", "No references", "Boolean keys are rejected"]
+    },
+    {
+      "id": "php.syntax.array-index-read",
+      "kind": "syntax",
+      "name": "Array index reads",
+      "implementation": "partial",
+      "contract": "Reads supported array values by supported keys.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestDifferential/arrays", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/arrays.php", "assertions": ["nested and keyed reads match fixture output"]},
+        {"test": "TestRuntimeFailureIsNotPass", "file": "tests/differential_test.go", "kind": "negative", "fixture": "tests/fixtures/runtime_failure.php", "assertions": ["missing key runtime failure is not reported as a pass"]}
+      ],
+      "limitations": ["Missing-key behavior is an explicit GoHP runtime failure, not a PHP warning-equivalence claim", "No index writes"]
+    },
+    {
+      "id": "php.syntax.class",
+      "kind": "syntax",
+      "name": "Classes, no-argument construction and methods",
+      "implementation": "partial",
+      "contract": "Lowers classes with public scalar defaults, no-argument construction, property reads and methods in the closed subset.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["method dispatch and public property read output match"]},
+        {"test": "TestUnsupported", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["missing property and wrong method arity are rejected"]}
+      ],
+      "limitations": ["No inheritance, constructors, visibility, static members, traits or interfaces"]
+    },
+    {
+      "id": "php.operator.add",
+      "kind": "operator",
+      "name": "Binary +",
+      "implementation": "partial",
+      "contract": "Performs supported integral addition and rejects statically known invalid operands.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["integer accumulation output matches"]},
+        {"test": "TestOverflowFailsExplicitly", "file": "runtime/runtime_test.go", "kind": "unit", "assertions": ["int64 overflow fails explicitly"]}
+      ],
+      "limitations": ["No float promotion", "Only limited numeric-string coercion"]
+    },
+    {
+      "id": "php.operator.concat",
+      "kind": "operator",
+      "name": "Binary .",
+      "implementation": "partial",
+      "contract": "Concatenates supported values using GoHP runtime conversion.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestDifferential/precedence", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/precedence.php", "assertions": ["target-version precedence output matches"]}
+      ],
+      "limitations": ["Only supported value types", "No complete PHP string conversion semantics"]
+    },
+    {
+      "id": "php.syntax.parentheses-and-precedence",
+      "kind": "syntax",
+      "name": "Parentheses and target-specific +/. precedence",
+      "implementation": "partial",
+      "contract": "Parses the closed expression grammar and distinguishes PHP 7.4 and 8.3 precedence for addition and concatenation.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestDifferential/precedence", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/precedence.php", "assertions": ["generated output equals the selected native PHP target"]},
+        {"test": "TestDifferential/arrays", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/arrays.php", "assertions": ["parenthesized integral addition output matches"]}
+      ],
+      "limitations": ["Only +, . and parentheses are covered"]
+    },
+    {
+      "id": "php.type.scalar-literals",
+      "kind": "type",
+      "name": "int64, string, bool and null literals",
+      "implementation": "partial",
+      "contract": "Represents the listed scalar literals in the closed subset.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestDifferential/arrays", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/arrays.php", "assertions": ["bool and null concatenation output matches fixture"]}
+      ],
+      "limitations": ["No floats, interpolation, complete casts or PHP type-juggling semantics"]
+    },
+    {
+      "id": "php.builtin.count",
+      "kind": "builtin",
+      "name": "count(array)",
+      "implementation": "partial",
+      "contract": "Supports one-argument, nonrecursive count for GoHP arrays only.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["array count output matches"]},
+        {"test": "TestUnsupported", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["count on a scalar is rejected"]}
+      ],
+      "limitations": ["No recursive or explicit second-argument mode", "No PHP count behavior for arbitrary Countable values", "Scalar rejection is not PHP warning/exception equivalence"]
+    },
+    {
+      "id": "php.builtin.strlen",
+      "kind": "builtin",
+      "name": "strlen",
+      "implementation": "unsupported",
+      "contract": "No lowering is provided.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [],
+      "limitations": ["Not supported"]
+    },
+    {
+      "id": "php.builtin.array_map",
+      "kind": "builtin",
+      "name": "array_map",
+      "implementation": "unsupported",
+      "contract": "No lowering is provided.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [],
+      "limitations": ["Callbacks and closures are unsupported"]
+    },
+    {
+      "id": "php.builtin.json_encode",
+      "kind": "builtin",
+      "name": "json_encode",
+      "implementation": "unsupported",
+      "contract": "No lowering is provided.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [],
+      "limitations": ["Go JSON behavior must not be assumed PHP-equivalent"]
+    },
+    {
+      "id": "php.syntax.closure",
+      "kind": "syntax",
+      "name": "Closures and callbacks",
+      "implementation": "unsupported",
+      "contract": "Closure syntax fails closed.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestUnsupported", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["closure source is rejected with a diagnostic code"]}
+      ],
+      "limitations": ["No callback or dynamic-call support"]
+    },
+    {
+      "id": "php.syntax.array-write-and-reference",
+      "kind": "syntax",
+      "name": "Array writes and references",
+      "implementation": "unsupported",
+      "contract": "Array element assignment and reference assignment fail closed.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestUnsupported", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["array write and reference assignment are rejected"]}
+      ],
+      "limitations": ["Copy-on-write and PHP reference semantics are not implemented"]
+    },
+    {
+      "id": "php.syntax.include-require",
+      "kind": "syntax",
+      "name": "include and require",
+      "implementation": "unsupported",
+      "contract": "Include syntax fails closed.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestUnsupported", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["include source is rejected with a diagnostic code"]}
+      ],
+      "limitations": ["No autoloading, include paths or Composer resolver"]
+    },
+    {
+      "id": "php.type.float",
+      "kind": "type",
+      "name": "Floating-point literals and values",
+      "implementation": "unsupported",
+      "contract": "Float literals fail closed.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestUnsupported", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["float literal source is rejected with a diagnostic code"]}
+      ],
+      "limitations": ["No PHP floating-point or promotion semantics"]
+    },
+    {
+      "id": "php.extension.database",
+      "kind": "extension",
+      "name": "mysqli, PDO and SQLite extensions",
+      "implementation": "unsupported",
+      "contract": "No extension bindings or database operations are provided.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [],
+      "limitations": ["No credentials, DB writes or extension equivalence claim"]
+    },
+    {
+      "id": "gohp.tooling.cli-generate",
+      "kind": "tooling",
+      "name": "gohp CLI generation and artifact publication",
+      "implementation": "implemented",
+      "contract": "Writes fresh generated Go and optional report artifacts without replacing existing or aliased destinations.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestCLIWritesFreshOutputAndReport", "file": "cmd/gohp/main_test.go", "kind": "compiler", "assertions": ["fresh output and report are written with consistent hashes"]},
+        {"test": "TestCLIRejectsExistingOrAliasedArtifactsWithoutClobbering", "file": "cmd/gohp/main_test.go", "kind": "compiler", "assertions": ["existing and aliased destinations are preserved"]},
+        {"test": "TestCLIFailuresLeaveNoArtifacts", "file": "cmd/gohp/main_test.go", "kind": "compiler", "assertions": ["tested path-validation and generation failures leave no newly published artifacts"]}
+      ],
+      "limitations": ["A successful generation report is not a PHP compatibility pass", "No crash-atomic two-file publication; cleanup may fail on filesystem errors", "Requires hard-link support and a private, non-concurrently-mutated workspace"]
+    },
+    {
+      "id": "gohp.tooling.statement-source-map",
+      "kind": "tooling",
+      "name": "Statement-level PHP-to-Go source maps",
+      "implementation": "partial",
+      "contract": "Publishes final formatted Go line ranges mapped to PHP statement start lines.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"test": "TestStatementSourceMap", "file": "internal/codegen/sourcemap_test.go", "kind": "unit", "assertions": ["nested statements, methods and formatted output map to expected PHP lines"]},
+        {"test": "TestSourceMapUnknownPositionsAndFailure", "file": "internal/codegen/sourcemap_test.go", "kind": "unit", "assertions": ["unknown positions are omitted and failed generation leaks no map"]},
+        {"test": "TestRuntimeFailureIsNotPass", "file": "tests/differential_test.go", "kind": "negative", "fixture": "tests/fixtures/runtime_failure.php", "assertions": ["a real generated Go panic frame resolves to the failing PHP statement"]}
+      ],
+      "limitations": ["Not Source Map v3", "No columns, multiple source files, debugger integration or PHP semantic guarantee"]
+    }
+  ]
+}

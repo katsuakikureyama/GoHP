@@ -44,7 +44,9 @@ readiness, not evidence that GitHub Actions has already run.
 References, array mutation/COW optimization, closures, exceptions, inheritance,
 include/autoload, Composer package resolution, most builtins and all extension
 adapters remain unsupported. No WordPress application compatibility, DB mutation
-compatibility, source maps, production sandbox or performance guarantee exists.
+compatibility, production sandbox or performance guarantee exists.
+Statement-level source maps are now emitted in build reports; full expression
+spans and automatic diagnostic/stack-trace rewriting remain unimplemented.
 Some valid PHP expressions compile but fail explicitly when they reach an
 unsupported runtime value operation; compilation is not functional PASS.
 

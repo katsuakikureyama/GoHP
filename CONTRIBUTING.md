@@ -12,10 +12,15 @@ production credentials to tests. Go packages currently have no external dependen
 
 ## Small follow-up roadmap
 
-1. Full PHP frontend assessment and structured diagnostics/source maps.
+1. Full PHP frontend adapter spike following the [assessment](docs/parser-adapter-assessment.md),
+   structured diagnostics and expression spans beyond the initial
+   [statement-level source maps](docs/source-maps.md).
 2. Lvalue/reference model and array writes, copy-on-write differential cases.
 3. Closures, callbacks, typed values, exceptions and classes beyond the subset.
-4. Composer/extension metadata reader and machine-readable compatibility registry.
+4. Implement the [compatibility ledger design](docs/compatibility-registry.md):
+   validate the seed catalog, assign stable test-case IDs, publish per-target
+   evidence and generate function/feature status views; then add the
+   Composer/extension metadata reader.
 5. Sandboxed versioned Gossip builder API, WordPress adapter fixtures and hooks.
 6. Broaden PHP versions and compare side effects, warning/exception semantics.
 

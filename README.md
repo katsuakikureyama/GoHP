@@ -59,7 +59,10 @@ Compilation alone never proves PHP compatibility.
 
 - [Architecture and decisions](docs/architecture.md)
 - [Compatibility and version matrix](docs/compatibility.md)
+- [Function/feature catalog and verification-ledger design](docs/compatibility-registry.md)
 - [Upstream assessment](docs/upstream.md)
+- [Parser adapter assessment](docs/parser-adapter-assessment.md)
+- [Statement-level source maps](docs/source-maps.md)
 - [Gossip integration contract](docs/integration.md)
 - [Development and roadmap](CONTRIBUTING.md)
 - [Security boundaries](SECURITY.md)
@@ -71,3 +74,7 @@ PHP を読みやすい Go ソースへ変換する初期 PoC です。関数・�
 含む fixture を実際にビルドし、PHP との標準出力の一致を確認します。
 参照、クロージャ、継承、Composer や PHP 拡張、WordPress 全体は未対応です。
 未対応を互換性成功とは扱いません。正式ライセンスは監査と所有者判断待ちです。
+生成レポートには Go の行から PHP の文開始行への対応を含みます。
+列単位の位置情報やエラー表示の自動変換、本格パーサへの切替は未対応です。
+関数・機能の初期台帳と、PHP バージョン別の検証結果を紐付ける設計も追加しています。
+対応状況の自動集計はまだ未実装です。

@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -104,7 +106,7 @@ func TestRuntimeFailureIsNotPass(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	b, e := codegen.Generate(p)
+	b, sourceMap, e := codegen.GenerateWithMap(p)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -116,4 +118,16 @@ func TestRuntimeFailureIsNotPass(t *testing.T) {
 	if e == nil || !bytes.Contains(o, []byte("undefined array key")) {
 		t.Fatalf("expected explicit runtime failure: %v %s", e, o)
 	}
+	// Resolve an actual generated-code stack frame, not a guessed Go line.
+	frames := regexp.MustCompile(regexp.QuoteMeta(file)+`:(\d+)`).FindAllSubmatch(o, -1)
+	for _, frame := range frames {
+		line, err := strconv.Atoi(string(frame[1]))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if phpLine, ok := sourceMap.PHPLine(line); ok && phpLine == 3 {
+			return
+		}
+	}
+	t.Fatalf("runtime failure has no frame mapping to PHP line 3: %s", o)
 }

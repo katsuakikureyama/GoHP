@@ -11,6 +11,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/katsuakikureyama/GoHP/internal/codegen"
 )
 
 var gohpBinary string
@@ -84,6 +86,25 @@ func TestCLIWritesFreshOutputAndReport(t *testing.T) {
 			}
 			if got := provenance["status"]; got != "generated" {
 				t.Errorf("status = %v, want generated", got)
+			}
+			var mappedReport struct {
+				Input     string            `json:"input"`
+				Output    string            `json:"output"`
+				SourceMap codegen.SourceMap `json:"source_map"`
+			}
+			if err := json.Unmarshal(readFile(t, report), &mappedReport); err != nil {
+				t.Fatal(err)
+			}
+			if mappedReport.Input != source || mappedReport.Output != output || mappedReport.SourceMap.Schema != "gohp.sourcemap/v0.1" || mappedReport.SourceMap.Precision != "statement-start-line" {
+				t.Fatalf("invalid map identities/contract: %+v", mappedReport)
+			}
+			if len(mappedReport.SourceMap.Mappings) != 1 {
+				t.Fatalf("expected one echo mapping: %+v", mappedReport.SourceMap)
+			}
+			entry := mappedReport.SourceMap.Mappings[0]
+			lines := strings.Split(string(generated), "\n")
+			if entry.SourceLine != 2 || entry.GeneratedStartLine != entry.GeneratedEndLine || entry.GeneratedStartLine < 1 || entry.GeneratedStartLine > len(lines) || !strings.Contains(lines[entry.GeneratedStartLine-1], `rt.Echo("ok")`) {
+				t.Fatalf("report does not map exact published Go echo to PHP line 2: %+v", entry)
 			}
 			if got := readFile(t, source); string(got) != validPHP {
 				t.Errorf("source changed to %q", got)

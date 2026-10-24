@@ -27,7 +27,10 @@ WebMCP exposure because it is a local compiler writing caller-owned build files.
 No browser operation, server resource, authentication route or auto-submit is added.
 
 Report schema `gohp.build/v0.1` includes IR/compiler versions, source and generated
-SHA-256, input path, PHP target and `generated` status. Consumer must record the
+SHA-256, input path, PHP target and `generated` status. Additive fields `output`
+and `source_map` identify the generated file and provide a versioned,
+[statement-level line map](source-maps.md); consumers must tolerate unknown
+fields, and older reports may omit both. Consumer must record the
 exact GoHP Git revision and Go toolchain, build source against the same runtime
 revision, and execute isolated differential fixtures before promoting status.
 No automatic plugin activation, DB migration, source upload or deployment occurs.

@@ -1,5 +1,11 @@
 # Compatibility inventory (Phase 0)
 
+The [verification-ledger design](compatibility-registry.md) separates implemented
+contracts from version-specific test evidence. Its initial
+[function/feature catalog](../compatibility/catalog.json) is draft data linked to
+existing checks; automatic status/report generation is not implemented yet.
+This table is the current curated summary, not a blanket support claim.
+
 | Area | Current status | Evidence / gap |
 |---|---|---|
 | PHP 7.4 / 8.3 | Closed shared subset; version-dependent `. / +` precedence | Differential fixtures run against each native version |
@@ -30,7 +36,8 @@ record exact source/dist revisions, transitive requirements, `php`, `ext-*`,
 platform constraints, generated/vendor code, scripts and licenses. Never run
 install/update or arbitrary hooks for metadata inspection. Resolve each requirement
 against a machine-readable registry with `unsupported`, `compile-pass`, and
-`differential-pass` distinct. The inventory reader and registry are not implemented.
+`differential-pass` distinct. The inventory reader and executable registry/status
+pipeline are not implemented; the draft catalog and ledger design are available.
 
 The current harness compares stdout and successful exit status. It does **not**
 validate filesystem side effects, DB mutation, PHP exception identity, warnings,
