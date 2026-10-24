@@ -78,6 +78,7 @@ See the [compatibility version policy](docs/compatibility.md#active-php-version-
 - [Legacy array syntax boundary](docs/legacy-array-syntax.md)
 - [Literal-mask rtrim boundary](docs/rtrim-boundary.md)
 - [Bounded `sprintf` zero-padding boundary](docs/sprintf-boundary.md)
+- [Bounded `str_replace` string boundary](docs/str-replace-boundary.md)
 - [Boolean validation subset](docs/boolean-boundary.md)
 - [Function/feature catalog and verification-ledger design](docs/compatibility-registry.md)
 - [Generate and browse function/feature evidence](docs/compatibility-ledger.md)
@@ -96,6 +97,7 @@ PHP を読みやすい Go ソースへ変換する初期 PoC です。関数・�
 配列は `[]` と `array(...)` を同じ限定処理へ変換し、空配列や入れ子を比較対象にします。
 `rtrim` は文字列入力＋明示的な固定文字一覧（範囲指定なし）の2引数だけを対象にします。
 `sprintf` は `%0Ns`（N は 0〜4096 の正規十進幅）の文字列／整数値だけを、byte 幅の左ゼロ埋めとして対象にします。
+`str_replace` は3つの文字列だけを、byte 単位・case-sensitive・non-overlap の置換として対象にします。
 単一分岐の `if`、短絡 `&&`、scalar の `===`、限定型の `(bool)` と型判定・ASCII小文字化も比較対象にします。
 参照、クロージャ、継承、Composer や PHP 拡張、WordPress 全体は未対応です。
 未対応を互換性成功とは扱いません。正式ライセンスは監査と所有者判断待ちです。

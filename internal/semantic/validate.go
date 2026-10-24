@@ -329,6 +329,21 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		if !validName(expr.Text) {
 			return valueType{}, malformed(expr.Line, "invalid function name")
 		}
+		if strings.EqualFold(expr.Text, "str_replace") {
+			if len(expr.Args) != 3 {
+				return valueType{}, unsupported(expr.Line, "str_replace expects three arguments")
+			}
+			args, err := v.exprs(expr.Args, scope)
+			if err != nil {
+				return valueType{}, err
+			}
+			for _, arg := range args {
+				if arg.kind != stringKind && arg.kind != unknownKind {
+					return valueType{}, unsupported(expr.Line, "str_replace requires three string arguments")
+				}
+			}
+			return valueType{kind: stringKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "sprintf") {
 			if len(expr.Args) != 2 {
 				return valueType{}, unsupported(expr.Line, "sprintf expects two arguments")

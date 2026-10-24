@@ -43,6 +43,11 @@ The legacy `array(...)` frontend addition stays within this excluded local
 compiler capability; it adds no service operation or authentication change.
 The literal-mask `rtrim` addition also stays within this exclusion; it does not
 introduce a browser operation, filesystem path resolver or network call.
+The three-string `str_replace` addition remains the same excluded local
+`gohp.cli.generate` capability, with no UI operation, route or authentication
+change. Array/count/coercion forms remain outside its
+[explicit subset contract](str-replace-boundary.md).
+
 The bounded `sprintf('%0Ns', value)` addition remains the same excluded local
 `gohp.cli.generate` capability: developer-only source translation, no browser
 operation or new service/authentication route. Dynamic formats and values are

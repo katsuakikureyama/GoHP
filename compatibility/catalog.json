@@ -324,6 +324,22 @@
       "limitations": ["No general sprintf grammar", "Only %0Ns with canonical decimal width 0..4096", "No PHP scalar/object coercion", "Widths count UTF-8 bytes rather than characters; input is never truncated", "Rejections are not PHP warning or TypeError equivalence"]
     },
     {
+      "id": "php.builtin.str-replace-strings",
+      "kind": "builtin",
+      "name": "str_replace(string, string, string)",
+      "implementation": "partial",
+      "contract": "Supports exactly three string arguments with byte-wise, case-sensitive, non-overlapping replace-all; empty search returns the subject unchanged.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id": "diff.str_replace", "test": "TestDifferential/str_replace", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/str_replace.php", "assertions": ["supported replace-all forms, including empty search/replacement, overlap, non-rescanning insertion, call spelling and multibyte strings match native PHP stdout byte-for-byte"]},
+        {"case_id": "unit.codegen.str_replace", "test": "TestStrReplaceLowersToRuntimeBoundary", "file": "internal/codegen/str_replace_test.go", "kind": "unit", "assertions": ["case-insensitive builtin spelling lowers through the runtime boundary"]},
+        {"case_id": "negative.codegen.str_replace", "test": "TestStrReplaceKnownUnsupportedFormsFailBeforeGeneration", "file": "internal/codegen/str_replace_test.go", "kind": "negative", "assertions": ["wrong arity, static non-string arguments and builtin redeclaration fail with diagnostics"]},
+        {"case_id": "unit.runtime.str_replace", "test": "TestStrReplaceStrings", "file": "runtime/str_replace_test.go", "kind": "unit", "assertions": ["empty needle, non-overlap, no rescanning, empty replacement, case sensitivity, multibyte, NUL and invalid UTF-8 byte behavior remain explicit"]},
+        {"case_id": "negative.runtime.str_replace", "test": "TestStrReplaceRejectsNonStringInEveryPosition", "file": "runtime/str_replace_test.go", "kind": "negative", "assertions": ["dynamic non-string values fail at the runtime boundary in search, replacement and subject positions"]}
+      ],
+      "limitations": ["Exactly three string arguments", "No arrays or optional by-reference count", "No scalar/object coercion", "No regular expressions or case-insensitive replacement", "No PHP warning or TypeError equivalence"]
+    },
+    {
       "id": "php.builtin.array_map",
       "kind": "builtin",
       "name": "array_map",
