@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/katsuakikureyama/GoHP/internal/ir"
+	"github.com/katsuakikureyama/GoHP/internal/semantic"
 )
 
 type generator struct {
@@ -33,6 +34,9 @@ func Generate(p ir.Program) (out []byte, err error) {
 	g := &generator{p: p, funcs: map[string]int{}, classes: map[string]bool{}, methods: map[string]bool{}}
 	if p.Version != ir.Version {
 		return nil, fmt.Errorf("IR001: unsupported IR version %q", p.Version)
+	}
+	if err := semantic.Validate(p); err != nil {
+		return nil, err
 	}
 	for _, f := range p.Functions {
 		n := name(f.Name)

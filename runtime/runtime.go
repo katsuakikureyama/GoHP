@@ -11,8 +11,9 @@ import (
 
 type Entry struct{ Key, Value any }
 type Array struct {
-	Entries []Entry
-	next    int64
+	Entries     []Entry
+	next        int64
+	nextBlocked bool
 }
 
 func Key(v any) any {
@@ -33,14 +34,18 @@ func NewArray(es ...Entry) Array {
 	for _, e := range es {
 		k := e.Key
 		if k == nil {
+			if a.nextBlocked {
+				panic("array key overflow unsupported")
+			}
 			k = a.next
 		}
 		k = Key(k)
 		if n, ok := k.(int64); ok && n >= a.next {
 			if n == math.MaxInt64 {
-				panic("array key overflow unsupported")
+				a.nextBlocked = true
+			} else {
+				a.next = n + 1
 			}
-			a.next = n + 1
 		}
 		found := false
 		for i := range a.Entries {
@@ -58,7 +63,7 @@ func NewArray(es ...Entry) Array {
 }
 func Clone(v any) any {
 	if a, ok := v.(Array); ok {
-		b := Array{next: a.next}
+		b := Array{next: a.next, nextBlocked: a.nextBlocked}
 		for _, e := range a.Entries {
 			b.Entries = append(b.Entries, Entry{e.Key, Clone(e.Value)})
 		}

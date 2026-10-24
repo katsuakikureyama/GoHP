@@ -19,6 +19,12 @@
 | XML / PCRE / serialization | Unsupported | Go library behavior must not be assumed equivalent |
 | WordPress / plugins / themes | Not runnable | Independent adapter and pinned oracle required |
 
+Before Go source generation, a semantic pass validates IR operand shape and
+rejects statically known mismatches such as `count(1)`, scalar `foreach`/indexing,
+and a known class receiver using an absent property, method, or wrong arity.
+Values whose type genuinely depends on runtime input remain protected by explicit
+runtime failures; validation success is not a differential compatibility result.
+
 Composer inventory plan: read `composer.json` and `composer.lock` as data only;
 record exact source/dist revisions, transitive requirements, `php`, `ext-*`,
 platform constraints, generated/vendor code, scripts and licenses. Never run

@@ -25,7 +25,7 @@ func TestDifferential(t *testing.T) {
 	if target != "7.4" && target != "8.3" {
 		t.Fatalf("unsupported reference PHP %s", target)
 	}
-	for _, fixture := range []string{"core", "arrays", "precedence"} {
+	for _, fixture := range []string{"core", "arrays", "max_array_key", "precedence"} {
 		t.Run(fixture, func(t *testing.T) {
 			file := filepath.Join("fixtures", fixture+".php")
 			src, e := os.ReadFile(file)
@@ -70,6 +70,7 @@ func TestDifferential(t *testing.T) {
 func TestUnsupported(t *testing.T) {
 	for _, src := range []string{
 		"<?php $f = function ($x) { return $x; };", "<?php include 'x.php';", "<?php $x = 1.5;", "<?php echo unknown();", "<?php echo $undefined;", "<?php $x = new Missing();", "<?php function x($a) { return $a; } echo x();", "<?php $a = [true => 1];", "<?php class X { public function __construct() {} }", "<?php $a = 012;", "<?php $a = &$b;", "<?php $a = [1]; $a[0] = 2;", "<?php return 1;",
+		"<?php echo count(1);", "<?php foreach (1 as $value) { echo $value; }", "<?php $value = 1; echo $value[0];", "<?php class X { public $name = 'x'; } $x = new X(); echo $x->missing;", "<?php class X { public function render($value) { return $value; } } $x = new X(); echo $x->render();",
 	} {
 		p, e := frontend.Parse(src, "8.3")
 		if e == nil {
@@ -80,6 +81,18 @@ func TestUnsupported(t *testing.T) {
 		} else if !strings.Contains(e.Error(), "PHP00") {
 			t.Errorf("missing diagnostic code: %v", e)
 		}
+	}
+}
+
+func TestMalformedIRFailsWithoutPanic(t *testing.T) {
+	p, e := frontend.Parse("<?php echo 1 + 2;", "8.3")
+	if e != nil {
+		t.Fatal(e)
+	}
+	p.Body[0].Expr.Args = p.Body[0].Expr.Args[:1]
+	_, e = codegen.Generate(p)
+	if e == nil || !strings.Contains(e.Error(), "IR002") {
+		t.Fatalf("malformed IR was not rejected safely: %v", e)
 	}
 }
 func TestRuntimeFailureIsNotPass(t *testing.T) {

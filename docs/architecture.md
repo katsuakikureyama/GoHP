@@ -14,8 +14,10 @@ PHP bytes -> frontend lexer/parser -> versioned semantic subset IR
 `internal/frontend` owns tokens, source lines and PHP-version precedence.
 `internal/ir` is independent of syntax tokens and contains expressions, statements,
 functions and classes. IR version is `0.1`; reject incompatible IR versions.
-`internal/codegen` performs name/arity/scope checks and lowers IR into direct Go
-calls, loops and structs. `runtime` implements the supported PHP value operations.
+`internal/semantic` validates IR shape and rejects statically known type/operation
+mismatches before generation. `internal/codegen` performs the remaining
+name/arity/scope checks and lowers IR into direct Go calls, loops and structs.
+`runtime` guards values that remain dynamic and implements supported operations.
 The CLI is the initial versioned adapter boundary, not a public Go API promise.
 No WordPress hooks or special compiler behavior exist in the core.
 
@@ -45,8 +47,8 @@ separate semantic tables and native reference runners before acceptance.
 
 ## Next decisions
 
-Adopt a full version-aware parser adapter; add typed validation before expanding
-runtime semantics. Design explicit lvalue/reference cells before array writes or
+Adopt a full version-aware parser adapter; extend validation as the type model
+grows. Design explicit lvalue/reference cells before array writes or
 closures. Add scalar types and conversions with warning/exception differential
 fixtures; then inheritance and include/autoload boundaries. Source maps, structured
 runtime diagnostics and persistent compatibility reports remain open work.
