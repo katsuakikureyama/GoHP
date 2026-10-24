@@ -1,0 +1,10 @@
+{
+  "name": "gohp-fixture/project",
+  "license": "proprietary",
+  "require": {"php": "^7.4 || ^8.3", "ext-json": "*", "gohp-fixture/library": "^1.0", "virtual/logger": "*"},
+  "require-dev": {"gohp-fixture/dev-tool": "^2.0"},
+  "scripts": {"post-install-cmd": "@php -r 'file_put_contents(\"must-not-exist\", \"secret-script-value\");'"},
+  "autoload": {"psr-4": {"Fixture\\": "src/"}, "files": ["must-not-execute.php"]},
+  "config": {"platform": {"php": "8.3.0", "ext-missing": false}},
+  "repositories": [{"type": "vcs", "url": "https://secret-repository-value@example.invalid/private"}]
+}

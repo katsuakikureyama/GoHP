@@ -18,8 +18,8 @@ production credentials to tests. Go packages currently have no external dependen
 2. Lvalue/reference model and array writes, copy-on-write differential cases.
 3. Closures, callbacks, typed values, exceptions and classes beyond the subset.
 4. Extend the [experimental compatibility ledger](docs/compatibility-ledger.md)
-   with reviewed historical applicability and the Composer/extension metadata
-   reader. Read-only multi-run views and target/kind/status filters now exist;
+   with reviewed historical applicability and PHP callsite inventory. A bounded
+   Composer metadata reader, read-only multi-run views and target/kind/status filters now exist;
    they never combine runs into a support verdict. Keep case links and limits current.
 5. Sandboxed versioned Gossip builder API, WordPress adapter fixtures and hooks.
 6. Broaden PHP versions and compare side effects, warning/exception semantics.

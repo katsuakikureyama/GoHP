@@ -61,6 +61,7 @@ Compilation alone never proves PHP compatibility.
 - [Compatibility and version matrix](docs/compatibility.md)
 - [Function/feature catalog and verification-ledger design](docs/compatibility-registry.md)
 - [Generate and browse function/feature evidence](docs/compatibility-ledger.md)
+- [Read Composer requirements without executing code](docs/compatibility.md#composer-metadata-inventory)
 - [Upstream assessment](docs/upstream.md)
 - [Parser adapter assessment](docs/parser-adapter-assessment.md)
 - [Statement-level source maps](docs/source-maps.md)
@@ -82,3 +83,5 @@ PHP を読みやすい Go ソースへ変換する初期 PoC です。関数・�
 保存済みの複数実行結果は `gohp-compat-view` で並べて表示し、PHP バージョン・種別・
 結果で絞り込めます。過去の PASS と新しい失敗は別々に保持します。
 現行 revision への適用判断・複数バージョンをまとめた対応認定・プロジェクト全体の互換性判定は未対応です。
+`gohp-inventory` は `composer.json` / `composer.lock` から依存・PHP条件・拡張を
+読み取ります。インストールやフック実行はせず、読取成功でも互換性は未確認のままです。

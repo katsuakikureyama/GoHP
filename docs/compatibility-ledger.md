@@ -65,7 +65,8 @@ expected-rejection checks pass.
 Reports record the catalog/event hashes, actual toolchain and PHP version,
 platform, build flags and source fingerprint. The source fingerprint is SHA-256
 of a lexically ordered JSON list of `{path, sha256}` for Go/PHP files, `go.mod`,
-`go.sum` when present and `compatibility/catalog.json`, excluding `.git`, `build`
+`go.sum` when present, `compatibility/catalog.json` and the inventory's
+`internal/inventory/testdata/**/composer.json` / `composer.lock` fixtures, excluding `.git`, `build`
 and `.cache` trees. It does not hash documentation or container configuration;
 image identities and flags are recorded separately. Source must not change during
 the run. A hash binds bytes; it is not a signature or a guarantee of trusted code.
@@ -182,8 +183,10 @@ Its catalog checks are Go tooling tests, never proof of PHP semantics.
 ## Remaining work
 
 Historical applicability decisions, combined-target support verdicts, remote
-query APIs, project/Composer inventory and stronger semantic comparisons remain
-unimplemented. Read-only per-run views and filtering are implemented. The catalog
+query APIs, PHP callsite inventory and stronger semantic comparisons remain
+unimplemented. A bounded [Composer metadata reader](compatibility.md#composer-metadata-inventory)
+and read-only per-run views/filtering are implemented; dependency resolution and
+project compatibility decisions are not. The catalog
 is deliberately incomplete and the ledger's per-case verdict is not a blanket
 `supported` state. Add contracts, cases and negative boundaries together when
 extending a function or feature; do not mark untested modes green.

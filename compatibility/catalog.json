@@ -260,6 +260,20 @@
         {"case_id": "unit.compat.view", "test": "TestViewKeepsRunsAndFailureVisibleThroughFilters", "file": "internal/compat/archive_test.go", "kind": "unit", "assertions": ["target and status filters retain each run, its overall failure, configuration and all cases", "archive text cannot insert raw HTML or Markdown links"]}
       ],
       "limitations": ["Internal consistency only, not authenticity, source revalidation or CI job success", "No latest/best selection, revision applicability or combined-target support verdict", "No PHP language compatibility claim from these Go-only tooling tests"]
+    },
+    {
+      "id": "gohp.tooling.composer-inventory",
+      "kind": "tooling",
+      "name": "Read-only Composer metadata inventory",
+      "implementation": "partial",
+      "contract": "Lists manifest and lock declarations without execution or resolution; keeps every dependency's compatibility unverified.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"case_id": "unit.inventory.declarations", "test": "TestReadKeepsDeclarationsSeparateWithoutExecuting", "file": "internal/inventory/read_test.go", "kind": "unit", "assertions": ["root, lock, dev and package-link declarations retain their source and relation", "references and false overrides survive; command bodies and URLs are omitted; inputs unchanged"]},
+        {"case_id": "unit.inventory.missing_lock", "test": "TestReadMissingLockIsNotCompatibilityEvidence", "file": "internal/inventory/read_test.go", "kind": "unit", "assertions": ["missing lock is explicit and dependencies remain unverified"]},
+        {"case_id": "unit.inventory.invalid", "test": "TestReadRejectsAmbiguousAndUnsafeMetadata", "file": "internal/inventory/read_test.go", "kind": "unit", "assertions": ["duplicate JSON keys, malformed selected fields, unsafe files and oversized inputs are rejected"]}
+      ],
+      "limitations": ["No PHP callsite inventory, dependency solver or package/extension support verdict", "No vendor/source inspection, lock freshness validation, license decision or full Composer schema validation", "Scripts/autoload recorded only by event/mode name; no hooks or plugins execute"]
     }
   ]
 }

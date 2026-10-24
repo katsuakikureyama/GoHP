@@ -13,7 +13,9 @@ single-run test evidence, per-target JSON/Markdown and CI artifacts. See the
 [ledger operation contract](compatibility-ledger.md). The remaining sections
 preserve the design direction; read-only multi-run views and target/kind/status
 filters are implemented in `gohp-compat-view`. Historical applicability, combined
-support verdicts, project inventory and service APIs are still follow-ups. No dashboard, automatic
+support verdicts, PHP callsite inventory and service APIs are still follow-ups.
+A read-only [Composer metadata inventory](compatibility.md#composer-metadata-inventory)
+exists without resolving requirements or certifying packages. No dashboard, automatic
 compatibility promotion or deployment is added.
 
 ## Catalog: what do we implement?

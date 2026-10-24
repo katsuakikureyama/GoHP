@@ -218,7 +218,8 @@ func sourceFingerprint(root string) (string, error) {
 			return nil
 		}
 		ext := filepath.Ext(rel)
-		if ext != ".go" && ext != ".php" && rel != "go.mod" && rel != "go.sum" && rel != "compatibility/catalog.json" {
+		inventoryFixture := strings.HasPrefix(rel, "internal/inventory/testdata/") && (filepath.Base(rel) == "composer.json" || filepath.Base(rel) == "composer.lock")
+		if ext != ".go" && ext != ".php" && rel != "go.mod" && rel != "go.sum" && rel != "compatibility/catalog.json" && !inventoryFixture {
 			return nil
 		}
 		if d.Type()&os.ModeSymlink != 0 {
