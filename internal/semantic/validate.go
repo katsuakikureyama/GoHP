@@ -285,11 +285,11 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		if !validName(expr.Text) {
 			return valueType{}, malformed(expr.Line, "invalid function name")
 		}
-		args, err := v.exprs(expr.Args, scope)
-		if err != nil {
-			return valueType{}, err
-		}
 		if strings.EqualFold(expr.Text, "count") {
+			args, err := v.exprs(expr.Args, scope)
+			if err != nil {
+				return valueType{}, err
+			}
 			if len(args) != 1 {
 				return valueType{}, unsupported(expr.Line, "count expects one argument")
 			}
@@ -297,6 +297,32 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 				return valueType{}, unsupported(expr.Line, "count requires an array")
 			}
 			return valueType{kind: intKind}, nil
+		}
+		if strings.EqualFold(expr.Text, "rtrim") {
+			if len(expr.Args) != 2 {
+				return valueType{}, unsupported(expr.Line, "rtrim expects two arguments")
+			}
+			input, err := v.expr(expr.Args[0], scope)
+			if err != nil {
+				return valueType{}, err
+			}
+			if input.kind != stringKind && input.kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "rtrim requires a string first argument")
+			}
+			mask, err := v.expr(expr.Args[1], scope)
+			if err != nil {
+				return valueType{}, err
+			}
+			if expr.Args[1].Kind != "string" || mask.kind != stringKind {
+				return valueType{}, unsupported(expr.Line, "rtrim requires a string literal mask")
+			}
+			if strings.Contains(expr.Args[1].Text, "..") {
+				return valueType{}, unsupported(expr.Line, "rtrim character ranges unsupported")
+			}
+			return valueType{kind: stringKind}, nil
+		}
+		if _, err := v.exprs(expr.Args, scope); err != nil {
+			return valueType{}, err
 		}
 		return valueType{kind: unknownKind}, nil
 	case "new":

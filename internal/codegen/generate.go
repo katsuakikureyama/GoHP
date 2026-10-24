@@ -47,7 +47,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	}
 	for _, f := range p.Functions {
 		n := name(f.Name)
-		if _, ok := g.funcs[n]; ok || n == "count" {
+		if _, ok := g.funcs[n]; ok || n == "count" || n == "rtrim" {
 			g.fail(f.Line, "duplicate or reserved function "+n)
 		}
 		g.funcs[n] = len(f.Params)
@@ -238,6 +238,18 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 				g.fail(e.Line, "count expects one argument")
 			}
 			return "rt.Count(" + args(e.Args) + ")"
+		}
+		if n == "rtrim" {
+			if len(e.Args) != 2 {
+				g.fail(e.Line, "rtrim expects two arguments")
+			}
+			if e.Args[1].Kind != "string" {
+				g.fail(e.Line, "rtrim requires a string literal mask")
+			}
+			if strings.Contains(e.Args[1].Text, "..") {
+				g.fail(e.Line, "rtrim character ranges unsupported")
+			}
+			return "rt.RTrim(" + g.expr(e.Args[0], scope) + "," + strconv.Quote(e.Args[1].Text) + ")"
 		}
 		arity, ok := g.funcs[n]
 		if !ok {

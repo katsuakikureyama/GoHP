@@ -60,7 +60,7 @@ func TestDifferential(t *testing.T) {
 	if !strings.HasPrefix(actualPHPVersion, target+".") {
 		t.Fatalf("reference PHP version %s does not match GOHP_PHP_TARGET %s", actualPHPVersion, target)
 	}
-	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence", "rtrim"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -167,6 +167,15 @@ func TestUnsupported(t *testing.T) {
 		{name: "array_write", src: "<?php $a = [1]; $a[0] = 2;"},
 		{name: "top_level_return", src: "<?php return 1;"},
 		{name: "count_scalar", src: "<?php echo count(1);"},
+		{name: "rtrim_missing_argument", src: "<?php echo rtrim('x');"},
+		{name: "rtrim_extra_argument", src: "<?php echo rtrim('x', 'x', 'x');"},
+		{name: "rtrim_int_input", src: "<?php echo rtrim(1, '1');"},
+		{name: "rtrim_bool_input", src: "<?php echo rtrim(true, '1');"},
+		{name: "rtrim_null_input", src: "<?php echo rtrim(null, 'x');"},
+		{name: "rtrim_array_input", src: "<?php echo rtrim([], 'x');"},
+		{name: "rtrim_dynamic_mask", src: "<?php $mask = 'x'; echo rtrim('x', $mask);"},
+		{name: "rtrim_range_mask", src: "<?php echo rtrim('xyz', 'a..z');"},
+		{name: "rtrim_redeclare", src: "<?php function RtRiM() { return 'x'; }"},
 		{name: "foreach_scalar", src: "<?php foreach (1 as $value) { echo $value; }"},
 		{name: "index_scalar", src: "<?php $value = 1; echo $value[0];"},
 		{name: "missing_property", src: "<?php class X { public $name = 'x'; } $x = new X(); echo $x->missing;"},

@@ -142,6 +142,24 @@ func Count(v any) any {
 	}
 	return int64(len(a.Entries))
 }
+func RTrim(v any, mask string) any {
+	s, ok := v.(string)
+	if !ok {
+		panic("rtrim requires string")
+	}
+	if strings.Contains(mask, "..") {
+		panic("rtrim character ranges unsupported")
+	}
+	var trim [256]bool
+	for i := 0; i < len(mask); i++ {
+		trim[mask[i]] = true
+	}
+	end := len(s)
+	for end > 0 && trim[s[end-1]] {
+		end--
+	}
+	return s[:end]
+}
 func Args(a []any, n int) {
 	if len(a) != n {
 		panic("unsupported argument count")

@@ -27,6 +27,8 @@ WebMCP exposure because it is a local compiler writing caller-owned build files.
 No browser operation, server resource, authentication route or auto-submit is added.
 The legacy `array(...)` frontend addition stays within this excluded local
 compiler capability; it adds no service operation or authentication change.
+The literal-mask `rtrim` addition also stays within this exclusion; it does not
+introduce a browser operation, filesystem path resolver or network call.
 
 Report schema `gohp.build/v0.1` includes IR/compiler versions, source and generated
 SHA-256, input path, PHP target and `generated` status. Additive fields `output`

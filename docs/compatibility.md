@@ -18,7 +18,7 @@ This table is the current curated summary, not a blanket support claim.
 | Classes | Public scalar defaults, no-arg construction, property reads, methods | `core.php`; no inheritance, constructors, visibility or static members |
 | Closures/callbacks/dynamic calls | Unsupported | Negative closure fixture; no claim of coverage |
 | Exceptions/warnings | Unsupported PHP behavior | Nonzero runtime failures; never functional PASS |
-| Built-ins | `count(array)` only | Everything else fails closed at compile time |
+| Built-ins | `count(array)` and restricted `rtrim(string, literal-mask)` | rtrim requires exactly two arguments and no `..` mask ranges; see [boundary](rtrim-boundary.md). Other builtins fail closed |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |

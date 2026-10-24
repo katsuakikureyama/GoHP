@@ -140,6 +140,29 @@
       "limitations": ["No recursive or explicit second-argument mode", "No PHP count behavior for arbitrary Countable values", "Scalar rejection is not PHP warning/exception equivalence"]
     },
     {
+      "id": "php.builtin.rtrim",
+      "kind": "builtin",
+      "name": "rtrim(string, literal-mask)",
+      "implementation": "partial",
+      "contract": "Supports exactly two arguments: a string or dynamic value guarded at runtime, and a string literal byte mask without character ranges.",
+      "php_targets": ["7.4", "8.3"],
+      "checks": [
+        {"case_id": "diff.rtrim", "test": "TestDifferential/rtrim", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/rtrim.php", "assertions": ["empty, unchanged, repeated slash/backslash, literal and empty masks, nested calls, case-insensitive calls, UTF-8 and byte-split output match native PHP"]},
+        {"case_id":"negative.rtrim_missing_argument","test":"TestUnsupported/rtrim_missing_argument","file":"tests/differential_test.go","kind":"negative","assertions":["omitted default mask is rejected"]},
+        {"case_id":"negative.rtrim_extra_argument","test":"TestUnsupported/rtrim_extra_argument","file":"tests/differential_test.go","kind":"negative","assertions":["extra argument is rejected"]},
+        {"case_id":"negative.rtrim_int_input","test":"TestUnsupported/rtrim_int_input","file":"tests/differential_test.go","kind":"negative","assertions":["integer input is rejected"]},
+        {"case_id":"negative.rtrim_bool_input","test":"TestUnsupported/rtrim_bool_input","file":"tests/differential_test.go","kind":"negative","assertions":["boolean input is rejected"]},
+        {"case_id":"negative.rtrim_null_input","test":"TestUnsupported/rtrim_null_input","file":"tests/differential_test.go","kind":"negative","assertions":["null input is rejected"]},
+        {"case_id":"negative.rtrim_array_input","test":"TestUnsupported/rtrim_array_input","file":"tests/differential_test.go","kind":"negative","assertions":["array input is rejected"]},
+        {"case_id":"negative.rtrim_dynamic_mask","test":"TestUnsupported/rtrim_dynamic_mask","file":"tests/differential_test.go","kind":"negative","assertions":["dynamic mask is rejected"]},
+        {"case_id":"negative.rtrim_range_mask","test":"TestUnsupported/rtrim_range_mask","file":"tests/differential_test.go","kind":"negative","assertions":["range mask is rejected"]},
+        {"case_id":"negative.rtrim_redeclare","test":"TestUnsupported/rtrim_redeclare","file":"tests/differential_test.go","kind":"negative","assertions":["reserved function redeclaration is rejected"]},
+        {"case_id":"unit.runtime.rtrim_bytes","test":"TestRTrimUsesBytesAndLiteralMask","file":"runtime/runtime_test.go","kind":"unit","assertions":["byte-mask trimming preserves the expected raw bytes including incomplete UTF-8"]},
+        {"case_id": "unit.runtime.rtrim", "test": "TestRTrimRejectsDynamicNonStringAndRanges", "file": "runtime/runtime_test.go", "kind": "unit", "assertions": ["runtime rejects dynamic non-string input and range masks"]}
+      ],
+      "limitations": ["No default mask", "No coercion of non-string input", "Mask must be a literal", "No '..' character ranges", "Trimming is byte-wise and may produce invalid UTF-8"]
+    },
+    {
       "id": "php.builtin.strlen",
       "kind": "builtin",
       "name": "strlen",

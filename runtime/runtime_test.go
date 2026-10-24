@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"math"
+	"strings"
 	"testing"
 )
 
@@ -40,4 +41,38 @@ func TestExplicitMaxArrayKeyOnlyBlocksFollowingAutomaticKey(t *testing.T) {
 		}
 	}()
 	NewArray(Entry{Key: int64(math.MaxInt64), Value: "edge"}, Entry{Value: "overflow"})
+}
+
+func TestRTrimUsesBytesAndLiteralMask(t *testing.T) {
+	if got := RTrim("path///", "/"); got != "path" {
+		t.Fatalf("RTrim slash mask = %#v, want path", got)
+	}
+	if got := RTrim("stay", ""); got != "stay" {
+		t.Fatalf("RTrim empty mask = %#v, want stay", got)
+	}
+	// The final byte of both UTF-8 encodings is 0xa9. Byte-wise PHP trimming
+	// removes it, even though the remaining string is not valid UTF-8.
+	if got := RTrim("é", "©"); got != string([]byte{0xc3}) {
+		t.Fatalf("RTrim byte mask = % x, want c3", []byte(got.(string)))
+	}
+}
+
+func TestRTrimRejectsDynamicNonStringAndRanges(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		fn   func()
+	}{
+		{name: "non_string", fn: func() { RTrim(int64(1), "1") }},
+		{name: "range", fn: func() { RTrim("x", "a..z") }},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				r := recover()
+				if r == nil || !strings.Contains(r.(string), "rtrim") {
+					t.Fatalf("RTrim did not reject unsupported input: %v", r)
+				}
+			}()
+			tt.fn()
+		})
+	}
 }
