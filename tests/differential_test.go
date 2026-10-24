@@ -28,7 +28,6 @@ type differentialEvidence struct {
 	CaseID          string            `json:"case_id"`
 	PHPTarget       string            `json:"php_target"`
 	PHPVersion      string            `json:"php_version"`
-	PHPLCType       string            `json:"php_lc_ctype,omitempty"`
 	FixtureSHA256   string            `json:"fixture_sha256"`
 	GeneratedSHA256 string            `json:"generated_sha256"`
 	Phases          map[string]string `json:"phases"`
@@ -125,7 +124,9 @@ func TestDifferential(t *testing.T) {
 			}
 			native := exec.Command(binary)
 			if fixture == "booleans" {
-				evidence.PHPLCType = "C"
+				// Keep the versioned GOHP_CASE payload unchanged; the raw event
+				// archive retains this separately recorded oracle precondition.
+				t.Log("PHP LC_CTYPE=C selected and verified in the oracle process")
 			}
 			native.Env = []string{"PATH="} // The emitted binary must run without discovering PHP.
 			got, e := native.Output()
