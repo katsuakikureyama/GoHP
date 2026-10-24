@@ -1,6 +1,7 @@
 ARG PHP_IMAGE=php:8.3.30-cli@sha256:92ff31bbd049fd199bf3700719374e4594b2baa7324eefc459bda26d622c3ea9
+ARG GO_IMAGE=golang:1.23.12@sha256:60deed95d3888cc5e4d9ff8a10c54e5edc008c6ae3fba6187be6fb592e19e8c0
 # Verified registry content digests: immutable Go toolchain and PHP reference.
-FROM golang:1.23.12@sha256:60deed95d3888cc5e4d9ff8a10c54e5edc008c6ae3fba6187be6fb592e19e8c0 AS go
+FROM ${GO_IMAGE} AS go
 FROM ${PHP_IMAGE}
 COPY --from=go /usr/local/go /usr/local/go
 ENV PATH="/usr/local/go/bin:${PATH}" CGO_ENABLED=0 GOTOOLCHAIN=local GOCACHE=/tmp/gohp-go-cache GOMODCACHE=/tmp/gohp-mod-cache

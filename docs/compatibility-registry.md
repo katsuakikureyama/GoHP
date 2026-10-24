@@ -7,12 +7,13 @@ ledger**. A catalog describes supported contracts and limits; a successful run
 proves specific cases at a revision and environment, not all PHP behaviour.
 Parsing, emitting Go, compiling and native-PHP behaviour comparison are distinct.
 
-This change supplies the initial machine-readable
-[`compatibility/catalog.json`](../compatibility/catalog.json) and this design.
-The catalog is draft data. Schema enforcement, stable per-case test IDs, run
-artifact production, status computation and generated reports are **not yet
-implemented**. Existing tests and CI remain the executable gate. No dashboard,
-new CLI command, API, compatibility promotion or deployment is added.
+The initial [`compatibility/catalog.json`](../compatibility/catalog.json) now has
+an experimental executable implementation: validated catalog, stable case IDs,
+single-run test evidence, per-target JSON/Markdown and CI artifacts. See the
+[ledger operation contract](compatibility-ledger.md). The remaining sections
+preserve the design direction; historical applicability, combined views, project
+inventory and consumer APIs are still follow-ups. No dashboard, automatic
+compatibility promotion or deployment is added.
 
 ## Catalog: what do we implement?
 
@@ -34,11 +35,9 @@ additional PHP builtins. Every unlisted builtin remains unsupported until
 deliberately added; the seed is not an exhaustive list of PHP functions. Unknown
 extension/package requirements remain unresolved, never implicitly supported.
 
-Some existing tests aggregate multiple cases (`TestUnsupported`), and fixtures
-aggregate features. Catalog references document this limitation: do not fabricate
-individual results. The ledger implementation must assign stable case IDs and
-link only assertions actually executed. Appearing in a fixture does not prove
-every aspect of a feature.
+Fixtures aggregate features, but rejection cases now have named subtests and
+catalog checks have stable case IDs. Link only assertions actually executed.
+Appearing in a fixture does not prove every aspect of a feature.
 
 ## Run ledger: what was checked and passed?
 

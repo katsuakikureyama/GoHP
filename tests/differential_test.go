@@ -2,6 +2,9 @@ package tests
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,34 +17,90 @@ import (
 	"github.com/katsuakikureyama/GoHP/internal/frontend"
 )
 
+const (
+	phaseNotRun          = "not-run"
+	phasePass            = "pass"
+	phaseFail            = "fail"
+	comparisonNotChecked = "not-checked"
+)
+
+type differentialEvidence struct {
+	CaseID          string            `json:"case_id"`
+	PHPTarget       string            `json:"php_target"`
+	PHPVersion      string            `json:"php_version"`
+	FixtureSHA256   string            `json:"fixture_sha256"`
+	GeneratedSHA256 string            `json:"generated_sha256"`
+	Phases          map[string]string `json:"phases"`
+	Comparisons     map[string]string `json:"comparisons"`
+}
+
+func phpTarget(t *testing.T) string {
+	t.Helper()
+	target := os.Getenv("GOHP_PHP_TARGET")
+	if target == "" {
+		target = "8.3"
+	}
+	if target != "7.4" && target != "8.3" {
+		t.Fatalf("GOHP_PHP_TARGET = %q, want 7.4 or 8.3", target)
+	}
+	return target
+}
+
 func TestDifferential(t *testing.T) {
 	php, e := exec.LookPath("php")
 	if e != nil {
 		t.Fatal("native PHP is required for differential validation")
 	}
-	v, e := exec.Command(php, "-r", "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;").Output()
+	v, e := exec.Command(php, "-r", "echo PHP_VERSION;").Output()
 	if e != nil {
 		t.Fatal(e)
 	}
-	target := string(v)
-	if target != "7.4" && target != "8.3" {
-		t.Fatalf("unsupported reference PHP %s", target)
+	actualPHPVersion := string(v)
+	target := phpTarget(t)
+	if !strings.HasPrefix(actualPHPVersion, target+".") {
+		t.Fatalf("reference PHP version %s does not match GOHP_PHP_TARGET %s", actualPHPVersion, target)
 	}
 	for _, fixture := range []string{"core", "arrays", "max_array_key", "precedence"} {
 		t.Run(fixture, func(t *testing.T) {
+			evidence := differentialEvidence{
+				CaseID:     "diff." + fixture,
+				PHPTarget:  target,
+				PHPVersion: actualPHPVersion,
+				Phases: map[string]string{
+					"parse": phaseNotRun, "codegen": phaseNotRun, "go-build": phaseNotRun, "go-execute": phaseNotRun, "differential": phaseNotRun,
+				},
+				Comparisons: map[string]string{
+					"stdout": comparisonNotChecked, "exit": comparisonNotChecked, "stderr": comparisonNotChecked, "exceptions": comparisonNotChecked, "side_effects": comparisonNotChecked,
+				},
+			}
+			defer func() {
+				encoded, err := json.Marshal(evidence)
+				if err != nil {
+					t.Errorf("marshal differential evidence: %v", err)
+					return
+				}
+				t.Logf("GOHP_CASE %s", encoded)
+			}()
+
 			file := filepath.Join("fixtures", fixture+".php")
 			src, e := os.ReadFile(file)
 			if e != nil {
 				t.Fatal(e)
 			}
+			evidence.FixtureSHA256 = sha256Hex(src)
 			p, e := frontend.Parse(string(src), target)
 			if e != nil {
+				evidence.Phases["parse"] = phaseFail
 				t.Fatal(e)
 			}
+			evidence.Phases["parse"] = phasePass
 			generated, e := codegen.Generate(p)
 			if e != nil {
+				evidence.Phases["codegen"] = phaseFail
 				t.Fatal(e)
 			}
+			evidence.Phases["codegen"] = phasePass
+			evidence.GeneratedSHA256 = sha256Hex(generated)
 			dir := t.TempDir()
 			out := filepath.Join(dir, "main.go")
 			if e = os.WriteFile(out, generated, 0600); e != nil {
@@ -50,39 +109,73 @@ func TestDifferential(t *testing.T) {
 			binary := filepath.Join(dir, "app")
 			build := exec.Command("go", "build", "-o", binary, out)
 			if o, e := build.CombinedOutput(); e != nil {
+				evidence.Phases["go-build"] = phaseFail
 				t.Fatalf("build: %v\n%s\n%s", e, o, generated)
 			}
+			evidence.Phases["go-build"] = phasePass
 			want, e := exec.Command(php, file).Output()
 			if e != nil {
+				evidence.Phases["differential"] = phaseFail
 				t.Fatal(e)
 			}
 			native := exec.Command(binary)
 			native.Env = []string{"PATH="} // The emitted binary must run without discovering PHP.
 			got, e := native.Output()
 			if e != nil {
+				evidence.Phases["go-execute"] = phaseFail
+				evidence.Comparisons["exit"] = phaseFail
 				t.Fatal(e)
 			}
+			evidence.Phases["go-execute"] = phasePass
 			if !bytes.Equal(got, want) {
+				evidence.Phases["differential"] = phaseFail
+				evidence.Comparisons["stdout"] = phaseFail
+				evidence.Comparisons["exit"] = phasePass
 				t.Fatalf("PHP=%q Go=%q", want, got)
 			}
+			evidence.Phases["differential"] = phasePass
+			evidence.Comparisons["stdout"] = phasePass
+			evidence.Comparisons["exit"] = phasePass
 			t.Logf("PHP %s and generated Go match: %q", target, got)
 		})
 	}
 }
 func TestUnsupported(t *testing.T) {
-	for _, src := range []string{
-		"<?php $f = function ($x) { return $x; };", "<?php include 'x.php';", "<?php $x = 1.5;", "<?php echo unknown();", "<?php echo $undefined;", "<?php $x = new Missing();", "<?php function x($a) { return $a; } echo x();", "<?php $a = [true => 1];", "<?php class X { public function __construct() {} }", "<?php $a = 012;", "<?php $a = &$b;", "<?php $a = [1]; $a[0] = 2;", "<?php return 1;",
-		"<?php echo count(1);", "<?php foreach (1 as $value) { echo $value; }", "<?php $value = 1; echo $value[0];", "<?php class X { public $name = 'x'; } $x = new X(); echo $x->missing;", "<?php class X { public function render($value) { return $value; } } $x = new X(); echo $x->render();",
+	target := phpTarget(t)
+	for _, tt := range []struct {
+		name string
+		src  string
+	}{
+		{name: "closure", src: "<?php $f = function ($x) { return $x; };"},
+		{name: "include", src: "<?php include 'x.php';"},
+		{name: "float", src: "<?php $x = 1.5;"},
+		{name: "unknown_function", src: "<?php echo unknown();"},
+		{name: "undefined_variable", src: "<?php echo $undefined;"},
+		{name: "unknown_class", src: "<?php $x = new Missing();"},
+		{name: "function_arity", src: "<?php function x($a) { return $a; } echo x();"},
+		{name: "boolean_array_key", src: "<?php $a = [true => 1];"},
+		{name: "magic_constructor", src: "<?php class X { public function __construct() {} }"},
+		{name: "nondecimal_integer", src: "<?php $a = 012;"},
+		{name: "reference", src: "<?php $a = &$b;"},
+		{name: "array_write", src: "<?php $a = [1]; $a[0] = 2;"},
+		{name: "top_level_return", src: "<?php return 1;"},
+		{name: "count_scalar", src: "<?php echo count(1);"},
+		{name: "foreach_scalar", src: "<?php foreach (1 as $value) { echo $value; }"},
+		{name: "index_scalar", src: "<?php $value = 1; echo $value[0];"},
+		{name: "missing_property", src: "<?php class X { public $name = 'x'; } $x = new X(); echo $x->missing;"},
+		{name: "method_arity", src: "<?php class X { public function render($value) { return $value; } } $x = new X(); echo $x->render();"},
 	} {
-		p, e := frontend.Parse(src, "8.3")
-		if e == nil {
-			_, e = codegen.Generate(p)
-		}
-		if e == nil {
-			t.Errorf("silently accepted unsupported source: %s", src)
-		} else if !strings.Contains(e.Error(), "PHP00") {
-			t.Errorf("missing diagnostic code: %v", e)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			p, e := frontend.Parse(tt.src, target)
+			if e == nil {
+				_, e = codegen.Generate(p)
+			}
+			if e == nil {
+				t.Errorf("silently accepted unsupported source: %s", tt.src)
+			} else if !strings.Contains(e.Error(), "PHP00") {
+				t.Errorf("missing diagnostic code: %v", e)
+			}
+		})
 	}
 }
 
@@ -98,11 +191,12 @@ func TestMalformedIRFailsWithoutPanic(t *testing.T) {
 	}
 }
 func TestRuntimeFailureIsNotPass(t *testing.T) {
+	target := phpTarget(t)
 	src, e := os.ReadFile("fixtures/runtime_failure.php")
 	if e != nil {
 		t.Fatal(e)
 	}
-	p, e := frontend.Parse(string(src), "8.3")
+	p, e := frontend.Parse(string(src), target)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -131,3 +225,5 @@ func TestRuntimeFailureIsNotPass(t *testing.T) {
 	}
 	t.Fatalf("runtime failure has no frame mapping to PHP line 3: %s", o)
 }
+
+func sha256Hex(b []byte) string { return fmt.Sprintf("%x", sha256.Sum256(b)) }

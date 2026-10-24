@@ -17,10 +17,9 @@ production credentials to tests. Go packages currently have no external dependen
    [statement-level source maps](docs/source-maps.md).
 2. Lvalue/reference model and array writes, copy-on-write differential cases.
 3. Closures, callbacks, typed values, exceptions and classes beyond the subset.
-4. Implement the [compatibility ledger design](docs/compatibility-registry.md):
-   validate the seed catalog, assign stable test-case IDs, publish per-target
-   evidence and generate function/feature status views; then add the
-   Composer/extension metadata reader.
+4. Extend the [experimental compatibility ledger](docs/compatibility-ledger.md)
+   with historical/combined-target evidence views and the Composer/extension
+   metadata reader. Keep catalog case links and contract limits current.
 5. Sandboxed versioned Gossip builder API, WordPress adapter fixtures and hooks.
 6. Broaden PHP versions and compare side effects, warning/exception semantics.
 

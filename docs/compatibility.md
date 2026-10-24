@@ -2,8 +2,9 @@
 
 The [verification-ledger design](compatibility-registry.md) separates implemented
 contracts from version-specific test evidence. Its initial
-[function/feature catalog](../compatibility/catalog.json) is draft data linked to
-existing checks; automatic status/report generation is not implemented yet.
+[function/feature catalog](../compatibility/catalog.json) is experimental data linked to
+existing checks. The [experimental ledger](compatibility-ledger.md) now validates
+it and generates a run-scoped PHP-target report from actual test events.
 This table is the current curated summary, not a blanket support claim.
 
 | Area | Current status | Evidence / gap |
@@ -36,8 +37,9 @@ record exact source/dist revisions, transitive requirements, `php`, `ext-*`,
 platform constraints, generated/vendor code, scripts and licenses. Never run
 install/update or arbitrary hooks for metadata inspection. Resolve each requirement
 against a machine-readable registry with `unsupported`, `compile-pass`, and
-`differential-pass` distinct. The inventory reader and executable registry/status
-pipeline are not implemented; the draft catalog and ledger design are available.
+`differential-pass` distinct. The inventory reader and historical/query pipeline
+are not implemented; single-run evidence and status
+generation are now available.
 
 The current harness compares stdout and successful exit status. It does **not**
 validate filesystem side effects, DB mutation, PHP exception identity, warnings,

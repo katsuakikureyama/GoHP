@@ -5,7 +5,7 @@ export CGO_ENABLED=0 GOTOOLCHAIN=local
 go version
 php --version
 go vet ./...
-go test -count=1 -v ./...
+go run ./cmd/gohp-compat -out "${GOHP_EVIDENCE_DIR:-build/compatibility}"
 mkdir -p build
 go build -o build/gohp ./cmd/gohp
 build/gohp -in tests/fixtures/core.php -out build/core.go -report build/core.report.json -php-version "$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')"

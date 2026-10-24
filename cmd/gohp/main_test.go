@@ -297,12 +297,39 @@ func TestCLIWritesToStdoutWithoutReport(t *testing.T) {
 
 func runCLI(t *testing.T, args ...string) (stdout, stderr string, err error) {
 	t.Helper()
+	if !hasPHPVersionFlag(args) {
+		args = append(args, "-php-version", phpTarget(t))
+	}
 	cmd := exec.Command(gohpBinary, args...)
 	var out, errOut strings.Builder
 	cmd.Stdout = &out
 	cmd.Stderr = &errOut
 	err = cmd.Run()
 	return out.String(), errOut.String(), err
+}
+
+func hasPHPVersionFlag(args []string) bool {
+	for i, arg := range args {
+		if arg == "-php-version" || strings.HasPrefix(arg, "-php-version=") {
+			return true
+		}
+		if i > 0 && args[i-1] == "-php-version" {
+			return true
+		}
+	}
+	return false
+}
+
+func phpTarget(t *testing.T) string {
+	t.Helper()
+	target := os.Getenv("GOHP_PHP_TARGET")
+	if target == "" {
+		target = "8.3"
+	}
+	if target != "7.4" && target != "8.3" {
+		t.Fatalf("GOHP_PHP_TARGET = %q, want 7.4 or 8.3", target)
+	}
+	return target
 }
 
 func writePHP(t *testing.T, dir, name, content string) string {
