@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence", "rtrim", "booleans"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence", "rtrim", "sprintf", "booleans"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,

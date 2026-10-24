@@ -308,6 +308,22 @@
       "limitations": ["Not supported"]
     },
     {
+      "id": "php.builtin.sprintf-zero-pad",
+      "kind": "builtin",
+      "name": "sprintf(%0Ns, string|int64)",
+      "implementation": "partial",
+      "contract": "Supports exactly two arguments and exactly the canonical %0Ns string/integer zero-padding subset, with N from 0 through 4096 and byte-width semantics.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id": "diff.sprintf", "test": "TestDifferential/sprintf", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/sprintf.php", "assertions": ["original zeroise-style dynamic format and accepted values match native PHP stdout byte-for-byte"]},
+        {"case_id": "unit.codegen.sprintf", "test": "TestSprintfZeroPadLowersToRuntimeBoundary", "file": "internal/codegen/sprintf_test.go", "kind": "unit", "assertions": ["zeroise-style dynamic format lowers through the runtime subset boundary"]},
+        {"case_id": "negative.codegen.sprintf", "test": "TestSprintfZeroPadKnownUnsupportedFormsFailBeforeGeneration", "file": "internal/codegen/sprintf_test.go", "kind": "negative", "assertions": ["known wrong arity, format, width, value type and redeclaration forms fail with a diagnostic"]},
+        {"case_id": "unit.runtime.sprintf", "test": "TestSprintfZeroPad", "file": "runtime/sprintf_test.go", "kind": "unit", "assertions": ["integer/string, byte width, no-truncation and maximum-width behavior remain bounded"]},
+        {"case_id": "negative.runtime.sprintf", "test": "TestSprintfZeroPadRejectsOutsideSubsetAtRuntime", "file": "runtime/sprintf_test.go", "kind": "negative", "assertions": ["dynamic invalid formats and values fail at the shared runtime boundary"]}
+      ],
+      "limitations": ["No general sprintf grammar", "Only %0Ns with canonical decimal width 0..4096", "No PHP scalar/object coercion", "Widths count UTF-8 bytes rather than characters; input is never truncated", "Rejections are not PHP warning or TypeError equivalence"]
+    },
+    {
       "id": "php.builtin.array_map",
       "kind": "builtin",
       "name": "array_map",

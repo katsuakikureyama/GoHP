@@ -47,7 +47,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	}
 	for _, f := range p.Functions {
 		n := name(f.Name)
-		if _, ok := g.funcs[n]; ok || n == "count" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "strtolower" {
+		if _, ok := g.funcs[n]; ok || n == "count" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "strtolower" || n == "sprintf" {
 			g.fail(f.Line, "duplicate or reserved function "+n)
 		}
 		g.funcs[n] = len(f.Params)
@@ -250,6 +250,12 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		return "rt.Get(" + args(e.Args) + ")"
 	case "call":
 		n := name(e.Text)
+		if n == "sprintf" {
+			if len(e.Args) != 2 {
+				g.fail(e.Line, "sprintf expects two arguments")
+			}
+			return "rt.SprintfZeroPad(" + args(e.Args) + ")"
+		}
 		booleanBuiltins := map[string]string{"is_bool": "IsBool", "is_string": "IsString", "strtolower": "StrToLower"}
 		if builtin, ok := booleanBuiltins[n]; ok {
 			if len(e.Args) != 1 {
