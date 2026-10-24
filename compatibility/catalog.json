@@ -372,6 +372,35 @@
       "limitations": ["Only the existing GoHP value/array subset; no new coercion, reference, write or copy-on-write implementation","Named arguments and dynamic function names remain unsupported","Object/reference alias semantics and PHP warning/exception equivalence are not established","Native differential evidence compares stdout and exits; exact value types and nested storage isolation are additionally runtime-unit-tested"]
     },
     {
+      "id": "php.builtin.array_key_exists",
+      "kind": "builtin",
+      "name": "array_key_exists(int|string, array)",
+      "implementation": "partial",
+      "contract": "Exactly two positional arguments return a boolean for first-dimension key presence, including null-valued entries; only integer/string keys with existing array normalization are supported.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.array_key_exists","test":"TestDifferential/array_key_exists","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_key_exists.php","assertions":["present-null versus missing, integer/string normalized keys, first-dimension lookup, dynamic calls, bool result observations and guarded reads match native PHP stdout and normal exits"]},
+        {"case_id":"unit.runtime.array_key_exists_presence","test":"TestArrayKeyExistsPresenceAndNormalization","file":"runtime/array_key_exists_test.go","kind":"unit","assertions":["null/false/zero/empty values count as present, numeric keys normalize, nested keys are not recursively searched, input is not mutated; extreme/binary keys are runtime-unit-only"]},
+        {"case_id":"unit.runtime.array_key_exists_domains","test":"TestArrayKeyExistsRejectsInvalidDomains","file":"runtime/array_key_exists_test.go","kind":"unit","assertions":["non-integer/string keys and non-array values fail explicitly"]},
+        {"case_id":"negative.array_key_exists_dynamic","test":"TestArrayKeyExistsRuntimeTypeGuard","file":"tests/differential_test.go","kind":"negative","assertions":["generated binaries reject invalid dynamic key and array domains with nonzero exits and explicit guard messages; not PHP error equivalence"]},
+        {"case_id":"negative.array_key_exists_invalid_bool_key","test":"TestUnsupported/array_key_exists_invalid_bool_key","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported invalid bool key rejected before generation"]},
+        {"case_id":"negative.array_key_exists_invalid_null_key","test":"TestUnsupported/array_key_exists_invalid_null_key","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported invalid null key rejected before generation"]},
+        {"case_id":"negative.array_key_exists_invalid_array_key","test":"TestUnsupported/array_key_exists_invalid_array_key","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported invalid array key rejected before generation"]},
+        {"case_id":"negative.array_key_exists_invalid_object_key","test":"TestUnsupported/array_key_exists_invalid_object_key","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported invalid object key rejected before generation"]},
+        {"case_id":"negative.array_key_exists_invalid_int_array","test":"TestUnsupported/array_key_exists_invalid_int_array","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported invalid int array rejected before generation"]},
+        {"case_id":"negative.array_key_exists_invalid_string_array","test":"TestUnsupported/array_key_exists_invalid_string_array","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported invalid string array rejected before generation"]},
+        {"case_id":"negative.array_key_exists_invalid_bool_array","test":"TestUnsupported/array_key_exists_invalid_bool_array","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported invalid bool array rejected before generation"]},
+        {"case_id":"negative.array_key_exists_invalid_null_array","test":"TestUnsupported/array_key_exists_invalid_null_array","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported invalid null array rejected before generation"]},
+        {"case_id":"negative.array_key_exists_invalid_object_array","test":"TestUnsupported/array_key_exists_invalid_object_array","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported invalid object array rejected before generation"]},
+        {"case_id":"negative.array_key_exists_arity_zero","test":"TestUnsupported/array_key_exists_arity_zero","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported arity zero rejected before generation"]},
+        {"case_id":"negative.array_key_exists_arity_one","test":"TestUnsupported/array_key_exists_arity_one","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported arity one rejected before generation"]},
+        {"case_id":"negative.array_key_exists_arity_three","test":"TestUnsupported/array_key_exists_arity_three","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported arity three rejected before generation"]},
+        {"case_id":"negative.array_key_exists_mixed_case_redeclare","test":"TestUnsupported/array_key_exists_mixed_case_redeclare","file":"tests/differential_test.go","kind":"negative","assertions":["Unsupported mixed case redeclare rejected before generation"]},
+        {"case_id":"negative.array_key_exists_alias","test":"TestUnsupported/array_key_exists_alias","file":"tests/differential_test.go","kind":"negative","assertions":["Unimplemented key_exists alias fails closed"]}
+      ],
+      "limitations": ["No bool/null/float/resource key coercion; this is narrower than native PHP 8.3","No object second argument, recursive search, named arguments or key_exists alias","No mutation, reference or new array-key semantics","Native evidence compares stdout and exits, including is_bool and strict-bool observations; warning/exception equivalence is not claimed"]
+    },
+    {
       "id": "php.builtin.array_map",
       "kind": "builtin",
       "name": "array_map",

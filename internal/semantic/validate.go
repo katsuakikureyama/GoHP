@@ -368,6 +368,18 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 			return valueType{kind: arrayKind}, nil
 		}
+		if strings.EqualFold(expr.Text, "array_key_exists") {
+			if len(args) != 2 {
+				return valueType{}, unsupported(expr.Line, "array_key_exists expects two arguments")
+			}
+			if args[0].kind != intKind && args[0].kind != stringKind && args[0].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "array_key_exists requires an integer or string key")
+			}
+			if args[1].kind != arrayKind && args[1].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "array_key_exists requires an array")
+			}
+			return valueType{kind: boolKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "rtrim") {
 			if len(expr.Args) != 2 {
 				return valueType{}, unsupported(expr.Line, "rtrim expects two arguments")

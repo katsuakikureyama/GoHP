@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence", "strlen", "array_keys", "array_values", "rtrim", "booleans", "feature_integration"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "rtrim", "booleans", "feature_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -218,6 +218,20 @@ func TestUnsupported(t *testing.T) {
 		{name: "array_values_extra_args", src: "<?php $values = array_values(['x'], 'extra');"},
 		{name: "array_values_redeclare", src: "<?php function ArRaY_VaLuEs($value) { return $value; }"},
 		{name: "array_values_echo_result", src: "<?php $values = array_values(['x' => 1]); echo $values;"},
+		{name: "array_key_exists_invalid_bool_key", src: "<?php $exists = array_key_exists(true, ['x' => 1]);"},
+		{name: "array_key_exists_invalid_null_key", src: "<?php $exists = array_key_exists(null, ['x' => 1]);"},
+		{name: "array_key_exists_invalid_array_key", src: "<?php $exists = array_key_exists([], ['x' => 1]);"},
+		{name: "array_key_exists_invalid_object_key", src: "<?php class X {} $key = new X(); $exists = array_key_exists($key, ['x' => 1]);"},
+		{name: "array_key_exists_invalid_int_array", src: "<?php $exists = array_key_exists('x', 1);"},
+		{name: "array_key_exists_invalid_string_array", src: "<?php $exists = array_key_exists('x', 'not an array');"},
+		{name: "array_key_exists_invalid_bool_array", src: "<?php $exists = array_key_exists('x', true);"},
+		{name: "array_key_exists_invalid_null_array", src: "<?php $exists = array_key_exists('x', null);"},
+		{name: "array_key_exists_invalid_object_array", src: "<?php class X {} $value = new X(); $exists = array_key_exists('x', $value);"},
+		{name: "array_key_exists_arity_zero", src: "<?php $exists = array_key_exists();"},
+		{name: "array_key_exists_arity_one", src: "<?php $exists = array_key_exists('x');"},
+		{name: "array_key_exists_arity_three", src: "<?php $exists = array_key_exists('x', [], 'extra');"},
+		{name: "array_key_exists_mixed_case_redeclare", src: "<?php function ArRaY_KeY_ExIsTs($key, $value) { return true; }"},
+		{name: "array_key_exists_alias", src: "<?php $exists = key_exists('x', ['x' => 1]);"},
 		{name: "if_else", src: "<?php if (true) { echo 'yes'; } else { echo 'no'; }"},
 		{name: "if_elseif", src: "<?php if (false) { echo 'no'; } elseif (true) { echo 'yes'; }"},
 		{name: "if_unbraced", src: "<?php if (true) echo 'yes';"},
@@ -404,6 +418,53 @@ func TestArrayValuesRuntimeTypeGuard(t *testing.T) {
 	output, err := run.CombinedOutput()
 	if err == nil || !bytes.Contains(output, []byte("array_values requires array")) {
 		t.Fatalf("expected explicit array_values runtime failure, got %v\n%s", err, output)
+	}
+}
+
+// TestArrayKeyExistsRuntimeTypeGuard covers both dynamic boundaries permitted
+// by semantic analysis. Function parameters are unknown at generation time,
+// but array_key_exists must reject an invalid key and an invalid array value
+// explicitly. This deliberately has no native-PHP invocation or PHP
+// error-equivalence claim.
+func TestArrayKeyExistsRuntimeTypeGuard(t *testing.T) {
+	target := phpTarget(t)
+	for _, tt := range []struct {
+		name    string
+		fixture string
+		message string
+	}{
+		{name: "key", fixture: "array_key_exists_runtime_key_failure.php", message: "array_key_exists requires integer or string key"},
+		{name: "array", fixture: "array_key_exists_runtime_array_failure.php", message: "array_key_exists requires array"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			src, err := os.ReadFile(filepath.Join("fixtures", tt.fixture))
+			if err != nil {
+				t.Fatal(err)
+			}
+			p, err := frontend.Parse(string(src), target)
+			if err != nil {
+				t.Fatal(err)
+			}
+			generated, err := codegen.Generate(p)
+			if err != nil {
+				t.Fatal(err)
+			}
+			dir := t.TempDir()
+			file := filepath.Join(dir, "main.go")
+			if err := os.WriteFile(file, generated, 0600); err != nil {
+				t.Fatal(err)
+			}
+			binary := filepath.Join(dir, "app")
+			if output, err := exec.Command("go", "build", "-o", binary, file).CombinedOutput(); err != nil {
+				t.Fatalf("build: %v\n%s\n%s", err, output, generated)
+			}
+			run := exec.Command(binary)
+			run.Env = []string{"PATH="}
+			output, err := run.CombinedOutput()
+			if err == nil || !bytes.Contains(output, []byte(tt.message)) {
+				t.Fatalf("expected explicit %s runtime failure, got %v\n%s", tt.name, err, output)
+			}
+		})
 	}
 }
 

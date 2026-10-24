@@ -182,6 +182,28 @@ func ArrayValues(v any) any {
 	return values
 }
 
+// ArrayKeyExists checks only the first dimension, including entries with nil
+// values. Keys use the same integer/string normalization as array construction;
+// PHP's other key coercions are deliberately outside this bounded contract.
+func ArrayKeyExists(key, value any) bool {
+	switch key.(type) {
+	case int64, string:
+	default:
+		panic("array_key_exists requires integer or string key")
+	}
+	a, ok := value.(Array)
+	if !ok {
+		panic("array_key_exists requires array")
+	}
+	key = Key(key)
+	for _, entry := range a.Entries {
+		if entry.Key == key {
+			return true
+		}
+	}
+	return false
+}
+
 func RTrim(v any, mask string) any {
 	s, ok := v.(string)
 	if !ok {

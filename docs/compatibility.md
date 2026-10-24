@@ -19,7 +19,7 @@ This table is the current curated summary, not a blanket support claim.
 | Classes | Public scalar defaults, no-arg construction, property reads, methods | `core.php`; no inheritance, constructors, visibility or static members |
 | Closures/callbacks/dynamic calls | Unsupported | Negative closure fixture; no claim of coverage |
 | Exceptions/warnings | Unsupported PHP behavior | Nonzero runtime failures; never functional PASS |
-| Built-ins | `count(array)`, `strlen(string)`, `array_keys(array)`, `array_values(array)`, restricted `rtrim`, `is_bool`, `is_string`, ASCII `strtolower(string)` | Bounded arities/domains below and in [rtrim](rtrim-boundary.md) / [boolean](boolean-boundary.md); other builtins fail closed |
+| Built-ins | `count(array)`, `strlen(string)`, `array_keys(array)`, `array_values(array)`, `array_key_exists(int\|string, array)`, restricted `rtrim`, `is_bool`, `is_string`, ASCII `strtolower(string)` | Bounded arities/domains below and in [rtrim](rtrim-boundary.md) / [boolean](boolean-boundary.md); other builtins fail closed |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |
@@ -139,6 +139,33 @@ the pinned PHP 8.3.36 oracle. The native comparison observes stdout and successf
 exits, not a typed serialization. Runtime tests additionally assert exact value
 types and outer/nested storage independence. The catalog stays partial and only
 reports a case-limited result when every linked check passes.
+
+### Bounded array_key_exists contract
+
+`array_key_exists(key, array)` accepts exactly two positional arguments. The key
+must be an integer or string; the second argument must be an array. It returns
+a boolean for presence in the first dimension, even when the stored value is
+null, false, zero or an empty string. Missing keys return false without reading
+their value or raising the missing-index guard. Nested keys are not searched
+recursively. These presence rules follow the [PHP reference](https://www.php.net/manual/en/function.array-key-exists.php).
+
+Key normalization uses the same implementation as array construction and reads:
+canonical decimal strings such as `'2'` address integer keys, while `'02'` and
+`'+2'` remain distinct strings. Input arrays and their values are not modified.
+Both array syntaxes and dynamic function parameters/returns are supported within
+this domain. The builtin is case-insensitive and reserved against redeclaration.
+
+Unlike native PHP 8.3, this bounded implementation rejects bool/null/float/resource
+keys instead of coercing them. Known invalid types/arity are rejected before
+generation; unknown values have explicit runtime guards for both arguments.
+Object inputs, the `key_exists` alias, named arguments, references and warning/
+exception equivalence are not implemented by this addition.
+
+`array_key_exists.php` compares native stdout/normal exits, with `is_bool` and
+strict true/false observations as well as guarded reads. Runtime unit checks
+cover nonmutation and additional binary/int64-boundary keys; these additional
+unit inputs are not end-to-end native evidence. Generated-binary negative tests
+cover both dynamic argument guards. The catalog remains partial.
 
 Composer metadata inventory is available below. It records declarations only;
 PHP callsites, generated/vendor code, dependency resolution and historical applicability

@@ -47,7 +47,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	}
 	for _, f := range p.Functions {
 		n := name(f.Name)
-		if _, ok := g.funcs[n]; ok || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "strtolower" {
+		if _, ok := g.funcs[n]; ok || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "array_key_exists" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "strtolower" {
 			g.fail(f.Line, "duplicate or reserved function "+n)
 		}
 		g.funcs[n] = len(f.Params)
@@ -280,6 +280,12 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 				g.fail(e.Line, "array_values expects one argument")
 			}
 			return "rt.ArrayValues(" + args(e.Args) + ")"
+		}
+		if n == "array_key_exists" {
+			if len(e.Args) != 2 {
+				g.fail(e.Line, "array_key_exists expects two arguments")
+			}
+			return "rt.ArrayKeyExists(" + args(e.Args) + ")"
 		}
 		if n == "rtrim" {
 			if len(e.Args) != 2 {
