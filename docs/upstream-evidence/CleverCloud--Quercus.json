@@ -7,6 +7,11 @@
       "path": "LICENSE",
       "url": "https://raw.githubusercontent.com/CleverCloud/Quercus/d60c80f3d24cdf6fef26a2c3065d1fae093133f4/LICENSE",
       "sha256": "204d8eff92f95aac4df6c8122bc1505f468f3a901e5a4cc08940e0ede1938994"
+    },
+    {
+      "path": "README",
+      "url": "https://raw.githubusercontent.com/CleverCloud/Quercus/d60c80f3d24cdf6fef26a2c3065d1fae093133f4/README",
+      "sha256": "0df6f2ec88ef61c7d1f1bfacf84cd3088be2b1c495a4e368a7aeb629671be50e"
     }
   ]
 }

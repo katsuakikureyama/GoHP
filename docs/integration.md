@@ -17,5 +17,5 @@ compatibility policy; future WordPress adapters belong outside the compiler core
 No whole WordPress core/plugin conversion works yet. Next cross-project requests:
 pin oracle PHP/WP versions; define source bundle manifest and fixture protocol;
 add stderr, exit, mutation and hook-order comparison; agree compatibility registry
-schema and immutable candidate IDs. These requests are documented here; no Gossip
-source or issue has been modified by this implementation.
+schema and immutable candidate IDs. Gossip source remains unchanged. These requests are also shared in the
+[Gossip kickoff issue](https://github.com/katsuakikureyama/Gossip/issues/1).
