@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -173,6 +173,16 @@ func TestUnsupported(t *testing.T) {
 		{name: "legacy_array_bareword", src: "<?php $a = array;"},
 		{name: "magic_constructor", src: "<?php class X { public function __construct() {} }"},
 		{name: "nondecimal_integer", src: "<?php $a = 012;"},
+		{name: "negative_integer_variable", src: "<?php $a = 1; echo -$a;"},
+		{name: "negative_integer_expression", src: "<?php echo -(1 + 2);"},
+		{name: "negative_integer_call", src: "<?php function value() { return 1; } echo -value();"},
+		{name: "negative_integer_string", src: "<?php echo -'5';"},
+		{name: "negative_integer_repeated_sign", src: "<?php echo - -5;"},
+		{name: "negative_integer_decrement", src: "<?php $a = 5; echo --$a;"},
+		{name: "negative_integer_subtraction", src: "<?php echo 1 - 2;"},
+		{name: "negative_integer_minimum_token", src: "<?php echo -9223372036854775808;"},
+		{name: "negative_integer_float", src: "<?php echo -1.5;"},
+		{name: "negative_integer_nondecimal", src: "<?php echo -012;"},
 		{name: "reference", src: "<?php $a = &$b;"},
 		{name: "array_nested_write", src: "<?php $a = [[1]]; $a[0][0] = 2;"},
 		{name: "array_append_undefined", src: "<?php $a[] = 2;"},

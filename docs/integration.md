@@ -43,6 +43,8 @@ within this excluded generation capability. Its writes concern simulated local
 PHP values, not service resources; no UI operation, route, authentication,
 external save/commit or automatic submission is introduced.
 No browser operation, server resource, authentication route or auto-submit is added.
+The [literal-only negative integer syntax](negative-integer-boundary.md) also
+uses this same excluded capability, with no new operation or authentication path.
 The same local generation operation now also accepts bounded `strlen(string)`
 calls; its [string-only byte-length contract](compatibility.md#bounded-strlen-contract)
 does not add a service operation or change this WebMCP exclusion.

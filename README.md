@@ -54,6 +54,8 @@ also covers `array(...)` syntax, empty returns, mixed nesting with `[]`, trailin
 commas and case-insensitive `array` spelling within the same closed array subset.
 Automatic literal keys now follow PHP 8.3's negative-integer progression, also
 after string-only entries; see the [array index boundary](docs/array-index-boundary.md).
+Negative decimal constants such as `-5` can now be written directly; general
+negation and float-promoting tokens remain outside the [bounded syntax](docs/negative-integer-boundary.md).
 Unsupported syntax must fail
 with a diagnostic; a separate runtime-negative test must fail on a missing key.
 Compilation alone never proves PHP compatibility.

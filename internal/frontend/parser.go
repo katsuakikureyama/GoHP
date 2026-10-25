@@ -396,6 +396,18 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 		}
 	case "sym":
 		switch t.text {
+		case "-":
+			// Only negate a decimal integer token, already range-checked by lex.
+			// In particular, 9223372036854775808 must not become an int64 by
+			// folding its sign: PHP first interprets that positive token as float.
+			if p.peek().kind != "int" {
+				p.fail("minus requires a decimal integer literal")
+			}
+			n := p.pop()
+			e.Kind, e.Text = "int", "-"+n.text
+			if n.text == "0" {
+				e.Text = "0"
+			}
 		case "(":
 			// The supported cast spelling is deliberately narrow. Looking ahead
 			// keeps ordinary parenthesized expressions intact.

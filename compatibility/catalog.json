@@ -289,6 +289,30 @@
       "limitations": ["Exactly one string argument", "ASCII byte mapping only", "No locale-sensitive or Unicode case mapping", "No non-string coercion"]
     },
     {
+      "id": "php.operator.literal-integer-negation",
+      "kind": "operator",
+      "name": "Literal-only decimal integer negation",
+      "implementation": "partial",
+      "contract": "Fold one minus followed by an admitted decimal integer token to signed int64 IR; whitespace/comments are allowed and -0 is integer zero.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.negative_integers","test":"TestDifferential/negative_integers","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/negative_integers.php","assertions":["negative decimal constants, scalar contexts, array keys/write/append, zero and integer bounds match native output"]},
+        {"case_id":"unit.frontend.negative_integer_ir","test":"TestNegativeIntegerLiteralIR","file":"internal/frontend/negative_integer_test.go","kind":"unit","assertions":["literal-only minus folds to int IR with canonical zero and the minus source line"]},
+        {"case_id":"compiler.negative_integer_lowering","test":"TestNegativeIntegerLiteralLowering","file":"internal/codegen/negative_integer_test.go","kind":"compiler","assertions":["negative literal keys and values use existing int64 lowering and retain statement source maps"]},
+        {"case_id":"negative.negative_integer_variable","test":"TestUnsupported/negative_integer_variable","file":"tests/differential_test.go","kind":"negative","assertions":["variable is rejected outside the bounded literal-only contract"]},
+        {"case_id":"negative.negative_integer_expression","test":"TestUnsupported/negative_integer_expression","file":"tests/differential_test.go","kind":"negative","assertions":["expression is rejected outside the bounded literal-only contract"]},
+        {"case_id":"negative.negative_integer_call","test":"TestUnsupported/negative_integer_call","file":"tests/differential_test.go","kind":"negative","assertions":["call is rejected outside the bounded literal-only contract"]},
+        {"case_id":"negative.negative_integer_string","test":"TestUnsupported/negative_integer_string","file":"tests/differential_test.go","kind":"negative","assertions":["string is rejected outside the bounded literal-only contract"]},
+        {"case_id":"negative.negative_integer_repeated_sign","test":"TestUnsupported/negative_integer_repeated_sign","file":"tests/differential_test.go","kind":"negative","assertions":["repeated_sign is rejected outside the bounded literal-only contract"]},
+        {"case_id":"negative.negative_integer_decrement","test":"TestUnsupported/negative_integer_decrement","file":"tests/differential_test.go","kind":"negative","assertions":["decrement is rejected outside the bounded literal-only contract"]},
+        {"case_id":"negative.negative_integer_subtraction","test":"TestUnsupported/negative_integer_subtraction","file":"tests/differential_test.go","kind":"negative","assertions":["subtraction is rejected outside the bounded literal-only contract"]},
+        {"case_id":"negative.negative_integer_minimum_token","test":"TestUnsupported/negative_integer_minimum_token","file":"tests/differential_test.go","kind":"negative","assertions":["minimum_token is rejected outside the bounded literal-only contract"]},
+        {"case_id":"negative.negative_integer_float","test":"TestUnsupported/negative_integer_float","file":"tests/differential_test.go","kind":"negative","assertions":["float is rejected outside the bounded literal-only contract"]},
+        {"case_id":"negative.negative_integer_nondecimal","test":"TestUnsupported/negative_integer_nondecimal","file":"tests/differential_test.go","kind":"negative","assertions":["nondecimal is rejected outside the bounded literal-only contract"]}
+      ],
+      "limitations": ["Only magnitudes 0..9223372036854775807; the source token in -9223372036854775808 promotes to float in PHP and is rejected","No negation of variables, calls, strings or parenthesized expressions; no repeated signs, unary plus, subtraction or decrement","Existing decimal-token restrictions remain; no nondecimal bases, separators, floats or coercion","64-bit PHP oracle only; existing runtime arithmetic may produce MinInt64 without admitting an out-of-range source token"]
+    },
+    {
       "id": "php.type.scalar-literals",
       "kind": "type",
       "name": "int64, string, bool and null literals",

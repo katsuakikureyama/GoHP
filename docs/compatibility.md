@@ -11,7 +11,7 @@ This table is the current curated summary, not a blanket support claim.
 |---|---|---|
 | PHP 8.3 | Active closed subset; native oracle is >= 8.3.36 | Differential fixtures run against the approved 8.3 oracle |
 | PHP 7.4, PHP 8.4+, other series | Not active targets | Historical evidence is retained; a separate policy/matrix is required before a series is enabled |
-| Scalar values | int64, strings, bool, null | `arrays.php`; no float or interpolation |
+| Scalar values | int64, strings, bool, null; literal-only negative decimal constants | `arrays.php`, `negative_integers.php`; no float or interpolation; [negative integer boundary](negative-integer-boundary.md) |
 | Operators | `+`, `.`, parentheses and full ternary | Integral coercion only; float promotion unsupported. Ternary is non-associative; no `?:`, `??` or object truthiness; [contract](ternary-stripslashes-boundary.md) |
 | Boolean control | Braced one-arm `if`, short-circuit `&&`, scalar `===`, `(bool)` | Scalar/array truthiness only; no else/elseif, array/object identity or other comparison operators; [contract](boolean-boundary.md) |
 | Functions | Named functions, fixed value arguments and returns | `core.php`; no optional/typed/by-reference/variadic args |

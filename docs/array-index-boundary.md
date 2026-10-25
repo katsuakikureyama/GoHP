@@ -22,8 +22,10 @@ That rejection is not a promise of PHP exception/message equivalence.
 
 `TestDifferential/negative_array_keys` observes key type, order and value using
 the supported PHP syntax, linked to `php.syntax.array-literal` in the catalog.
-Canonical negative numeric strings exercise integer-key normalization without
-adding unary-minus syntax. Runtime regression tests also check write/copy/map/
+That fixture retains canonical negative numeric strings to exercise key
+normalization. Direct negative constants are now covered by the separate
+[literal-only negation contract](negative-integer-boundary.md) and native fixture.
+Runtime regression tests also check write/copy/map/
 reindex bookkeeping. The separate `TestDifferential/array_append` now observes
 that state through supported one-level append statements.
 Native runs compare stdout and normal exits only; stderr, exceptions and side
