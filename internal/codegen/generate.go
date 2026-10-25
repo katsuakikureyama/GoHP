@@ -47,7 +47,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	}
 	for _, f := range p.Functions {
 		n := name(f.Name)
-		if _, ok := g.funcs[n]; ok || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "array_key_exists" || n == "array_is_list" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "is_array" || n == "strtolower" || n == "sprintf" || n == "str_replace" || n == "stripslashes" || n == "array_map" || n == "addslashes" {
+		if _, ok := g.funcs[n]; ok || n == "isset" || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "array_key_exists" || n == "array_is_list" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "is_array" || n == "strtolower" || n == "sprintf" || n == "str_replace" || n == "stripslashes" || n == "array_map" || n == "addslashes" {
 			g.fail(f.Line, "duplicate or reserved function "+n)
 		}
 		g.funcs[n] = len(f.Params)
@@ -271,6 +271,8 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		return "rt.NewArray(" + strings.Join(a, ",") + ")"
 	case "index":
 		return "rt.Get(" + args(e.Args) + ")"
+	case "isset_index":
+		return "rt.ArrayIsset(" + args(e.Args) + ")"
 	case "call":
 		n := name(e.Text)
 		if n == "array_map" {

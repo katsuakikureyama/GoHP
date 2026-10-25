@@ -798,6 +798,30 @@
       ]
     },
     {
+      "id": "php.syntax.isset-array-element",
+      "kind": "syntax",
+      "name": "Single array-element isset",
+      "implementation": "partial",
+      "contract": "isset($array[$key]) probes a defined real array with one integer/string literal or variable key; missing/null entries are false and other stored values are true, without eagerly reading or mutating the element.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id": "diff.array_isset", "test": "TestDifferential/array_isset", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/array_isset.php", "assertions": ["stdout", "exit", "missing/null versus present falsy entries and indexed selection with caller input observation"]},
+        {"case_id": "unit.array_isset.presence", "test": "TestArrayIssetPresenceNilAndFalsyValues", "file": "runtime/array_isset_test.go", "kind": "unit", "assertions": ["missing/null false, false/zero/empty string/empty array/nested array true; input unchanged"]},
+        {"case_id": "unit.array_isset.keys", "test": "TestArrayIssetNormalizesIntegerStringKeys", "file": "runtime/array_isset_test.go", "kind": "unit", "assertions": ["canonical numeric and negative keys normalize; leading-zero/NUL/UTF-8 keys remain distinct"]},
+        {"case_id": "unit.array_isset.domain", "test": "TestArrayIssetRejectsOutsideBoundedDomain", "file": "runtime/array_isset_test.go", "kind": "unit", "assertions": ["non-array roots and unsupported key types fail explicitly"]},
+        {"case_id": "compiler.array_isset.lowering", "test": "TestArrayIssetLowersWithoutIndexReadAndPreservesExpressionContexts", "file": "internal/codegen/array_isset_test.go", "kind": "compiler", "assertions": ["case-insensitive construct uses ArrayIsset rather than Get, with expression contexts and statement source map"]},
+        {"case_id": "negative.array_isset.source", "test": "TestArrayIssetStrictSourceFormsFailClosed", "file": "internal/codegen/array_isset_test.go", "kind": "negative", "assertions": ["forms outside the one-level defined-variable and literal/variable-key boundary fail before generation"]},
+        {"case_id": "negative.array_isset.ir", "test": "TestArrayIssetMalformedIRAndRedeclarationFailBeforeGeneration", "file": "internal/codegen/array_isset_test.go", "kind": "negative", "assertions": ["malformed address IR, normal call IR and global isset redeclaration fail before generation"]},
+        {"case_id": "negative.array_isset.runtime", "test": "TestArrayIssetRuntimeGuards", "file": "tests/array_isset_runtime_test.go", "kind": "negative", "assertions": ["compiled unknown arguments reject null/string roots and bool/null keys"]}
+      ],
+      "limitations": [
+        "No simple-variable or multi-operand isset; undefined/null/scalar roots, nested indexes and object/string offsets are excluded",
+        "No effectful or parenthesized root/key expressions, references or bool/null/float key coercions",
+        "Runtime guards are not PHP warning/exception equivalence; native comparison covers stdout and normal exits only",
+        "WordPress typed-return helper integration and Gossip compiler adoption are not yet verified"
+      ]
+    },
+    {
       "id": "php.syntax.array-write-and-reference",
       "kind": "syntax",
       "name": "Nested array writes and references",
