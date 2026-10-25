@@ -3,6 +3,25 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.is_null",
+      "kind": "builtin",
+      "name": "is_null(value)",
+      "implementation": "partial",
+      "contract": "Exactly one evaluated value, case-insensitive direct calls, actual null only; bool result without false-like conversion or undefined-address probing.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.is_null","test":"TestDifferential/is_null","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/is_null.php","assertions":["stdout","exit","null versus false-like/non-null values, single evaluation, lazy guards, present-null versus missing keys and callback composition"]},
+        {"case_id":"unit.runtime.is_null_domain","test":"TestIsNullValueDomain","file":"runtime/is_null_test.go","kind":"unit","assertions":["canonical nil accepted, false-like values/arrays/objects/callables and Go typed nil values return false without conversion"]},
+        {"case_id":"compiler.is_null_lowering","test":"TestIsNullLoweringAndSourceMap","file":"internal/codegen/is_null_test.go","kind":"compiler","assertions":["case-insensitive predicate lowers within guarded bool return and preserves statement source map"]},
+        {"case_id":"negative.is_null_missing_argument","test":"TestUnsupported/is_null_missing_argument","file":"tests/differential_test.go","kind":"negative","assertions":["missing argument rejected"]},
+        {"case_id":"negative.is_null_extra_argument","test":"TestUnsupported/is_null_extra_argument","file":"tests/differential_test.go","kind":"negative","assertions":["extra argument rejected"]},
+        {"case_id":"negative.is_null_redeclare","test":"TestUnsupported/is_null_redeclare","file":"tests/differential_test.go","kind":"negative","assertions":["case-insensitive builtin redeclaration rejected"]},
+        {"case_id":"negative.is_null_bool_as_array","test":"TestUnsupported/is_null_bool_as_array","file":"tests/differential_test.go","kind":"negative","assertions":["known bool result cannot be used as an array"]},
+        {"case_id":"negative.is_null_undefined_variable","test":"TestUnsupported/is_null_undefined_variable","file":"tests/differential_test.go","kind":"negative","assertions":["is_null does not admit an undefined variable read"]}
+      ],
+      "limitations": ["Existing GoHP value domain only; no new float/resource syntax or conversion", "Not an isset replacement: undefined variables and missing-key reads retain existing rejection/failure boundaries", "No named arguments, builtin callable lookup, branch-sensitive narrowing or PHP warning/exception equivalence", "Gossip original-source adoption needs separate pins and evidence"]
+    },
+    {
       "id": "php.builtin.is_int",
       "kind": "builtin",
       "name": "is_int(value)",

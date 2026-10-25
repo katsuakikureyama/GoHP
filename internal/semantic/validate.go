@@ -678,7 +678,7 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 			return valueType{kind: stringKind}, nil
 		}
-		if strings.EqualFold(expr.Text, "is_int") || strings.EqualFold(expr.Text, "is_bool") || strings.EqualFold(expr.Text, "is_string") || strings.EqualFold(expr.Text, "is_array") {
+		if strings.EqualFold(expr.Text, "is_null") || strings.EqualFold(expr.Text, "is_int") || strings.EqualFold(expr.Text, "is_bool") || strings.EqualFold(expr.Text, "is_string") || strings.EqualFold(expr.Text, "is_array") {
 			if len(expr.Args) != 1 {
 				return valueType{}, unsupported(expr.Line, strings.ToLower(expr.Text)+" expects one argument")
 			}

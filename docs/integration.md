@@ -45,6 +45,10 @@ operation. It adds no coercion, source type, route or dependency. Existing Gossi
 pins/evidence are unchanged; compiler feature checks do not promote original-source
 compatibility or adopt the new compiler revision automatically.
 
+The [is_null predicate](is-null-boundary.md) also stays inside that excluded local
+operation: no route/auth change, suppressed undefined reads or new source types.
+Its owned fixture does not replace Gossip's pinned original-source comparison.
+
 Fixed positional [array parameters](array-parameter-boundary.md) extend the same
 local `gohp.cli.generate` operation; WebMCP remains excluded because this is
 developer-only source translation, with no browser/server operation or auth route.

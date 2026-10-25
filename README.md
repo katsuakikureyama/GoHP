@@ -62,7 +62,7 @@ Compilation alone never proves PHP compatibility.
 Builtins currently include `count(array)`, bounded `strlen(string)` (byte
 length only, no implicit non-string coercion), `array_keys(array)` (one argument,
 ordered keys, no value filtering) and `array_values(array)` (ordered values,
-zero-based indexes, no flattening), literal-mask `rtrim`, `is_bool`, `is_string`, `is_int`, `is_array`
+zero-based indexes, no flattening), literal-mask `rtrim`, `is_bool`, `is_string`, `is_int`, `is_null`, `is_array`
 and ASCII `strtolower(string)`. String-only `strcasecmp(string, string)` adds
 binary-safe ASCII case-insensitive comparison with an integer result; no
 coercion, Unicode folding or locale collation. See the
@@ -181,7 +181,7 @@ CLI の `-php-version 8.3` はパッチ番号ではなく言語系列の指定�
 追加時には系列ごとの最低版・固定oracleイメージdigest・専用fixture・検証証拠を別途そろえます。
 最低版の指定だけで、コンパイラや生成物のセキュリティを保証するものではありません。
 組込み関数は `count(array)`、限定的な `strlen(string)`・`array_keys(array)`・`array_values(array)`、
-固定maskの `rtrim`、`is_bool`・`is_string`・`is_int`・`is_array`・ASCIIの `strtolower(string)` を対象にします。
+固定maskの `rtrim`、`is_bool`・`is_string`・`is_int`・`is_null`・`is_array`・ASCIIの `strtolower(string)` を対象にします。
 `strlen` はバイト数を返し、数値・nullなどからの暗黙変換は対象外です。
 `array_keys` は1引数で順序を保ったキー一覧を返します。値による絞り込みは未対応です。
 `array_values` は順序を保った値一覧を0始まりに振り直し、入れ子の配列は平坦化しません。
