@@ -667,6 +667,18 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			// Preserve downstream runtime guards instead of promising an int key.
 			return valueType{kind: unknownKind}, nil
 		}
+		if strings.EqualFold(expr.Text, "array_reverse") {
+			if len(args) < 1 || len(args) > 2 {
+				return valueType{}, unsupported(expr.Line, "array_reverse expects one or two arguments")
+			}
+			if args[0].kind != arrayKind && args[0].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "array_reverse requires an array")
+			}
+			if len(args) == 2 && args[1].kind != boolKind && args[1].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "array_reverse preserve_keys requires bool")
+			}
+			return valueType{kind: arrayKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "array_values") {
 			if len(args) != 1 {
 				return valueType{}, unsupported(expr.Line, "array_values expects one argument")

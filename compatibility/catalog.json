@@ -3,6 +3,24 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.array_reverse",
+      "kind": "builtin",
+      "name": "array_reverse(array, bool preserve_keys = false)",
+      "implementation": "partial",
+      "contract": "Reverse outer insertion order into a detached array. Default/false reindexes integer keys from zero; true preserves integer keys. String keys and nested values are always retained. Rebuild result append metadata without mutating the input.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.array_reverse","test":"TestDifferential/array_reverse","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_reverse.php","assertions":["stdout","exit","default/false/true, mixed/negative/normalized keys, nested copy, append metadata, input preservation, single evaluation and callbacks"]},
+        {"case_id":"compiler.array_reverse","test":"TestArrayReverseLoweringAndSourceMap","file":"internal/codegen/array_reverse_test.go","kind":"compiler","assertions":["case-insensitive direct call, optional false default and explicit flags lower with source map"]},
+        {"case_id":"negative.array_reverse.source","test":"TestArrayReverseUnsupportedSource","file":"internal/codegen/array_reverse_test.go","kind":"negative","assertions":["arity, known invalid domains, undefined reads, named args, reserved redeclaration and scalar echo rejected before output"]},
+        {"case_id":"unit.runtime.array_reverse","test":"TestArrayReverseOrderKeysAndIsolation","file":"runtime/array_reverse_test.go","kind":"unit","assertions":["mixed/binary keys, exact values, empty result, detached outer/nested storage and input preservation"]},
+        {"case_id":"unit.runtime.array_reverse.append","test":"TestArrayReverseAppendMetadata","file":"runtime/array_reverse_test.go","kind":"unit","assertions":["negative/extreme integer keys, reindex versus preservation and overflow guard"]},
+        {"case_id":"negative.array_reverse.domain","test":"TestArrayReverseRejectsInvalidDomains","file":"runtime/array_reverse_test.go","kind":"negative","assertions":["actual array and bool required, including invalid flag with empty array"]},
+        {"case_id":"negative.array_reverse.runtime","test":"TestArrayReverseRuntimeGuards","file":"tests/array_reverse_runtime_test.go","kind":"negative","assertions":["dynamic nonarray/nonbool arguments and preserved-key append overflow fail explicitly"]}
+      ],
+      "limitations": ["Existing array/key/value domain only; no weak boolean coercion, named args or builtin callable lookup", "No references, recursive reversal, internal pointer API or PHP exception equivalence claim", "Gossip adoption requires separate pin and original-source evidence"]
+    },
+    {
       "id": "php.builtin.array_key_first",
       "kind": "builtin",
       "name": "array_key_first(array)",

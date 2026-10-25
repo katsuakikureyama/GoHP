@@ -70,6 +70,9 @@ coercion, Unicode folding or locale collation. See the
 [`array_key_first(array)`](docs/array-key-first-boundary.md) and
 [`array_key_last(array)`](docs/array-key-last-boundary.md) return the first/last
 insertion-order int/string key, or null for an empty array, without modifying it.
+[`array_reverse(array, bool preserve_keys = false)`](docs/array-reverse-boundary.md)
+reverses outer order without modifying the input, retaining string keys and
+optionally integer keys; the optional flag accepts actual booleans only.
 `array_key_exists(int|string, array)` checks
 first-level key presence, including null-valued entries, without other key
 coercions. `array_is_list(array)` checks zero-based consecutive integer keys in

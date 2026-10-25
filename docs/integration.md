@@ -1,5 +1,10 @@
 # Gossip builder contract v0.1 (proposal)
 
+[`array_reverse`](array-reverse-boundary.md) extends WebMCP-excluded local
+`gohp.cli.generate` with bounded array reversal and an actual-bool optional flag.
+No route, authentication or deployment change; Gossip pins and original-source
+evidence require their own adoption checks and are not changed here.
+
 [`array_key_first`](array-key-first-boundary.md) extends the same WebMCP-excluded
 local compiler operation with first-key lookup. It does not adopt or replace
 Gossip's array_first value-returning polyfill, repin original-source evidence,
