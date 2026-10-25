@@ -447,7 +447,25 @@
         {"case_id": "negative.array_return.source", "test": "TestArrayReturnUnsupportedSourceFailsClosed", "file": "internal/codegen/array_return_test.go", "kind": "negative", "assertions": ["unsupported types/typed parameters/bare or known non-array returns produce no generated output"]},
         {"case_id": "negative.array_return.runtime", "test": "TestArrayReturnRuntimeGuards", "file": "tests/array_return_runtime_test.go", "kind": "negative", "assertions": ["compiled unknown null/scalar returns and fallthrough fail explicitly"]}
       ],
-      "limitations": ["No other/nullable/union/intersection return types, typed parameters or typed methods", "No path-completeness proof or branch-sensitive narrowing", "Failure is not PHP TypeError/catchability equivalence; native harness compares stdout and normal exits", "Gossip adoption requires its own pinned original-source evidence"]
+      "limitations": ["No nullable/union/intersection return types, typed parameters or typed methods; bool returns have a separate contract", "No path-completeness proof or branch-sensitive narrowing", "Failure is not PHP TypeError/catchability equivalence; native harness compares stdout and normal exits", "Gossip adoption requires its own pinned original-source evidence"]
+    },
+    {
+      "id": "php.syntax.bool-return-type",
+      "kind": "syntax",
+      "name": "Actual-bool return declarations on named global functions",
+      "implementation": "partial",
+      "contract": "Retains case-insensitive : bool and guards explicit returns and fallthrough; accepts actual bool only, rejects known non-bools before generation and unknown non-bools at runtime. No implicit scalar coercion.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.bool_return","test":"TestDifferential/bool_return","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/bool_return.php","assertions":["stdout","exit","actual true/false types, early/empty-loop returns, forward/nested calls, evaluation marker, explicit cast and literal array_map/typed-array composition"]},
+        {"case_id":"unit.bool_return.values","test":"TestBoolReturnPreservesBooleanValues","file":"runtime/bool_return_test.go","kind":"unit","assertions":["actual true/false preserved without truthiness conversion"]},
+        {"case_id":"negative.bool_return.domain","test":"TestBoolReturnRejectsNonBooleans","file":"runtime/bool_return_test.go","kind":"negative","assertions":["null/int/string/array/object rejected by runtime guard, not implicitly cast"]},
+        {"case_id":"compiler.bool_return.paths","test":"TestBoolReturnTypeRetainedAndGuarded","file":"internal/codegen/bool_return_test.go","kind":"compiler","assertions":["normalized IR type, nested/fallthrough/forward guards and return source location retained"]},
+        {"case_id":"negative.bool_return.source","test":"TestBoolReturnUnsupportedSourceFailsClosed","file":"internal/codegen/bool_return_test.go","kind":"negative","assertions":["known non-bool/bare/dead returns and unsupported type/parameter/method declarations fail without output"]},
+        {"case_id":"negative.bool_return.ir","test":"TestBoolReturnMalformedIRFailsClosed","file":"internal/codegen/bool_return_test.go","kind":"negative","assertions":["noncanonical and unsupported direct IR return types fail without output"]},
+        {"case_id":"negative.bool_return.runtime","test":"TestBoolReturnRuntimeGuards","file":"tests/bool_return_runtime_test.go","kind":"negative","assertions":["compiled unknown null/int/string/array/object and fallthrough fail explicitly"]}
+      ],
+      "limitations": ["No implicit scalar return coercion or strict_types declaration support", "No nullable/union/intersection/literal return types, typed parameters or typed methods", "No general callable/arrow closure/array_all support", "Failure is not PHP TypeError/catchability equivalence; native observations are stdout and normal exit only", "Gossip original helper remains unexecuted under this revision; prior pins/evidence unchanged"]
     },
     {
       "id": "php.syntax.foreach",

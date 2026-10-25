@@ -97,7 +97,7 @@ func Validate(p ir.Program) error {
 }
 
 func (v validator) function(f ir.Function, class string) error {
-	if f.ReturnType != "" && f.ReturnType != "array" {
+	if f.ReturnType != "" && f.ReturnType != "array" && f.ReturnType != "bool" {
 		return malformed(f.Line, "unsupported IR return type")
 	}
 	if class != "" && f.ReturnType != "" {
@@ -184,6 +184,9 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 			}
 			if returnType == "array" && t.kind != arrayKind && t.kind != unknownKind {
 				return unsupported(stmt.Line, "array return requires an array value")
+			}
+			if returnType == "bool" && t.kind != boolKind && t.kind != unknownKind {
+				return unsupported(stmt.Line, "bool return requires a bool value; scalar coercion is unsupported")
 			}
 		case "foreach":
 			if !validName(stmt.Value) || stmt.Key != "" && !validName(stmt.Key) {

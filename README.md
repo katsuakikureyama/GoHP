@@ -59,6 +59,11 @@ numeric negation and float-promoting tokens remain outside the [bounded syntax](
 Unsupported syntax must fail
 with a diagnostic; a separate runtime-negative test must fail on a missing key.
 Compilation alone never proves PHP compatibility.
+Named global functions also retain bounded `: bool` declarations and guard
+actual Boolean returns, including nested returns and fallthrough. Implicit
+scalar coercion, typed parameters/methods and general callable support remain
+excluded; see the [Boolean return boundary](docs/bool-return-boundary.md).
+This is a prerequisite for Gossip's next original helper, not its adoption.
 Builtins currently include `count(array)`, bounded `strlen(string)` (byte
 length only, no implicit non-string coercion), `array_keys(array)` (one argument,
 ordered keys, no value filtering) and `array_values(array)` (ordered values,
