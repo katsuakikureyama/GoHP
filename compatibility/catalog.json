@@ -3,6 +3,233 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.in-array-strict-scalar",
+      "kind": "builtin",
+      "name": "Strict scalar array membership",
+      "implementation": "partial",
+      "contract": "Exactly three arguments with literal true strictness; null/bool/int64/string needle and all array values; type-and-value equality, keys ignored, bool result. Entire domain validated before search.",
+      "php_targets": [
+        "8.3"
+      ],
+      "checks": [
+        {
+          "case_id": "diff.in_array_strict",
+          "test": "TestDifferential/in_array_strict",
+          "file": "tests/differential_test.go",
+          "kind": "differential",
+          "fixture": "tests/fixtures/in_array_strict.php",
+          "assertions": [
+            "stdout",
+            "exit",
+            "strict scalar distinctions, case/binary-safe strings, ignored keys and single operand evaluation"
+          ]
+        },
+        {
+          "case_id": "unit.runtime.in_array_strict",
+          "test": "TestInArrayStrictMatchesOnlyIdenticalSupportedScalars",
+          "file": "runtime/in_array_strict_test.go",
+          "kind": "unit",
+          "assertions": [
+            "bool type and exact scalar membership across mixed keys, case and byte strings"
+          ]
+        },
+        {
+          "case_id": "unit.runtime.in_array_domain",
+          "test": "TestInArrayStrictRejectsValuesOutsideItsClosedDomain",
+          "file": "runtime/in_array_strict_test.go",
+          "kind": "unit",
+          "assertions": [
+            "invalid needle, haystack and late values rejected even after early match"
+          ]
+        },
+        {
+          "case_id": "compiler.in_array_lowering",
+          "test": "TestInArrayStrictLoweringAndSourceMap",
+          "file": "internal/codegen/in_array_strict_test.go",
+          "kind": "compiler",
+          "assertions": [
+            "case-insensitive name lowers to guarded runtime with statement source map"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_no_args",
+          "test": "TestUnsupported/in_array_no_args",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "outside strict scalar contract rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_missing_strict",
+          "test": "TestUnsupported/in_array_missing_strict",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "outside strict scalar contract rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_extra_args",
+          "test": "TestUnsupported/in_array_extra_args",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "outside strict scalar contract rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_false_strict",
+          "test": "TestUnsupported/in_array_false_strict",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "outside strict scalar contract rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_dynamic_strict",
+          "test": "TestUnsupported/in_array_dynamic_strict",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "outside strict scalar contract rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_expression_strict",
+          "test": "TestUnsupported/in_array_expression_strict",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "outside strict scalar contract rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_array_needle",
+          "test": "TestUnsupported/in_array_array_needle",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "outside strict scalar contract rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_object_needle",
+          "test": "TestUnsupported/in_array_object_needle",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "outside strict scalar contract rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_nonarray_haystack",
+          "test": "TestUnsupported/in_array_nonarray_haystack",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "outside strict scalar contract rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_nested_haystack",
+          "test": "TestUnsupported/in_array_nested_haystack",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "outside strict scalar contract rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_object_haystack",
+          "test": "TestUnsupported/in_array_object_haystack",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "outside strict scalar contract rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_redeclare",
+          "test": "TestUnsupported/in_array_redeclare",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "outside strict scalar contract rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_result_not_string",
+          "test": "TestUnsupported/in_array_result_not_string",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "outside strict scalar contract rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_dead_branch",
+          "test": "TestUnsupported/in_array_dead_branch",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "outside strict scalar contract rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_runtime_array_needle_empty",
+          "test": "TestInArrayStrictRuntimeGuards/array_needle_empty",
+          "file": "tests/in_array_strict_runtime_test.go",
+          "kind": "negative",
+          "assertions": [
+            "generated binary rejects dynamic value with explicit domain guard"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_runtime_object_needle",
+          "test": "TestInArrayStrictRuntimeGuards/object_needle",
+          "file": "tests/in_array_strict_runtime_test.go",
+          "kind": "negative",
+          "assertions": [
+            "generated binary rejects dynamic value with explicit domain guard"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_runtime_nonarray_haystack",
+          "test": "TestInArrayStrictRuntimeGuards/nonarray_haystack",
+          "file": "tests/in_array_strict_runtime_test.go",
+          "kind": "negative",
+          "assertions": [
+            "generated binary rejects dynamic value with explicit domain guard"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_runtime_invalid_before_match",
+          "test": "TestInArrayStrictRuntimeGuards/invalid_before_match",
+          "file": "tests/in_array_strict_runtime_test.go",
+          "kind": "negative",
+          "assertions": [
+            "generated binary rejects dynamic value with explicit domain guard"
+          ]
+        },
+        {
+          "case_id": "negative.in_array_runtime_invalid_after_match",
+          "test": "TestInArrayStrictRuntimeGuards/invalid_after_match",
+          "file": "tests/in_array_strict_runtime_test.go",
+          "kind": "negative",
+          "assertions": [
+            "generated binary rejects dynamic value with explicit domain guard"
+          ]
+        }
+      ],
+      "limitations": [
+        "No loose/default/dynamic strictness, floats, array/object needles or non-scalar haystack values",
+        "Complete domain guard rejects unsupported values even after an early matching scalar; not general PHP mixed-array behavior",
+        "Native oracle observes stdout/normal exit, not general stderr/exception/side-effect equivalence"
+      ]
+    },
+    {
       "id": "php.builtin.strcasecmp-string",
       "kind": "builtin",
       "name": "String-only ASCII case-insensitive comparison",

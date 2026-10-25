@@ -22,6 +22,7 @@ This table is the current curated summary, not a blanket support claim.
 | Built-ins | `count(array)`, `strlen(string)`, `array_keys(array)`, `array_values(array)`, `array_key_exists(int\|string, array)`, `array_is_list(array)`, restricted `rtrim`, `is_bool`, `is_string`, `is_array`, ASCII `strtolower(string)`, `stripslashes(string)`, `addslashes(string)`, literal-callback `array_map` | Bounded arities/domains; [rtrim](rtrim-boundary.md), [boolean](boolean-boundary.md), [ternary](ternary-stripslashes-boundary.md), [literal callback](array-map-boundary.md); other builtins fail closed |
 | String formatting / replacement | `sprintf('%0Ns', string\|int64)` with canonical width 0–4096; `str_replace(string, string, string)` | [Zero-padding boundary](sprintf-boundary.md) / [replacement boundary](str-replace-boundary.md); no general formatting, array substitutions or count reference |
 | Case-insensitive string comparison | `strcasecmp(string, string)` | [ASCII byte comparison](strcasecmp-boundary.md); no non-string coercion or Unicode/locale folding |
+| Strict scalar membership | `in_array(scalar, scalar-valued array, true)` | [Closed strict boundary](in-array-strict-boundary.md); no loose mode or array/object values |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |
