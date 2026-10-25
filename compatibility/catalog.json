@@ -232,6 +232,24 @@
       "limitations": ["Exactly one argument", "No PHP extension type values"]
     },
     {
+      "id": "php.builtin.is_array",
+      "kind": "builtin",
+      "name": "is_array(value)",
+      "implementation": "partial",
+      "contract": "One value argument returns bool: true for existing GoHP array values (including empty and associative), false for supported scalars, null and generated class instances. No conversion, traversal or mutation.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id": "diff.is_array", "test": "TestDifferential/is_array", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/is_array.php", "assertions": ["empty/list/associative/nested arrays and non-array values match native PHP via strict bool observation", "dynamic arguments, single evaluation, short-circuit array guards and original preservation match"]},
+        {"case_id": "unit.runtime.is_array_domain", "test": "TestIsArrayValueDomain", "file": "runtime/is_array_test.go", "kind": "unit", "assertions": ["GoHP Array values are distinguished from scalars, native Go slices/maps and pointers without conversion"]},
+        {"case_id": "compiler.is_array_lowering", "test": "TestIsArrayLowersToRuntimeBoundary", "file": "internal/codegen/is_array_test.go", "kind": "compiler", "assertions": ["case-insensitive calls lower to the runtime type predicate"]},
+        {"case_id": "negative.is_array_missing_argument", "test": "TestUnsupported/is_array_missing_argument", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["missing argument is rejected"]},
+        {"case_id": "negative.is_array_extra_argument", "test": "TestUnsupported/is_array_extra_argument", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["extra argument is rejected"]},
+        {"case_id": "negative.is_array_redeclare", "test": "TestUnsupported/is_array_redeclare", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["case-insensitive builtin redeclaration is rejected"]},
+        {"case_id": "negative.is_array_bool_as_array", "test": "TestUnsupported/is_array_bool_as_array", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["known bool result cannot be consumed as an array"]}
+      ],
+      "limitations": ["Only existing compiler value forms; no float/resource or extension-value support is added", "No named arguments, array-like object conversion or branch-sensitive type narrowing", "Native evidence compares stdout and normal exits; no general PHP warning/exception or typed observation protocol claim"]
+    },
+    {
       "id": "php.builtin.is_string",
       "kind": "builtin",
       "name": "is_string",
@@ -494,12 +512,35 @@
     {
       "id": "php.builtin.array_map",
       "kind": "builtin",
-      "name": "array_map",
-      "implementation": "unsupported",
-      "contract": "No lowering is provided.",
+      "name": "array_map(literal user callback, array)",
+      "implementation": "partial",
+      "contract": "Exactly one array and one literal declared one-argument global callback; preserves keys/order, clones callback values and resolves forward/recursive calls statically.",
       "php_targets": ["8.3"],
-      "checks": [],
-      "limitations": ["Callbacks and closures are unsupported"]
+      "checks": [
+        {"case_id":"diff.array_map","test":"TestDifferential/array_map","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_map.php","assertions":["literal callbacks, ordered keys, empty mapping, finite recursive lists and value preservation match native PHP stdout and normal exit"]},
+        {"case_id":"unit.runtime.array_map_values","test":"TestArrayMapPreservesKeysOrderAndValueIsolation","file":"runtime/array_map_test.go","kind":"unit","assertions":["keys/order/index metadata and callback argument/result array isolation are retained"]},
+        {"case_id":"negative.runtime.array_map","test":"TestArrayMapEmptyAndInvalidArguments","file":"runtime/array_map_test.go","kind":"negative","assertions":["empty arrays invoke no callback and invalid array/nil callback fail explicitly"]},
+        {"case_id":"unit.codegen.array_map_addslashes","test":"TestArrayMapAndAddSlashesLowerToRuntimeBoundaries","file":"internal/codegen/array_map_test.go","kind":"unit","assertions":["literal case-insensitive callbacks lower to a direct adapter and addslashes runtime boundary"]},
+        {"case_id":"negative.codegen.array_map_addslashes","test":"TestArrayMapAndAddSlashesKnownUnsupportedFormsFailBeforeGeneration","file":"internal/codegen/array_map_test.go","kind":"negative","assertions":["unsupported callback forms/arity/domains and reserved names fail before generation"]},
+        {"case_id":"negative.ir.array_map_callback","test":"TestArrayMapWrongCallbackIRIsRejectedBeforeGeneration","file":"internal/codegen/array_map_test.go","kind":"negative","assertions":["nonliteral callback IR fails safely before generated code"]}
+      ],
+      "limitations": ["One array only", "Literal declared one-argument global callback only", "No builtin/null/dynamic/method/closure/reference callbacks", "No general object alias or warning/exception equivalence", "No arbitrary-depth or cyclic recursion guarantee"]
+    },
+    {
+      "id": "php.builtin.addslashes-string",
+      "kind": "builtin",
+      "name": "addslashes(string)",
+      "implementation": "partial",
+      "contract": "Exactly one actual string, byte-wise single-pass escaping of quotes/backslash and NUL to backslash-zero.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.array_map","test":"TestDifferential/array_map","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_map.php","assertions":["string quoting composes with finite recursive literal callbacks and non-string passthrough"]},
+        {"case_id":"unit.runtime.addslashes_bytes","test":"TestAddSlashesEscapesBytesInOnePass","file":"runtime/addslashes_test.go","kind":"unit","assertions":["quotes/backslashes/NUL/UTF8 and invalid bytes are processed once without decoding"]},
+        {"case_id":"negative.runtime.addslashes","test":"TestAddSlashesRejectsNonStrings","file":"runtime/addslashes_test.go","kind":"negative","assertions":["non-string dynamic inputs fail explicitly"]},
+        {"case_id":"unit.codegen.array_map_addslashes","test":"TestArrayMapAndAddSlashesLowerToRuntimeBoundaries","file":"internal/codegen/array_map_test.go","kind":"unit","assertions":["addslashes lowers through its guarded runtime boundary"]},
+        {"case_id":"negative.codegen.array_map_addslashes","test":"TestArrayMapAndAddSlashesKnownUnsupportedFormsFailBeforeGeneration","file":"internal/codegen/array_map_test.go","kind":"negative","assertions":["arity, known non-string and redeclaration are rejected"]}
+      ],
+      "limitations": ["Actual string only, no weak coercion", "Not SQL/HTML/shell escaping", "No PHP warning or TypeError equivalence"]
     },
     {
       "id": "php.builtin.json_encode",
@@ -514,14 +555,14 @@
     {
       "id": "php.syntax.closure",
       "kind": "syntax",
-      "name": "Closures and callbacks",
+      "name": "Closures and dynamic callbacks",
       "implementation": "unsupported",
       "contract": "Closure syntax fails closed.",
       "php_targets": ["8.3"],
       "checks": [
         {"case_id": "negative.closure", "test": "TestUnsupported/closure", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["closure source is rejected with a diagnostic code"]}
       ],
-      "limitations": ["No callback or dynamic-call support"]
+      "limitations": ["No closures or dynamic calls; literal one-argument named array_map callbacks have a separate partial contract"]
     },
     {
       "id": "php.syntax.array-write-and-reference",

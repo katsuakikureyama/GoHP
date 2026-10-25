@@ -34,7 +34,8 @@ type classInfo struct {
 }
 
 type validator struct {
-	classes map[string]classInfo
+	classes   map[string]classInfo
+	functions map[string]int
 }
 
 // Validate rejects malformed IR and operations that are statically outside the
@@ -43,7 +44,12 @@ func Validate(p ir.Program) error {
 	if err := phpversion.ValidateTarget(p.PHPVersion); err != nil {
 		return fmt.Errorf("PHP003: %w", err)
 	}
-	v := validator{classes: make(map[string]classInfo, len(p.Classes))}
+	v := validator{classes: make(map[string]classInfo, len(p.Classes)), functions: make(map[string]int, len(p.Functions))}
+	// Collect before validating bodies so literal callbacks can refer forward
+	// or back to their own declaration without dynamic callable resolution.
+	for _, f := range p.Functions {
+		v.functions[strings.ToLower(f.Name)] = len(f.Params)
+	}
 	for _, c := range p.Classes {
 		if !validName(c.Name) {
 			return malformed(1, "invalid class name")
@@ -350,6 +356,27 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		if err != nil {
 			return valueType{}, err
 		}
+		if strings.EqualFold(expr.Text, "array_map") {
+			if len(expr.Args) != 2 || expr.Args[0].Kind != "string" || !validName(expr.Args[0].Text) {
+				return valueType{}, unsupported(expr.Line, "array_map expects a literal named callback and one array")
+			}
+			if arity, ok := v.functions[strings.ToLower(expr.Args[0].Text)]; !ok || arity != 1 {
+				return valueType{}, unsupported(expr.Line, "array_map callback must be a declared one-argument function")
+			}
+			if args[1].kind != arrayKind && args[1].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "array_map requires an array")
+			}
+			return valueType{kind: arrayKind}, nil
+		}
+		if strings.EqualFold(expr.Text, "addslashes") {
+			if len(args) != 1 {
+				return valueType{}, unsupported(expr.Line, "addslashes expects one argument")
+			}
+			if args[0].kind != stringKind && args[0].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "addslashes requires a string argument")
+			}
+			return valueType{kind: stringKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "stripslashes") {
 			if len(expr.Args) != 1 {
 				return valueType{}, unsupported(expr.Line, "stripslashes expects one argument")
@@ -459,7 +486,7 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 			return valueType{kind: stringKind}, nil
 		}
-		if strings.EqualFold(expr.Text, "is_bool") || strings.EqualFold(expr.Text, "is_string") {
+		if strings.EqualFold(expr.Text, "is_bool") || strings.EqualFold(expr.Text, "is_string") || strings.EqualFold(expr.Text, "is_array") {
 			if len(expr.Args) != 1 {
 				return valueType{}, unsupported(expr.Line, strings.ToLower(expr.Text)+" expects one argument")
 			}

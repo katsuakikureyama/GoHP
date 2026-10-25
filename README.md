@@ -58,7 +58,7 @@ Compilation alone never proves PHP compatibility.
 Builtins currently include `count(array)`, bounded `strlen(string)` (byte
 length only, no implicit non-string coercion), `array_keys(array)` (one argument,
 ordered keys, no value filtering) and `array_values(array)` (ordered values,
-zero-based indexes, no flattening), literal-mask `rtrim`, `is_bool`, `is_string`
+zero-based indexes, no flattening), literal-mask `rtrim`, `is_bool`, `is_string`, `is_array`
 and ASCII `strtolower(string)`. `array_key_exists(int|string, array)` checks
 first-level key presence, including null-valued entries, without other key
 coercions. `array_is_list(array)` checks zero-based consecutive integer keys in
@@ -93,6 +93,7 @@ See the [compatibility version policy](docs/compatibility.md#active-php-version-
 - [Bounded `str_replace` string boundary](docs/str-replace-boundary.md)
 - [Full ternary and string-only `stripslashes` boundary](docs/ternary-stripslashes-boundary.md)
 - [Combined conditional/array compiler boundary](docs/gossip-compiler-integration.md)
+- [Literal callback mapping and string quoting boundary](docs/array-map-boundary.md)
 - [Boolean validation subset](docs/boolean-boundary.md)
 - [Function/feature catalog and verification-ledger design](docs/compatibility-registry.md)
 - [Generate and browse function/feature evidence](docs/compatibility-ledger.md)
@@ -122,7 +123,7 @@ CLI の `-php-version 8.3` はパッチ番号ではなく言語系列の指定�
 追加時には系列ごとの最低版・固定oracleイメージdigest・専用fixture・検証証拠を別途そろえます。
 最低版の指定だけで、コンパイラや生成物のセキュリティを保証するものではありません。
 組込み関数は `count(array)`、限定的な `strlen(string)`・`array_keys(array)`・`array_values(array)`、
-固定maskの `rtrim`、`is_bool`・`is_string`・ASCIIの `strtolower(string)` を対象にします。
+固定maskの `rtrim`、`is_bool`・`is_string`・`is_array`・ASCIIの `strtolower(string)` を対象にします。
 `strlen` はバイト数を返し、数値・nullなどからの暗黙変換は対象外です。
 `array_keys` は1引数で順序を保ったキー一覧を返します。値による絞り込みは未対応です。
 `array_values` は順序を保った値一覧を0始まりに振り直し、入れ子の配列は平坦化しません。
