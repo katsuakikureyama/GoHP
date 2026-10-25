@@ -63,6 +63,16 @@ The three-string `str_replace` addition remains the same excluded local
 change. Array/count/coercion forms remain outside its
 [explicit subset contract](str-replace-boundary.md).
 
+The full ternary and string-only `stripslashes` addition remains the same
+excluded local `gohp.cli.generate` capability. It adds no browser operation,
+service resource, authentication route, or auto-submit; short/coalesce ternary,
+recursive WordPress unescaping and scalar/object coercion remain outside its
+[explicit subset contract](ternary-stripslashes-boundary.md).
+
+The [conditional/array compiler integration](gossip-compiler-integration.md)
+preserves that exclusion and the existing operation boundary. Combining these
+compiler subsets introduces no additional browser/service capability.
+
 The bounded `sprintf('%0Ns', value)` addition remains the same excluded local
 `gohp.cli.generate` capability: developer-only source translation, no browser
 operation or new service/authentication route. Dynamic formats and values are

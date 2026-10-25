@@ -146,6 +146,23 @@
       "limitations": ["No else, elseif, alternative syntax or unbraced body", "Variables first assigned in an if body are not definitely assigned after it"]
     },
     {
+      "id": "php.syntax.full-ternary",
+      "kind": "syntax",
+      "name": "Full ternary conditional",
+      "implementation": "partial",
+      "contract": "Lowers condition ? yes : no with one condition evaluation and lazy branch evaluation over the existing supported truthiness domain.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.conditional_array_integration","test":"TestDifferential/conditional_array_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/conditional_array_integration.php","assertions":["lazy conditional string processing and non-string array passthrough compose with array keys/values/existence/list operations on one compiler/runtime"]},
+        {"case_id": "diff.ternary_stripslashes", "test": "TestDifferential/ternary_stripslashes", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/ternary_stripslashes.php", "assertions": ["precedence, legal middle and parenthesized nesting, visible condition/branch effects and selected native PHP stdout match"]},
+        {"case_id": "unit.codegen.ternary_stripslashes", "test": "TestTernaryAndStripSlashesLowerToRuntimeBoundaries", "file": "internal/codegen/ternary_stripslashes_test.go", "kind": "unit", "assertions": ["ternary lowering calls the supported truthiness boundary from a lazy closure"]},
+        {"case_id": "negative.codegen.ternary_stripslashes", "test": "TestTernaryAndStripSlashesKnownUnsupportedFormsFailBeforeGeneration", "file": "internal/codegen/ternary_stripslashes_test.go", "kind": "negative", "assertions": ["short/coalesce/chained forms, invalid separator tokens, object conditions and invalid unselected arms fail closed"]},
+        {"case_id": "negative.ir.ternary_arity", "test": "TestTernaryMalformedIRArityFailsBeforeGeneration", "file": "internal/codegen/ternary_stripslashes_test.go", "kind": "negative", "assertions": ["malformed ternary operand counts fail safely before code generation"]},
+        {"case_id": "unit.codegen.ternary_mixed_arms", "test": "TestTernaryMixedArmsRemainConservative", "file": "internal/codegen/ternary_stripslashes_test.go", "kind": "unit", "assertions": ["mixed branch types do not acquire an optimistic static type"]}
+      ],
+      "limitations": ["No short ?: or ??", "Unparenthesized ternary chains are rejected", "No object truthiness", "Both arms are statically validated", "Mixed branch types remain unknown"]
+    },
+    {
       "id": "php.operator.logical-and",
       "kind": "operator",
       "name": "Logical &&",
@@ -457,6 +474,22 @@
         {"case_id": "negative.runtime.str_replace", "test": "TestStrReplaceRejectsNonStringInEveryPosition", "file": "runtime/str_replace_test.go", "kind": "negative", "assertions": ["dynamic non-string values fail at the runtime boundary in search, replacement and subject positions"]}
       ],
       "limitations": ["Exactly three string arguments", "No arrays or optional by-reference count", "No scalar/object coercion", "No regular expressions or case-insensitive replacement", "No PHP warning or TypeError equivalence"]
+    },
+    {
+      "id": "php.builtin.stripslashes-string",
+      "kind": "builtin",
+      "name": "stripslashes(string)",
+      "implementation": "partial",
+      "contract": "Supports exactly one actual string argument, removing one backslash before each following byte, mapping escaped ASCII zero to NUL and dropping a trailing backslash.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.conditional_array_integration","test":"TestDifferential/conditional_array_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/conditional_array_integration.php","assertions":["guarded string-only unescaping composes with bounded formatting/replacement while non-string arrays retain their values"]},
+        {"case_id": "diff.ternary_stripslashes", "test": "TestDifferential/ternary_stripslashes", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/ternary_stripslashes.php", "assertions": ["case-insensitive calls, quote/backslash/arbitrary-byte/ASCII-zero/trailing-backslash handling and string-only guard output match native PHP"]},
+        {"case_id": "unit.codegen.ternary_stripslashes", "test": "TestTernaryAndStripSlashesLowerToRuntimeBoundaries", "file": "internal/codegen/ternary_stripslashes_test.go", "kind": "unit", "assertions": ["case-insensitive builtin spelling lowers through the runtime boundary"]},
+        {"case_id": "negative.codegen.ternary_stripslashes", "test": "TestTernaryAndStripSlashesKnownUnsupportedFormsFailBeforeGeneration", "file": "internal/codegen/ternary_stripslashes_test.go", "kind": "negative", "assertions": ["wrong arity, static non-string input and builtin redeclaration fail with diagnostics"]},
+        {"case_id": "unit.runtime.stripslashes", "test": "TestStripSlashesRuntime", "file": "runtime/stripslashes_test.go", "kind": "unit", "assertions": ["byte-wise pairs, escaped ASCII zero, trailing slash, actual NUL and invalid UTF-8 behavior are explicit"]}
+      ],
+      "limitations": ["Exactly one actual string argument", "No scalar/object coercion", "No recursive array handling", "No PHP warning or TypeError equivalence"]
     },
     {
       "id": "php.builtin.array_map",
