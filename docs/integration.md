@@ -137,6 +137,12 @@ exact GoHP Git revision and Go toolchain, build source against the same runtime
 revision, and execute isolated differential fixtures before promoting status.
 No automatic plugin activation, DB migration, source upload or deployment occurs.
 
+The [actual-bool return declaration](bool-return-boundary.md) extends named
+global functions only. It preserves the local `gohp.cli.generate` WebMCP exclusion
+and adds no service/auth route. Gossip's numeric-array original still needs typed
+parameters and callable/arrow dependencies plus a separately pinned comparison;
+accepting `: bool` alone is not original-source compatibility or adoption.
+
 Case-insensitive true/false/null literals normalize only those three predefined
 values to existing IR. This stays within the excluded local `gohp.cli.generate`
 capability, without a service/authentication change, general constant resolution

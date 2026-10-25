@@ -102,10 +102,12 @@ true. Literal negative integer keys are accepted with the same bounded decimal
 negation rules as array reads/writes. This is not general isset: undefined roots, nested indexes, properties,
 multiple operands and key coercions are excluded. See the
 [array isset boundary](docs/array-isset-boundary.md).
-Named global functions may declare `: array`; explicit returns and fallthrough
-are checked rather than silently dropping the declaration. Other return types,
+Named global functions may declare `: array` or `: bool`; explicit returns and fallthrough
+are checked rather than silently dropping the declaration. Bool returns require
+actual bool values, without weak scalar coercion. Other return types,
 typed parameters and typed methods remain excluded. See the
-[array return boundary](docs/array-return-boundary.md).
+[array return boundary](docs/array-return-boundary.md) and
+[bool return boundary](docs/bool-return-boundary.md).
 Strict scalar `in_array(needle, haystack, true)` is also available: the needle
 and all array values must be null/bool/int64/string. Loose comparison and
 array/object values are excluded; see the [membership boundary](docs/in-array-strict-boundary.md).

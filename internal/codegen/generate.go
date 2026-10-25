@@ -139,6 +139,8 @@ func (g *generator) function(f ir.Function, c string) {
 	if len(f.Body) == 0 || f.Body[len(f.Body)-1].Kind != "return" {
 		if f.ReturnType == "array" {
 			g.emit("return rt.ArrayReturn(nil)\n")
+		} else if f.ReturnType == "bool" {
+			g.emit("return rt.BoolReturn(nil)\n")
 		} else {
 			g.emit("return nil\n")
 		}
@@ -181,6 +183,8 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			}
 			if returnType == "array" {
 				g.emit("return rt.ArrayReturn(%s)\n", g.expr(s.Expr, scope))
+			} else if returnType == "bool" {
+				g.emit("return rt.BoolReturn(%s)\n", g.expr(s.Expr, scope))
 			} else {
 				g.emit("return rt.Clone(%s)\n", g.expr(s.Expr, scope))
 			}

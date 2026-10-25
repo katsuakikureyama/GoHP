@@ -22,7 +22,7 @@ type Function struct {
 	Params     []string
 	Body       []Stmt
 	Line       int
-	ReturnType string // Empty (untyped) or "array" on a named global function.
+	ReturnType string // Empty (untyped), "array" or "bool" on a named global function.
 }
 type Property struct {
 	Name  string

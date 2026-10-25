@@ -3,6 +3,24 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.bool-return-type",
+      "kind": "syntax",
+      "name": "Actual-bool returns on named global functions",
+      "implementation": "partial",
+      "contract": "Canonical : bool declaration with actual boolean returns only; every explicit return and fallthrough guarded, known mismatches rejected statically, unknown values guarded at runtime. No weak scalar coercion.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.bool_return","test":"TestDifferential/bool_return","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/bool_return.php","assertions":["stdout","exit","typed true/false and predicates, branches/foreach, forward calls and named callback composition; bool type, one evaluation and caller preservation"]},
+        {"case_id":"unit.bool_return.values","test":"TestBoolReturnActualBooleans","file":"runtime/bool_return_test.go","kind":"unit","assertions":["true and false preserve exact bool type/value"]},
+        {"case_id":"negative.bool_return.coercion","test":"TestBoolReturnRejectsCoercion","file":"runtime/bool_return_test.go","kind":"negative","assertions":["null/integer/string/array/object are rejected without truthiness coercion"]},
+        {"case_id":"compiler.bool_return.paths","test":"TestBoolReturnTypeAndSourceMap","file":"internal/codegen/bool_return_test.go","kind":"compiler","assertions":["mixed-case annotation canonicalizes; forward, conditional, foreach and fallthrough returns guard values with source maps"]},
+        {"case_id":"negative.bool_return.source","test":"TestBoolReturnUnsupportedSource","file":"internal/codegen/bool_return_test.go","kind":"negative","assertions":["known non-bool/dead-arm returns, unsupported declarations, typed params/methods and bare returns are rejected"]},
+        {"case_id":"negative.bool_return.ir","test":"TestBoolReturnRejectsNoncanonicalIR","file":"internal/codegen/bool_return_test.go","kind":"negative","assertions":["noncanonical/unsupported return-type IR is rejected before generation"]},
+        {"case_id":"negative.bool_return.runtime","test":"TestBoolReturnRuntimeGuards","file":"tests/bool_return_runtime_test.go","kind":"negative","assertions":["compiled unknown non-bools across conditional/foreach returns and fallthrough fail explicitly"]}
+      ],
+      "limitations": ["Actual bool values only; PHP weak scalar return coercion is outside this subset", "No typed methods/parameters, nullable/union/intersection or boolean alias return types", "No path-completeness proof or inferred call return types", "Runtime rejection is not PHP TypeError/catchability equivalence", "Gossip numeric-array adoption still requires other dependencies and pinned original-source comparison"]
+    },
+    {
       "id": "php.builtin.in-array-strict-scalar",
       "kind": "builtin",
       "name": "Strict scalar array membership",
@@ -456,7 +474,7 @@
         {"case_id": "negative.array_return.source", "test": "TestArrayReturnUnsupportedSourceFailsClosed", "file": "internal/codegen/array_return_test.go", "kind": "negative", "assertions": ["unsupported types/typed parameters/bare or known non-array returns produce no generated output"]},
         {"case_id": "negative.array_return.runtime", "test": "TestArrayReturnRuntimeGuards", "file": "tests/array_return_runtime_test.go", "kind": "negative", "assertions": ["compiled unknown null/scalar returns and fallthrough fail explicitly"]}
       ],
-      "limitations": ["No other/nullable/union/intersection return types, typed parameters or typed methods", "No path-completeness proof or branch-sensitive narrowing", "Failure is not PHP TypeError/catchability equivalence; native harness compares stdout and normal exits", "Gossip adoption requires its own pinned original-source evidence"]
+      "limitations": ["Only array and separately bounded bool return declarations; no nullable/union/intersection types, typed parameters or typed methods", "No path-completeness proof or branch-sensitive narrowing", "Failure is not PHP TypeError/catchability equivalence; native harness compares stdout and normal exits", "Gossip adoption requires its own pinned original-source evidence"]
     },
     {
       "id": "php.syntax.foreach",

@@ -21,6 +21,13 @@ name/arity/scope checks and lowers IR into direct Go calls, loops and structs.
 The CLI is the initial versioned adapter boundary, not a public Go API promise.
 No WordPress hooks or special compiler behavior exist in the core.
 
+The optional `Function.ReturnType` admits canonical empty/untyped, `array` or
+`bool` on named global functions. Validation propagates that context through
+all conditional and foreach bodies; code generation guards explicit returns
+and fallthrough. The bool boundary admits actual bool only, not weak scalar
+coercions. No call-site type inference, typed method/parameter support or
+path-completeness analysis is implied. Existing IR version `0.1` is retained.
+
 The additive internal `Stmt.ElseBody` field retains IR version `0.1`, with nil
 for no else and a non-nil empty slice for an explicit empty else. Only if statements
 may carry it. Both arms are validated from independent copies of the pre-if scope;

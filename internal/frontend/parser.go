@@ -250,10 +250,11 @@ func (p *parser) function() ir.Function {
 	}
 	if p.accept(":") {
 		t := p.pop()
-		if t.kind != "id" || !strings.EqualFold(t.text, "array") {
-			p.fail("only array return declarations are supported")
+		returnType := strings.ToLower(t.text)
+		if t.kind != "id" || (returnType != "array" && returnType != "bool") {
+			p.fail("only array and bool return declarations are supported")
 		}
-		f.ReturnType = "array"
+		f.ReturnType = returnType
 	}
 	f.Body = p.block()
 	return f
