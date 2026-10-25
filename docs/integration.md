@@ -1,5 +1,11 @@
 # Gossip builder contract v0.1 (proposal)
 
+Bounded [foreach continue](foreach-continue-boundary.md) addresses one compiler
+blocker measured in Gossip PR #35 for `_wp_array_get`. Default parameters and
+bare/multiple isset remain separate blockers; no unchanged-source PASS or new
+consumer pin is claimed. It remains inside WebMCP-excluded `gohp.cli.generate`,
+without route/authentication/deployment changes.
+
 [`array_merge`](array-merge-boundary.md) extends the same WebMCP-excluded local
 `gohp.cli.generate` operation with nonrecursive array merging. Explicit positional
 arrays only; no route/auth/deployment change, Gossip repin or source certification.

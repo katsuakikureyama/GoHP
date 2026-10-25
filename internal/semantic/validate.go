@@ -165,22 +165,22 @@ func (v validator) function(f ir.Function, class string) error {
 	return v.stmts(f.Body, scope, f.ReturnType, false)
 }
 
-func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType string, inLoop bool) error {
+func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType string, inForeach bool) error {
 	for _, stmt := range stmts {
 		if stmt.Kind != "if" && stmt.ElseBody != nil {
 			return malformed(stmt.Line, "else body requires an if statement")
 		}
 		switch stmt.Kind {
 		case "continue":
-			zero := func(e ir.Expr) bool {
-				return e.Kind == "" && e.Text == "" && e.Line == 0 && e.Args == nil && e.Params == nil
+			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || stmt.Body != nil || !emptyExpr(stmt.Expr) || !emptyExpr(stmt.Target) {
+				return malformed(stmt.Line, "continue must have no payload")
 			}
-			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || stmt.Body != nil || !zero(stmt.Expr) || !zero(stmt.Target) {
-				return malformed(stmt.Line, "continue must not have operands or fields")
-			}
-			if !inLoop {
+			if !inForeach {
 				return unsupported(stmt.Line, "continue requires an enclosing foreach")
 			}
+			// Still validate dead statements, without letting dead assignments
+			// overwrite the type state that reaches the next loop iteration.
+			scope = cloneScope(scope)
 		case "assign":
 			if !validName(stmt.Name) {
 				return malformed(stmt.Line, "invalid assignment target")
@@ -283,11 +283,11 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 				return unsupported(stmt.Line, "if condition requires a supported value")
 			}
 			inner := cloneScope(scope)
-			if err := v.stmts(stmt.Body, inner, returnType, inLoop); err != nil {
+			if err := v.stmts(stmt.Body, inner, returnType, inForeach); err != nil {
 				return err
 			}
 			other := cloneScope(scope)
-			if err := v.stmts(stmt.ElseBody, other, returnType, inLoop); err != nil {
+			if err := v.stmts(stmt.ElseBody, other, returnType, inForeach); err != nil {
 				return err
 			}
 			// Validate both arms from the pre-if scope. Branch-only bindings do
@@ -303,6 +303,10 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 		}
 	}
 	return nil
+}
+
+func emptyExpr(e ir.Expr) bool {
+	return e.Kind == "" && e.Text == "" && e.Line == 0 && e.Args == nil && e.Params == nil
 }
 
 func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, error) {
