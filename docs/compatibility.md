@@ -28,6 +28,7 @@ This table is the current curated summary, not a blanket support claim.
 | Last array key | `array_key_last(array)` | [Bounded last key](array-key-last-boundary.md); insertion-order int/string key or null, input unchanged; guard empty before indexing |
 | First array key | `array_key_first(array)` | [Bounded first key](array-key-first-boundary.md); first insertion-order key, not minimum key/value; same empty-result guard |
 | Array reversal | `array_reverse(array, bool preserve_keys = false)` | [Bounded reversal](array-reverse-boundary.md); reverse outer order, retain string keys, optionally retain integer keys, detached array result; no flag coercion |
+| Array merge | `array_merge(array ...arrays)` | [Bounded merge](array-merge-boundary.md); zero or more explicit arrays, reindexed integer keys and in-place string-key replacement, detached nonrecursive result; no unpack syntax |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |
