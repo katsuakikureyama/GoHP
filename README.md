@@ -73,6 +73,9 @@ insertion-order int/string key, or null for an empty array, without modifying it
 [`array_reverse(array, bool preserve_keys = false)`](docs/array-reverse-boundary.md)
 reverses outer order without modifying the input, retaining string keys and
 optionally integer keys; the optional flag accepts actual booleans only.
+[`array_merge(array ...arrays)`](docs/array-merge-boundary.md) joins explicitly
+supplied arrays, reindexing integer keys and replacing duplicate string-keyed
+values in place; zero arguments return an empty array. No argument unpacking.
 `array_key_exists(int|string, array)` checks
 first-level key presence, including null-valued entries, without other key
 coercions. `array_is_list(array)` checks zero-based consecutive integer keys in

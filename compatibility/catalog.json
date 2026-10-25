@@ -3,6 +3,24 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.array_merge",
+      "kind": "builtin",
+      "name": "array_merge(array ...arrays)",
+      "implementation": "partial",
+      "contract": "Zero or more positional actual arrays, each evaluated once. Integer-keyed values append with consecutive keys from zero; later duplicate string keys replace values at their original position. Returns a detached nonrecursive array with rebuilt append metadata.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.array_merge","test":"TestDifferential/array_merge","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_merge.php","assertions":["stdout","exit","zero/one/multiple arrays, integer reindex versus string replacement order, normalized keys, nested nonrecursive replacement, input preservation, append and single evaluation"]},
+        {"case_id":"compiler.array_merge","test":"TestArrayMergeLoweringAndSourceMap","file":"internal/codegen/array_merge_test.go","kind":"compiler","assertions":["case-insensitive zero/one/two/three argument lowering with statement source map"]},
+        {"case_id":"negative.array_merge.source","test":"TestArrayMergeUnsupportedSource","file":"internal/codegen/array_merge_test.go","kind":"negative","assertions":["nonarrays in different positions, undefined reads, named args, unpack, redeclaration, builtin callback lookup and scalar echo rejected before output"]},
+        {"case_id":"unit.runtime.array_merge","test":"TestArrayMergeKeysValuesAndIsolation","file":"runtime/array_merge_test.go","kind":"unit","assertions":["integer duplicates append, string duplicates replace in place, binary keys and exact values, nested nonrecursive replacement and independent storage"]},
+        {"case_id":"unit.runtime.array_merge.append","test":"TestArrayMergeEmptySingleAndAppend","file":"runtime/array_merge_test.go","kind":"unit","assertions":["zero/empty/single arrays, extreme keys reindex, input metadata preserved and result append rebuilt"]},
+        {"case_id":"negative.array_merge.domain","test":"TestArrayMergeRejectsNonArrays","file":"runtime/array_merge_test.go","kind":"negative","assertions":["actual arrays required at every argument position without coercion"]},
+        {"case_id":"negative.array_merge.runtime","test":"TestArrayMergeRuntimeGuards","file":"tests/array_merge_runtime_test.go","kind":"negative","assertions":["generated binaries reject dynamic nonarrays in first, second and third positions"]}
+      ],
+      "limitations": ["Existing array/key/value domain only; no coercion, named args, unpack syntax or builtin callable lookup", "Nonrecursive merge, not array union; no references, general variadic function declarations or PHP exception equivalence claim", "Gossip adoption requires separate pin and original-source evidence"]
+    },
+    {
       "id": "php.builtin.array_reverse",
       "kind": "builtin",
       "name": "array_reverse(array, bool preserve_keys = false)",

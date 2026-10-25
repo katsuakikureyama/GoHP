@@ -667,6 +667,14 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			// Preserve downstream runtime guards instead of promising an int key.
 			return valueType{kind: unknownKind}, nil
 		}
+		if strings.EqualFold(expr.Text, "array_merge") {
+			for _, arg := range args {
+				if arg.kind != arrayKind && arg.kind != unknownKind {
+					return valueType{}, unsupported(expr.Line, "array_merge requires arrays")
+				}
+			}
+			return valueType{kind: arrayKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "array_reverse") {
 			if len(args) < 1 || len(args) > 2 {
 				return valueType{}, unsupported(expr.Line, "array_reverse expects one or two arguments")
