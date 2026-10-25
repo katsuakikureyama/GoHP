@@ -3,6 +3,24 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.empty-array-variable",
+      "kind": "syntax",
+      "name": "empty on a defined array variable",
+      "implementation": "partial",
+      "contract": "Case-insensitive variable-only language construct; defined actual arrays return bool true iff the outer array has zero entries. Unknown values are guarded, not coerced; contents and input are unchanged.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.array_empty","test":"TestDifferential/array_empty","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_empty.php","assertions":["stdout","exit","empty versus nonempty falsy/nested values, typed and dynamic calls, bool result, callbacks, lazy guards and caller preservation"]},
+        {"case_id":"compiler.array_empty","test":"TestArrayEmptyLoweringAndSourceMap","file":"internal/codegen/array_empty_test.go","kind":"compiler","assertions":["dedicated variable-only IR, guarded bool return and source map"]},
+        {"case_id":"negative.array_empty.source","test":"TestArrayEmptyUnsupportedSource","file":"internal/codegen/array_empty_test.go","kind":"negative","assertions":["undefined/scalar/expression/index/property operands, wrong arity, redeclaration and bool-as-array rejected before generation"]},
+        {"case_id":"negative.array_empty.ir","test":"TestArrayEmptyMalformedIR","file":"internal/codegen/array_empty_test.go","kind":"negative","assertions":["generic empty calls and noncanonical dedicated IR rejected"]},
+        {"case_id":"unit.runtime.array_empty","test":"TestArrayEmptyOuterCountAndPreservation","file":"runtime/array_empty_test.go","kind":"unit","assertions":["only outer count determines result; nested values and index metadata unchanged"]},
+        {"case_id":"negative.array_empty.domain","test":"TestArrayEmptyRejectsNonArrays","file":"runtime/array_empty_test.go","kind":"negative","assertions":["runtime rejects nonarrays rather than accepting general PHP empty domain"]},
+        {"case_id":"negative.array_empty.runtime","test":"TestArrayEmptyRuntimeGuards","file":"tests/array_empty_runtime_test.go","kind":"negative","assertions":["compiled unknown null/bool/string/integer values and arrow path cannot bypass array guard"]}
+      ],
+      "limitations": ["Not general PHP empty: no undefined-variable suppression, scalar/object operands, array-element/property probes or arbitrary expressions", "No named arguments or callable lookup for this language construct", "Runtime rejection is not PHP warning/exception equivalence", "Gossip original-source adoption needs separate pin and evidence; array_key_last remains unsupported"]
+    },
+    {
       "id": "php.builtin.is_null",
       "kind": "builtin",
       "name": "is_null(value)",

@@ -96,6 +96,9 @@ One-level `$array[$key] = $value` and `$array[] = $value` statements update
 existing array variables with detached value copies. Explicit keys must be
 int/string literals or variables; append uses PHP 8.3 integer-index progression.
 Nested targets, auto-vivification and references remain excluded.
+Bounded `empty($arrayVariable)` tests only a defined actual array's outer entry
+count, without inspecting values; undefined/scalar/index/property operands remain
+excluded. See the [empty boundary](docs/array-empty-boundary.md).
 One-level `isset($array[$key])` probes a defined array variable without reading
 a missing element. Missing/null entries return false; other stored values return
 true. Literal negative integer keys are accepted with the same bounded decimal
