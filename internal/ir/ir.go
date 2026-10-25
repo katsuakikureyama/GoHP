@@ -14,6 +14,7 @@ type Stmt struct {
 	Expr       Expr
 	Target     Expr // assign_index: index(variable, key); assign_append: variable
 	Body       []Stmt
+	ElseBody   []Stmt // if only; nil means absent, non-nil may be empty
 	Key, Value string
 }
 type Function struct {

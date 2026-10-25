@@ -311,6 +311,12 @@ func (p *parser) stmt() ir.Stmt {
 		s.Expr = p.expr(0)
 		p.need(")")
 		s.Body = p.block()
+		if p.accept("else") {
+			s.ElseBody = p.block()
+			if s.ElseBody == nil {
+				s.ElseBody = []ir.Stmt{}
+			}
+		}
 	default:
 		if p.peek().kind != "var" {
 			p.fail("unsupported statement")

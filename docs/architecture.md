@@ -21,6 +21,14 @@ name/arity/scope checks and lowers IR into direct Go calls, loops and structs.
 The CLI is the initial versioned adapter boundary, not a public Go API promise.
 No WordPress hooks or special compiler behavior exist in the core.
 
+The additive internal `Stmt.ElseBody` field retains IR version `0.1`, with nil
+for no else and a non-nil empty slice for an explicit empty else. Only if statements
+may carry it. Both arms are validated from independent copies of the pre-if scope;
+new bindings never escape, and any changed existing type becomes unknown.
+Codegen uses Go if/else with one guarded condition evaluation. This is a closed
+subset extension, not a public serialized IR compatibility promise; CLI/report
+schemas and runtime interfaces are unchanged.
+
 The one-array `array_map` subset resolves a literal one-argument user function
 at compile time and emits a direct function adapter. Both semantic and codegen
 registries include all declarations before bodies, admitting forward references

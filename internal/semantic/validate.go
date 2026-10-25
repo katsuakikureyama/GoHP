@@ -115,6 +115,9 @@ func (v validator) function(f ir.Function, class string) error {
 
 func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType) error {
 	for _, stmt := range stmts {
+		if stmt.Kind != "if" && stmt.ElseBody != nil {
+			return malformed(stmt.Line, "else body requires an if statement")
+		}
 		switch stmt.Kind {
 		case "assign":
 			if !validName(stmt.Name) {
@@ -214,11 +217,15 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType) error {
 			if err := v.stmts(stmt.Body, inner); err != nil {
 				return err
 			}
-			// A one-arm if body may not execute. Validate it in full, but do not
-			// let branch-only bindings escape and make changed outer bindings
-			// unknown after the conditional.
+			other := cloneScope(scope)
+			if err := v.stmts(stmt.ElseBody, other); err != nil {
+				return err
+			}
+			// Validate both arms from the pre-if scope. Branch-only bindings do
+			// not escape, even if both arms define them. A changed outer type
+			// stays unknown; no path-sensitive or return-sensitive inference.
 			for name, before := range scope {
-				if after := inner[name]; after != before {
+				if inner[name] != before || other[name] != before {
 					scope[name] = valueType{kind: unknownKind}
 				}
 			}

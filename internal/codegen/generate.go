@@ -183,6 +183,14 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool) {
 				inner[k] = v
 			}
 			g.stmts(s.Body, inner, inFunc)
+			if s.ElseBody != nil {
+				g.emit("} else {\n")
+				other := map[string]bool{}
+				for k, v := range scope {
+					other[k] = v
+				}
+				g.stmts(s.ElseBody, other, inFunc)
+			}
 			g.emit("}\n")
 		case "foreach":
 			if s.Value == "this" || s.Key == "this" || s.Key != "" && s.Key == s.Value {

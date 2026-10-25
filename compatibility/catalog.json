@@ -134,18 +134,33 @@
     {
       "id": "php.syntax.if",
       "kind": "syntax",
-      "name": "Braced one-arm if statements",
+      "name": "Braced if statements with optional else",
       "implementation": "partial",
-      "contract": "Lowers one-arm if statements with a braced body and preserves writes to variables that were defined before the conditional.",
+      "contract": "Evaluate one scalar/array condition once and execute only the selected braced if/else body, preserving writes to variables defined before the conditional.",
       "php_targets": ["8.3"],
       "checks": [
         {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["nested conditions, early returns and assignments to an existing variable match native PHP"]},
-        {"case_id": "negative.if_else", "test": "TestUnsupported/if_else", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["else is rejected"]},
+        {"case_id":"diff.if_else","test":"TestDifferential/if_else","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/if_else.php","assertions":["truthiness, one condition evaluation, selected branches, nested returns, existing-variable updates, array copies and foreach composition match native stdout and normal exit"]},
+        {"case_id":"compiler.if_else_source_map","test":"TestIfElseSourceMapAndEmptyBranch","file":"internal/codegen/if_else_test.go","kind":"compiler","assertions":["nested else statements retain source lines and explicit empty else survives parsing"]},
+        {"case_id":"negative.ir.else_body","test":"TestElseBodyRequiresIfIR","file":"internal/codegen/if_else_test.go","kind":"negative","assertions":["ElseBody on a non-if statement is rejected rather than silently ignored"]},
+        {"case_id":"negative.if_else_dynamic","test":"TestIfElseRuntimeGuards","file":"tests/if_else_runtime_test.go","kind":"negative","assertions":["generated binaries preserve condition and selected-else runtime guards; no native error equivalence claim"]},
+        {"case_id":"negative.if_else_unbraced","test":"TestUnsupported/if_else_unbraced","file":"tests/differential_test.go","kind":"negative","assertions":["unbraced else is rejected"]},
+        {"case_id":"negative.if_else_if","test":"TestUnsupported/if_else_if","file":"tests/differential_test.go","kind":"negative","assertions":["else if shorthand remains unsupported"]},
+        {"case_id":"negative.if_else_duplicate","test":"TestUnsupported/if_else_duplicate","file":"tests/differential_test.go","kind":"negative","assertions":["duplicate else is rejected"]},
+        {"case_id":"negative.if_else_orphan","test":"TestUnsupported/if_else_orphan","file":"tests/differential_test.go","kind":"negative","assertions":["orphan else is rejected"]},
+        {"case_id":"negative.if_else_alternative","test":"TestUnsupported/if_else_alternative","file":"tests/differential_test.go","kind":"negative","assertions":["alternative syntax is rejected"]},
+        {"case_id":"negative.if_else_local_escape","test":"TestUnsupported/if_else_local_escape","file":"tests/differential_test.go","kind":"negative","assertions":["else-only local cannot escape"]},
+        {"case_id":"negative.if_else_both_local_escape","test":"TestUnsupported/if_else_both_local_escape","file":"tests/differential_test.go","kind":"negative","assertions":["even bindings introduced in both arms remain unavailable after if"]},
+        {"case_id":"negative.if_else_sibling_local","test":"TestUnsupported/if_else_sibling_local","file":"tests/differential_test.go","kind":"negative","assertions":["then-only binding cannot leak into else"]},
+        {"case_id":"negative.if_else_sibling_type","test":"TestUnsupported/if_else_sibling_type","file":"tests/differential_test.go","kind":"negative","assertions":["else is validated from the pre-if type environment"]},
+        {"case_id":"negative.if_else_dead_call","test":"TestUnsupported/if_else_dead_call","file":"tests/differential_test.go","kind":"negative","assertions":["dead else calls are statically validated"]},
+        {"case_id":"negative.if_else_dead_array","test":"TestUnsupported/if_else_dead_array","file":"tests/differential_test.go","kind":"negative","assertions":["dead else known type errors are rejected"]},
+        {"case_id":"negative.if_else_object_condition","test":"TestUnsupported/if_else_object_condition","file":"tests/differential_test.go","kind":"negative","assertions":["known object condition remains outside truthiness subset"]},
         {"case_id": "negative.if_elseif", "test": "TestUnsupported/if_elseif", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["elseif is rejected"]},
         {"case_id": "negative.if_unbraced", "test": "TestUnsupported/if_unbraced", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["unbraced if body is rejected"]},
         {"case_id": "negative.if_branch_local_variable", "test": "TestUnsupported/if_branch_local_variable", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["a variable first assigned only in an if body is not available outside it"]}
       ],
-      "limitations": ["No else, elseif, alternative syntax or unbraced body", "Variables first assigned in an if body are not definitely assigned after it"]
+      "limitations": ["No elseif, else if shorthand, alternative syntax or unbraced bodies","Both arms are statically validated from the pre-if environment","New branch bindings cannot escape even if both arms define them; existing changed types become unknown","No path-sensitive or return-sensitive type/definite-assignment inference","No object truthiness or PHP warning/exception equivalence"]
     },
     {
       "id": "php.syntax.full-ternary",
