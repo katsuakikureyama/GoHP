@@ -239,9 +239,9 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		// A closure keeps the condition single-evaluation and both arms lazy.
 		return "(func() any { if rt.Bool(" + g.expr(e.Args[0], scope) + ") { return " + g.expr(e.Args[1], scope) + " }; return " + g.expr(e.Args[2], scope) + " }())"
 	case "binary":
-		if e.Text == "&&" {
-			// Go's && preserves PHP's left-to-right short-circuit evaluation.
-			return "(rt.Bool(" + g.expr(e.Args[0], scope) + ") && rt.Bool(" + g.expr(e.Args[1], scope) + "))"
+		if e.Text == "&&" || e.Text == "||" {
+			// Go's logical operators preserve PHP's left-to-right short circuit.
+			return "(rt.Bool(" + g.expr(e.Args[0], scope) + ") " + e.Text + " rt.Bool(" + g.expr(e.Args[1], scope) + "))"
 		}
 		if e.Text == "===" {
 			return "rt.Identical(" + args(e.Args) + ")"

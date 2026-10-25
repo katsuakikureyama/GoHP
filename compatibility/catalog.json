@@ -173,10 +173,173 @@
       "contract": "Evaluates supported truthiness values left-to-right and short-circuits the right operand.",
       "php_targets": ["8.3"],
       "checks": [
-        {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["a marker-producing right operand is skipped for false and evaluated once for true", "guarded strtolower does not receive non-string dynamic values"]},
-        {"case_id": "negative.logical_or", "test": "TestUnsupported/logical_or", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["logical || is rejected"]}
+        {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["a marker-producing right operand is skipped for false and evaluated once for true", "guarded strtolower does not receive non-string dynamic values"]}
       ],
-      "limitations": ["No ||, xor, and/or keyword operators or general PHP truthiness"]
+      "limitations": ["No xor, and/or keyword operators or general PHP truthiness; || has a separate partial contract"]
+    },
+    {
+      "id": "php.operator.logical-or",
+      "kind": "operator",
+      "name": "Logical ||",
+      "implementation": "partial",
+      "contract": "Return bool from existing scalar/array truthiness, evaluating the left operand once and the right only when the left is false; bind below && and above full ternary.",
+      "php_targets": [
+        "8.3"
+      ],
+      "checks": [
+        {
+          "case_id": "diff.logical_or",
+          "test": "TestDifferential/logical_or",
+          "file": "tests/differential_test.go",
+          "kind": "differential",
+          "fixture": "tests/fixtures/logical_or.php",
+          "assertions": [
+            "scalar/array truthiness, bool result types, precedence, evaluation order and lazy RHS/ternary branches match native PHP stdout and normal exit"
+          ]
+        },
+        {
+          "case_id": "compiler.logical_or_lowering",
+          "test": "TestLogicalOrLoweringAndSourceMap",
+          "file": "internal/codegen/logical_or_test.go",
+          "kind": "compiler",
+          "assertions": [
+            "logical or lowers to guarded Go short circuit and retains PHP statement source mapping"
+          ]
+        },
+        {
+          "case_id": "negative.ir.logical_or_arity",
+          "test": "TestLogicalOrMalformedArity",
+          "file": "internal/codegen/logical_or_test.go",
+          "kind": "negative",
+          "assertions": [
+            "malformed binary operand counts fail before generation"
+          ]
+        },
+        {
+          "case_id": "negative.logical_or_dynamic",
+          "test": "TestLogicalOrRuntimeTypeGuards",
+          "file": "tests/logical_or_runtime_test.go",
+          "kind": "negative",
+          "assertions": [
+            "evaluated unknown objects fail at Bool guard; a skipped dynamic right object is not converted; no native error equivalence claim"
+          ]
+        },
+        {
+          "case_id": "negative.logical_or_object_left",
+          "test": "TestUnsupported/logical_or_object_left",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "known object on the left is rejected"
+          ]
+        },
+        {
+          "case_id": "negative.logical_or_object_right",
+          "test": "TestUnsupported/logical_or_object_right",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "known object on an evaluated right operand is rejected"
+          ]
+        },
+        {
+          "case_id": "negative.logical_or_dead_object",
+          "test": "TestUnsupported/logical_or_dead_object",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "known object on an unselected right operand remains statically rejected"
+          ]
+        },
+        {
+          "case_id": "negative.logical_or_dead_call",
+          "test": "TestUnsupported/logical_or_dead_call",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "unselected unknown calls remain invalid"
+          ]
+        },
+        {
+          "case_id": "negative.logical_or_dead_variable",
+          "test": "TestUnsupported/logical_or_dead_variable",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "unselected undefined variables remain invalid"
+          ]
+        },
+        {
+          "case_id": "negative.logical_or_missing_left",
+          "test": "TestUnsupported/logical_or_missing_left",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "missing left operand is rejected"
+          ]
+        },
+        {
+          "case_id": "negative.logical_or_missing_right",
+          "test": "TestUnsupported/logical_or_missing_right",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "missing right operand is rejected"
+          ]
+        },
+        {
+          "case_id": "negative.logical_or_keyword",
+          "test": "TestUnsupported/logical_or_keyword",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "or keyword remains unsupported"
+          ]
+        },
+        {
+          "case_id": "negative.logical_or_bitwise",
+          "test": "TestUnsupported/logical_or_bitwise",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "single bitwise | remains unsupported"
+          ]
+        },
+        {
+          "case_id": "negative.logical_or_result_array",
+          "test": "TestUnsupported/logical_or_result_array",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "bool result cannot be consumed as an array"
+          ]
+        },
+        {
+          "case_id": "negative.logical_or_literal_key",
+          "test": "TestUnsupported/logical_or_literal_key",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "bool expression key remains unsupported"
+          ]
+        },
+        {
+          "case_id": "negative.logical_or_property_default",
+          "test": "TestUnsupported/logical_or_property_default",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "general property default expressions remain unsupported"
+          ]
+        }
+      ],
+      "limitations": [
+        "No object/float/resource truthiness",
+        "Both operands are statically validated even when one is unreachable",
+        "No branch-sensitive type narrowing",
+        "No or/and/xor keywords or bitwise |",
+        "No general PHP warning/exception/side-effect equivalence"
+      ]
     },
     {
       "id": "php.operator.strict-equal",

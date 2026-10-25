@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -287,7 +287,18 @@ func TestUnsupported(t *testing.T) {
 		{name: "if_elseif", src: "<?php if (false) { echo 'no'; } elseif (true) { echo 'yes'; }"},
 		{name: "if_unbraced", src: "<?php if (true) echo 'yes';"},
 		{name: "cast_int", src: "<?php echo (int) '1';"},
-		{name: "logical_or", src: "<?php echo true || false;"},
+		{name: "logical_or_object_left", src: "<?php class Box {} echo new Box() || false;"},
+		{name: "logical_or_object_right", src: "<?php class Box {} echo false || new Box();"},
+		{name: "logical_or_dead_object", src: "<?php class Box {} echo true || new Box();"},
+		{name: "logical_or_dead_call", src: "<?php echo true || missing();"},
+		{name: "logical_or_dead_variable", src: "<?php echo true || $missing;"},
+		{name: "logical_or_missing_left", src: "<?php echo || true;"},
+		{name: "logical_or_missing_right", src: "<?php echo false ||;"},
+		{name: "logical_or_keyword", src: "<?php echo false or true;"},
+		{name: "logical_or_bitwise", src: "<?php echo 1 | 2;"},
+		{name: "logical_or_result_array", src: "<?php echo count([] || [1]);"},
+		{name: "logical_or_literal_key", src: "<?php $a = [false || true => 1];"},
+		{name: "logical_or_property_default", src: "<?php class Box { public $value = false || true; }"},
 		{name: "loose_equal", src: "<?php echo 1 == '1';"},
 		{name: "strict_equal_array", src: "<?php echo [] === [];"},
 		{name: "strict_equal_chain", src: "<?php echo true === false === false;"},

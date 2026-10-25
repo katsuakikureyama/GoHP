@@ -323,9 +323,9 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 				return valueType{}, unsupported(expr.Line, "strict comparison requires supported scalars")
 			}
 			return valueType{kind: boolKind}, nil
-		case "&&":
+		case "&&", "||":
 			if !isBoolDomain(left) || !isBoolDomain(right) {
-				return valueType{}, unsupported(expr.Line, "logical and requires supported values")
+				return valueType{}, unsupported(expr.Line, "logical "+expr.Text+" requires supported values")
 			}
 			return valueType{kind: boolKind}, nil
 		default:

@@ -152,7 +152,7 @@ func lex(s string) ([]token, error) {
 		matched := false
 		// Keep multi-character operators longest-first so === is never split
 		// into the unsupported = token followed by ==.
-		for _, op := range []string{"===", "&&", "=>", "->"} {
+		for _, op := range []string{"===", "&&", "||", "=>", "->"} {
 			if strings.HasPrefix(s[i:], op) {
 				ts = append(ts, token{op, ln, "sym"})
 				i += len(op)
@@ -346,15 +346,18 @@ func (p *parser) stmt() ir.Stmt {
 }
 func (p *parser) prec(t token) int {
 	if t.kind == "sym" && t.text == "." {
-		return 3
-	}
-	if t.kind == "sym" && t.text == "+" {
 		return 4
 	}
+	if t.kind == "sym" && t.text == "+" {
+		return 5
+	}
 	if t.kind == "sym" && t.text == "===" {
-		return 2
+		return 3
 	}
 	if t.kind == "sym" && t.text == "&&" {
+		return 2
+	}
+	if t.kind == "sym" && t.text == "||" {
 		return 1
 	}
 	return 0
@@ -397,7 +400,7 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 	case "sym":
 		switch t.text {
 		case "!":
-			e = ir.Expr{Kind: "not", Args: []ir.Expr{p.expr(5)}, Line: t.line}
+			e = ir.Expr{Kind: "not", Args: []ir.Expr{p.expr(6)}, Line: t.line}
 		case "-":
 			// Only negate a decimal integer token, already range-checked by lex.
 			// In particular, 9223372036854775808 must not become an int64 by
@@ -416,7 +419,7 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 			if p.peek().kind == "id" && strings.EqualFold(p.peek().text, "bool") && p.pos+1 < len(p.ts) && p.ts[p.pos+1].text == ")" {
 				p.pop()
 				p.need(")")
-				e = ir.Expr{Kind: "bool_cast", Args: []ir.Expr{p.expr(5)}, Line: t.line}
+				e = ir.Expr{Kind: "bool_cast", Args: []ir.Expr{p.expr(6)}, Line: t.line}
 			} else {
 				e = p.expr(0)
 				p.need(")")

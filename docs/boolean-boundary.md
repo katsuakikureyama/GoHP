@@ -8,9 +8,12 @@ It is not general PHP control flow or object/coercion compatibility.
 
 - Braced one-arm `if (condition) { ... }`, including nesting and early return.
   No `else`, `elseif`, alternate syntax or unbraced bodies.
-- `&&` lowers to Go's short-circuit operator: evaluate the left side once, and
-  evaluate the right side only if needed. Both sides must still be valid within
+- `&&` and `||` lower to Go's short-circuit operators: evaluate the left side
+  once, and evaluate the right side only if needed. Both sides must still be valid within
   the compiler's supported subset; dead code does not bypass validation.
+  `&&` skips its right operand when the left is false; `||` skips it when the
+  left is true. Both return bool, not an original operand value. Keyword
+  `and`/`or`/`xor` and bitwise `|` remain unsupported.
 - Prefix `!` evaluates one operand once, applies the same bounded truthiness
   conversion as `(bool)`, and returns the opposite bool. Repeated `!!` is allowed.
   A one-operand `not` IR expression lowers to Go `!rt.Bool(operand)`; unknown
@@ -48,8 +51,9 @@ can change their type. This conservative rule avoids claiming definite assignmen
 where a branch might not execute; it is not full PHP data-flow inference.
 
 Operator precedence uses the PHP 8.3 `+` above `.` relationship, above
-`===`, above `&&`; prefix `!` and bool casts bind more tightly. Calls and index
-reads belong to the operand of `!`, while `!0 + 2` means `(!0) + 2`.
+`===`, above `&&`, above `||`, above full ternary; prefix `!` and bool casts bind
+more tightly. Calls and index reads belong to the operand of `!`, while
+`!0 + 2` means `(!0) + 2`.
 Statement maps cover nested
 conditional headers and bodies. No IR schema fields or report schema change.
 
@@ -68,13 +72,21 @@ even a statically invalid operand inside a short-circuited branch; malformed
 arity and bool-result misuse remain rejected. No object truthiness, PHP warning
 or exception equivalence, or general side-effect parity is claimed.
 
+The separate `logical_or.php` fixture observes bool results across scalar/array
+operands, once-only left-to-right markers, skipped right operands, chains,
+precedence and guarded array operations. Generated-binary tests reject unknown
+object values when evaluated on either side, but do not convert an unused dynamic
+right operand. Known invalid objects/calls/variables still fail generation even
+on a statically unselected side. Malformed IR arity, incomplete syntax, bool
+array-key/result misuse and general property defaults remain rejected.
+
 The separate `is_array.php` fixture observes predicate results using `is_bool`
 and strict true/false comparison, covers both array syntaxes and generated
 objects, and checks single argument evaluation and short-circuit array guards.
 It checks original values after calls. Runtime-only tests also distinguish
 native Go slices/maps/pointers from the runtime's Array representation; those
 Go values do not imply new PHP source types. The predicate does not add
-branch-sensitive type narrowing: both sides of `&&` are statically validated.
+branch-sensitive type narrowing: both sides of `&&` / `||` are statically validated.
 
 Current native runs use PHP 8.3.36 or newer within 8.3 under the shared policy.
 The former 7.4 / older 8.3 evidence is historical; 8.4+ needs separate admission
