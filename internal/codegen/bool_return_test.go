@@ -69,6 +69,7 @@ func TestBoolReturnUnsupportedSource(t *testing.T) {
 		"<?php function result(): boolean { return true; }",
 		"<?php function result(): ?bool { return true; }",
 		"<?php function result(): bool|int { return true; }",
+		"<?php function result(): bool&int { return true; }",
 		"<?php function result(): true { return true; }",
 		"<?php function result(bool $v): bool { return $v; }",
 		"<?php class X { public function result(): bool { return true; } }",
@@ -90,7 +91,7 @@ func TestBoolReturnUnsupportedSource(t *testing.T) {
 }
 
 func TestBoolReturnRejectsNoncanonicalIR(t *testing.T) {
-	for _, returnType := range []string{"BOOL", "boolean", "?bool", "true"} {
+	for _, returnType := range []string{"BOOL", "boolean", "?bool", "bool|int", "true"} {
 		p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Functions: []ir.Function{{
 			Name: "result", ReturnType: returnType, Line: 1,
 			Body: []ir.Stmt{{Kind: "return", Line: 1, Expr: ir.Expr{Kind: "bool", Text: "true", Line: 1}}},
