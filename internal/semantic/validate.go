@@ -437,6 +437,12 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 			return valueType{kind: stringKind}, nil
 		case "===", "!==":
+			// Literal null identity is a type predicate, not array/object
+			// identity. Both operands were validated above; the other value
+			// must still be evaluated exactly once by code generation.
+			if expr.Args[0].Kind == "null" || expr.Args[1].Kind == "null" {
+				return valueType{kind: boolKind}, nil
+			}
 			if !isScalarOrUnknown(left) || !isScalarOrUnknown(right) {
 				return valueType{}, unsupported(expr.Line, "strict comparison requires supported scalars")
 			}

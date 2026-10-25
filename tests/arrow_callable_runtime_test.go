@@ -20,7 +20,7 @@ func TestArrowCallableRuntimeGuards(t *testing.T) {
 		{"unknown_variable_callee_wrong_arity", "<?php function pass($value) { return $value; } $callback = pass(fn($value) => $value); $result = $callback();", "callable argument count mismatch"},
 		{"extra_arguments", "<?php $callback = fn() => true; $result = $callback(1);", "callable argument count mismatch"},
 		{"unknown_callable_bool", "<?php function pass($value) { return $value; } echo (bool)pass(fn() => true);", "boolean conversion outside supported scalar/array subset"},
-		{"unknown_callable_strict", "<?php function pass($value) { return $value; } echo pass(fn() => true) === null;", "strict equality outside supported scalar subset"},
+		{"unknown_callable_strict", "<?php function pass($value) { return $value; } echo pass(fn() => true) === false;", "strict equality outside supported scalar subset"},
 	})
 }
 

@@ -89,7 +89,9 @@ Prefix logical negation `!` (including `!!`) uses the existing scalar/array
 truthiness rules and returns bool; object truthiness and loose `!=` remain excluded.
 Strict `!==` compares only null, bool, int64 and string by both type and value,
 returning the opposite of scalar `===` without coercion. Unparenthesized chains
-mixing `===` and `!==` are rejected; array/object comparison remains excluded.
+mixing `===` and `!==` are rejected. A literal `null` operand additionally lowers
+to a once-only null type probe, including against arrays/objects/callables;
+general array/object comparison remains excluded.
 Logical `||` uses the same truthiness domain and returns bool, skipping its right
 operand when the left is true. It binds below `&&` and above full ternary;
 keyword `or` and bitwise `|` remain unsupported. See the [boolean boundary](docs/boolean-boundary.md).

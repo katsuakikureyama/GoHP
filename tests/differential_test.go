@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"null_defaults", "continue_foreach", "isset_forms", "in_array_strict", "membership_control_flow", "isset_negative_keys", "literal_case", "arrow_callable", "arrow_typed_composition", "array_parameter", "array_parameter_bool_composition", "bool_return", "bool_return_composition", "core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "strict_not_equal", "if_else", "elseif", "precedence", "strlen", "strcasecmp", "foreach_continue", "array_merge", "array_reverse", "array_key_first", "array_key_last", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "is_int", "is_null", "array_map", "array_write", "array_append", "array_empty", "array_isset", "array_return", "charset_array_integration", "control_flow_array_integration", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
+	for _, fixture := range []string{"literal_null_identity", "null_defaults", "continue_foreach", "isset_forms", "in_array_strict", "membership_control_flow", "isset_negative_keys", "literal_case", "arrow_callable", "arrow_typed_composition", "array_parameter", "array_parameter_bool_composition", "bool_return", "bool_return_composition", "core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "strict_not_equal", "if_else", "elseif", "precedence", "strlen", "strcasecmp", "foreach_continue", "array_merge", "array_reverse", "array_key_first", "array_key_last", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "is_int", "is_null", "array_map", "array_write", "array_append", "array_empty", "array_isset", "array_return", "charset_array_integration", "control_flow_array_integration", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -347,10 +347,10 @@ func TestUnsupported(t *testing.T) {
 		{name: "loose_equal", src: "<?php echo 1 == '1';"},
 		{name: "strict_equal_array", src: "<?php echo [] === [];"},
 		{name: "strict_equal_chain", src: "<?php echo true === false === false;"},
-		{name: "strict_not_equal_array_left", src: "<?php echo [] !== null;"},
-		{name: "strict_not_equal_array_right", src: "<?php echo null !== [];"},
-		{name: "strict_not_equal_object_left", src: "<?php class Box {} echo new Box() !== null;"},
-		{name: "strict_not_equal_object_right", src: "<?php class Box {} echo null !== new Box();"},
+		{name: "strict_not_equal_array_left", src: "<?php echo [] !== false;"},
+		{name: "strict_not_equal_array_right", src: "<?php echo false !== [];"},
+		{name: "strict_not_equal_object_left", src: "<?php class Box {} echo new Box() !== false;"},
+		{name: "strict_not_equal_object_right", src: "<?php class Box {} echo false !== new Box();"},
 		{name: "strict_not_equal_dead_array", src: "<?php echo true || ([] !== []);"},
 		{name: "strict_not_equal_chain", src: "<?php echo 1 !== 2 !== 3;"},
 		{name: "strict_not_equal_chain_equal_first", src: "<?php echo 1 === 2 !== false;"},

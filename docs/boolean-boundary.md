@@ -27,8 +27,11 @@ It is not general PHP control flow or object/coercion compatibility.
   A one-operand `not` IR expression lowers to Go `!rt.Bool(operand)`; unknown
   unsupported types retain the existing runtime guard. This does not add `!=`,
   a `not` keyword or general constant expressions in property defaults.
-- Scalar `===` and `!==` compare type and value for nil, bool, int64 and string. Arrays
-  and objects are rejected, including runtime-unknown values of those types.
+- Scalar `===` and `!==` compare type and value for nil, bool, int64 and string.
+  When either operand is a literal `null`, the other validated expression is
+  evaluated once through `rt.IsNull` (negated for `!==`), including arrays,
+  objects and callables. This is a null type probe, not their identity semantics.
+  Without a literal null, arrays/objects remain rejected, including unknown values.
   `!==` returns the negation of `===` as bool, using `!rt.Identical(left, right)`
   and the same scalar guard, with no type coercion. Each operand is evaluated once.
   Unparenthesized chains of either operator, including mixed chains, are rejected
