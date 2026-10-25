@@ -1007,27 +1007,31 @@
     {
       "id": "php.operator.strict-equal",
       "kind": "operator",
-      "name": "Strict scalar equality ===",
+      "name": "Strict scalar equality and literal-null probes ===",
       "implementation": "partial",
-      "contract": "Compares null, bool, int64 and string values by both type and value.",
+      "contract": "Compares null, bool, int64 and string by type/value; when either syntactic operand is literal null, evaluates the other supported expression once as a canonical-null predicate, including arrays/objects/callables.",
       "php_targets": ["8.3"],
       "checks": [
         {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["integer and string values with the same spelling remain distinct", "strict comparison participates in target-specific precedence"]},
+        {"case_id":"diff.literal_null_identity","test":"TestDifferential/literal_null_identity","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/literal_null_identity.php","assertions":["stdout","exit","both literal-null operand orders and both strict operators; non-scalar null probes, single evaluation and surrounding short circuit"]},
+        {"case_id":"compiler.literal_null_identity","test":"TestLiteralNullIdentityLowering","file":"internal/codegen/literal_null_identity_test.go","kind":"compiler","assertions":["literal-null probes use IsNull once, preserve source mapping, leave variable-variable identity guarded"]},
+        {"case_id":"negative.literal_null_identity","test":"TestLiteralNullIdentityBoundary","file":"internal/codegen/literal_null_identity_test.go","kind":"negative","assertions":["general non-null array comparisons and invalid/missing operands remain rejected"]},
         {"case_id": "unit.runtime.identical_rejects_array", "test": "TestIdenticalRejectsArrayValues", "file": "runtime/runtime_test.go", "kind": "unit", "assertions": ["runtime rejects array identity semantics explicitly"]},
         {"case_id": "negative.strict_equal_array", "test": "TestUnsupported/strict_equal_array", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["array strict equality is rejected"]},
         {"case_id": "negative.strict_equal_chain", "test": "TestUnsupported/strict_equal_chain", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["unparenthesized non-associative strict-equality chain is rejected"]}
       ],
-      "limitations": ["No array or object identity semantics", "No loose equality"]
+      "limitations": ["No general array or object identity; non-scalar extension requires a syntactic literal-null operand", "Two unknown variables retain scalar runtime guards even when one is actually null", "No loose equality"]
     },
     {
       "id": "php.operator.strict-not-equal",
       "kind": "operator",
-      "name": "Strict scalar inequality !==",
+      "name": "Strict scalar inequality and literal-null probes !==",
       "implementation": "partial",
-      "contract": "Compare null, bool, int64 and string by type and value with no coercion, returning the negation of scalar identity as bool.",
+      "contract": "Compare canonical scalars without coercion, returning negated identity; with a syntactic literal-null operand, evaluates the other supported expression once as a negated canonical-null predicate.",
       "php_targets": ["8.3"],
       "checks": [
         {"case_id":"diff.strict_not_equal","test":"TestDifferential/strict_not_equal","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/strict_not_equal.php","assertions":["scalar type/value distinctions, bool results, precedence, parenthesized comparisons, once-only operands and lazy surrounding branches match native stdout and normal exit"]},
+        {"case_id":"diff.literal_null_identity","test":"TestDifferential/literal_null_identity","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/literal_null_identity.php","assertions":["stdout","exit","both literal-null operand orders and both strict operators; non-scalar null probes, single evaluation and surrounding short circuit"]},
         {"case_id":"compiler.strict_not_equal_lowering","test":"TestStrictNotEqualLoweringAndSourceMap","file":"internal/codegen/strict_not_equal_test.go","kind":"compiler","assertions":["!== lowers to negated guarded Identical and retains PHP statement source mapping"]},
         {"case_id":"negative.ir.strict_not_equal_arity","test":"TestStrictNotEqualMalformedArity","file":"internal/codegen/strict_not_equal_test.go","kind":"negative","assertions":["invalid binary arity fails before code generation"]},
         {"case_id":"negative.strict_not_equal_dynamic","test":"TestStrictNotEqualRuntimeTypeGuards","file":"tests/strict_not_equal_runtime_test.go","kind":"negative","assertions":["generated binaries reject arrays and objects on either unknown operand; no PHP error equivalence claim"]},
@@ -1045,7 +1049,7 @@
         {"case_id":"negative.strict_not_equal_literal_key","test":"TestUnsupported/strict_not_equal_literal_key","file":"tests/differential_test.go","kind":"negative","assertions":["bool expression array key remains outside the subset"]},
         {"case_id":"negative.strict_not_equal_property_default","test":"TestUnsupported/strict_not_equal_property_default","file":"tests/differential_test.go","kind":"negative","assertions":["general property default expression remains unsupported"]}
       ],
-      "limitations": ["No array/object identity, floats, resources or extension values","No loose != or <>","=== and !== share non-associative precedence; mixed chains require parentheses","Both operands are statically validated; unknown non-scalars fail at runtime","No PHP warning/exception or general operand evaluation-order equivalence"]
+      "limitations": ["No general array/object identity, floats, resources or extension values; non-scalar null probes require a syntactic literal-null operand","No loose != or <>","=== and !== share non-associative precedence; mixed chains require parentheses","Both operands are statically validated; unknown non-scalars without a literal-null operand fail at runtime","No PHP warning/exception or general operand evaluation-order equivalence"]
     },
     {
       "id": "php.operator.loose-equal",

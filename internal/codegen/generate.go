@@ -304,6 +304,21 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		// A closure keeps the condition single-evaluation and both arms lazy.
 		return "(func() any { if rt.Bool(" + g.expr(e.Args[0], scope) + ") { return " + g.expr(e.Args[1], scope) + " }; return " + g.expr(e.Args[2], scope) + " }())"
 	case "binary":
+		if e.Text == "===" || e.Text == "!==" {
+			other := -1
+			if e.Args[0].Kind == "null" {
+				other = 1
+			} else if e.Args[1].Kind == "null" {
+				other = 0
+			}
+			if other >= 0 {
+				probe := "rt.IsNull(" + g.expr(e.Args[other], scope) + ")"
+				if e.Text == "!==" {
+					return "(!" + probe + ")"
+				}
+				return probe
+			}
+		}
 		if e.Text == "&&" || e.Text == "||" {
 			// Go's logical operators preserve PHP's left-to-right short circuit.
 			return "(rt.Bool(" + g.expr(e.Args[0], scope) + ") " + e.Text + " rt.Bool(" + g.expr(e.Args[1], scope) + "))"
