@@ -451,6 +451,29 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		if err != nil {
 			return valueType{}, err
 		}
+		if strings.EqualFold(expr.Text, "in_array") {
+			if len(args) != 3 || expr.Args[2].Kind != "bool" || expr.Args[2].Text != "true" {
+				return valueType{}, unsupported(expr.Line, "in_array expects three arguments with literal true strictness")
+			}
+			if !isScalarOrUnknown(args[0]) {
+				return valueType{}, unsupported(expr.Line, "in_array requires a scalar needle")
+			}
+			if args[1].kind != arrayKind && args[1].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "in_array requires an array haystack")
+			}
+			if expr.Args[1].Kind == "array" {
+				for _, pair := range expr.Args[1].Args {
+					value, err := v.expr(pair.Args[1], scope)
+					if err != nil {
+						return valueType{}, err
+					}
+					if !isScalarOrUnknown(value) {
+						return valueType{}, unsupported(expr.Line, "in_array requires scalar haystack values")
+					}
+				}
+			}
+			return valueType{kind: boolKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "array_map") {
 			if len(expr.Args) != 2 || expr.Args[0].Kind != "string" || !validName(expr.Args[0].Text) {
 				return valueType{}, unsupported(expr.Line, "array_map expects a literal named callback and one array")

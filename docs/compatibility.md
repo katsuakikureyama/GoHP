@@ -23,6 +23,7 @@ This table is the current curated summary, not a blanket support claim.
 | String formatting / replacement | `sprintf('%0Ns', string\|int64)` with canonical width 0–4096; `str_replace(string, string, string)` | [Zero-padding boundary](sprintf-boundary.md) / [replacement boundary](str-replace-boundary.md); no general formatting, array substitutions or count reference |
 | Case-insensitive string comparison | `strcasecmp(string, string)` | [ASCII byte comparison](strcasecmp-boundary.md); no non-string coercion or Unicode/locale folding |
 | Array-element presence | `isset($array[$key])` on a defined actual array | [Bounded isset](array-isset-boundary.md); one literal/variable int/string key, missing/null false; no undefined roots, nested/property/general isset |
+| Strict scalar membership | `in_array(scalar, scalar-valued array, true)` | [Closed strict boundary](in-array-strict-boundary.md); no loose mode or array/object values |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |

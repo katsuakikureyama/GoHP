@@ -47,7 +47,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	}
 	for _, f := range p.Functions {
 		n := name(f.Name)
-		if _, ok := g.funcs[n]; ok || n == "isset" || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "array_key_exists" || n == "array_is_list" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "is_array" || n == "strtolower" || n == "strcasecmp" || n == "sprintf" || n == "str_replace" || n == "stripslashes" || n == "array_map" || n == "addslashes" {
+		if _, ok := g.funcs[n]; ok || n == "in_array" || n == "isset" || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "array_key_exists" || n == "array_is_list" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "is_array" || n == "strtolower" || n == "strcasecmp" || n == "sprintf" || n == "str_replace" || n == "stripslashes" || n == "array_map" || n == "addslashes" {
 			g.fail(f.Line, "duplicate or reserved function "+n)
 		}
 		g.funcs[n] = len(f.Params)
@@ -305,6 +305,12 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 				g.fail(e.Line, "array_map callback must be a declared one-argument function")
 			}
 			return "rt.ArrayMap(func(value any) any { return F_" + callback + "(value) }, " + g.expr(e.Args[1], scope) + ")"
+		}
+		if n == "in_array" {
+			if len(e.Args) != 3 || e.Args[2].Kind != "bool" || e.Args[2].Text != "true" {
+				g.fail(e.Line, "in_array expects three arguments with literal true strictness")
+			}
+			return "rt.InArrayStrict(" + args(e.Args[:2]) + ")"
 		}
 		if n == "addslashes" {
 			if len(e.Args) != 1 {

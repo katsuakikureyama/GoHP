@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "strict_not_equal", "if_else", "elseif", "precedence", "strlen", "strcasecmp", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "array_isset", "array_return", "charset_array_integration", "control_flow_array_integration", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
+	for _, fixture := range []string{"in_array_strict", "membership_control_flow", "core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "strict_not_equal", "if_else", "elseif", "precedence", "strlen", "strcasecmp", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "array_isset", "array_return", "charset_array_integration", "control_flow_array_integration", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -231,6 +231,20 @@ func TestUnsupported(t *testing.T) {
 		{name: "index_scalar", src: "<?php $value = 1; echo $value[0];"},
 		{name: "missing_property", src: "<?php class X { public $name = 'x'; } $x = new X(); echo $x->missing;"},
 		{name: "method_arity", src: "<?php class X { public function render($value) { return $value; } } $x = new X(); echo $x->render();"},
+		{name: "in_array_no_args", src: "<?php echo in_array();"},
+		{name: "in_array_missing_strict", src: "<?php echo in_array('x', ['x']);"},
+		{name: "in_array_extra_args", src: "<?php echo in_array('x', ['x'], true, true);"},
+		{name: "in_array_false_strict", src: "<?php echo in_array('x', ['x'], false);"},
+		{name: "in_array_dynamic_strict", src: "<?php $strict = true; echo in_array('x', ['x'], $strict);"},
+		{name: "in_array_expression_strict", src: "<?php echo in_array('x', ['x'], !false);"},
+		{name: "in_array_array_needle", src: "<?php echo in_array([], [], true);"},
+		{name: "in_array_object_needle", src: "<?php class X {} echo in_array(new X(), [], true);"},
+		{name: "in_array_nonarray_haystack", src: "<?php echo in_array('x', 'x', true);"},
+		{name: "in_array_nested_haystack", src: "<?php echo in_array('x', ['x', []], true);"},
+		{name: "in_array_object_haystack", src: "<?php class X {} echo in_array('x', [new X()], true);"},
+		{name: "in_array_redeclare", src: "<?php function In_ArRaY($n, $h, $s) { return true; }"},
+		{name: "in_array_result_not_string", src: "<?php echo strtolower(in_array('x', [], true));"},
+		{name: "in_array_dead_branch", src: "<?php if (false) { echo in_array([], [], true); }"},
 		{name: "strcasecmp_no_args", src: "<?php echo strcasecmp();"},
 		{name: "strcasecmp_missing_arg", src: "<?php echo strcasecmp('x');"},
 		{name: "strcasecmp_extra_args", src: "<?php echo strcasecmp('x', 'y', 'z');"},

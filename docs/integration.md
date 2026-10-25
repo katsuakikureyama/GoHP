@@ -118,6 +118,16 @@ WordPress original or evidence for a new Gossip compiler pin. This integration
 retains the excluded `gohp.cli.generate` capability and adds no service route,
 authentication change, deployment or automatic promotion.
 
+The control-flow membership integration additionally combines published #44
+(`49a302e44464623dc4912bafbcf44192759d7878`) with #43
+(`d349e433aabd2230a23d3fb2aaa9e76a5173b58b`). Both parent histories and their
+fixtures remain intact. [Strict scalar membership](in-array-strict-boundary.md)
+does not gain loose comparison or general mixed-array support from this merge.
+Owned native composition and static/runtime rejection cases validate the new
+combined configuration; previous parent PASS is not its evidence. The local
+`gohp.cli.generate` WebMCP exclusion and existing service/auth boundaries remain
+unchanged. No Gossip source/pin/evidence, release or deployment is changed.
+
 Report schema `gohp.build/v0.1` includes IR/compiler versions, source and generated
 SHA-256, input path, PHP target and `generated` status. Additive fields `output`
 and `source_map` identify the generated file and provide a versioned,

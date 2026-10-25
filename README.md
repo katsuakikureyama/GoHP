@@ -105,6 +105,9 @@ Named global functions may declare `: array`; explicit returns and fallthrough
 are checked rather than silently dropping the declaration. Other return types,
 typed parameters and typed methods remain excluded. See the
 [array return boundary](docs/array-return-boundary.md).
+Strict scalar `in_array(needle, haystack, true)` is also available: the needle
+and all array values must be null/bool/int64/string. Loose comparison and
+array/object values are excluded; see the [membership boundary](docs/in-array-strict-boundary.md).
 
 ### Active PHP target
 
