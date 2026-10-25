@@ -55,7 +55,7 @@ commas and case-insensitive `array` spelling within the same closed array subset
 Automatic literal keys now follow PHP 8.3's negative-integer progression, also
 after string-only entries; see the [array index boundary](docs/array-index-boundary.md).
 Negative decimal constants such as `-5` can now be written directly; general
-negation and float-promoting tokens remain outside the [bounded syntax](docs/negative-integer-boundary.md).
+numeric negation and float-promoting tokens remain outside the [bounded syntax](docs/negative-integer-boundary.md).
 Unsupported syntax must fail
 with a diagnostic; a separate runtime-negative test must fail on a missing key.
 Compilation alone never proves PHP compatibility.
@@ -68,6 +68,8 @@ first-level key presence, including null-valued entries, without other key
 coercions. `array_is_list(array)` checks zero-based consecutive integer keys in
 insertion order (empty arrays are lists). See the compatibility contract and the linked
 string/boolean boundaries; these are partial implementations.
+Prefix logical negation `!` (including `!!`) uses the existing scalar/array
+truthiness rules and returns bool; object truthiness, `!=` and `!==` remain excluded.
 The integrated string subset also includes `sprintf('%0Ns', string|int64)` for
 canonical widths 0–4096 and `str_replace(string, string, string)` only. General
 formatting, array substitutions, coercions and by-reference count are excluded.

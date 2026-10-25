@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -183,6 +183,15 @@ func TestUnsupported(t *testing.T) {
 		{name: "negative_integer_minimum_token", src: "<?php echo -9223372036854775808;"},
 		{name: "negative_integer_float", src: "<?php echo -1.5;"},
 		{name: "negative_integer_nondecimal", src: "<?php echo -012;"},
+		{name: "logical_not_object", src: "<?php class Box {} echo !new Box();"},
+		{name: "logical_not_dead_object", src: "<?php class Box {} echo false && !new Box();"},
+		{name: "logical_not_result_array", src: "<?php echo count(![]);"},
+		{name: "logical_not_literal_key", src: "<?php $a = [!false => 1];"},
+		{name: "logical_not_missing_operand", src: "<?php echo !;"},
+		{name: "logical_not_equal", src: "<?php echo 1 != 2;"},
+		{name: "logical_not_identical", src: "<?php echo 1 !== 2;"},
+		{name: "logical_not_keyword", src: "<?php echo not true;"},
+		{name: "logical_not_property_default", src: "<?php class Box { public $value = !false; }"},
 		{name: "reference", src: "<?php $a = &$b;"},
 		{name: "array_nested_write", src: "<?php $a = [[1]]; $a[0][0] = 2;"},
 		{name: "array_append_undefined", src: "<?php $a[] = 2;"},

@@ -255,6 +255,8 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		return "rt." + op + "(" + args(e.Args) + ")"
 	case "bool_cast":
 		return "rt.Bool(" + args(e.Args) + ")"
+	case "not":
+		return "(!rt.Bool(" + args(e.Args) + "))"
 	case "array":
 		var a []string
 		for _, pair := range e.Args {

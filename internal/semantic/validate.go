@@ -355,7 +355,7 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 		}
 		return valueType{kind: arrayKind}, nil
-	case "bool_cast":
+	case "bool_cast", "not":
 		if err := require(1); err != nil {
 			return valueType{}, err
 		}
@@ -364,6 +364,9 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			return valueType{}, err
 		}
 		if !isBoolDomain(operand) {
+			if expr.Kind == "not" {
+				return valueType{}, unsupported(expr.Line, "logical not requires a supported value")
+			}
 			return valueType{}, unsupported(expr.Line, "boolean cast requires a supported value")
 		}
 		return valueType{kind: boolKind}, nil

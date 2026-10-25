@@ -163,7 +163,7 @@ func lex(s string) ([]token, error) {
 		if matched {
 			continue
 		}
-		if strings.ContainsRune("(){}[];,=+.-?:", rune(c)) {
+		if strings.ContainsRune("(){}[];,=+.-?:!", rune(c)) {
 			ts = append(ts, token{string(c), ln, "sym"})
 			i++
 			continue
@@ -396,6 +396,8 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 		}
 	case "sym":
 		switch t.text {
+		case "!":
+			e = ir.Expr{Kind: "not", Args: []ir.Expr{p.expr(5)}, Line: t.line}
 		case "-":
 			// Only negate a decimal integer token, already range-checked by lex.
 			// In particular, 9223372036854775808 must not become an int64 by

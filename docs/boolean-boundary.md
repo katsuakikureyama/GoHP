@@ -11,6 +11,11 @@ It is not general PHP control flow or object/coercion compatibility.
 - `&&` lowers to Go's short-circuit operator: evaluate the left side once, and
   evaluate the right side only if needed. Both sides must still be valid within
   the compiler's supported subset; dead code does not bypass validation.
+- Prefix `!` evaluates one operand once, applies the same bounded truthiness
+  conversion as `(bool)`, and returns the opposite bool. Repeated `!!` is allowed.
+  A one-operand `not` IR expression lowers to Go `!rt.Bool(operand)`; unknown
+  unsupported types retain the existing runtime guard. This does not add `!=`,
+  `!==`, a `not` keyword or general constant expressions in property defaults.
 - Scalar `===` compares type and value for nil, bool, int64 and string. Arrays
   and objects are rejected, including runtime-unknown values of those types.
   Unparenthesized chains of `===` are rejected as non-associative.
@@ -43,7 +48,9 @@ can change their type. This conservative rule avoids claiming definite assignmen
 where a branch might not execute; it is not full PHP data-flow inference.
 
 Operator precedence uses the PHP 8.3 `+` above `.` relationship, above
-`===`, above `&&`; bool casts bind more tightly. Statement maps cover nested
+`===`, above `&&`; prefix `!` and bool casts bind more tightly. Calls and index
+reads belong to the operand of `!`, while `!0 + 2` means `(!0) + 2`.
+Statement maps cover nested
 conditional headers and bodies. No IR schema fields or report schema change.
 
 The owned `booleans.php` native differential fixture covers truthiness, guarded
@@ -53,6 +60,13 @@ Explicit negative checks cover unsupported syntax, domains, builtin arities,
 reserved declarations and branch-local variable escape. Runtime checks preserve
 failure boundaries for unsupported dynamic values. The catalog records partial
 contracts and target-specific results, never unconditional support.
+
+The separate `logical_not.php` fixture observes `!`/`!!` results as bools across
+the supported value domain, prefix/binary/postfix precedence, lazy branches and
+operand evaluation markers. Negative tests cover known and dynamic objects,
+even a statically invalid operand inside a short-circuited branch; malformed
+arity and bool-result misuse remain rejected. No object truthiness, PHP warning
+or exception equivalence, or general side-effect parity is claimed.
 
 The separate `is_array.php` fixture observes predicate results using `is_bool`
 and strict true/false comparison, covers both array syntaxes and generated

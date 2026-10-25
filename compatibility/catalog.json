@@ -206,6 +206,30 @@
       "limitations": ["PHP type-juggling equality is unsupported"]
     },
     {
+      "id": "php.operator.logical-not",
+      "kind": "operator",
+      "name": "Prefix logical not",
+      "implementation": "partial",
+      "contract": "Evaluate one operand once and negate its existing PHP 8.3 scalar/array truthiness; always return bool, including repeated !!.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.logical_not","test":"TestDifferential/logical_not","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/logical_not.php","assertions":["logical negation returns bool across the scalar/array domain, respects precedence, evaluates operands once and composes with lazy branches"]},
+        {"case_id":"compiler.logical_not_lowering","test":"TestLogicalNotLoweringAndSourceMap","file":"internal/codegen/logical_not_test.go","kind":"compiler","assertions":["one-operand not IR lowers through the existing Bool guard and retains statement source mapping"]},
+        {"case_id":"negative.ir.logical_not_arity","test":"TestLogicalNotMalformedArity","file":"internal/codegen/logical_not_test.go","kind":"negative","assertions":["malformed not IR arity is rejected before code generation"]},
+        {"case_id":"negative.logical_not_dynamic","test":"TestLogicalNotRuntimeTypeGuard","file":"tests/logical_not_runtime_test.go","kind":"negative","assertions":["unknown object operands fail explicitly in the generated binary; no native error equivalence claim"]},
+        {"case_id":"negative.logical_not_object","test":"TestUnsupported/logical_not_object","file":"tests/differential_test.go","kind":"negative","assertions":["object form is rejected outside the bounded logical-not contract"]},
+        {"case_id":"negative.logical_not_dead_object","test":"TestUnsupported/logical_not_dead_object","file":"tests/differential_test.go","kind":"negative","assertions":["dead_object form is rejected outside the bounded logical-not contract"]},
+        {"case_id":"negative.logical_not_result_array","test":"TestUnsupported/logical_not_result_array","file":"tests/differential_test.go","kind":"negative","assertions":["result_array form is rejected outside the bounded logical-not contract"]},
+        {"case_id":"negative.logical_not_literal_key","test":"TestUnsupported/logical_not_literal_key","file":"tests/differential_test.go","kind":"negative","assertions":["literal_key form is rejected outside the bounded logical-not contract"]},
+        {"case_id":"negative.logical_not_missing_operand","test":"TestUnsupported/logical_not_missing_operand","file":"tests/differential_test.go","kind":"negative","assertions":["missing_operand form is rejected outside the bounded logical-not contract"]},
+        {"case_id":"negative.logical_not_equal","test":"TestUnsupported/logical_not_equal","file":"tests/differential_test.go","kind":"negative","assertions":["equal form is rejected outside the bounded logical-not contract"]},
+        {"case_id":"negative.logical_not_identical","test":"TestUnsupported/logical_not_identical","file":"tests/differential_test.go","kind":"negative","assertions":["identical form is rejected outside the bounded logical-not contract"]},
+        {"case_id":"negative.logical_not_keyword","test":"TestUnsupported/logical_not_keyword","file":"tests/differential_test.go","kind":"negative","assertions":["keyword form is rejected outside the bounded logical-not contract"]},
+        {"case_id":"negative.logical_not_property_default","test":"TestUnsupported/logical_not_property_default","file":"tests/differential_test.go","kind":"negative","assertions":["property_default form is rejected outside the bounded logical-not contract"]}
+      ],
+      "limitations": ["Only null/bool/int64/string/array truthiness; no object/resource/float/extension-value support","No !=, !== or not keyword, and no general property constant-expression support","Unknown operand types stay guarded at runtime; no warning/exception or general side-effect equivalence"]
+    },
+    {
       "id": "php.cast.bool",
       "kind": "syntax",
       "name": "(bool) cast",
