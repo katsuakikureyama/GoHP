@@ -3,6 +3,24 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.is_int",
+      "kind": "builtin",
+      "name": "is_int(value)",
+      "implementation": "partial",
+      "contract": "Exactly one argument, case-insensitive direct calls, actual canonical int64 values only; bool result without numeric-string coercion, traversal or mutation.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.is_int","test":"TestDifferential/is_int","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/is_int.php","assertions":["stdout","exit","actual bool/type distinction for integers and nonintegers, numeric strings, single evaluation, guarded arithmetic, integer/string keys and generated callback composition"]},
+        {"case_id":"unit.runtime.is_int_domain","test":"TestIsIntValueDomain","file":"runtime/is_int_test.go","kind":"unit","assertions":["signed int64 endpoints accepted; null/bool/string/array/object/callable and noncanonical Go numeric types rejected without conversion"]},
+        {"case_id":"compiler.is_int_lowering","test":"TestIsIntLoweringAndSourceMap","file":"internal/codegen/is_int_test.go","kind":"compiler","assertions":["case-insensitive predicate lowers within guarded bool return and preserves statement source map"]},
+        {"case_id":"negative.is_int_missing_argument","test":"TestUnsupported/is_int_missing_argument","file":"tests/differential_test.go","kind":"negative","assertions":["missing argument rejected"]},
+        {"case_id":"negative.is_int_extra_argument","test":"TestUnsupported/is_int_extra_argument","file":"tests/differential_test.go","kind":"negative","assertions":["extra argument rejected"]},
+        {"case_id":"negative.is_int_redeclare","test":"TestUnsupported/is_int_redeclare","file":"tests/differential_test.go","kind":"negative","assertions":["case-insensitive builtin redeclaration rejected"]},
+        {"case_id":"negative.is_int_bool_as_array","test":"TestUnsupported/is_int_bool_as_array","file":"tests/differential_test.go","kind":"negative","assertions":["known bool result cannot be used as an array"]}
+      ],
+      "limitations": ["Existing GoHP value/literal domain only: no new float/resource/integer syntax or numeric conversion", "No is_integer/is_long aliases, is_numeric, named arguments or builtin callable lookup", "No branch-sensitive type narrowing or PHP warning/exception equivalence", "Gossip original-source adoption requires a separate compiler pin and evidence"]
+    },
+    {
       "id": "php.syntax.array-parameter-type",
       "kind": "syntax",
       "name": "Array parameters on named global functions",

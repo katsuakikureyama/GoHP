@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"in_array_strict", "membership_control_flow", "isset_negative_keys", "literal_case", "arrow_callable", "arrow_typed_composition", "array_parameter", "array_parameter_bool_composition", "bool_return", "bool_return_composition", "core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "strict_not_equal", "if_else", "elseif", "precedence", "strlen", "strcasecmp", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "array_isset", "array_return", "charset_array_integration", "control_flow_array_integration", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
+	for _, fixture := range []string{"in_array_strict", "membership_control_flow", "isset_negative_keys", "literal_case", "arrow_callable", "arrow_typed_composition", "array_parameter", "array_parameter_bool_composition", "bool_return", "bool_return_composition", "core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "strict_not_equal", "if_else", "elseif", "precedence", "strlen", "strcasecmp", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "is_int", "array_map", "array_write", "array_append", "array_isset", "array_return", "charset_array_integration", "control_flow_array_integration", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -361,6 +361,10 @@ func TestUnsupported(t *testing.T) {
 		{name: "strict_not_equal_literal_key", src: "<?php $a = [1 !== 2 => 0];"},
 		{name: "strict_not_equal_property_default", src: "<?php class Box { public $value = 1 !== 2; }"},
 		{name: "is_bool_missing_argument", src: "<?php echo is_bool();"},
+		{name: "is_int_missing_argument", src: "<?php echo is_int();"},
+		{name: "is_int_extra_argument", src: "<?php echo is_int(0, 1);"},
+		{name: "is_int_redeclare", src: "<?php function Is_InT($value) { return true; }"},
+		{name: "is_int_bool_as_array", src: "<?php echo count(is_int(0));"},
 		{name: "is_bool_extra_argument", src: "<?php echo is_bool(true, false);"},
 		{name: "is_string_missing_argument", src: "<?php echo is_string();"},
 		{name: "is_string_extra_argument", src: "<?php echo is_string('x', 'y');"},

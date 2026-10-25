@@ -36,11 +36,13 @@ It is not general PHP control flow or object/coercion compatibility.
 - `(bool)` and condition truthiness accept nil, bool, int64, string and GoHP
   arrays only. False values are nil, false, integer zero, empty string, string
   `"0"` and empty arrays. Unsupported dynamic value types fail explicitly.
-- `is_bool`, `is_string` and `is_array` take exactly one value and return bool
+- `is_bool`, `is_string`, `is_int` and `is_array` take exactly one value and return bool
   type predicates. `is_array` accepts existing scalar/null/array/class-instance
   values: empty, indexed and associative arrays are true; all non-arrays are
   false. It does not convert, walk or mutate the value. Array-like objects are
   not arrays; no float/resource/extension-value syntax is added.
+  [is_int](is-int-boundary.md) returns true only for canonical int64 values;
+  numeric strings and all noninteger values remain false without conversion.
 - `strtolower` takes exactly one actual string, mapping ASCII A–Z bytes to a–z
   and leaving other bytes unchanged. No weak coercion or Unicode case folding.
   PHP 8.3 uses ASCII semantics. The oracle additionally selects and verifies

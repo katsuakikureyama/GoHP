@@ -40,6 +40,11 @@ Capture-free [arrows and callable parameters](arrow-callable-boundary.md) remain
 inside the WebMCP-excluded `gohp.cli.generate` capability: developer-only local
 source translation, no browser operation, service route, authentication or auto-submit.
 
+The bounded [is_int predicate](is-int-boundary.md) uses that same excluded local
+operation. It adds no coercion, source type, route or dependency. Existing Gossip
+pins/evidence are unchanged; compiler feature checks do not promote original-source
+compatibility or adopt the new compiler revision automatically.
+
 Fixed positional [array parameters](array-parameter-boundary.md) extend the same
 local `gohp.cli.generate` operation; WebMCP remains excluded because this is
 developer-only source translation, with no browser/server operation or auth route.
