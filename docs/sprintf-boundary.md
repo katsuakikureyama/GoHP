@@ -34,9 +34,10 @@ binary. It covers positive/zero integers, strings including a negative-number
 string, an empty string,
 width zero, no truncation and a multibyte string with byte width. The runtime and
 code-generation tests separately cover the width ceiling and rejected forms.
-Negative integer literals are outside the current parser subset: negative int64
-runtime values are tested directly and through Gossip's typed-input observer,
-not claimed as parsed negative literals in this native fixture.
+The frontend now admits [bounded negative decimal constants](negative-integer-boundary.md).
+This sprintf fixture still does not observe parsed negative integer inputs:
+negative int64 runtime values are tested directly and through Gossip's separate
+typed-input observer. The syntax extension does not expand this fixture's evidence.
 The compatibility catalog entry `php.builtin.sprintf-zero-pad` records those
 checks; a generation-only result is not a PHP compatibility pass.
 
