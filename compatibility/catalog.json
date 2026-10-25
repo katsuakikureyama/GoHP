@@ -10,6 +10,7 @@
       "contract": "Canonical : bool declaration with actual boolean returns only; every explicit return and fallthrough guarded, known mismatches rejected statically, unknown values guarded at runtime. No weak scalar coercion.",
       "php_targets": ["8.3"],
       "checks": [
+        {"case_id":"diff.bool_return_composition","test":"TestDifferential/bool_return_composition","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/bool_return_composition.php","assertions":["stdout","exit","retained #48 fixture: actual bool parameter passthrough, empty foreach, explicit bool casts, forward marker and typed-array/array_map composition"]},
         {"case_id":"diff.bool_return","test":"TestDifferential/bool_return","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/bool_return.php","assertions":["stdout","exit","typed true/false and predicates, branches/foreach, forward calls and named callback composition; bool type, one evaluation and caller preservation"]},
         {"case_id":"unit.bool_return.values","test":"TestBoolReturnActualBooleans","file":"runtime/bool_return_test.go","kind":"unit","assertions":["true and false preserve exact bool type/value"]},
         {"case_id":"negative.bool_return.coercion","test":"TestBoolReturnRejectsCoercion","file":"runtime/bool_return_test.go","kind":"negative","assertions":["null/integer/string/array/object are rejected without truthiness coercion"]},

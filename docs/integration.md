@@ -142,6 +142,9 @@ global functions only. It preserves the local `gohp.cli.generate` WebMCP exclusi
 and adds no service/auth route. Gossip's numeric-array original still needs typed
 parameters and callable/arrow dependencies plus a separately pinned comparison;
 accepting `: bool` alone is not original-source compatibility or adoption.
+The [bool-return branch reconciliation](bool-return-integration.md) merges #48
+and #49 without duplicating the feature ID or runtime guard, preserving the old
+evidence at its original revisions and requiring a new merged-configuration run.
 
 Case-insensitive true/false/null literals normalize only those three predefined
 values to existing IR. This stays within the excluded local `gohp.cli.generate`

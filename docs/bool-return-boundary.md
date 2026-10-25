@@ -35,3 +35,7 @@ Gossip must pin and verify the complete dependency chain separately.
 
 Local `gohp.cli.generate` remains WebMCP-excluded. No service/authentication route,
 external write, new dependency, automatic promotion, release or deployment.
+
+The [parallel-branch reconciliation](bool-return-integration.md) retains both
+published histories, consolidates duplicate checks and keeps both owned native
+fixtures under distinct names. Current evidence must identify the merged revision.
