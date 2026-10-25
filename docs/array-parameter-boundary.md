@@ -25,8 +25,11 @@ describes argument evaluation and default by-value passing; the
 describes declaration checks. Runtime rejection here is a Go failure, not PHP
 TypeError message, stack, catchability or error-side-effect equivalence.
 
-Excluded here: scalar/nullable/union/intersection parameter types, defaults,
-references, variadics, named arguments and typed methods. Return-type inference
+Excluded here: scalar/nullable/union/intersection parameter types, defaults on
+typed parameters, references, variadics, named arguments and typed methods.
+The separate bounded default rule admits only trailing **untyped** `= null`
+parameters on named global functions; it does not broaden this typed-array
+declaration contract. Return-type inference
 and path-completeness proofs are not added. Direct IR accepts no noncanonical
 annotations or misaligned metadata. Existing untyped IR remains valid.
 Generated-arrow `callable` parameters now have a [separate boundary](arrow-callable-boundary.md).

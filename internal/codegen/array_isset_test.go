@@ -59,8 +59,6 @@ func TestArrayIssetStrictSourceFormsFailClosed(t *testing.T) {
 		src  string
 	}{
 		{"no_arguments", "<?php $items = []; echo isset();"},
-		{"multiple_arguments", "<?php $items = []; echo isset($items['a'], $items['b']);"},
-		{"simple_variable", "<?php $items = []; echo isset($items);"},
 		{"nested_index", "<?php $items = [[]]; echo isset($items[0]['child']);"},
 		{"property", "<?php class Item { public $value = null; } $item = new Item(); echo isset($item->value);"},
 		{"string_offset", "<?php echo isset('text'[0]);"},

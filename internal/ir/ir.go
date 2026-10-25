@@ -20,12 +20,13 @@ type Stmt struct {
 	Key, Value string
 }
 type Function struct {
-	Name       string
-	Params     []string
-	ParamTypes []string // Empty means all untyped; otherwise aligned with Params: "", "array", "callable".
-	Body       []Stmt
-	Line       int
-	ReturnType string // Empty (untyped), "array" or "bool" on a named global function.
+	Name               string
+	Params             []string
+	ParamTypes         []string // Empty means all untyped; otherwise aligned with Params: "", "array", "callable".
+	OptionalNullParams int      // Number of trailing, untyped parameters defaulting to null.
+	Body               []Stmt
+	Line               int
+	ReturnType         string // Empty (untyped), "array" or "bool" on a named global function.
 }
 type Property struct {
 	Name  string

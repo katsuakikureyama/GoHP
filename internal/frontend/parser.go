@@ -253,6 +253,15 @@ func (p *parser) function() ir.Function {
 			}
 			f.Params = append(f.Params, p.name("var"))
 			paramTypes = append(paramTypes, paramType)
+			if p.accept("=") {
+				value := p.pop()
+				if value.kind != "id" || !strings.EqualFold(value.text, "null") {
+					p.fail("only null parameter defaults are supported")
+				}
+				f.OptionalNullParams++
+			} else if f.OptionalNullParams != 0 {
+				p.fail("required parameters cannot follow optional parameters")
+			}
 			if p.accept(")") {
 				break
 			}
@@ -307,6 +316,10 @@ func (p *parser) block() []ir.Stmt {
 func (p *parser) stmt() ir.Stmt {
 	s := ir.Stmt{Line: p.peek().line}
 	switch {
+	case p.peek().kind == "id" && strings.EqualFold(p.peek().text, "continue"):
+		p.pop()
+		s.Kind = "continue"
+		p.need(";")
 	case p.accept("echo"):
 		s.Kind = "echo"
 		s.Expr = p.expr(0)
@@ -458,28 +471,36 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 			break
 		}
 		if strings.EqualFold(t.text, "isset") {
-			// Keep the operand as an address, not an eagerly evaluated index.
-			// Only one defined array variable and one literal/variable key are
-			// supported; broader PHP isset forms remain outside this subset.
 			p.need("(")
-			base := p.pop()
-			if base.kind != "var" {
-				p.fail("isset requires a single indexed variable")
+			var operands []ir.Expr
+			for {
+				base := p.pop()
+				if base.kind != "var" {
+					p.fail("isset requires a variable or one-level indexed variable")
+				}
+				address := ir.Expr{Kind: "isset_var", Line: t.line, Args: []ir.Expr{{Kind: "var", Text: base.text, Line: base.line}}}
+				if p.accept("[") {
+					key := p.pop()
+					keyExpr := ir.Expr{Kind: key.kind, Text: key.text, Line: key.line}
+					if key.kind == "sym" && key.text == "-" {
+						keyExpr = p.negativeInteger(key)
+					} else if key.kind != "int" && key.kind != "string" && key.kind != "var" {
+						p.fail("isset key must be an integer/string literal or variable")
+					}
+					p.need("]")
+					address.Kind = "isset_index"
+					address.Args = append(address.Args, keyExpr)
+				}
+				operands = append(operands, address)
+				if p.accept(")") {
+					break
+				}
+				p.need(",")
 			}
-			p.need("[")
-			key := p.pop()
-			keyExpr := ir.Expr{Kind: key.kind, Text: key.text, Line: key.line}
-			if key.kind == "sym" && key.text == "-" {
-				keyExpr = p.negativeInteger(key)
-			} else if key.kind != "int" && key.kind != "string" && key.kind != "var" {
-				p.fail("isset key must be an integer/string literal or variable")
+			e = operands[0]
+			if len(operands) > 1 {
+				e = ir.Expr{Kind: "isset_multi", Line: t.line, Args: operands}
 			}
-			p.need("]")
-			p.need(")")
-			e = ir.Expr{Kind: "isset_index", Line: t.line, Args: []ir.Expr{
-				{Kind: "var", Text: base.text, Line: base.line},
-				keyExpr,
-			}}
 			break
 		}
 		// array(...) is a language construct, not a builtin call. Both literal
