@@ -144,6 +144,25 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType) error {
 				return err
 			}
 			scope[base.Text] = valueType{kind: arrayKind}
+		case "assign_append":
+			base := stmt.Target
+			if base.Kind != "var" || len(base.Args) != 0 || !validName(base.Text) || stmt.Name != "" {
+				return malformed(stmt.Line, "array append requires a variable target")
+			}
+			if _, ok := scope[base.Text]; !ok {
+				return unsupported(stmt.Line, "array append requires an existing variable")
+			}
+			t, err := v.expr(base, scope)
+			if err != nil {
+				return err
+			}
+			if t.kind != arrayKind && t.kind != unknownKind {
+				return unsupported(stmt.Line, "array append requires an array")
+			}
+			if _, err := v.expr(stmt.Expr, scope); err != nil {
+				return err
+			}
+			scope[base.Text] = valueType{kind: arrayKind}
 		case "echo":
 			t, err := v.expr(stmt.Expr, scope)
 			if err != nil {

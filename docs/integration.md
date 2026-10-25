@@ -38,7 +38,7 @@ they require independent validation before adopting this integrated revision.
 
 Capability/WebMCP scope: `gohp.cli.generate` is explicitly **excluded** from browser
 WebMCP exposure because it is a local compiler writing caller-owned build files.
-The [one-level PHP array assignment](array-write-boundary.md) extension remains
+The [one-level PHP array assignment and append](array-write-boundary.md) extension remains
 within this excluded generation capability. Its writes concern simulated local
 PHP values, not service resources; no UI operation, route, authentication,
 external save/commit or automatic submission is introduced.

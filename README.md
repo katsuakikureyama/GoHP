@@ -72,9 +72,10 @@ formatting, array substitutions, coercions and by-reference count are excluded.
 The callback subset admits `array_map('declared_function', array)` with one
 array and one literal one-argument user function, including finite recursion.
 String-only `addslashes` is byte quoting, not SQL/HTML/shell sanitization.
-One-level `$array[$key] = $value` statements update existing array variables
-with detached value copies. Keys must be int/string literals or variables;
-append, nested targets, auto-vivification and references remain excluded.
+One-level `$array[$key] = $value` and `$array[] = $value` statements update
+existing array variables with detached value copies. Explicit keys must be
+int/string literals or variables; append uses PHP 8.3 integer-index progression.
+Nested targets, auto-vivification and references remain excluded.
 
 ### Active PHP target
 

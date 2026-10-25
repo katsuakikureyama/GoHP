@@ -2,9 +2,10 @@
 
 ## Lvalue design
 
-Only `$local[key] = value;` is admitted, where the root variable already exists
-and contains an array. The key is an integer/string literal or a variable with
-an actual int64/string value. No effectful key expressions are admitted.
+`$local[key] = value;` and `$local[] = value;` are admitted only when the root
+variable already exists and contains an array. An explicit key is an
+integer/string literal or a variable with an actual int64/string value.
+No effectful key expressions are admitted.
 An explicit `assign_index` statement carries `Target` as an index expression
 whose base is one variable and whose key is one literal/variable; `Expr` is the
 right-hand value. This additive IR field/kind keeps version 0.1, not a public
@@ -24,13 +25,32 @@ contract. Static invalid domains fail before generation, unknown values are
 guarded at runtime. Failure behavior is not PHP warning/exception equivalence.
 Integer-index bookkeeping is shared with literal construction, including the
 [PHP 8.3 negative-key boundary](array-index-boundary.md). Copies preserve this
-state; this does not enable append statements.
+state.
+
+## Append statements
+
+`$local[] = value;` has its own `assign_append` statement kind with a variable
+`Target` and an RHS `Expr`; it is not an index-read expression with a missing key.
+The semantic validator checks the target shape, definitely-existing root and
+array-or-unknown type before code generation. Generated code calls
+`ArrayAppend(base, value)` once and writes its result back to that root.
+It uses the same copy semantics as `ArraySet`; `$a[] = $a` appends a finite
+pre-write value snapshot, not a self-reference.
+
+The next integer key follows PHP 8.3, including negative keys and string-only
+prefixes. Copy/map preserve that index while keys/values reindex it. The last
+available int64 key may be appended once; another append fails explicitly.
+Unknown non-array roots are rejected at runtime rather than auto-vivified.
+`TestDifferential/array_append` observes keys/types, copies, RHS evaluation and
+foreach snapshots; unit/codegen/runtime-negative checks cover isolation,
+malformed IR, static exclusions and dynamic domain/overflow failures.
 
 ## Excluded forms
 
-No `$a[]` append, `$a[x][y]` target, undefined/null/scalar auto-vivification,
+No `$a[x][y]`, `$a[x][]` or `$a[][y]` target, undefined/null/scalar auto-vivification,
 references, compound assignment, assignment expressions, unset, or PHP's
 bool/null/float key coercions. Object alias semantics are not extended.
+Empty-bracket reads remain invalid; append is a statement-only operation.
 Key calls/operators are rejected rather than promising general evaluation-order
 compatibility. Future nested writes/references require a separate lvalue design.
 

@@ -67,6 +67,8 @@ results.
 Adopt a full version-aware parser adapter; extend validation as the type model
 grows. The [one-level assignment design](array-write-boundary.md) uses an explicit
 root-binding target and functional array replacement, not reference cells.
+Append uses a distinct `assign_append` statement with a variable-only target;
+it shares runtime copy/index semantics without admitting empty-bracket reads.
 Nested lvalues/references and closures require a further location/cell design.
 Add scalar types and conversions with warning/exception differential
 fixtures; then inheritance and include/autoload boundaries. Source maps, structured

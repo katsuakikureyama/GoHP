@@ -18,8 +18,8 @@ dynamic construction keys, boolean keys, union, typed declarations and arbitrary
 remain unsupported. Malformed delimiters, missing elements and a bare `array`
 identifier must fail. Unknown ordinary function calls still fail closed.
 One-level element writes are now covered separately by the
-[existing-array assignment contract](array-write-boundary.md); nested/append
-targets and reference semantics remain excluded.
+[existing-array assignment contract](array-write-boundary.md), including append
+to an existing array variable. Nested targets and reference semantics remain excluded.
 Both literal forms share the corrected
 [PHP 8.3 automatic-index behavior](array-index-boundary.md) for negative keys.
 

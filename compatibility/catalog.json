@@ -585,7 +585,6 @@
         {"case_id":"compiler.array_write_lowering","test":"TestArrayWriteLoweringAndSourceMap","file":"internal/codegen/array_write_test.go","kind":"compiler","assertions":["explicit root-binding update lowers through ArraySet with statement source mapping"]},
         {"case_id":"negative.ir.array_write_target","test":"TestArrayWriteMalformedTarget","file":"internal/codegen/array_write_test.go","kind":"negative","assertions":["malformed or nested assignment target IR is rejected safely"]},
         {"case_id":"negative.array_write_dynamic","test":"TestArrayWriteRuntimeGuards","file":"tests/array_write_runtime_test.go","kind":"negative","assertions":["generated binary rejects dynamic non-array roots and non-int/string keys; no native error equivalence claim"]},
-        {"case_id":"negative.array_write_append","test":"TestUnsupported/array_write_append","file":"tests/differential_test.go","kind":"negative","assertions":["append form is rejected before generation"]},
         {"case_id":"negative.array_write_undefined","test":"TestUnsupported/array_write_undefined","file":"tests/differential_test.go","kind":"negative","assertions":["undefined form is rejected before generation"]},
         {"case_id":"negative.array_write_null","test":"TestUnsupported/array_write_null","file":"tests/differential_test.go","kind":"negative","assertions":["null form is rejected before generation"]},
         {"case_id":"negative.array_write_scalar","test":"TestUnsupported/array_write_scalar","file":"tests/differential_test.go","kind":"negative","assertions":["scalar form is rejected before generation"]},
@@ -597,7 +596,206 @@
         {"case_id":"negative.array_write_property","test":"TestUnsupported/array_write_property","file":"tests/differential_test.go","kind":"negative","assertions":["property form is rejected before generation"]},
         {"case_id":"negative.array_write_conditional_root","test":"TestUnsupported/array_write_conditional_root","file":"tests/differential_test.go","kind":"negative","assertions":["conditional root form is rejected before generation"]}
       ],
-      "limitations": ["No nested/append/property/reference lvalues, compound writes or unset","No undefined/null/scalar auto-vivification or bool/null/float key conversion","No effectful key expressions, new object alias or PHP warning/exception equivalence","Eager value copies, not Zend copy-on-write or general reference cells"]
+      "limitations": ["Append has a separate partial contract; no nested/property/reference lvalues, compound writes or unset","No undefined/null/scalar auto-vivification or bool/null/float key conversion","No effectful key expressions, new object alias or PHP warning/exception equivalence","Eager value copies, not Zend copy-on-write or general reference cells"]
+    },
+    {
+      "id": "php.syntax.array-append",
+      "kind": "syntax",
+      "name": "One-level append to existing array variables",
+      "implementation": "partial",
+      "contract": "Append a detached value to an existing array variable using its PHP 8.3 next integer key; no auto-vivification.",
+      "php_targets": [
+        "8.3"
+      ],
+      "checks": [
+        {
+          "case_id": "diff.array_append",
+          "test": "TestDifferential/array_append",
+          "file": "tests/differential_test.go",
+          "kind": "differential",
+          "fixture": "tests/fixtures/array_append.php",
+          "assertions": [
+            "PHP 8.3 append key types/order, copy/map/reindex state, self snapshots, RHS once and foreach snapshots match native output"
+          ]
+        },
+        {
+          "case_id": "unit.runtime.array_append_copy",
+          "test": "TestArrayAppendKeysAndValueIsolation",
+          "file": "runtime/array_append_test.go",
+          "kind": "unit",
+          "assertions": [
+            "append preserves source/RHS isolation and ordered values"
+          ]
+        },
+        {
+          "case_id": "unit.runtime.array_append_snapshot_max",
+          "test": "TestArrayAppendSelfSnapshotAndMaximum",
+          "file": "runtime/array_append_test.go",
+          "kind": "unit",
+          "assertions": [
+            "self append is a detached finite snapshot; maximum integer insertion succeeds once then fails"
+          ]
+        },
+        {
+          "case_id": "negative.runtime.array_append_domain",
+          "test": "TestArrayAppendRejectsNonArrays",
+          "file": "runtime/array_append_test.go",
+          "kind": "negative",
+          "assertions": [
+            "non-array roots are rejected without auto-vivification"
+          ]
+        },
+        {
+          "case_id": "compiler.array_append_lowering",
+          "test": "TestArrayAppendLoweringAndSourceMap",
+          "file": "internal/codegen/array_append_test.go",
+          "kind": "compiler",
+          "assertions": [
+            "explicit append statement lowers through ArrayAppend with source mapping"
+          ]
+        },
+        {
+          "case_id": "negative.ir.array_append_target",
+          "test": "TestArrayAppendMalformedTarget",
+          "file": "internal/codegen/array_append_test.go",
+          "kind": "negative",
+          "assertions": [
+            "malformed append targets are rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.array_append_dynamic",
+          "test": "TestArrayAppendRuntimeGuards",
+          "file": "tests/array_write_runtime_test.go",
+          "kind": "negative",
+          "assertions": [
+            "generated binary rejects dynamic non-array roots and overflow; no native error equivalence claim"
+          ]
+        },
+        {
+          "case_id": "negative.array_append_undefined",
+          "test": "TestUnsupported/array_append_undefined",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "undefined form is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.array_append_null",
+          "test": "TestUnsupported/array_append_null",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "null form is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.array_append_scalar",
+          "test": "TestUnsupported/array_append_scalar",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "scalar form is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.array_append_bool",
+          "test": "TestUnsupported/array_append_bool",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "bool form is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.array_append_object",
+          "test": "TestUnsupported/array_append_object",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "object form is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.array_append_nested",
+          "test": "TestUnsupported/array_append_nested",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "nested form is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.array_append_outer_nested",
+          "test": "TestUnsupported/array_append_outer_nested",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "outer_nested form is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.array_append_reference",
+          "test": "TestUnsupported/array_append_reference",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "reference form is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.array_append_property",
+          "test": "TestUnsupported/array_append_property",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "property form is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.array_append_compound",
+          "test": "TestUnsupported/array_append_compound",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "compound form is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.array_append_read",
+          "test": "TestUnsupported/array_append_read",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "read form is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.array_append_expression",
+          "test": "TestUnsupported/array_append_expression",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "expression form is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.array_append_conditional_root",
+          "test": "TestUnsupported/array_append_conditional_root",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "conditional_root form is rejected before generation"
+          ]
+        }
+      ],
+      "limitations": [
+        "Statement-only variable root; no nested/property/reference append, empty-bracket reads or assignment expressions",
+        "No undefined/null/scalar auto-vivification, compound assignment or unset",
+        "Int64 overflow fails explicitly, not PHP warning/exception equivalence",
+        "Eager array copies; no new object alias, cyclic reference or Zend copy-on-write semantics"
+      ]
     },
     {
       "id": "php.syntax.array-write-and-reference",

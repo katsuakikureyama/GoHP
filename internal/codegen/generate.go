@@ -161,6 +161,14 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool) {
 			key := g.expr(s.Target.Args[1], scope)
 			value := g.expr(s.Expr, scope)
 			g.emit("v[%q]=rt.ArraySet(%s,%s,%s)\n", root, base, key, value)
+		case "assign_append":
+			root := s.Target.Text // Variable-only shape validated before generation.
+			if root == "this" || root == "GLOBALS" || strings.HasPrefix(root, "_") {
+				g.fail(s.Line, "reserved/global variable unsupported")
+			}
+			base := g.expr(s.Target, scope)
+			value := g.expr(s.Expr, scope)
+			g.emit("v[%q]=rt.ArrayAppend(%s,%s)\n", root, base, value)
 		case "echo":
 			g.emit("rt.Echo(%s)\n", g.expr(s.Expr, scope))
 		case "return":

@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -175,7 +175,19 @@ func TestUnsupported(t *testing.T) {
 		{name: "nondecimal_integer", src: "<?php $a = 012;"},
 		{name: "reference", src: "<?php $a = &$b;"},
 		{name: "array_nested_write", src: "<?php $a = [[1]]; $a[0][0] = 2;"},
-		{name: "array_write_append", src: "<?php $a = []; $a[] = 2;"},
+		{name: "array_append_undefined", src: "<?php $a[] = 2;"},
+		{name: "array_append_null", src: "<?php $a = null; $a[] = 2;"},
+		{name: "array_append_scalar", src: "<?php $a = 'x'; $a[] = 2;"},
+		{name: "array_append_bool", src: "<?php $a = false; $a[] = 2;"},
+		{name: "array_append_object", src: "<?php class X {} $a = new X(); $a[] = 2;"},
+		{name: "array_append_nested", src: "<?php $a = [[]]; $a[0][] = 2;"},
+		{name: "array_append_outer_nested", src: "<?php $a = []; $a[][0] = 2;"},
+		{name: "array_append_reference", src: "<?php $a = []; $v = 2; $a[] = &$v;"},
+		{name: "array_append_property", src: "<?php class X { public $value = null; } $a = new X(); $a->value[] = 2;"},
+		{name: "array_append_compound", src: "<?php $a = []; $a[] += 2;"},
+		{name: "array_append_read", src: "<?php $a = []; echo $a[];"},
+		{name: "array_append_expression", src: "<?php $a = []; $b = ($a[] = 2);"},
+		{name: "array_append_conditional_root", src: "<?php if (true) { $a = []; } $a[] = 2;"},
 		{name: "array_write_undefined", src: "<?php $a[0] = 2;"},
 		{name: "array_write_null", src: "<?php $a = null; $a[0] = 2;"},
 		{name: "array_write_scalar", src: "<?php $a = 'x'; $a[0] = 'y';"},

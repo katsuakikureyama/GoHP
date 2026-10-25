@@ -11,11 +11,26 @@ import (
 	"github.com/katsuakikureyama/GoHP/internal/frontend"
 )
 
+type arrayRuntimeCase struct{ name, source, message string }
+
 func TestArrayWriteRuntimeGuards(t *testing.T) {
-	for _, tt := range []struct{ name, source, message string }{
+	checkArrayRuntimeGuards(t, []arrayRuntimeCase{
 		{"base", "<?php function update_value($a) { $a[0] = 1; return $a; } echo update_value(null);", "array assignment requires array"},
 		{"key", "<?php function update_value($key) { $a = []; $a[$key] = 1; return $a; } $result = update_value(true);", "unsupported array key type"},
-	} {
+	})
+}
+
+func TestArrayAppendRuntimeGuards(t *testing.T) {
+	checkArrayRuntimeGuards(t, []arrayRuntimeCase{
+		{"null", "<?php function add_value($a) { $a[] = 1; return $a; } $result = add_value(null);", "array append requires array"},
+		{"scalar", "<?php function add_value($a) { $a[] = 1; return $a; } $result = add_value(false);", "array append requires array"},
+		{"overflow", "<?php $a = [9223372036854775807 => 'edge']; $a[] = 'overflow';", "array key overflow unsupported"},
+	})
+}
+
+func checkArrayRuntimeGuards(t *testing.T, cases []arrayRuntimeCase) {
+	t.Helper()
+	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			p, err := frontend.Parse(tt.source, phpTarget(t))
 			if err != nil {

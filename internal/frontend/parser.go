@@ -319,19 +319,24 @@ func (p *parser) stmt() ir.Stmt {
 		s.Name = p.name("var")
 		if p.peek().kind == "sym" && p.peek().text == "[" {
 			p.pop()
-			key := p.expr(0)
-			if p.peek().kind != "sym" || p.peek().text != "]" {
-				p.fail("expected array assignment closing bracket")
+			base := ir.Expr{Kind: "var", Text: s.Name, Line: s.Line}
+			if p.peek().kind == "sym" && p.peek().text == "]" {
+				p.pop()
+				s.Kind = "assign_append"
+				s.Target = base
+			} else {
+				key := p.expr(0)
+				if p.peek().kind != "sym" || p.peek().text != "]" {
+					p.fail("expected array assignment closing bracket")
+				}
+				p.pop()
+				s.Kind = "assign_index"
+				s.Target = ir.Expr{Kind: "index", Line: s.Line, Args: []ir.Expr{base, key}}
 			}
-			p.pop()
-			s.Kind = "assign_index"
-			s.Target = ir.Expr{Kind: "index", Line: s.Line, Args: []ir.Expr{
-				{Kind: "var", Text: s.Name, Line: s.Line}, key,
-			}}
 			s.Name = ""
 		}
-		if s.Kind == "assign_index" && (p.peek().kind != "sym" || p.peek().text != "=") {
-			p.fail("array assignment requires one index and =")
+		if (s.Kind == "assign_index" || s.Kind == "assign_append") && (p.peek().kind != "sym" || p.peek().text != "=") {
+			p.fail("array assignment requires one level and =")
 		}
 		p.need("=")
 		s.Expr = p.expr(0)

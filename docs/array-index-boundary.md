@@ -24,12 +24,15 @@ That rejection is not a promise of PHP exception/message equivalence.
 the supported PHP syntax, linked to `php.syntax.array-literal` in the catalog.
 Canonical negative numeric strings exercise integer-key normalization without
 adding unary-minus syntax. Runtime regression tests also check write/copy/map/
-reindex bookkeeping, which is not observable via an append statement yet.
+reindex bookkeeping. The separate `TestDifferential/array_append` now observes
+that state through supported one-level append statements.
 Native runs compare stdout and normal exits only; stderr, exceptions and side
 effects are not checked by this fixture.
 
-No `$a[] = ...`, unset, references, array union, dynamic literal keys or additional
-key coercions are added. PHP 8.4+ remains a separate policy/matrix/evidence task.
+One-level `$a[] = ...` on an existing array is covered by the
+[assignment boundary](array-write-boundary.md). Unset, references, array union,
+dynamic literal keys and additional key coercions remain excluded.
+PHP 8.4+ remains a separate policy/matrix/evidence task.
 This is a correction inside the existing local `gohp.cli.generate` capability,
 still WebMCP-excluded under the [integration contract](integration.md); no new
 route, authentication, external resource write or deployment is introduced.
