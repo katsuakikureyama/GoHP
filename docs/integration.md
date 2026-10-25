@@ -30,8 +30,8 @@ accepted integration target: adding it requires a separate policy/matrix and
 Gossip-owned compatibility decision. Historical 7.4 archives are readable but
 must not be used to approve a new candidate.
 
-This integration combines the conditional/array/string stack through PR #24
-with PR #25's is_array predicate, including the shared 8.3 oracle policy.
+This integration combines the predicate/conditional stack through PR #26
+with PR #27's literal array_map and string-only addslashes, retaining the shared 8.3 oracle policy.
 Earlier separate-stack evidence does not validate the resulting
 revision. Gossip's original-source units and compiler pins are unchanged here;
 they require independent validation before adopting this integrated revision.
@@ -72,6 +72,10 @@ excluded local `gohp.cli.generate` capability. It adds no browser operation,
 service resource, authentication route, or auto-submit; short/coalesce ternary,
 recursive WordPress unescaping and scalar/object coercion remain outside its
 [explicit subset contract](ternary-stripslashes-boundary.md).
+
+The [literal array_map / addslashes extension](array-map-boundary.md) remains
+the same WebMCP-excluded local generation capability. Compile-time callback
+resolution introduces no new UI/server operation or authentication route.
 
 The [conditional/array compiler integration](gossip-compiler-integration.md)
 preserves that exclusion and the existing operation boundary. Combining these

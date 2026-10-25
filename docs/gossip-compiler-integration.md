@@ -7,7 +7,7 @@ string-only stripslashes stack (Draft #23,
 and the separate #22 checkout untouched. Its evidence belongs to that exact
 configuration; earlier stack passes were not proof of that merge.
 
-The current integration combines that published PR #24 revision
+The earlier PR #26 integration combined that published PR #24 revision
 `e5ba8c1db81d235cc177cc83699868d812abff7e` with PR #25's `is_array` predicate
 `14383426911e42134780e098fec721ce68c0debb`. All earlier fixtures and guards
 remain registered. No source-stack runtime or parser domain is widened.
@@ -18,6 +18,10 @@ condition/arm evaluation and original-value preservation in one generated binary
 Both new catalog links identify the same single differential check. Prior PR #24
 compiler evidence and Gossip's twelve-helper bundle remain pinned historical
 evidence, not validation of this newer compiler revision or automatic adoption.
+
+The current revision additionally integrates PR #27's literal callback mapping
+and string-only addslashes. See [the callback boundary](array-map-boundary.md)
+for its exact parent revisions, new composition fixture and separate evidence.
 
 ## Resolution and contract
 
@@ -40,8 +44,10 @@ not general side-effect, warning, stderr or exception equivalence.
 Existing corpus entries are retained. That earlier integration check is linked to
 `php.syntax.full-ternary` and `php.builtin.stripslashes-string`; it does not turn
 unsupported features into supported ones. Invalid domains keep existing static
-and runtime guards. References, array writes, recursive callbacks, general
-coercion, short ternary/coalescing and object truthiness remain excluded.
+and runtime guards. References, array writes, general callbacks, coercion,
+short ternary/coalescing and object truthiness remain excluded. Explicit finite
+recursion through a literal declared callback is now admitted only by the
+separate [one-array mapping contract](array-map-boundary.md).
 
 ## Gossip adoption is separate
 

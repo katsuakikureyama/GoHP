@@ -29,7 +29,9 @@ the following byte; an escaped ASCII `0` becomes NUL, and a trailing backslash
 is dropped. Backslash pairs are consumed once, actual NUL bytes are preserved,
 and no Unicode decoding is performed. This is intentionally not PHP scalar or
 object coercion, recursive array processing, warning/TypeError equivalence, or
-support for `stripslashes_deep`, `wp_unslash`, `array_map`, or callbacks.
+support for `stripslashes_deep` or `wp_unslash`. The separate
+[literal array_map extension](array-map-boundary.md) now admits bounded named
+callbacks; it does not make this string builtin automatically recursive.
 
 The owned native differential fixture
 [`tests/fixtures/ternary_stripslashes.php`](../tests/fixtures/ternary_stripslashes.php)

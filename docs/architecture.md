@@ -21,6 +21,12 @@ name/arity/scope checks and lowers IR into direct Go calls, loops and structs.
 The CLI is the initial versioned adapter boundary, not a public Go API promise.
 No WordPress hooks or special compiler behavior exist in the core.
 
+The one-array `array_map` subset resolves a literal one-argument user function
+at compile time and emits a direct function adapter. Both semantic and codegen
+registries include all declarations before bodies, admitting forward references
+and ordinary recursion without a dynamic callable engine. Runtime mapping
+preserves ordered keys and the established nested-array value-copy boundary.
+
 The additive `ternary` IR kind keeps IR version `0.1` and uses ordered `Args`
 for condition, yes and no (no schema-field change). It lowers through a local
 closure so the condition is evaluated once and the unselected arm is lazy;

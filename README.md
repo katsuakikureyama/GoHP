@@ -67,6 +67,9 @@ string/boolean boundaries; these are partial implementations.
 The integrated string subset also includes `sprintf('%0Ns', string|int64)` for
 canonical widths 0–4096 and `str_replace(string, string, string)` only. General
 formatting, array substitutions, coercions and by-reference count are excluded.
+The callback subset admits `array_map('declared_function', array)` with one
+array and one literal one-argument user function, including finite recursion.
+String-only `addslashes` is byte quoting, not SQL/HTML/shell sanitization.
 
 ### Active PHP target
 
@@ -93,6 +96,7 @@ See the [compatibility version policy](docs/compatibility.md#active-php-version-
 - [Bounded `str_replace` string boundary](docs/str-replace-boundary.md)
 - [Full ternary and string-only `stripslashes` boundary](docs/ternary-stripslashes-boundary.md)
 - [Combined conditional/array compiler boundary](docs/gossip-compiler-integration.md)
+- [Literal callback mapping and string quoting boundary](docs/array-map-boundary.md)
 - [Boolean validation subset](docs/boolean-boundary.md)
 - [Function/feature catalog and verification-ledger design](docs/compatibility-registry.md)
 - [Generate and browse function/feature evidence](docs/compatibility-ledger.md)
@@ -114,6 +118,8 @@ PHP を読みやすい Go ソースへ変換する初期 PoC です。関数・�
 `sprintf` は `%0Ns`（N は 0〜4096 の正規十進幅）の文字列／整数値だけを、byte 幅の左ゼロ埋めとして対象にします。
 `str_replace` は3つの文字列だけを、byte 単位・case-sensitive・non-overlap の置換として対象にします。
 full ternary `condition ? yes : no` と `stripslashes` の文字列1引数も限定的に対象にします。
+`array_map`は宣言済み1引数関数のliteral名＋単一配列のみ、`addslashes`は実文字列のみです。
+一般callback・自動再帰・SQL/HTML/shell向けサニタイズの対応ではありません。
 単一分岐の `if`、短絡 `&&`、scalar の `===`、限定型の `(bool)` と型判定・ASCII小文字化も比較対象にします。
 参照、クロージャ、継承、Composer や PHP 拡張、WordPress 全体は未対応です。
 未対応を互換性成功とは扱いません。正式ライセンスは監査と所有者判断待ちです。

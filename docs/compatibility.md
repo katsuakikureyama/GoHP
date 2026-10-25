@@ -17,9 +17,9 @@ This table is the current curated summary, not a blanket support claim.
 | Functions | Named functions, fixed value arguments and returns | `core.php`; no optional/typed/by-reference/variadic args |
 | Arrays | `[]` and `array(...)`; mixed ordered keys/values, reads, nested value copies, foreach | Literal int/string keys; no writes, references, unpacking or array union; see [syntax boundary](legacy-array-syntax.md) |
 | Classes | Public scalar defaults, no-arg construction, property reads, methods | `core.php`; no inheritance, constructors, visibility or static members |
-| Closures/callbacks/dynamic calls | Unsupported | Negative closure fixture; no claim of coverage |
+| Closures/dynamic callbacks | Unsupported | Only literal named one-argument user callbacks through one-array `array_map` are admitted; no general callable support; [contract](array-map-boundary.md) |
 | Exceptions/warnings | Unsupported PHP behavior | Nonzero runtime failures; never functional PASS |
-| Built-ins | `count(array)`, `strlen(string)`, `array_keys(array)`, `array_values(array)`, `array_key_exists(int\|string, array)`, `array_is_list(array)`, restricted `rtrim`, `is_bool`, `is_string`, `is_array`, ASCII `strtolower(string)`, `stripslashes(string)` | Bounded arities/domains below and in [rtrim](rtrim-boundary.md) / [boolean](boolean-boundary.md) / [ternary and stripslashes](ternary-stripslashes-boundary.md); other builtins fail closed |
+| Built-ins | `count(array)`, `strlen(string)`, `array_keys(array)`, `array_values(array)`, `array_key_exists(int\|string, array)`, `array_is_list(array)`, restricted `rtrim`, `is_bool`, `is_string`, `is_array`, ASCII `strtolower(string)`, `stripslashes(string)`, `addslashes(string)`, literal-callback `array_map` | Bounded arities/domains; [rtrim](rtrim-boundary.md), [boolean](boolean-boundary.md), [ternary](ternary-stripslashes-boundary.md), [literal callback](array-map-boundary.md); other builtins fail closed |
 | String formatting / replacement | `sprintf('%0Ns', string\|int64)` with canonical width 0–4096; `str_replace(string, string, string)` | [Zero-padding boundary](sprintf-boundary.md) / [replacement boundary](str-replace-boundary.md); no general formatting, array substitutions or count reference |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
@@ -53,6 +53,13 @@ arrays and avoiding invalid runtime calls on scalar/null/object alternatives.
 Visible markers check single condition evaluation and the selected arm only.
 The two catalog links count one check; previous separate-stack evidence does
 not validate this integrated revision. See the [integration boundary](gossip-compiler-integration.md).
+
+`callback_composition_integration.php` adds finite literal-callback recursion,
+ternary type dispatch, string quoting/unquoting and nested key/value observation.
+It preserves the original input and observes callback order and empty-map
+non-invocation. This single shared check has the same stdout/normal-exit boundary;
+see the [callback contract](array-map-boundary.md), not a general callback or
+Gossip adoption claim.
 
 ## Active PHP version policy
 
