@@ -33,6 +33,8 @@ The other fixture preserves elseif/else-if/else paths and copy isolation.
 Parent PASS results do not substitute for a new merged-configuration run.
 
 No parent PR is closed or overwritten. Main/release/deployment and Gossip source,
-pins and prior evidence are unchanged. Typed array/callable arguments, arrow
-callbacks and dynamic invocation still block the numeric-array original.
+pins and prior evidence are unchanged. The subsequent
+[array-parameter integration](array-parameter-integration.md) adds #51's bounded
+array arguments. Callable arguments, arrow callbacks and dynamic invocation
+still block the numeric-array original.
 Local `gohp.cli.generate` remains WebMCP-excluded; no service/authentication change.

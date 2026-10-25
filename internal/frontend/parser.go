@@ -239,14 +239,28 @@ func Parse(src, version string) (out ir.Program, err error) {
 func (p *parser) function() ir.Function {
 	f := ir.Function{Name: p.name("id"), Line: p.peek().line}
 	p.need("(")
+	var paramTypes []string
+	typed := false
 	if !p.accept(")") {
 		for {
+			paramType := ""
+			if p.peek().kind == "id" {
+				annotation := p.pop()
+				if !strings.EqualFold(annotation.text, "array") {
+					p.fail("only array parameter declarations are supported")
+				}
+				paramType, typed = "array", true
+			}
 			f.Params = append(f.Params, p.name("var"))
+			paramTypes = append(paramTypes, paramType)
 			if p.accept(")") {
 				break
 			}
 			p.need(",")
 		}
+	}
+	if typed {
+		f.ParamTypes = paramTypes
 	}
 	if p.accept(":") {
 		t := p.pop()

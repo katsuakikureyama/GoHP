@@ -36,6 +36,10 @@ Earlier separate-stack evidence does not validate the resulting
 revision. Gossip's original-source units and compiler pins are unchanged here;
 they require independent validation before adopting this integrated revision.
 
+Fixed positional [array parameters](array-parameter-boundary.md) extend the same
+local `gohp.cli.generate` operation; WebMCP remains excluded because this is
+developer-only source translation, with no browser/server operation or auth route.
+
 Capability/WebMCP scope: `gohp.cli.generate` is explicitly **excluded** from browser
 WebMCP exposure because it is a local compiler writing caller-owned build files.
 The [one-level PHP array assignment and append](array-write-boundary.md) extension remains
@@ -139,12 +143,16 @@ No automatic plugin activation, DB migration, source upload or deployment occurs
 
 The [actual-bool return declaration](bool-return-boundary.md) extends named
 global functions only. It preserves the local `gohp.cli.generate` WebMCP exclusion
-and adds no service/auth route. Gossip's numeric-array original still needs typed
-parameters and callable/arrow dependencies plus a separately pinned comparison;
+and adds no service/auth route. Gossip's numeric-array original still needs
+callable/arrow dependencies plus a separately pinned comparison;
 accepting `: bool` alone is not original-source compatibility or adoption.
 The [bool-return branch reconciliation](bool-return-integration.md) merges #48
 and #49 without duplicating the feature ID or runtime guard, preserving the old
 evidence at its original revisions and requiring a new merged-configuration run.
+The [array-parameter integration](array-parameter-integration.md) brings #51's
+bounded array arguments onto that reconciled stack. Both parent fixture lists
+remain intact, with explicit input/output guard composition checks. This does
+not add callable parameters or promote Gossip's original-source compatibility.
 
 Case-insensitive true/false/null literals normalize only those three predefined
 values to existing IR. This stays within the excluded local `gohp.cli.generate`

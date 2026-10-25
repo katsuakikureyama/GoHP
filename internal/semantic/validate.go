@@ -34,8 +34,9 @@ type classInfo struct {
 }
 
 type validator struct {
-	classes   map[string]classInfo
-	functions map[string]int
+	classes    map[string]classInfo
+	functions  map[string]int
+	parameters map[string][]string
 }
 
 // Validate rejects malformed IR and operations that are statically outside the
@@ -44,11 +45,15 @@ func Validate(p ir.Program) error {
 	if err := phpversion.ValidateTarget(p.PHPVersion); err != nil {
 		return fmt.Errorf("PHP003: %w", err)
 	}
-	v := validator{classes: make(map[string]classInfo, len(p.Classes)), functions: make(map[string]int, len(p.Functions))}
+	v := validator{classes: make(map[string]classInfo, len(p.Classes)), functions: make(map[string]int, len(p.Functions)), parameters: make(map[string][]string, len(p.Functions))}
 	// Collect before validating bodies so literal callbacks can refer forward
 	// or back to their own declaration without dynamic callable resolution.
 	for _, f := range p.Functions {
+		if err := validateParameterTypes(f, false); err != nil {
+			return err
+		}
 		v.functions[strings.ToLower(f.Name)] = len(f.Params)
+		v.parameters[strings.ToLower(f.Name)] = f.ParamTypes
 	}
 	for _, c := range p.Classes {
 		if !validName(c.Name) {
@@ -62,6 +67,9 @@ func Validate(p ir.Program) error {
 			info.properties[property.Name] = literalType(property.Value)
 		}
 		for _, method := range c.Methods {
+			if err := validateParameterTypes(method, true); err != nil {
+				return err
+			}
 			if !validName(method.Name) {
 				return malformed(method.Line, "invalid method name")
 			}
@@ -96,6 +104,21 @@ func Validate(p ir.Program) error {
 	return v.stmts(p.Body, map[string]valueType{}, "")
 }
 
+func validateParameterTypes(f ir.Function, method bool) error {
+	if len(f.ParamTypes) != 0 && len(f.ParamTypes) != len(f.Params) {
+		return malformed(f.Line, "parameter types must align with parameter names")
+	}
+	for _, annotation := range f.ParamTypes {
+		if annotation != "" && annotation != "array" {
+			return malformed(f.Line, "unsupported IR parameter type")
+		}
+		if method && annotation != "" {
+			return unsupported(f.Line, "typed method parameters are unsupported")
+		}
+	}
+	return nil
+}
+
 func (v validator) function(f ir.Function, class string) error {
 	if f.ReturnType != "" && f.ReturnType != "array" && f.ReturnType != "bool" {
 		return malformed(f.Line, "unsupported IR return type")
@@ -110,11 +133,14 @@ func (v validator) function(f ir.Function, class string) error {
 	if class != "" {
 		scope["this"] = valueType{kind: objectKind, class: class}
 	}
-	for _, param := range f.Params {
+	for i, param := range f.Params {
 		if !validName(param) {
 			return malformed(f.Line, "invalid parameter name")
 		}
 		scope[param] = valueType{kind: unknownKind}
+		if len(f.ParamTypes) != 0 && f.ParamTypes[i] == "array" {
+			scope[param] = valueType{kind: arrayKind}
+		}
 	}
 	return v.stmts(f.Body, scope, f.ReturnType)
 }
@@ -632,6 +658,16 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 				return valueType{}, unsupported(expr.Line, "strtolower requires a string argument")
 			}
 			return valueType{kind: stringKind}, nil
+		}
+		if arity, ok := v.functions[strings.ToLower(expr.Text)]; ok {
+			if len(args) != arity {
+				return valueType{}, unsupported(expr.Line, "unsupported argument count for "+expr.Text)
+			}
+			for i, annotation := range v.parameters[strings.ToLower(expr.Text)] {
+				if annotation == "array" && args[i].kind != arrayKind && args[i].kind != unknownKind {
+					return valueType{}, unsupported(expr.Line, "array parameter requires an array argument")
+				}
+			}
 		}
 		return valueType{kind: unknownKind}, nil
 	case "new":
