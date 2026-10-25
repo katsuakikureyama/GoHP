@@ -15,9 +15,12 @@
         {"case_id":"compiler.foreach_continue.type_state","test":"TestForeachContinueDeadTailTypeState","file":"internal/codegen/foreach_continue_test.go","kind":"compiler","assertions":["unreachable assignments cannot hide reachable type changes at loop exit"]},
         {"case_id":"negative.foreach_continue.source","test":"TestForeachContinueUnsupportedSource","file":"internal/codegen/foreach_continue_test.go","kind":"negative","assertions":["outside/called-function scope, levels, expressions, other loop kinds, redeclaration and invalid/undefined dead tails rejected"]},
         {"case_id":"negative.foreach_continue.ir","test":"TestForeachContinueMalformedIR","file":"internal/codegen/foreach_continue_test.go","kind":"negative","assertions":["malformed payloads and out-of-loop raw IR fail before output"]},
-        {"case_id":"negative.foreach_continue.runtime","test":"TestForeachContinueRuntimeGuards","file":"tests/foreach_continue_runtime_test.go","kind":"negative","assertions":["reachable pre-continue type changes and typed-return fallthrough retain runtime guards"]}
+        {"case_id":"negative.foreach_continue.runtime","test":"TestForeachContinueRuntimeGuards","file":"tests/foreach_continue_runtime_test.go","kind":"negative","assertions":["reachable pre-continue type changes and typed-return fallthrough retain runtime guards"]},
+        {"case_id":"diff.continue_foreach","test":"TestDifferential/continue_foreach","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/continue_foreach.php","assertions":["stdout","exit","nested nearest-foreach composition with ordered outer separators"]},
+        {"case_id":"compiler.continue_foreach.composition","test":"TestContinueForeachLowering","file":"internal/codegen/continue_test.go","kind":"compiler","assertions":["continue composes with typed array parameters and array/bool returns; source mapping"]},
+        {"case_id":"negative.continue_foreach.composition","test":"TestContinueForeachBoundary","file":"internal/codegen/continue_test.go","kind":"negative","assertions":["out-of-loop, level and malformed payload rejection"]}
       ],
-      "limitations": ["Only bare continue in braced foreach/conditional bodies; no explicit level, break or other loop kinds", "No general path-sensitive narrowing, branch-local escape or PHP warning/exception equivalence", "Gossip _wp_array_get still needs default parameters and bare/multiple isset plus new pin/evidence; array_slice deferred"]
+      "limitations": ["Only bare continue in braced foreach/conditional bodies; no explicit level, break or other loop kinds", "No general path-sensitive narrowing, branch-local escape or PHP warning/exception equivalence", "Gossip adoption still requires its own exact compiler pin and unchanged-source evidence; array_slice deferred"]
     },
     {
       "id": "php.builtin.array_merge",
