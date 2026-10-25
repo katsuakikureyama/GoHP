@@ -306,17 +306,7 @@ func (p *parser) stmt() ir.Stmt {
 		p.need(")")
 		s.Body = p.block()
 	case p.accept("if"):
-		s.Kind = "if"
-		p.need("(")
-		s.Expr = p.expr(0)
-		p.need(")")
-		s.Body = p.block()
-		if p.accept("else") {
-			s.ElseBody = p.block()
-			if s.ElseBody == nil {
-				s.ElseBody = []ir.Stmt{}
-			}
-		}
+		s = p.ifStmt(s.Line)
 	default:
 		if p.peek().kind != "var" {
 			p.fail("unsupported statement")
@@ -350,6 +340,32 @@ func (p *parser) stmt() ir.Stmt {
 	}
 	return s
 }
+
+// The leading if/elseif token has already been consumed. Normalize chains to
+// nested if statements so validation and codegen share the existing lazy arms.
+func (p *parser) ifStmt(line int) ir.Stmt {
+	s := ir.Stmt{Kind: "if", Line: line}
+	p.need("(")
+	s.Expr = p.expr(0)
+	p.need(")")
+	s.Body = p.block()
+	branch := p.peek()
+	if p.accept("elseif") {
+		s.ElseBody = []ir.Stmt{p.ifStmt(branch.line)}
+	} else if p.accept("else") {
+		branch = p.peek()
+		if p.accept("if") {
+			s.ElseBody = []ir.Stmt{p.ifStmt(branch.line)}
+		} else {
+			s.ElseBody = p.block()
+			if s.ElseBody == nil {
+				s.ElseBody = []ir.Stmt{}
+			}
+		}
+	}
+	return s
+}
+
 func isStrictComparison(t token) bool {
 	return t.kind == "sym" && (t.text == "===" || t.text == "!==")
 }

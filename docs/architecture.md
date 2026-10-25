@@ -28,6 +28,10 @@ new bindings never escape, and any changed existing type becomes unknown.
 Codegen uses Go if/else with one guarded condition evaluation. This is a closed
 subset extension, not a public serialized IR compatibility promise; CLI/report
 schemas and runtime interfaces are unchanged.
+The frontend normalizes braced `elseif` and `else if` chains into these same
+nested if/ElseBody nodes, retaining each condition's keyword source line. No
+new IR fields, validator branches, codegen paths or runtime functions are needed;
+the existing independent scopes and guarded lazy execution apply recursively.
 
 The one-array `array_map` subset resolves a literal one-argument user function
 at compile time and emits a direct function adapter. Both semantic and codegen

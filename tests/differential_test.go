@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "strict_not_equal", "if_else", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "strict_not_equal", "if_else", "elseif", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -283,7 +283,6 @@ func TestUnsupported(t *testing.T) {
 		{name: "array_is_list_redeclare", src: "<?php function ArRaY_Is_LiSt($value) { return true; }"},
 		{name: "array_is_list_result_as_array", src: "<?php $count = count(array_is_list([]));"},
 		{name: "if_else_unbraced", src: "<?php if (false) {} else echo 'x';"},
-		{name: "if_else_if", src: "<?php if (false) {} else if (true) {}"},
 		{name: "if_else_duplicate", src: "<?php if (false) {} else {} else {}"},
 		{name: "if_else_orphan", src: "<?php else {}"},
 		{name: "if_else_alternative", src: "<?php if (false): echo 'a'; else: echo 'b'; endif;"},
@@ -294,7 +293,18 @@ func TestUnsupported(t *testing.T) {
 		{name: "if_else_dead_call", src: "<?php if (true) {} else { echo missing(); }"},
 		{name: "if_else_dead_array", src: "<?php if (true) {} else { echo []; }"},
 		{name: "if_else_object_condition", src: "<?php class Box {} if (new Box()) {} else {}"},
-		{name: "if_elseif", src: "<?php if (false) { echo 'no'; } elseif (true) { echo 'yes'; }"},
+		{name: "elseif_unbraced", src: "<?php if (false) {} elseif (true) echo 'x';"},
+		{name: "else_if_unbraced", src: "<?php if (false) {} else if (true) echo 'x';"},
+		{name: "elseif_orphan", src: "<?php elseif (true) {}"},
+		{name: "elseif_after_else", src: "<?php if (false) {} else {} elseif (true) {}"},
+		{name: "elseif_missing_condition", src: "<?php if (false) {} elseif () {}"},
+		{name: "elseif_missing_parentheses", src: "<?php if (false) {} elseif true {}"},
+		{name: "elseif_dead_object", src: "<?php class Box {} if (true) {} elseif (new Box()) {}"},
+		{name: "elseif_dead_call", src: "<?php if (true) {} elseif (false) { echo missing(); }"},
+		{name: "elseif_dead_variable", src: "<?php if (true) {} elseif ($missing) {}"},
+		{name: "elseif_sibling_local", src: "<?php if (true) { $local = 1; } elseif ($local) {}"},
+		{name: "elseif_local_escape", src: "<?php if (false) {} elseif (true) { $local = 1; } echo $local;"},
+		{name: "elseif_sibling_type", src: "<?php $value = 1; if (false) { $value = []; } elseif (count($value)) {}"},
 		{name: "if_unbraced", src: "<?php if (true) echo 'yes';"},
 		{name: "cast_int", src: "<?php echo (int) '1';"},
 		{name: "logical_or_object_left", src: "<?php class Box {} echo new Box() || false;"},

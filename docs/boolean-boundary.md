@@ -6,10 +6,11 @@ It is not general PHP control flow or object/coercion compatibility.
 
 ## Implemented contract
 
-- Braced `if (condition) { ... }` with optional `else { ... }`, including empty
-  bodies, nesting and early return. The condition is evaluated once and only
-  the selected body executes. No `elseif`, `else if` shorthand, alternate syntax
-  or unbraced bodies; use explicit `else { if (...) { ... } }` for nesting.
+- Braced `if (condition) { ... }`, optional `elseif (...) { ... }` / `else if
+  (...) { ... }` chains and optional final `else { ... }`, including empty bodies,
+  nesting and early return. Each reached condition is evaluated once; the first
+  truthy branch prevents evaluation of later conditions/bodies. Both spellings
+  may mix and normalize to nested if/ElseBody. No alternative syntax or unbraced bodies.
 - `&&` and `||` lower to Go's short-circuit operators: evaluate the left side
   once, and evaluate the right side only if needed. Both sides must still be valid within
   the compiler's supported subset; dead code does not bypass validation.
@@ -43,6 +44,7 @@ It is not general PHP control flow or object/coercion compatibility.
 
 PHP references: [boolean conversion](https://www.php.net/manual/en/language.types.boolean.php),
 [else](https://www.php.net/manual/en/control-structures.else.php),
+[elseif/else if](https://www.php.net/manual/en/control-structures.elseif.php),
 [short-circuit operators](https://www.php.net/manual/en/language.operators.logical.php),
 [strict comparisons](https://www.php.net/manual/en/language.operators.comparison.php),
 [precedence](https://www.php.net/manual/en/language.operators.precedence.php), and
@@ -59,6 +61,9 @@ is a literal true. Existing binding types become unknown if either branch change
 them, even if both branches agree on a new type. These are conservative compiler
 restrictions, not PHP block scope; no path-sensitive or return-sensitive
 definite-assignment/type inference is claimed.
+This extends to every arm of an elseif chain, including conditions: earlier
+branch-only bindings and type changes do not leak into later arms. Unreachable
+conditions/bodies must still be valid in the closed subset.
 
 Operator precedence uses the PHP 8.3 `+` above `.` relationship, above
 `===` / `!==`, above `&&`, above `||`, above full ternary; prefix `!` and bool casts bind
@@ -69,6 +74,8 @@ conditional headers and bodies. The internal `Stmt.ElseBody` field is optional;
 nil means absent and a non-nil empty slice retains an explicit empty else.
 Else headers/closing braces inherit the enclosing if's statement mapping;
 statements inside else keep their own source lines. No CLI report schema change.
+Normalized elseif conditions retain the elseif token's line; `else if` retains
+the if token's line, including when the two words are separated by a newline.
 
 The owned `booleans.php` native differential fixture covers truthiness, guarded
 string lowering, strict type distinction, nested returns, existing-variable
@@ -85,6 +92,14 @@ statically checked, including dead arms. Negative checks cover branch/sibling
 binding leaks, unsupported forms and known invalid values; generated-binary tests
 preserve the dynamic condition and selected-else builtin guards. Malformed IR
 with ElseBody on non-if statements is rejected before generation.
+
+The separate `elseif.php` fixture observes both spellings and mixed chains,
+first/middle/final/fallback selection, once-only condition markers, skipped
+conditions after an empty selected body, nesting and existing-variable updates.
+Source-map checks cover normalized headers/bodies. Negative tests cover malformed
+chains, unbraced bodies, dead invalid conditions/bodies and sibling scope leaks.
+Generated binaries check both evaluated and skipped dynamic object conditions
+for both spellings. No new truthiness types or variable inference is introduced.
 
 The separate `logical_not.php` fixture observes `!`/`!!` results as bools across
 the supported value domain, prefix/binary/postfix precedence, lazy branches and
