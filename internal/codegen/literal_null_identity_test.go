@@ -63,10 +63,17 @@ $short_or = true || (marker('or', $known) !== null);
 }
 
 func TestLiteralNullIdentityBoundary(t *testing.T) {
+	p, err := frontend.Parse("<?php function same($left, $right) { return $left === $right; }", "8.3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := Generate(p)
+	if err != nil || !strings.Contains(string(out), `rt.Identical(v["left"], v["right"])`) {
+		t.Fatalf("variable-variable comparison lost the existing runtime guard: %v\n%s", err, out)
+	}
 	for name, source := range map[string]string{
-		"dynamic_arrays": "function pass($value) { return $value; } $left = pass([]); $right = pass([]); echo $left === $right;",
-		"known_arrays":   "$left = []; $right = []; echo $left !== $right;",
-		"array_literal":  "echo [] === [];",
+		"known_arrays":  "$left = []; $right = []; echo $left !== $right;",
+		"array_literal": "echo [] === [];",
 	} {
 		t.Run(name, func(t *testing.T) {
 			p, err := frontend.Parse("<?php "+source, "8.3")
