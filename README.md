@@ -99,7 +99,8 @@ The integrated string subset also includes `sprintf('%0Ns', string|int64)` for
 canonical widths 0–4096 and `str_replace(string, string, string)` only. General
 formatting, array substitutions, coercions and by-reference count are excluded.
 The callback subset admits `array_map('declared_function', array)` with one
-array and one literal one-argument user function, including finite recursion.
+array and one literal user function whose required arity is one (trailing
+untyped null defaults are allowed), including finite recursion.
 String-only `addslashes` is byte quoting, not SQL/HTML/shell sanitization.
 One-level `$array[$key] = $value` and `$array[] = $value` statements update
 existing array variables with detached value copies. Explicit keys must be
@@ -110,15 +111,19 @@ count, without inspecting values; undefined/scalar/index/property operands remai
 excluded. See the [empty boundary](docs/array-empty-boundary.md).
 One-level `isset($array[$key])` probes a defined array variable without reading
 a missing element. Missing/null entries return false; other stored values return
-true. Literal negative integer keys are accepted with the same bounded decimal
+true. Defined bare variables and a comma-separated list of defined bare/indexed
+addresses are also supported, evaluated left-to-right with short-circuiting.
+Literal negative integer keys are accepted with the same bounded decimal
 negation rules as array reads/writes. This is not general isset: undefined roots, nested indexes, properties,
-multiple operands and key coercions are excluded. See the
+effectful/parenthesized addresses and key coercions are excluded. See the
 [array isset boundary](docs/array-isset-boundary.md).
 Named global functions may declare `: array` or `: bool`; explicit returns and fallthrough
 are checked rather than silently dropping the declaration. Bool returns require
 actual bool values, without weak scalar coercion. Fixed positional `array`
-parameters are checked before the body and receive detached value copies; see
-the [array parameter boundary](docs/array-parameter-boundary.md). Capture-free
+parameters are checked before the body and receive detached value copies. Named
+global functions may additionally use trailing untyped `= null` defaults; typed
+or method defaults remain excluded. See the
+[array parameter boundary](docs/array-parameter-boundary.md). Capture-free
 `fn($value, $key) => expression` arrows can be passed through global `callable`
 parameters and invoked through variables; [this bounded contract](docs/arrow-callable-boundary.md)
 does not include string/method callables, captures or typed arrow signatures.

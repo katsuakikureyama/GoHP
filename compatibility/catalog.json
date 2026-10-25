@@ -147,7 +147,22 @@
         {"case_id":"negative.array_parameter.runtime","test":"TestArrayParameterRuntimeGuards","file":"tests/array_parameter_runtime_test.go","kind":"negative","assertions":["compiled unknown null/scalar/object arguments and scalar callback elements rejected"]},
         {"case_id":"negative.array_parameter.before_body","test":"TestArrayParameterGuardPrecedesFunctionBody","file":"tests/array_parameter_runtime_test.go","kind":"negative","assertions":["invalid unknown argument rejected without executing body marker"]}
       ],
-      "limitations": ["No scalar/nullable/union/intersection parameter types, defaults, references, variadics, named arguments or typed methods", "Generated-arrow callable contract is separate; no return-type inference", "Runtime failure is not PHP TypeError/catchability/error-side-effect equivalence", "Gossip original-source adoption requires separate pins and differential evidence"]
+      "limitations": ["No scalar/nullable/union/intersection parameter types, typed-parameter defaults, references, variadics, named arguments or typed methods; untyped trailing null defaults have a separate bounded entry", "Generated-arrow callable contract is separate; no return-type inference", "Runtime failure is not PHP TypeError/catchability/error-side-effect equivalence", "Gossip original-source adoption requires separate pins and differential evidence"]
+    },
+    {
+      "id": "php.syntax.null-default-parameters",
+      "kind": "syntax",
+      "name": "Trailing untyped null defaults on named global functions",
+      "implementation": "partial",
+      "contract": "A trailing suffix of untyped named-global parameters may use case-insensitive = null. Calls accept only the resulting fixed positional minimum through maximum; omitted slots are canonical null before ordinary parameter copy/guard handling.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.null_defaults","test":"TestDifferential/null_defaults","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/null_defaults.php","assertions":["stdout","exit","omitted versus explicit null/value arguments, forwarding, literal array_map callback arity and caller-array isolation"]},
+        {"case_id":"compiler.null_defaults","test":"TestNullDefaultParametersLowering","file":"internal/codegen/null_defaults_test.go","kind":"compiler","assertions":["OptionalNullParams IR suffix, min/max lowering, parameter guard ordering, forwarding, literal callback adapter and source map"]},
+        {"case_id":"negative.null_defaults","test":"TestNullDefaultParametersBoundary","file":"internal/codegen/null_defaults_test.go","kind":"negative","assertions":["missing/extra arity, non-null/typed/method defaults, required-after-optional, callback below minimum and malformed IR fail closed"]},
+        {"case_id":"unit.runtime.null_defaults","test":"TestNullDefaultArgs","file":"runtime/null_default_args_test.go","kind":"unit","assertions":["padding with canonical null leaves caller slice unchanged; invalid bounds and arity panic explicitly"]}
+      ],
+      "limitations": ["Only trailing untyped null defaults on named global functions", "No typed or method defaults, non-null expressions, named arguments, references, variadics or general PHP coercion", "Runtime arity failure is not PHP warning/TypeError/catchability equivalence", "Gossip adoption requires a separate pinned original-source comparison"]
     },
     {
       "id": "php.syntax.bool-return-type",
@@ -1388,7 +1403,7 @@
       "kind": "builtin",
       "name": "array_map(literal user callback, array)",
       "implementation": "partial",
-      "contract": "Exactly one array and one literal declared one-argument global callback; preserves keys/order, clones callback values and resolves forward/recursive calls statically.",
+      "contract": "Exactly one array and one literal declared global callback with one required value argument and optional trailing untyped null defaults; preserves keys/order, clones callback values and resolves forward/recursive calls statically.",
       "php_targets": ["8.3"],
       "checks": [
         {"case_id":"diff.callback_composition_integration","test":"TestDifferential/callback_composition_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/callback_composition_integration.php","assertions":["finite literal-callback recursion composes with type predicates, ternary and string quoting/unquoting while retaining nested keys, order, scalar types and caller input; empty maps invoke no callback"]},
@@ -1399,7 +1414,7 @@
         {"case_id":"negative.codegen.array_map_addslashes","test":"TestArrayMapAndAddSlashesKnownUnsupportedFormsFailBeforeGeneration","file":"internal/codegen/array_map_test.go","kind":"negative","assertions":["unsupported callback forms/arity/domains and reserved names fail before generation"]},
         {"case_id":"negative.ir.array_map_callback","test":"TestArrayMapWrongCallbackIRIsRejectedBeforeGeneration","file":"internal/codegen/array_map_test.go","kind":"negative","assertions":["nonliteral callback IR fails safely before generated code"]}
       ],
-      "limitations": ["One array only", "Literal declared one-argument global callback only", "No builtin/null/dynamic/method/closure/reference callbacks", "No general object alias or warning/exception equivalence", "No arbitrary-depth or cyclic recursion guarantee"]
+      "limitations": ["One array only", "Literal declared global callback with one required value argument; only the separate trailing-untyped-null default suffix is allowed", "No builtin/null/dynamic/method/closure/reference callbacks", "No general object alias or warning/exception equivalence", "No arbitrary-depth or cyclic recursion guarantee"]
     },
     {
       "id": "php.builtin.addslashes-string",
@@ -1703,12 +1718,27 @@
         {"case_id": "negative.array_isset.runtime", "test": "TestArrayIssetRuntimeGuards", "file": "tests/array_isset_runtime_test.go", "kind": "negative", "assertions": ["compiled unknown arguments reject null/string roots and bool/null keys"]}
       ],
       "limitations": [
-        "No simple-variable or multi-operand isset; undefined/null/scalar roots, nested indexes and object/string offsets are excluded",
+        "This indexed-address entry does not cover the separate bounded bare-variable/multi-address entry; undefined/null/scalar roots, nested indexes and object/string offsets are excluded",
         "Negative key literals use one minus and magnitude 0..9223372036854775807; no general negation or arithmetic key expressions",
         "No effectful or parenthesized root/key expressions, references or bool/null/float key coercions",
         "Runtime guards are not PHP warning/exception equivalence; native comparison covers stdout and normal exits only",
         "WordPress typed-return helper integration and Gossip compiler adoption are not yet verified"
       ]
+    },
+    {
+      "id": "php.syntax.isset-variable-list",
+      "kind": "syntax",
+      "name": "Defined bare-variable and multi-address isset",
+      "implementation": "partial",
+      "contract": "A defined bare variable may be probed by isset($value); two or more defined bare or existing one-level indexed addresses may be probed left to right. Bare null and missing/null indexed addresses return false; later addresses are not evaluated after false.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.isset_forms","test":"TestDifferential/isset_forms","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/isset_forms.php","assertions":["stdout","exit","defined bare/null/falsy values, multiple bare/indexed addresses, contexts and short-circuit guard ordering"]},
+        {"case_id":"compiler.isset_forms","test":"TestIssetFormsLowering","file":"internal/codegen/isset_forms_test.go","kind":"compiler","assertions":["canonical isset_var/isset_multi IR, left-to-right Go && lowering, no eager indexed read and source map"]},
+        {"case_id":"negative.isset_forms","test":"TestIssetFormsBoundary","file":"internal/codegen/isset_forms_test.go","kind":"negative","assertions":["empty/literal/call/nested/property/parenthesized/undefined and malformed IR forms fail closed"]},
+        {"case_id":"unit.runtime.isset_value","test":"TestIssetValueDomain","file":"runtime/isset_value_test.go","kind":"unit","assertions":["canonical null is false and supported non-null values are true without coercion"]}
+      ],
+      "limitations": ["Addresses must already be defined; no PHP undefined-variable suppression", "No nested indexes, properties, string offsets, arbitrary/parenthesized/effectful addresses or references", "Indexed addresses retain the separate strict array root and int|string key contract", "No warning/exception equivalence; Gossip adoption needs a separate pinned original-source comparison"]
     },
     {
       "id": "php.syntax.array-write-and-reference",

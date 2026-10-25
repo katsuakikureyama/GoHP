@@ -37,6 +37,7 @@ type classInfo struct {
 type validator struct {
 	classes    map[string]classInfo
 	functions  map[string]int
+	minimum    map[string]int
 	parameters map[string][]string
 }
 
@@ -46,7 +47,7 @@ func Validate(p ir.Program) error {
 	if err := phpversion.ValidateTarget(p.PHPVersion); err != nil {
 		return fmt.Errorf("PHP003: %w", err)
 	}
-	v := validator{classes: make(map[string]classInfo, len(p.Classes)), functions: make(map[string]int, len(p.Functions)), parameters: make(map[string][]string, len(p.Functions))}
+	v := validator{classes: make(map[string]classInfo, len(p.Classes)), functions: make(map[string]int, len(p.Functions)), minimum: map[string]int{}, parameters: make(map[string][]string, len(p.Functions))}
 	// Collect before validating bodies so literal callbacks can refer forward
 	// or back to their own declaration without dynamic callable resolution.
 	for _, f := range p.Functions {
@@ -54,6 +55,7 @@ func Validate(p ir.Program) error {
 			return err
 		}
 		v.functions[strings.ToLower(f.Name)] = len(f.Params)
+		v.minimum[strings.ToLower(f.Name)] = len(f.Params) - f.OptionalNullParams
 		v.parameters[strings.ToLower(f.Name)] = f.ParamTypes
 	}
 	for _, c := range p.Classes {
@@ -102,10 +104,16 @@ func Validate(p ir.Program) error {
 			}
 		}
 	}
-	return v.stmts(p.Body, map[string]valueType{}, "")
+	return v.stmts(p.Body, map[string]valueType{}, "", false)
 }
 
 func validateParameterTypes(f ir.Function, method bool) error {
+	if f.OptionalNullParams < 0 || f.OptionalNullParams > len(f.Params) {
+		return malformed(f.Line, "invalid optional-null parameter count")
+	}
+	if method && f.OptionalNullParams != 0 {
+		return unsupported(f.Line, "method parameter defaults are unsupported")
+	}
 	if len(f.ParamTypes) != 0 && len(f.ParamTypes) != len(f.Params) {
 		return malformed(f.Line, "parameter types must align with parameter names")
 	}
@@ -115,6 +123,11 @@ func validateParameterTypes(f ir.Function, method bool) error {
 		}
 		if method && annotation != "" {
 			return unsupported(f.Line, "typed method parameters are unsupported")
+		}
+	}
+	for i := len(f.Params) - f.OptionalNullParams; i < len(f.Params); i++ {
+		if len(f.ParamTypes) != 0 && f.ParamTypes[i] != "" {
+			return unsupported(f.Line, "null defaults require untyped parameters")
 		}
 	}
 	return nil
@@ -149,15 +162,25 @@ func (v validator) function(f ir.Function, class string) error {
 			scope[param] = valueType{kind: callableKind}
 		}
 	}
-	return v.stmts(f.Body, scope, f.ReturnType)
+	return v.stmts(f.Body, scope, f.ReturnType, false)
 }
 
-func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType string) error {
+func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType string, inLoop bool) error {
 	for _, stmt := range stmts {
 		if stmt.Kind != "if" && stmt.ElseBody != nil {
 			return malformed(stmt.Line, "else body requires an if statement")
 		}
 		switch stmt.Kind {
+		case "continue":
+			zero := func(e ir.Expr) bool {
+				return e.Kind == "" && e.Text == "" && e.Line == 0 && e.Args == nil && e.Params == nil
+			}
+			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || stmt.Body != nil || !zero(stmt.Expr) || !zero(stmt.Target) {
+				return malformed(stmt.Line, "continue must not have operands or fields")
+			}
+			if !inLoop {
+				return unsupported(stmt.Line, "continue requires an enclosing foreach")
+			}
 		case "assign":
 			if !validName(stmt.Name) {
 				return malformed(stmt.Line, "invalid assignment target")
@@ -240,7 +263,7 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 			if stmt.Key != "" {
 				inner[stmt.Key] = valueType{kind: unknownKind}
 			}
-			if err := v.stmts(stmt.Body, inner, returnType); err != nil {
+			if err := v.stmts(stmt.Body, inner, returnType, true); err != nil {
 				return err
 			}
 			// A foreach body may not execute. Existing variables changed inside it
@@ -260,11 +283,11 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 				return unsupported(stmt.Line, "if condition requires a supported value")
 			}
 			inner := cloneScope(scope)
-			if err := v.stmts(stmt.Body, inner, returnType); err != nil {
+			if err := v.stmts(stmt.Body, inner, returnType, inLoop); err != nil {
 				return err
 			}
 			other := cloneScope(scope)
-			if err := v.stmts(stmt.ElseBody, other, returnType); err != nil {
+			if err := v.stmts(stmt.ElseBody, other, returnType, inLoop); err != nil {
 				return err
 			}
 			// Validate both arms from the pre-if scope. Branch-only bindings do
@@ -480,6 +503,34 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			return valueType{}, unsupported(expr.Line, "empty requires an array")
 		}
 		return valueType{kind: boolKind}, nil
+	case "isset_var":
+		if err := require(1); err != nil {
+			return valueType{}, err
+		}
+		base := expr.Args[0]
+		if expr.Text != "" || base.Kind != "var" {
+			return valueType{}, malformed(expr.Line, "isset requires a variable address")
+		}
+		if _, ok := scope[base.Text]; !ok {
+			return valueType{}, unsupported(expr.Line, "isset requires a defined variable")
+		}
+		if _, err := v.expr(base, scope); err != nil {
+			return valueType{}, err
+		}
+		return valueType{kind: boolKind}, nil
+	case "isset_multi":
+		if expr.Text != "" || len(expr.Args) < 2 {
+			return valueType{}, malformed(expr.Line, "multi isset requires at least two addresses")
+		}
+		for _, operand := range expr.Args {
+			if operand.Kind != "isset_var" && operand.Kind != "isset_index" {
+				return valueType{}, malformed(expr.Line, "multi isset requires variable addresses")
+			}
+			if _, err := v.expr(operand, scope); err != nil {
+				return valueType{}, err
+			}
+		}
+		return valueType{kind: boolKind}, nil
 	case "isset_index":
 		if err := require(2); err != nil {
 			return valueType{}, err
@@ -538,7 +589,7 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			return valueType{}, malformed(expr.Line, "empty must use the empty_array language construct")
 		}
 		if strings.EqualFold(expr.Text, "isset") {
-			return valueType{}, malformed(expr.Line, "isset must use the isset_index language construct")
+			return valueType{}, malformed(expr.Line, "isset must use an address language construct")
 		}
 		if !validName(expr.Text) {
 			return valueType{}, malformed(expr.Line, "invalid function name")
@@ -574,7 +625,7 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			if len(expr.Args) != 2 || expr.Args[0].Kind != "string" || !validName(expr.Args[0].Text) {
 				return valueType{}, unsupported(expr.Line, "array_map expects a literal named callback and one array")
 			}
-			if arity, ok := v.functions[strings.ToLower(expr.Args[0].Text)]; !ok || arity != 1 {
+			if arity, ok := v.functions[strings.ToLower(expr.Args[0].Text)]; !ok || arity < 1 || v.minimum[strings.ToLower(expr.Args[0].Text)] > 1 {
 				return valueType{}, unsupported(expr.Line, "array_map callback must be a declared one-argument function")
 			}
 			if args[1].kind != arrayKind && args[1].kind != unknownKind {
@@ -759,10 +810,13 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			return valueType{kind: stringKind}, nil
 		}
 		if arity, ok := v.functions[strings.ToLower(expr.Text)]; ok {
-			if len(args) != arity {
+			if len(args) > arity || len(args) < v.minimum[strings.ToLower(expr.Text)] {
 				return valueType{}, unsupported(expr.Line, "unsupported argument count for "+expr.Text)
 			}
 			for i, annotation := range v.parameters[strings.ToLower(expr.Text)] {
+				if i >= len(args) {
+					break
+				}
 				if annotation == "array" && args[i].kind != arrayKind && args[i].kind != unknownKind {
 					return valueType{}, unsupported(expr.Line, "array parameter requires an array argument")
 				}

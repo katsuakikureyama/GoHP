@@ -15,6 +15,7 @@ type generator struct {
 	p       ir.Program
 	b       strings.Builder
 	funcs   map[string]int
+	minimum map[string]int
 	classes map[string]bool
 	methods map[string]bool
 	serial  int
@@ -39,6 +40,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		}
 	}()
 	g := &generator{p: p, funcs: map[string]int{}, classes: map[string]bool{}, methods: map[string]bool{}}
+	g.minimum = map[string]int{}
 	if p.Version != ir.Version {
 		return nil, SourceMap{}, fmt.Errorf("IR001: unsupported IR version %q", p.Version)
 	}
@@ -47,6 +49,9 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	}
 	for _, f := range p.Functions {
 		n := name(f.Name)
+		if n == "continue" {
+			g.fail(f.Line, "reserved function "+n)
+		}
 		if n == "array_key_first" || n == "array_key_last" || n == "array_reverse" || n == "array_merge" {
 			g.fail(f.Line, "reserved function "+n)
 		}
@@ -57,6 +62,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 			g.fail(f.Line, "duplicate or reserved function "+n)
 		}
 		g.funcs[n] = len(f.Params)
+		g.minimum[n] = len(f.Params) - f.OptionalNullParams
 	}
 	for _, c := range p.Classes {
 		n := name(c.Name)
@@ -128,7 +134,12 @@ func (g *generator) function(f ir.Function, c string) {
 	} else {
 		g.emit("func (self *C_%s) M_%s(args ...any) any {\n", name(c), name(f.Name))
 	}
-	g.emit("rt.Args(args,%d)\nv:=map[string]any{}; _=v\n", len(f.Params))
+	if f.OptionalNullParams != 0 {
+		g.emit("args=rt.NullDefaultArgs(args,%d,%d)\n", len(f.Params)-f.OptionalNullParams, len(f.Params))
+	} else {
+		g.emit("rt.Args(args,%d)\n", len(f.Params))
+	}
+	g.emit("v:=map[string]any{}; _=v\n")
 	scope := map[string]bool{}
 	if c != "" {
 		scope["this"] = true
@@ -163,6 +174,8 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 	for _, s := range ss {
 		g.emit("// gohp:begin %d\n", s.Line)
 		switch s.Kind {
+		case "continue":
+			g.emit("continue\n")
 		case "assign":
 			if s.Name == "this" || s.Name == "GLOBALS" || strings.HasPrefix(s.Name, "_") {
 				g.fail(s.Line, "reserved/global variable unsupported")
@@ -322,6 +335,14 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		return "rt.Get(" + args(e.Args) + ")"
 	case "isset_index":
 		return "rt.ArrayIsset(" + args(e.Args) + ")"
+	case "isset_var":
+		return "rt.IssetValue(" + args(e.Args) + ")"
+	case "isset_multi":
+		var operands []string
+		for _, operand := range e.Args {
+			operands = append(operands, g.expr(operand, scope))
+		}
+		return "(" + strings.Join(operands, " && ") + ")"
 	case "empty_array":
 		return "rt.ArrayEmpty(" + args(e.Args) + ")"
 	case "call":
@@ -331,7 +352,7 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 				g.fail(e.Line, "array_map expects a literal named callback and one array")
 			}
 			callback := name(e.Args[0].Text)
-			if arity, ok := g.funcs[callback]; !ok || arity != 1 {
+			if arity, ok := g.funcs[callback]; !ok || arity < 1 || g.minimum[callback] > 1 {
 				g.fail(e.Line, "array_map callback must be a declared one-argument function")
 			}
 			return "rt.ArrayMap(func(value any) any { return F_" + callback + "(value) }, " + g.expr(e.Args[1], scope) + ")"
@@ -456,7 +477,7 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		if !ok {
 			g.fail(e.Line, "unsupported function "+n)
 		}
-		if len(e.Args) != arity {
+		if len(e.Args) > arity || len(e.Args) < g.minimum[n] {
 			g.fail(e.Line, "unsupported argument count for "+n)
 		}
 		return "F_" + n + "(" + args(e.Args) + ")"
