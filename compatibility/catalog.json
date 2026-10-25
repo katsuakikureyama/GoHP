@@ -12,6 +12,7 @@
         "8.3"
       ],
       "checks": [
+        {"case_id":"diff.literal_case","test":"TestDifferential/literal_case","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/literal_case.php","assertions":["stdout","exit","mixed-case bool/null literals in expressions, returns, property defaults, strict membership and isset; variable and quoted-string case preserved"]},
         {"case_id":"diff.membership_control_flow","test":"TestDifferential/membership_control_flow","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/membership_control_flow.php","assertions":["stdout","exit","strict membership in conditional typed returns and callbacks, isset selection, short-circuiting, single operand evaluation and negative-key copy isolation"]},
         {"case_id":"negative.membership_control_flow.static","test":"TestMembershipControlFlowRejectsInvalidDeadArms","file":"internal/codegen/in_array_strict_test.go","kind":"negative","assertions":["dead elseif domain, else-if loose mode and else bool return in array-typed functions are rejected before generation"]},
         {"case_id":"negative.membership_control_flow.runtime","test":"TestMembershipControlFlowRuntimeGuards","file":"tests/in_array_strict_runtime_test.go","kind":"negative","assertions":["reached elseif validates late invalid values; else-if rejects nonarray haystack; unknown bool return in else is array-guarded"]},
@@ -990,9 +991,12 @@
       "kind": "type",
       "name": "int64, string, bool and null literals",
       "implementation": "partial",
-      "contract": "Represents the listed scalar literals in the closed subset.",
+      "contract": "Represents the listed scalar literals in the closed subset; true/false/null accept ASCII letter-case variants and canonicalize to existing bool/null IR.",
       "php_targets": ["8.3"],
       "checks": [
+        {"case_id":"diff.literal_case","test":"TestDifferential/literal_case","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/literal_case.php","assertions":["stdout","exit","mixed-case bool/null literals in expressions, returns, property defaults, strict membership and isset; variable and quoted-string case preserved"]},
+        {"case_id":"compiler.literal_case","test":"TestLiteralCaseCanonicalIRAndSourceMap","file":"internal/codegen/literal_case_test.go","kind":"compiler","assertions":["case variants normalize to canonical bool/null IR and retain source mapping"]},
+        {"case_id":"negative.literal_case","test":"TestLiteralCaseDoesNotBypassDomains","file":"internal/codegen/literal_case_test.go","kind":"negative","assertions":["mixed-case constants retain strictness/key/type guards; general constants, call syntax, uppercase control keywords and variable-case leakage remain rejected"]},
         {"case_id": "diff.arrays", "test": "TestDifferential/arrays", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/arrays.php", "assertions": ["bool and null concatenation output matches fixture"]}
       ],
       "limitations": ["No floats, interpolation, complete casts or PHP type-juggling semantics"]

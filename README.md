@@ -110,6 +110,10 @@ Strict scalar `in_array(needle, haystack, true)` is also available: the needle
 and all array values must be null/bool/int64/string. Loose comparison and
 array/object values are excluded; see the [membership boundary](docs/in-array-strict-boundary.md).
 
+The predefined `true`, `false` and `null` literals accept uppercase and mixed
+case (for example `TRUE`, `FaLsE`, `NuLl`). Variable/property names and string
+contents remain case-sensitive; this does not imply general keyword support.
+
 ### Active PHP target
 
 GoHP's initial compatibility target is the PHP **8.3** language series only.

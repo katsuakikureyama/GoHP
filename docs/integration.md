@@ -137,6 +137,11 @@ exact GoHP Git revision and Go toolchain, build source against the same runtime
 revision, and execute isolated differential fixtures before promoting status.
 No automatic plugin activation, DB migration, source upload or deployment occurs.
 
+Case-insensitive true/false/null literals normalize only those three predefined
+values to existing IR. This stays within the excluded local `gohp.cli.generate`
+capability, without a service/authentication change, general constant resolution
+or dependency. Existing consumer pins/evidence require separate adoption.
+
 Direct negative-literal keys in bounded array-element `isset` reuse the existing
 integer IR and runtime presence probe. This parser consistency extension remains
 within the excluded local `gohp.cli.generate` capability: no general key-expression

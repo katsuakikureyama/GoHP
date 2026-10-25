@@ -440,11 +440,18 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 			e = p.arrayLiteral(t.line, ")")
 			break
 		}
+		// These three predefined literals are case-insensitive in PHP. Do not
+		// fold identifiers globally: variable/property names retain their case.
+		literal := strings.ToLower(t.text)
+		if literal == "true" || literal == "false" {
+			e.Kind, e.Text = "bool", literal
+			break
+		}
+		if literal == "null" {
+			e.Kind, e.Text = "null", literal
+			break
+		}
 		switch t.text {
-		case "true", "false":
-			e.Kind = "bool"
-		case "null":
-			e.Kind = "null"
 		case "new":
 			e.Kind = "new"
 			e.Text = p.name("id")

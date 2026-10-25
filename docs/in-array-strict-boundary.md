@@ -1,8 +1,10 @@
 # Strict scalar array membership
 
 `in_array(needle, haystack, true)` accepts exactly three arguments. The third
-must be the lowercase literal `true` admitted by the current parser (parentheses
-are transparent), not a variable, expression, omitted value or loose mode.
+must be the literal `true` in any ASCII letter case (parentheses are transparent),
+not a variable, expression, omitted value or loose mode. The parser canonicalizes
+`TRUE` and mixed-case spellings to the same bool IR; `FALSE`/`NULL` remain invalid
+strictness arguments.
 Function names are case-insensitive and reserved against redeclaration.
 
 The needle and every haystack value must be null, bool, int64 or string;

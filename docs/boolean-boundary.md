@@ -6,6 +6,11 @@ It is not general PHP control flow or object/coercion compatibility.
 
 ## Implemented contract
 
+- `true`, `false` and `null` literals accept ASCII letter-case variants and
+  normalize to existing lowercase bool/null IR. This applies in expressions,
+  returns and public scalar property defaults. Quoted strings and variable or
+  property names retain their case. This does not add general constants,
+  globally case-insensitive keywords or new coercions.
 - Braced `if (condition) { ... }`, optional `elseif (...) { ... }` / `else if
   (...) { ... }` chains and optional final `else { ... }`, including empty bodies,
   nesting and early return. Each reached condition is evaluated once; the first
@@ -43,6 +48,7 @@ It is not general PHP control flow or object/coercion compatibility.
 - New builtin names are case-insensitive and reserved against redeclaration.
 
 PHP references: [boolean conversion](https://www.php.net/manual/en/language.types.boolean.php),
+[null literals](https://www.php.net/manual/en/language.types.null.php),
 [else](https://www.php.net/manual/en/control-structures.else.php),
 [elseif/else if](https://www.php.net/manual/en/control-structures.elseif.php),
 [short-circuit operators](https://www.php.net/manual/en/language.operators.logical.php),
@@ -84,6 +90,12 @@ Explicit negative checks cover unsupported syntax, domains, builtin arities,
 reserved declarations and branch-local variable escape. Runtime checks preserve
 failure boundaries for unsupported dynamic values. The catalog records partial
 contracts and target-specific results, never unconditional support.
+
+The `literal_case.php` fixture compares mixed-case literals in conditions,
+arguments/returns, property defaults and strict membership against the native
+oracle. Compiler tests retain canonical IR and source lines and verify that
+case variants cannot bypass existing key/type/strictness guards. Variable and
+quoted-string case are not normalized. Runtime behavior and IR schema are unchanged.
 
 The separate `if_else.php` fixture covers supported truthiness, one condition
 evaluation, lazy branch markers, empty/nested branches, early returns, updates
