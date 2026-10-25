@@ -246,6 +246,9 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		if e.Text == "===" {
 			return "rt.Identical(" + args(e.Args) + ")"
 		}
+		if e.Text == "!==" {
+			return "(!rt.Identical(" + args(e.Args) + "))"
+		}
 		op := "Add"
 		if e.Text == "." {
 			op = "Concat"

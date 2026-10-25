@@ -357,6 +357,34 @@
       "limitations": ["No array or object identity semantics", "No loose equality"]
     },
     {
+      "id": "php.operator.strict-not-equal",
+      "kind": "operator",
+      "name": "Strict scalar inequality !==",
+      "implementation": "partial",
+      "contract": "Compare null, bool, int64 and string by type and value with no coercion, returning the negation of scalar identity as bool.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.strict_not_equal","test":"TestDifferential/strict_not_equal","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/strict_not_equal.php","assertions":["scalar type/value distinctions, bool results, precedence, parenthesized comparisons, once-only operands and lazy surrounding branches match native stdout and normal exit"]},
+        {"case_id":"compiler.strict_not_equal_lowering","test":"TestStrictNotEqualLoweringAndSourceMap","file":"internal/codegen/strict_not_equal_test.go","kind":"compiler","assertions":["!== lowers to negated guarded Identical and retains PHP statement source mapping"]},
+        {"case_id":"negative.ir.strict_not_equal_arity","test":"TestStrictNotEqualMalformedArity","file":"internal/codegen/strict_not_equal_test.go","kind":"negative","assertions":["invalid binary arity fails before code generation"]},
+        {"case_id":"negative.strict_not_equal_dynamic","test":"TestStrictNotEqualRuntimeTypeGuards","file":"tests/strict_not_equal_runtime_test.go","kind":"negative","assertions":["generated binaries reject arrays and objects on either unknown operand; no PHP error equivalence claim"]},
+        {"case_id":"negative.strict_not_equal_array_left","test":"TestUnsupported/strict_not_equal_array_left","file":"tests/differential_test.go","kind":"negative","assertions":["known array on the left is rejected"]},
+        {"case_id":"negative.strict_not_equal_array_right","test":"TestUnsupported/strict_not_equal_array_right","file":"tests/differential_test.go","kind":"negative","assertions":["known array on the right is rejected"]},
+        {"case_id":"negative.strict_not_equal_object_left","test":"TestUnsupported/strict_not_equal_object_left","file":"tests/differential_test.go","kind":"negative","assertions":["known object on the left is rejected"]},
+        {"case_id":"negative.strict_not_equal_object_right","test":"TestUnsupported/strict_not_equal_object_right","file":"tests/differential_test.go","kind":"negative","assertions":["known object on the right is rejected"]},
+        {"case_id":"negative.strict_not_equal_dead_array","test":"TestUnsupported/strict_not_equal_dead_array","file":"tests/differential_test.go","kind":"negative","assertions":["unsupported comparison in an unselected branch is rejected"]},
+        {"case_id":"negative.strict_not_equal_chain","test":"TestUnsupported/strict_not_equal_chain","file":"tests/differential_test.go","kind":"negative","assertions":["unparenthesized !== chain is rejected"]},
+        {"case_id":"negative.strict_not_equal_chain_equal_first","test":"TestUnsupported/strict_not_equal_chain_equal_first","file":"tests/differential_test.go","kind":"negative","assertions":["unparenthesized === followed by !== is rejected"]},
+        {"case_id":"negative.strict_not_equal_chain_equal_last","test":"TestUnsupported/strict_not_equal_chain_equal_last","file":"tests/differential_test.go","kind":"negative","assertions":["unparenthesized !== followed by === is rejected"]},
+        {"case_id":"negative.strict_not_equal_missing_left","test":"TestUnsupported/strict_not_equal_missing_left","file":"tests/differential_test.go","kind":"negative","assertions":["missing left operand is rejected"]},
+        {"case_id":"negative.strict_not_equal_missing_right","test":"TestUnsupported/strict_not_equal_missing_right","file":"tests/differential_test.go","kind":"negative","assertions":["missing right operand is rejected"]},
+        {"case_id":"negative.strict_not_equal_result_array","test":"TestUnsupported/strict_not_equal_result_array","file":"tests/differential_test.go","kind":"negative","assertions":["bool result is not an array"]},
+        {"case_id":"negative.strict_not_equal_literal_key","test":"TestUnsupported/strict_not_equal_literal_key","file":"tests/differential_test.go","kind":"negative","assertions":["bool expression array key remains outside the subset"]},
+        {"case_id":"negative.strict_not_equal_property_default","test":"TestUnsupported/strict_not_equal_property_default","file":"tests/differential_test.go","kind":"negative","assertions":["general property default expression remains unsupported"]}
+      ],
+      "limitations": ["No array/object identity, floats, resources or extension values","No loose != or <>","=== and !== share non-associative precedence; mixed chains require parentheses","Both operands are statically validated; unknown non-scalars fail at runtime","No PHP warning/exception or general operand evaluation-order equivalence"]
+    },
+    {
       "id": "php.operator.loose-equal",
       "kind": "operator",
       "name": "Loose equality ==",
@@ -386,11 +414,10 @@
         {"case_id":"negative.logical_not_literal_key","test":"TestUnsupported/logical_not_literal_key","file":"tests/differential_test.go","kind":"negative","assertions":["literal_key form is rejected outside the bounded logical-not contract"]},
         {"case_id":"negative.logical_not_missing_operand","test":"TestUnsupported/logical_not_missing_operand","file":"tests/differential_test.go","kind":"negative","assertions":["missing_operand form is rejected outside the bounded logical-not contract"]},
         {"case_id":"negative.logical_not_equal","test":"TestUnsupported/logical_not_equal","file":"tests/differential_test.go","kind":"negative","assertions":["equal form is rejected outside the bounded logical-not contract"]},
-        {"case_id":"negative.logical_not_identical","test":"TestUnsupported/logical_not_identical","file":"tests/differential_test.go","kind":"negative","assertions":["identical form is rejected outside the bounded logical-not contract"]},
         {"case_id":"negative.logical_not_keyword","test":"TestUnsupported/logical_not_keyword","file":"tests/differential_test.go","kind":"negative","assertions":["keyword form is rejected outside the bounded logical-not contract"]},
         {"case_id":"negative.logical_not_property_default","test":"TestUnsupported/logical_not_property_default","file":"tests/differential_test.go","kind":"negative","assertions":["property_default form is rejected outside the bounded logical-not contract"]}
       ],
-      "limitations": ["Only null/bool/int64/string/array truthiness; no object/resource/float/extension-value support","No !=, !== or not keyword, and no general property constant-expression support","Unknown operand types stay guarded at runtime; no warning/exception or general side-effect equivalence"]
+      "limitations": ["Only null/bool/int64/string/array truthiness; no object/resource/float/extension-value support","No != or not keyword, and no general property constant-expression support; scalar !== has a separate partial contract","Unknown operand types stay guarded at runtime; no warning/exception or general side-effect equivalence"]
     },
     {
       "id": "php.cast.bool",

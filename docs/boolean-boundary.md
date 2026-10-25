@@ -18,10 +18,13 @@ It is not general PHP control flow or object/coercion compatibility.
   conversion as `(bool)`, and returns the opposite bool. Repeated `!!` is allowed.
   A one-operand `not` IR expression lowers to Go `!rt.Bool(operand)`; unknown
   unsupported types retain the existing runtime guard. This does not add `!=`,
-  `!==`, a `not` keyword or general constant expressions in property defaults.
-- Scalar `===` compares type and value for nil, bool, int64 and string. Arrays
+  a `not` keyword or general constant expressions in property defaults.
+- Scalar `===` and `!==` compare type and value for nil, bool, int64 and string. Arrays
   and objects are rejected, including runtime-unknown values of those types.
-  Unparenthesized chains of `===` are rejected as non-associative.
+  `!==` returns the negation of `===` as bool, using `!rt.Identical(left, right)`
+  and the same scalar guard, with no type coercion. Each operand is evaluated once.
+  Unparenthesized chains of either operator, including mixed chains, are rejected
+  as non-associative. Explicit parentheses permit comparing scalar bool results.
 - `(bool)` and condition truthiness accept nil, bool, int64, string and GoHP
   arrays only. False values are nil, false, integer zero, empty string, string
   `"0"` and empty arrays. Unsupported dynamic value types fail explicitly.
@@ -38,6 +41,7 @@ It is not general PHP control flow or object/coercion compatibility.
 
 PHP references: [boolean conversion](https://www.php.net/manual/en/language.types.boolean.php),
 [short-circuit operators](https://www.php.net/manual/en/language.operators.logical.php),
+[strict comparisons](https://www.php.net/manual/en/language.operators.comparison.php),
 [precedence](https://www.php.net/manual/en/language.operators.precedence.php), and
 [strtolower](https://www.php.net/manual/en/function.strtolower.php), and
 [is_array](https://www.php.net/manual/en/function.is-array.php).
@@ -51,7 +55,7 @@ can change their type. This conservative rule avoids claiming definite assignmen
 where a branch might not execute; it is not full PHP data-flow inference.
 
 Operator precedence uses the PHP 8.3 `+` above `.` relationship, above
-`===`, above `&&`, above `||`, above full ternary; prefix `!` and bool casts bind
+`===` / `!==`, above `&&`, above `||`, above full ternary; prefix `!` and bool casts bind
 more tightly. Calls and index reads belong to the operand of `!`, while
 `!0 + 2` means `(!0) + 2`.
 Statement maps cover nested
@@ -79,6 +83,15 @@ object values when evaluated on either side, but do not convert an unused dynami
 right operand. Known invalid objects/calls/variables still fail generation even
 on a statically unselected side. Malformed IR arity, incomplete syntax, bool
 array-key/result misuse and general property defaults remain rejected.
+
+The separate `strict_not_equal.php` fixture observes scalar type/value differences,
+bool results, precedence, parenthesized comparisons, one evaluation per operand
+and short-circuited surrounding branches. Static negative tests reject arrays and
+objects on either side (even in dead branches), mixed unparenthesized chains and
+invalid syntax/result uses. Generated-binary checks exercise unknown array/object
+operands on both sides; the existing scalar guard is not bypassed by a type mismatch.
+This does not add loose `!=`/`<>`, array/object identity, floating-point values,
+PHP exception equivalence or a general PHP operand evaluation-order guarantee.
 
 The separate `is_array.php` fixture observes predicate results using `is_bool`
 and strict true/false comparison, covers both array syntaxes and generated

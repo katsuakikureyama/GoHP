@@ -14,7 +14,7 @@ branch type is retained; different branch types deliberately become unknown,
 so validation does not pretend that an always-unselected arm determines a
 value's type.
 
-Ternary binds below the supported `||`, `&&`, `===`, `.`, and `+` operators. The
+Ternary binds below the supported `||`, `&&`, `===` / `!==`, `.`, and `+` operators. The
 middle expression can itself contain an unparenthesized ternary, while the
 final expression cannot: PHP 8's ternary operator is non-associative. Explicit
 parentheses allow nesting. Short ternary `?:`, null coalescing `??`, an

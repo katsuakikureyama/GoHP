@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "strict_not_equal", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -189,7 +189,6 @@ func TestUnsupported(t *testing.T) {
 		{name: "logical_not_literal_key", src: "<?php $a = [!false => 1];"},
 		{name: "logical_not_missing_operand", src: "<?php echo !;"},
 		{name: "logical_not_equal", src: "<?php echo 1 != 2;"},
-		{name: "logical_not_identical", src: "<?php echo 1 !== 2;"},
 		{name: "logical_not_keyword", src: "<?php echo not true;"},
 		{name: "logical_not_property_default", src: "<?php class Box { public $value = !false; }"},
 		{name: "reference", src: "<?php $a = &$b;"},
@@ -302,6 +301,19 @@ func TestUnsupported(t *testing.T) {
 		{name: "loose_equal", src: "<?php echo 1 == '1';"},
 		{name: "strict_equal_array", src: "<?php echo [] === [];"},
 		{name: "strict_equal_chain", src: "<?php echo true === false === false;"},
+		{name: "strict_not_equal_array_left", src: "<?php echo [] !== null;"},
+		{name: "strict_not_equal_array_right", src: "<?php echo null !== [];"},
+		{name: "strict_not_equal_object_left", src: "<?php class Box {} echo new Box() !== null;"},
+		{name: "strict_not_equal_object_right", src: "<?php class Box {} echo null !== new Box();"},
+		{name: "strict_not_equal_dead_array", src: "<?php echo true || ([] !== []);"},
+		{name: "strict_not_equal_chain", src: "<?php echo 1 !== 2 !== 3;"},
+		{name: "strict_not_equal_chain_equal_first", src: "<?php echo 1 === 2 !== false;"},
+		{name: "strict_not_equal_chain_equal_last", src: "<?php echo 1 !== 2 === true;"},
+		{name: "strict_not_equal_missing_left", src: "<?php echo !== true;"},
+		{name: "strict_not_equal_missing_right", src: "<?php echo false !==;"},
+		{name: "strict_not_equal_result_array", src: "<?php echo count(1 !== 2);"},
+		{name: "strict_not_equal_literal_key", src: "<?php $a = [1 !== 2 => 0];"},
+		{name: "strict_not_equal_property_default", src: "<?php class Box { public $value = 1 !== 2; }"},
 		{name: "is_bool_missing_argument", src: "<?php echo is_bool();"},
 		{name: "is_bool_extra_argument", src: "<?php echo is_bool(true, false);"},
 		{name: "is_string_missing_argument", src: "<?php echo is_string();"},

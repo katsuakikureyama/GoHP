@@ -152,7 +152,7 @@ func lex(s string) ([]token, error) {
 		matched := false
 		// Keep multi-character operators longest-first so === is never split
 		// into the unsupported = token followed by ==.
-		for _, op := range []string{"===", "&&", "||", "=>", "->"} {
+		for _, op := range []string{"===", "!==", "&&", "||", "=>", "->"} {
 			if strings.HasPrefix(s[i:], op) {
 				ts = append(ts, token{op, ln, "sym"})
 				i += len(op)
@@ -344,6 +344,10 @@ func (p *parser) stmt() ir.Stmt {
 	}
 	return s
 }
+func isStrictComparison(t token) bool {
+	return t.kind == "sym" && (t.text == "===" || t.text == "!==")
+}
+
 func (p *parser) prec(t token) int {
 	if t.kind == "sym" && t.text == "." {
 		return 4
@@ -351,7 +355,7 @@ func (p *parser) prec(t token) int {
 	if t.kind == "sym" && t.text == "+" {
 		return 5
 	}
-	if t.kind == "sym" && t.text == "===" {
+	if isStrictComparison(t) {
 		return 3
 	}
 	if t.kind == "sym" && t.text == "&&" {
@@ -456,8 +460,8 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 		p.pop()
 		right := p.expr(q + 1)
 		e = ir.Expr{Kind: "binary", Text: op.text, Args: []ir.Expr{e, right}, Line: op.line}
-		if op.text == "===" && p.peek().kind == "sym" && p.peek().text == "===" {
-			p.fail("strict equality is non-associative; use parentheses")
+		if isStrictComparison(op) && isStrictComparison(p.peek()) {
+			p.fail("strict comparison is non-associative; use parentheses")
 		}
 	}
 	if min == 0 && p.peek().kind == "sym" && p.peek().text == "?" {

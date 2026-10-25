@@ -69,7 +69,10 @@ coercions. `array_is_list(array)` checks zero-based consecutive integer keys in
 insertion order (empty arrays are lists). See the compatibility contract and the linked
 string/boolean boundaries; these are partial implementations.
 Prefix logical negation `!` (including `!!`) uses the existing scalar/array
-truthiness rules and returns bool; object truthiness, `!=` and `!==` remain excluded.
+truthiness rules and returns bool; object truthiness and loose `!=` remain excluded.
+Strict `!==` compares only null, bool, int64 and string by both type and value,
+returning the opposite of scalar `===` without coercion. Unparenthesized chains
+mixing `===` and `!==` are rejected; array/object comparison remains excluded.
 Logical `||` uses the same truthiness domain and returns bool, skipping its right
 operand when the left is true. It binds below `&&` and above full ternary;
 keyword `or` and bitwise `|` remain unsupported. See the [boolean boundary](docs/boolean-boundary.md).
@@ -134,7 +137,7 @@ PHP を読みやすい Go ソースへ変換する初期 PoC です。関数・�
 full ternary `condition ? yes : no` と `stripslashes` の文字列1引数も限定的に対象にします。
 `array_map`は宣言済み1引数関数のliteral名＋単一配列のみ、`addslashes`は実文字列のみです。
 一般callback・自動再帰・SQL/HTML/shell向けサニタイズの対応ではありません。
-単一分岐の `if`、短絡 `&&` / `||`、論理否定 `!`、scalar の `===`、限定型の `(bool)` と型判定・ASCII小文字化も比較対象にします。
+単一分岐の `if`、短絡 `&&` / `||`、論理否定 `!`、scalar の `===` / `!==`、限定型の `(bool)` と型判定・ASCII小文字化も比較対象にします。
 参照、クロージャ、継承、Composer や PHP 拡張、WordPress 全体は未対応です。
 未対応を互換性成功とは扱いません。正式ライセンスは監査と所有者判断待ちです。
 初期の互換性対象は PHP **8.3 系のみ**で、native 比較には **8.3 系の 8.3.36 以上**を使います。

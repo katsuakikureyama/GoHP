@@ -47,6 +47,8 @@ The [literal-only negative integer syntax](negative-integer-boundary.md) also
 uses this same excluded capability, with no new operation or authentication path.
 The bounded [logical-not and logical-or operators](boolean-boundary.md) likewise remain within
 this local compiler capability; they introduce no route, external write or auto-submit.
+The [scalar strict-not-equal comparison](boolean-boundary.md) also uses the same
+excluded local generation capability, without UI/server operations or new authentication.
 The same local generation operation now also accepts bounded `strlen(string)`
 calls; its [string-only byte-length contract](compatibility.md#bounded-strlen-contract)
 does not add a service operation or change this WebMCP exclusion.

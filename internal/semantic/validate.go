@@ -318,7 +318,7 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 				return valueType{}, unsupported(expr.Line, "concatenation requires supported scalars")
 			}
 			return valueType{kind: stringKind}, nil
-		case "===":
+		case "===", "!==":
 			if !isScalarOrUnknown(left) || !isScalarOrUnknown(right) {
 				return valueType{}, unsupported(expr.Line, "strict comparison requires supported scalars")
 			}
