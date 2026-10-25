@@ -9,7 +9,7 @@ import (
 )
 
 func TestArrayMapAndAddSlashesLowerToRuntimeBoundaries(t *testing.T) {
-	p, err := frontend.Parse("<?php $items = ['first' => \"O'Reilly\"]; $mapped = ArRaY_MaP('MaPpEr', $items); foreach ($mapped as $key => $value) { echo $key . ':' . $value; } function mapper($value) { return AdD_sLaShEs($value); }", "8.3")
+	p, err := frontend.Parse("<?php $items = ['first' => \"O'Reilly\"]; $mapped = ArRaY_MaP('MaPpEr', $items); foreach ($mapped as $key => $value) { echo $key . ':' . $value; } function mapper($value) { return AdDsLaShEs($value); }", "8.3")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +45,7 @@ func TestArrayMapAndAddSlashesKnownUnsupportedFormsFailBeforeGeneration(t *testi
 		{"addslashes_missing", "<?php echo addslashes();"},
 		{"addslashes_extra", "<?php echo addslashes('x', 'y');"},
 		{"addslashes_static_non_string", "<?php echo addslashes(1);"},
-		{"addslashes_redeclare", "<?php function AdD_sLaShEs($value) { return $value; }"},
+		{"addslashes_redeclare", "<?php function AdDsLaShEs($value) { return $value; }"},
 		{"array_map_redeclare", "<?php function ArRaY_mAp($value) { return $value; }"},
 		{"array_result_not_string_for_concat", "<?php function mapper($value) { return $value; } echo array_map('mapper', []) . 'x';"},
 		{"array_result_not_string_for_lowercase", "<?php function mapper($value) { return $value; } echo strtolower(array_map('mapper', []));"},

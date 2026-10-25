@@ -10,7 +10,7 @@ echo $items[9] . ':' . $items['name'] . "\n";
 
 function mapped_escape($value) {
     echo '<' . $value . '>';
-    return AdD_sLaShEs($value);
+    return AdDsLaShEs($value);
 }
 
 function recursive_escape($value) {
