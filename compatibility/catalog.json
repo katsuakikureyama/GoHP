@@ -3,6 +3,178 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.strcasecmp-string",
+      "kind": "builtin",
+      "name": "String-only ASCII case-insensitive comparison",
+      "implementation": "partial",
+      "contract": "Two actual strings; ASCII-only case folding, first unequal folded-byte delta or prefix-length ordering as integer for selected PHP 8.3 implementation. Static and dynamic string guards.",
+      "php_targets": [
+        "8.3"
+      ],
+      "checks": [
+        {
+          "case_id": "diff.strcasecmp",
+          "test": "TestDifferential/strcasecmp",
+          "file": "tests/differential_test.go",
+          "kind": "differential",
+          "fixture": "tests/fixtures/strcasecmp.php",
+          "assertions": [
+            "numeric ASCII case-insensitive comparison, integer type, prefix/UTF-8 distinctions and composed predicate/operand calls match native PHP stdout"
+          ]
+        },
+        {
+          "case_id": "unit.runtime.strcasecmp_bytes",
+          "test": "TestStrCaseCmpASCIIByteResults",
+          "file": "runtime/strcasecmp_test.go",
+          "kind": "unit",
+          "assertions": [
+            "ASCII-only folded byte deltas, prefix ordering, NUL/high-byte preservation and int64 results"
+          ]
+        },
+        {
+          "case_id": "unit.runtime.strcasecmp_guards",
+          "test": "TestStrCaseCmpRejectsNonStrings",
+          "file": "runtime/strcasecmp_test.go",
+          "kind": "unit",
+          "assertions": [
+            "either non-string operand fails without coercion"
+          ]
+        },
+        {
+          "case_id": "compiler.strcasecmp_lowering",
+          "test": "TestStrCaseCmpLoweringAndSourceMap",
+          "file": "internal/codegen/strcasecmp_test.go",
+          "kind": "compiler",
+          "assertions": [
+            "case-insensitive builtin call uses runtime guard and retains PHP statement mapping"
+          ]
+        },
+        {
+          "case_id": "compiler.strcasecmp_arity",
+          "test": "TestStrCaseCmpMalformedArity",
+          "file": "internal/codegen/strcasecmp_test.go",
+          "kind": "compiler",
+          "assertions": [
+            "direct IR zero/one/three arguments are rejected"
+          ]
+        },
+        {
+          "case_id": "runtime.strcasecmp_guards",
+          "test": "TestStrCaseCmpRuntimeTypeGuards",
+          "file": "tests/strcasecmp_runtime_test.go",
+          "kind": "negative",
+          "assertions": [
+            "generated binaries reject dynamic int/null/array/object operands through string guard"
+          ]
+        },
+        {
+          "case_id": "negative.strcasecmp_no_args",
+          "test": "TestUnsupported/strcasecmp_no_args",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "unsupported strcasecmp no_args is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.strcasecmp_missing_arg",
+          "test": "TestUnsupported/strcasecmp_missing_arg",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "unsupported strcasecmp missing_arg is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.strcasecmp_extra_args",
+          "test": "TestUnsupported/strcasecmp_extra_args",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "unsupported strcasecmp extra_args is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.strcasecmp_int_left",
+          "test": "TestUnsupported/strcasecmp_int_left",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "unsupported strcasecmp int_left is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.strcasecmp_bool_right",
+          "test": "TestUnsupported/strcasecmp_bool_right",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "unsupported strcasecmp bool_right is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.strcasecmp_null_left",
+          "test": "TestUnsupported/strcasecmp_null_left",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "unsupported strcasecmp null_left is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.strcasecmp_array_right",
+          "test": "TestUnsupported/strcasecmp_array_right",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "unsupported strcasecmp array_right is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.strcasecmp_object_left",
+          "test": "TestUnsupported/strcasecmp_object_left",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "unsupported strcasecmp object_left is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.strcasecmp_redeclare",
+          "test": "TestUnsupported/strcasecmp_redeclare",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "unsupported strcasecmp redeclare is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.strcasecmp_result_not_string",
+          "test": "TestUnsupported/strcasecmp_result_not_string",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "unsupported strcasecmp result_not_string is rejected before generation"
+          ]
+        },
+        {
+          "case_id": "negative.strcasecmp_dead_branch",
+          "test": "TestUnsupported/strcasecmp_dead_branch",
+          "file": "tests/differential_test.go",
+          "kind": "negative",
+          "assertions": [
+            "unsupported strcasecmp dead_branch is rejected before generation"
+          ]
+        }
+      ],
+      "limitations": [
+        "No scalar coercion, object conversion, Unicode case folding or locale collation",
+        "Only result sign is a portable PHP API promise; numeric evidence is for selected PHP 8.3 oracle",
+        "No PHP error/exception or general operand evaluation-order equivalence",
+        "Gossip original-source adoption and separate array-return stack require independent integration"
+      ]
+    },
+    {
       "id": "gohp.tooling.php-target-policy",
       "kind": "tooling",
       "name": "PHP target and native oracle admission",

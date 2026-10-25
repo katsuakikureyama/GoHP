@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "strict_not_equal", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "strict_not_equal", "precedence", "strlen", "strcasecmp", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_write", "array_append", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -231,6 +231,17 @@ func TestUnsupported(t *testing.T) {
 		{name: "index_scalar", src: "<?php $value = 1; echo $value[0];"},
 		{name: "missing_property", src: "<?php class X { public $name = 'x'; } $x = new X(); echo $x->missing;"},
 		{name: "method_arity", src: "<?php class X { public function render($value) { return $value; } } $x = new X(); echo $x->render();"},
+		{name: "strcasecmp_no_args", src: "<?php echo strcasecmp();"},
+		{name: "strcasecmp_missing_arg", src: "<?php echo strcasecmp('x');"},
+		{name: "strcasecmp_extra_args", src: "<?php echo strcasecmp('x', 'y', 'z');"},
+		{name: "strcasecmp_int_left", src: "<?php echo strcasecmp(1, '1');"},
+		{name: "strcasecmp_bool_right", src: "<?php echo strcasecmp('1', true);"},
+		{name: "strcasecmp_null_left", src: "<?php echo strcasecmp(null, '');"},
+		{name: "strcasecmp_array_right", src: "<?php echo strcasecmp('', []);"},
+		{name: "strcasecmp_object_left", src: "<?php class X {} echo strcasecmp(new X(), '');"},
+		{name: "strcasecmp_redeclare", src: "<?php function StRcAsEcMp($a, $b) { return 0; }"},
+		{name: "strcasecmp_result_not_string", src: "<?php echo strtolower(strcasecmp('a', 'A'));"},
+		{name: "strcasecmp_dead_branch", src: "<?php if (false) { echo strcasecmp([], ''); }"},
 		{name: "strlen_int", src: "<?php echo strlen(1);"},
 		{name: "strlen_bool", src: "<?php echo strlen(true);"},
 		{name: "strlen_null", src: "<?php echo strlen(null);"},

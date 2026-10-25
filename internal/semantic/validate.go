@@ -533,6 +533,17 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 			return valueType{kind: boolKind}, nil
 		}
+		if strings.EqualFold(expr.Text, "strcasecmp") {
+			if len(args) != 2 {
+				return valueType{}, unsupported(expr.Line, "strcasecmp expects two arguments")
+			}
+			for _, arg := range args {
+				if arg.kind != stringKind && arg.kind != unknownKind {
+					return valueType{}, unsupported(expr.Line, "strcasecmp requires two strings")
+				}
+			}
+			return valueType{kind: intKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "strtolower") {
 			if len(expr.Args) != 1 {
 				return valueType{}, unsupported(expr.Line, "strtolower expects one argument")

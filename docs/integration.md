@@ -99,6 +99,11 @@ runtime-guarded; see [the subset contract](sprintf-boundary.md).
 The boolean-control/type-predicate addition remains the same excluded local
 compiler capability; no authentication or user-facing service action is added.
 
+The [string-only strcasecmp extension](strcasecmp-boundary.md) retains that
+WebMCP exclusion. It introduces no route or authentication change. Its compiler
+pin is based on #38; the separate #36 array-return stack is not implicitly
+included, and existing Gossip manifests/results are not upgraded automatically.
+
 Report schema `gohp.build/v0.1` includes IR/compiler versions, source and generated
 SHA-256, input path, PHP target and `generated` status. Additive fields `output`
 and `source_map` identify the generated file and provide a versioned,
