@@ -576,7 +576,7 @@
       "contract": "Single explicit int/string index assignment to an initialized local array variable replaces or inserts a copied value while preserving key order and independent nested arrays. References remain unsupported.",
       "php_targets": ["8.3"],
       "checks": [
-        {"case_id": "diff.array_set", "test": "TestDifferential/array_set", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/array_set.php"},
+        {"case_id": "diff.array_set", "test": "TestDifferential/array_set", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/array_set.php", "assertions": ["explicit-key order, independent copies, null RHS, finite recursion and foreach snapshot match native stdout and normal exit"]},
         {"case_id": "unit.codegen.array_set", "test": "TestArraySetParsesAndLowersToRuntimeBoundary", "file": "internal/codegen/array_set_test.go", "kind": "unit", "assertions": ["single-index statement is explicit IR and lowers to runtime boundary"]},
         {"case_id": "negative.codegen.array_set", "test": "TestArraySetKnownUnsupportedSourceFailsBeforeGeneration", "file": "internal/codegen/array_set_test.go", "kind": "negative", "assertions": ["undefined/scalar targets, invalid keys and excluded assignment forms fail before generation"]},
         {"case_id": "negative.ir.array_set", "test": "TestArraySetMalformedIRIsRejectedBeforeGeneration", "file": "internal/codegen/array_set_test.go", "kind": "negative", "assertions": ["missing index, invalid statement fields and reserved/undefined bases rejected"]},
