@@ -1,5 +1,9 @@
 # Gossip builder contract v0.1 (proposal)
 
+Bounded [array-variable empty](array-empty-boundary.md) is part of local
+`gohp.cli.generate`, still WebMCP-excluded. It adds no route/authentication or
+server operation; Gossip original-source pins and evidence remain separate.
+
 Gossip can invoke `gohp -in source.php -out candidate.go -php-version 8.3
 -report candidate.report.json` in an isolated build workspace. The command exits
 nonzero for unsupported syntax or semantic checks and produces no new Go output

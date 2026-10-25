@@ -439,6 +439,20 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 			e.Args = []ir.Expr{p.expr(0)}
 			break
 		}
+		if strings.EqualFold(t.text, "empty") {
+			// This subset tests a defined array variable, never a suppressed
+			// undefined/index/property read or an arbitrary expression.
+			p.need("(")
+			base := p.pop()
+			if base.kind != "var" {
+				p.fail("empty requires a single array variable")
+			}
+			p.need(")")
+			e = ir.Expr{Kind: "empty_array", Line: t.line, Args: []ir.Expr{
+				{Kind: "var", Text: base.text, Line: base.line},
+			}}
+			break
+		}
 		if strings.EqualFold(t.text, "isset") {
 			// Keep the operand as an address, not an eagerly evaluated index.
 			// Only one defined array variable and one literal/variable key are

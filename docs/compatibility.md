@@ -24,6 +24,7 @@ This table is the current curated summary, not a blanket support claim.
 | Case-insensitive string comparison | `strcasecmp(string, string)` | [ASCII byte comparison](strcasecmp-boundary.md); no non-string coercion or Unicode/locale folding |
 | Array-element presence | `isset($array[$key])` on a defined actual array | [Bounded isset](array-isset-boundary.md); one literal/variable int/string key, missing/null false; no undefined roots, nested/property/general isset |
 | Strict scalar membership | `in_array(scalar, scalar-valued array, true)` | [Closed strict boundary](in-array-strict-boundary.md); no loose mode or array/object values |
+| Array emptiness | `empty($arrayVariable)` on a defined actual array | [Bounded empty](array-empty-boundary.md); outer count only, no undefined/scalar/index/property/expression operands |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |

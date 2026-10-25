@@ -461,6 +461,25 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			return valueType{}, unsupported(expr.Line, "boolean cast requires a supported value")
 		}
 		return valueType{kind: boolKind}, nil
+	case "empty_array":
+		if err := require(1); err != nil {
+			return valueType{}, err
+		}
+		base := expr.Args[0]
+		if expr.Text != "" || base.Kind != "var" {
+			return valueType{}, malformed(expr.Line, "empty requires a single array variable")
+		}
+		if _, ok := scope[base.Text]; !ok {
+			return valueType{}, unsupported(expr.Line, "empty requires an existing array variable")
+		}
+		baseType, err := v.expr(base, scope)
+		if err != nil {
+			return valueType{}, err
+		}
+		if baseType.kind != arrayKind && baseType.kind != unknownKind {
+			return valueType{}, unsupported(expr.Line, "empty requires an array")
+		}
+		return valueType{kind: boolKind}, nil
 	case "isset_index":
 		if err := require(2); err != nil {
 			return valueType{}, err
@@ -515,6 +534,9 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		}
 		return valueType{kind: unknownKind}, nil
 	case "call":
+		if strings.EqualFold(expr.Text, "empty") {
+			return valueType{}, malformed(expr.Line, "empty must use the empty_array language construct")
+		}
 		if strings.EqualFold(expr.Text, "isset") {
 			return valueType{}, malformed(expr.Line, "isset must use the isset_index language construct")
 		}

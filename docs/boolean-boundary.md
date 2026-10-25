@@ -49,6 +49,9 @@ It is not general PHP control flow or object/coercion compatibility.
   and leaving other bytes unchanged. No weak coercion or Unicode case folding.
   PHP 8.3 uses ASCII semantics. The oracle additionally selects and verifies
   `LC_CTYPE=C` for reproducibility; historical PHP 7.4 results are not current support.
+- Bounded [array-variable empty](array-empty-boundary.md) is a language construct,
+  returning bool from a defined actual array's outer count. It is not a generic
+  falsy-value test or an undefined/index/property probe.
 - New builtin names are case-insensitive and reserved against redeclaration.
 
 PHP references: [boolean conversion](https://www.php.net/manual/en/language.types.boolean.php),
