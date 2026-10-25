@@ -94,7 +94,7 @@ func TestArrayReturnUnsupportedSourceFailsClosed(t *testing.T) {
 		"<?php function result(): string { return ''; }",
 		"<?php function result(): ?array { return []; }",
 		"<?php function result(): array|int { return []; }",
-		"<?php function result(array $value): array { return $value; }",
+		"<?php function result(callable $value): array { return $value; }",
 		"<?php function result(): array { return; }",
 		"<?php function result(): array { return null; }",
 		"<?php function result(): array { return false; }",

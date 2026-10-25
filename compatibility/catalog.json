@@ -3,6 +3,25 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.array-parameter-type",
+      "kind": "syntax",
+      "name": "Array parameters on named global functions",
+      "implementation": "partial",
+      "contract": "Fixed positional array parameters retain aligned canonical IR metadata; known non-arrays fail statically and unknown values are guarded and copied before the body. Annotation constrains entry, not later local assignments.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.array_parameter","test":"TestDifferential/array_parameter","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_parameter.php","assertions":["stdout","exit","forward calls, ordered mixed arguments, array/bool returns, nested copy and key metadata, literal callbacks and local reassignment"]},
+        {"case_id":"unit.array_parameter.copy","test":"TestArrayParameterClonesArrayAndMetadata","file":"runtime/array_parameter_test.go","kind":"unit","assertions":["nested arrays and integer-key metadata copied without aliasing"]},
+        {"case_id":"negative.array_parameter.domain","test":"TestArrayParameterRejectsNonArrays","file":"runtime/array_parameter_test.go","kind":"negative","assertions":["null/scalar/object values rejected without coercion"]},
+        {"case_id":"compiler.array_parameter.entry","test":"TestArrayParameterRetentionAndEntryGuards","file":"internal/codegen/array_parameter_test.go","kind":"compiler","assertions":["mixed-case aligned metadata, mixed typed/untyped bindings, entry guards and body source maps; local reassignment allowed"]},
+        {"case_id":"negative.array_parameter.source","test":"TestArrayParameterUnsupportedSource","file":"internal/codegen/array_parameter_test.go","kind":"negative","assertions":["known wrong arguments, arity and excluded declarations rejected with no output"]},
+        {"case_id":"negative.array_parameter.ir","test":"TestArrayParameterMalformedIR","file":"internal/codegen/array_parameter_test.go","kind":"negative","assertions":["misaligned/noncanonical metadata rejected before forward calls"]},
+        {"case_id":"negative.array_parameter.runtime","test":"TestArrayParameterRuntimeGuards","file":"tests/array_parameter_runtime_test.go","kind":"negative","assertions":["compiled unknown null/scalar/object arguments and scalar callback elements rejected"]},
+        {"case_id":"negative.array_parameter.before_body","test":"TestArrayParameterGuardPrecedesFunctionBody","file":"tests/array_parameter_runtime_test.go","kind":"negative","assertions":["invalid unknown argument rejected without executing body marker"]}
+      ],
+      "limitations": ["No callable/scalar/nullable/union/intersection parameter types, defaults, references, variadics, named arguments or typed methods", "No dynamic callable engine or return-type inference", "Runtime failure is not PHP TypeError/catchability/error-side-effect equivalence", "Gossip original-source adoption requires separate pins and differential evidence"]
+    },
+    {
       "id": "php.syntax.bool-return-type",
       "kind": "syntax",
       "name": "Actual-bool returns on named global functions",
@@ -18,7 +37,7 @@
         {"case_id":"negative.bool_return.ir","test":"TestBoolReturnRejectsNoncanonicalIR","file":"internal/codegen/bool_return_test.go","kind":"negative","assertions":["noncanonical/unsupported return-type IR is rejected before generation"]},
         {"case_id":"negative.bool_return.runtime","test":"TestBoolReturnRuntimeGuards","file":"tests/bool_return_runtime_test.go","kind":"negative","assertions":["compiled unknown non-bools across conditional/foreach returns and fallthrough fail explicitly"]}
       ],
-      "limitations": ["Actual bool values only; PHP weak scalar return coercion is outside this subset", "No typed methods/parameters, nullable/union/intersection or boolean alias return types", "No path-completeness proof or inferred call return types", "Runtime rejection is not PHP TypeError/catchability equivalence", "Gossip numeric-array adoption still requires other dependencies and pinned original-source comparison"]
+      "limitations": ["Actual bool values only; PHP weak scalar return coercion is outside this subset", "No typed methods/non-array parameters, nullable/union/intersection or boolean alias return types", "No path-completeness proof or inferred call return types", "Runtime rejection is not PHP TypeError/catchability equivalence", "Gossip numeric-array adoption still requires other dependencies and pinned original-source comparison"]
     },
     {
       "id": "php.builtin.in-array-strict-scalar",
@@ -450,7 +469,7 @@
       "checks": [
         {"case_id": "diff.core", "test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["native PHP stdout equals generated Go stdout"]}
       ],
-      "limitations": ["No optional, typed, variadic or by-reference parameters", "No closures or dynamic calls"]
+      "limitations": ["No optional, non-array typed, variadic or by-reference parameters", "No closures or dynamic calls"]
     },
     {
       "id": "php.syntax.array-return-type",
@@ -471,10 +490,10 @@
         {"case_id": "compiler.array_return.paths", "test": "TestArrayReturnTypeIsRetainedAndGuardsEveryReturnPath", "file": "internal/codegen/array_return_test.go", "kind": "compiler", "assertions": ["IR retains the annotation and nested return/fallthrough guards are emitted"]},
         {"case_id": "compiler.array_return.forward", "test": "TestArrayReturnTypeMixedCaseAndForwardCallLowering", "file": "internal/codegen/array_return_test.go", "kind": "compiler", "assertions": ["case-insensitive source annotations normalize and forward calls remain guarded"]},
         {"case_id": "negative.array_return.ir", "test": "TestArrayReturnTypeMalformedIRAndTypedMethodsFailClosed", "file": "internal/codegen/array_return_test.go", "kind": "negative", "assertions": ["noncanonical/unsupported IR types and typed methods are rejected"]},
-        {"case_id": "negative.array_return.source", "test": "TestArrayReturnUnsupportedSourceFailsClosed", "file": "internal/codegen/array_return_test.go", "kind": "negative", "assertions": ["unsupported types/typed parameters/bare or known non-array returns produce no generated output"]},
+        {"case_id": "negative.array_return.source", "test": "TestArrayReturnUnsupportedSourceFailsClosed", "file": "internal/codegen/array_return_test.go", "kind": "negative", "assertions": ["unsupported return/parameter types and bare or known non-array returns produce no generated output"]},
         {"case_id": "negative.array_return.runtime", "test": "TestArrayReturnRuntimeGuards", "file": "tests/array_return_runtime_test.go", "kind": "negative", "assertions": ["compiled unknown null/scalar returns and fallthrough fail explicitly"]}
       ],
-      "limitations": ["Only array and separately bounded bool return declarations; no nullable/union/intersection types, typed parameters or typed methods", "No path-completeness proof or branch-sensitive narrowing", "Failure is not PHP TypeError/catchability equivalence; native harness compares stdout and normal exits", "Gossip adoption requires its own pinned original-source evidence"]
+      "limitations": ["Only array and separately bounded bool return declarations; no nullable/union/intersection types, non-array typed parameters or typed methods", "No path-completeness proof or branch-sensitive narrowing", "Failure is not PHP TypeError/catchability equivalence; native harness compares stdout and normal exits", "Gossip adoption requires its own pinned original-source evidence"]
     },
     {
       "id": "php.syntax.foreach",

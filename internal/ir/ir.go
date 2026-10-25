@@ -20,6 +20,7 @@ type Stmt struct {
 type Function struct {
 	Name       string
 	Params     []string
+	ParamTypes []string // Empty means all untyped; otherwise aligned with Params, each "" or "array".
 	Body       []Stmt
 	Line       int
 	ReturnType string // Empty (untyped), "array" or "bool" on a named global function.

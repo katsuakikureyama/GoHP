@@ -36,6 +36,10 @@ Earlier separate-stack evidence does not validate the resulting
 revision. Gossip's original-source units and compiler pins are unchanged here;
 they require independent validation before adopting this integrated revision.
 
+Fixed positional [array parameters](array-parameter-boundary.md) extend the same
+local `gohp.cli.generate` operation; WebMCP remains excluded because this is
+developer-only source translation, with no browser/server operation or auth route.
+
 Capability/WebMCP scope: `gohp.cli.generate` is explicitly **excluded** from browser
 WebMCP exposure because it is a local compiler writing caller-owned build files.
 The [one-level PHP array assignment and append](array-write-boundary.md) extension remains

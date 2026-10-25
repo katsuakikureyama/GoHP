@@ -104,8 +104,10 @@ multiple operands and key coercions are excluded. See the
 [array isset boundary](docs/array-isset-boundary.md).
 Named global functions may declare `: array` or `: bool`; explicit returns and fallthrough
 are checked rather than silently dropping the declaration. Bool returns require
-actual bool values, without weak scalar coercion. Other return types,
-typed parameters and typed methods remain excluded. See the
+actual bool values, without weak scalar coercion. Fixed positional `array`
+parameters are checked before the body and receive detached value copies; see
+the [array parameter boundary](docs/array-parameter-boundary.md). Other parameter
+and return types and typed methods remain excluded. See the
 [array return boundary](docs/array-return-boundary.md) and
 [bool return boundary](docs/bool-return-boundary.md).
 Strict scalar `in_array(needle, haystack, true)` is also available: the needle

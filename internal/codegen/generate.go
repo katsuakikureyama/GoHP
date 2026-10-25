@@ -133,7 +133,11 @@ func (g *generator) function(f ir.Function, c string) {
 			g.fail(f.Line, "duplicate or reserved parameter "+n)
 		}
 		scope[n] = true
-		g.emit("v[%q]=rt.Clone(args[%d])\n", n, i)
+		if len(f.ParamTypes) != 0 && f.ParamTypes[i] == "array" {
+			g.emit("v[%q]=rt.ArrayParameter(args[%d])\n", n, i)
+		} else {
+			g.emit("v[%q]=rt.Clone(args[%d])\n", n, i)
+		}
 	}
 	g.stmts(f.Body, scope, true, f.ReturnType)
 	if len(f.Body) == 0 || f.Body[len(f.Body)-1].Kind != "return" {

@@ -25,8 +25,17 @@ The optional `Function.ReturnType` admits canonical empty/untyped, `array` or
 `bool` on named global functions. Validation propagates that context through
 all conditional and foreach bodies; code generation guards explicit returns
 and fallthrough. The bool boundary admits actual bool only, not weak scalar
-coercions. No call-site type inference, typed method/parameter support or
+coercions. No call-site return-type inference, typed method support or
 path-completeness analysis is implied. Existing IR version `0.1` is retained.
+
+The additive `Function.ParamTypes` is empty for all-untyped parameters; otherwise
+it aligns exactly with `Params` and contains only canonical `""` or `"array"`.
+All signatures are validated before any body/call is checked. Array parameters
+start with array scope type; known non-array direct arguments are rejected and
+unknown arguments use `rt.ArrayParameter` before the function body. The guard
+copies supported arrays and their key metadata. The annotation constrains entry,
+not later local assignments. Only named global fixed positional parameters are
+covered; [the boundary](array-parameter-boundary.md) excludes typed methods.
 
 The additive internal `Stmt.ElseBody` field retains IR version `0.1`, with nil
 for no else and a non-nil empty slice for an explicit empty else. Only if statements
