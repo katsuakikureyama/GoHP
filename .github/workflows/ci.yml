@@ -1,0 +1,52 @@
+name: compiler-validation
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  differential:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Add a new target here only after its independent compatibility
+        # validation and target-policy update; this job never ranges minors.
+        include:
+          - php_target: "8.3"
+            php_image: php:8.3.36-cli@sha256:98d555ff97b3865140ad31032508c3ca089fa97a8944b14ca9dc03ea05d788cd
+    env:
+      GOHP_PHP_TARGET: ${{ matrix.php_target }}
+      GOHP_PHP_IMAGE: ${{ matrix.php_image }}
+      GOHP_GO_IMAGE: golang:1.23.12@sha256:60deed95d3888cc5e4d9ff8a10c54e5edc008c6ae3fba6187be6fb592e19e8c0
+      GOHP_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      GOHP_RUN_ID: ${{ github.run_id }}
+      GOHP_RUN_ATTEMPT: ${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Build pinned development image
+        run: docker compose build --build-arg PHP_IMAGE="$GOHP_PHP_IMAGE" --build-arg GO_IMAGE="$GOHP_GO_IMAGE" test
+      - name: Validate PHP vs compiled Go with no network
+        run: |
+          export GOHP_COMMIT="$(git rev-parse HEAD)"
+          export GOHP_TREE="$(git rev-parse 'HEAD^{tree}')"
+          export GOHP_DIRTY=clean
+          if test -n "$(git status --porcelain --untracked-files=all)"; then export GOHP_DIRTY=dirty; fi
+          mkdir -p build/ci
+          docker compose run --rm --user "$(id -u):$(id -g)" \
+            -v "$PWD/build/ci:/evidence" -e GOHP_EVIDENCE_DIR=/evidence/run \
+            -e GOHP_COMMIT -e GOHP_TREE -e GOHP_DIRTY \
+            -e GOHP_PHP_TARGET -e GOHP_PHP_IMAGE -e GOHP_GO_IMAGE -e GOHP_RUN_URL -e GOHP_RUN_ID -e GOHP_RUN_ATTEMPT \
+            test
+      - name: Publish function and feature summary
+        if: always()
+        run: |
+          if test -f build/ci/run/summary.md; then
+            tee -a "$GITHUB_STEP_SUMMARY" < build/ci/run/summary.md
+          fi
+      - name: Retain compatibility evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: compatibility-php${{ matrix.php_target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/ci/run/
+          if-no-files-found: error
+          retention-days: 30

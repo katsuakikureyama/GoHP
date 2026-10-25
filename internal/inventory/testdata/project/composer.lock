@@ -1,0 +1,26 @@
+{
+  "content-hash": "fixture-only-not-a-freshness-proof",
+  "packages": [
+    {
+      "name": "gohp-fixture/library",
+      "version": "1.2.3",
+      "type": "library",
+      "license": ["MIT", "BSD-3-Clause"],
+      "source": {"type": "git", "url": "https://secret-source-value@example.invalid/library.git", "reference": "fixture-commit-a"},
+      "dist": {"type": "zip", "url": "https://example.invalid/dist?token=secret-dist-value", "reference": "fixture-commit-a", "shasum": ""},
+      "require": {"php": ">=7.4", "ext-mbstring": "*", "lib-icu": ">=60"},
+      "require-dev": {"gohp-fixture/package-tests-only": "^1"},
+      "provide": {"virtual/logger": "1.0"},
+      "replace": {"gohp-fixture/replaced": "self.version"},
+      "conflict": {"gohp-fixture/old": "<1.0"},
+      "suggest": {"ext-curl": "Optional transport; not a version constraint"},
+      "autoload": {"files": ["never-load.php"]}
+    }
+  ],
+  "packages-dev": [
+    {"name": "gohp-fixture/dev-tool", "version": "2.0.0", "type": "composer-plugin", "require": {"composer-plugin-api": "^2.0"}}
+  ],
+  "platform": {"php": "^7.4 || ^8.3", "ext-json": "*"},
+  "platform-dev": {},
+  "platform-overrides": {"php": "8.3.0", "ext-missing": false}
+}

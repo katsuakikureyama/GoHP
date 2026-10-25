@@ -1,0 +1,17 @@
+{
+  "repository": "nikic/PHP-Parser",
+  "observed_at": "2026-10-24",
+  "head": "8d2b672aff65a1a4dbf7936cec27d19f51989412",
+  "files": [
+    {
+      "path": "README.md",
+      "url": "https://raw.githubusercontent.com/nikic/PHP-Parser/8d2b672aff65a1a4dbf7936cec27d19f51989412/README.md",
+      "sha256": "8c89ec56744b78052f9324a4ce76210cf298acbb227653b86491f685a9035105"
+    },
+    {
+      "path": "LICENSE",
+      "url": "https://raw.githubusercontent.com/nikic/PHP-Parser/8d2b672aff65a1a4dbf7936cec27d19f51989412/LICENSE",
+      "sha256": "dd859e107fac9f87a4413ab8c3c96f0f1611a17f596a2db562a5a4f4904c1e97"
+    }
+  ]
+}

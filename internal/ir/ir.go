@@ -1,0 +1,43 @@
+// Package ir defines the versioned, frontend-independent GoHP subset IR.
+package ir
+
+const Version = "0.1"
+
+type Expr struct {
+	Kind, Text string
+	Line       int
+	Args       []Expr
+	Params     []string // Only arrow expressions: fixed, untyped, capture-free parameters.
+}
+type Stmt struct {
+	Kind, Name string
+	Line       int
+	Expr       Expr
+	Target     Expr // assign_index: index(variable, key); assign_append: variable
+	Body       []Stmt
+	ElseBody   []Stmt // if only; nil means absent, non-nil may be empty
+	Key, Value string
+}
+type Function struct {
+	Name       string
+	Params     []string
+	ParamTypes []string // Empty means all untyped; otherwise aligned with Params: "", "array", "callable".
+	Body       []Stmt
+	Line       int
+	ReturnType string // Empty (untyped), "array" or "bool" on a named global function.
+}
+type Property struct {
+	Name  string
+	Value Expr
+}
+type Class struct {
+	Name       string
+	Properties []Property
+	Methods    []Function
+}
+type Program struct {
+	Version, PHPVersion string
+	Functions           []Function
+	Classes             []Class
+	Body                []Stmt
+}

@@ -1,0 +1,17 @@
+{
+  "repository": "jphp-group/jphp",
+  "observed_at": "2026-10-24",
+  "head": "eefaac6d8195025ba53c2b7b0996a9c128b2ffb7",
+  "files": [
+    {
+      "path": "README.md",
+      "url": "https://raw.githubusercontent.com/jphp-group/jphp/eefaac6d8195025ba53c2b7b0996a9c128b2ffb7/README.md",
+      "sha256": "4dd3aa9ef6f430e6ddaebbff8ed75f9b16fc7604ab0eb6c3afd9bb59d83fc616"
+    },
+    {
+      "path": "LICENSE",
+      "url": "https://raw.githubusercontent.com/jphp-group/jphp/eefaac6d8195025ba53c2b7b0996a9c128b2ffb7/LICENSE",
+      "sha256": "c005fe158c42796e4398f135db889b27120b0c57423ff375f5ce134a243dbede"
+    }
+  ]
+}

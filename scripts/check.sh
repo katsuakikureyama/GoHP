@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+export CGO_ENABLED=0 GOTOOLCHAIN=local
+# PHP and the Go toolchain must exist. Tests deliberately fail instead of skipping PHP.
+go version
+php --version
+# This target is a policy-gated minor label, never inferred from the installed
+# PHP patch version. The compatibility runner validates the metadata before the
+# test suite executes.
+GOHP_PHP_TARGET="${GOHP_PHP_TARGET:-8.3}"
+export GOHP_PHP_TARGET
+go run ./cmd/gohp-compat -out "${GOHP_EVIDENCE_DIR:-build/compatibility}"
+go vet ./...
+mkdir -p build
+go build -o build/gohp ./cmd/gohp
+build/gohp -in tests/fixtures/core.php -out build/core.go -report build/core.report.json -php-version "$GOHP_PHP_TARGET"
+go build -o build/core build/core.go
+php tests/fixtures/core.php > build/php.stdout
+build/core > build/go.stdout
+cmp build/php.stdout build/go.stdout
+# No generated file may be produced for rejected source.
+rm -f build/rejected.go
+if build/gohp -in tests/fixtures/unsupported.php -out build/rejected.go; then
+  echo 'ERROR: unsupported source accepted' >&2; exit 1
+fi
+test ! -e build/rejected.go
+printf '%s\n' 'PASS: compiled native Go output matches PHP; unsupported source rejected'
