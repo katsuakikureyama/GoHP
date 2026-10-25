@@ -18,6 +18,8 @@ type generator struct {
 	classes map[string]bool
 	methods map[string]bool
 	serial  int
+	// Dead tails are still traversed for codegen-only validation, not emitted.
+	suppress bool
 }
 
 func name(s string) string { return strings.ToLower(s) }
@@ -50,7 +52,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		if n == "array_key_first" || n == "array_key_last" || n == "array_reverse" || n == "array_merge" {
 			g.fail(f.Line, "reserved function "+n)
 		}
-		if n == "empty" {
+		if n == "empty" || n == "continue" {
 			g.fail(f.Line, "reserved language construct "+n)
 		}
 		if _, ok := g.funcs[n]; ok || n == "in_array" || n == "isset" || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "array_key_exists" || n == "array_is_list" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "is_null" || n == "is_int" || n == "is_array" || n == "strtolower" || n == "strcasecmp" || n == "sprintf" || n == "str_replace" || n == "stripslashes" || n == "array_map" || n == "addslashes" {
@@ -120,7 +122,11 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	}
 	return out, sourceMap, nil
 }
-func (g *generator) emit(s string, a ...any)   { fmt.Fprintf(&g.b, s, a...) }
+func (g *generator) emit(s string, a ...any) {
+	if !g.suppress {
+		fmt.Fprintf(&g.b, s, a...)
+	}
+}
 func (g *generator) fail(line int, msg string) { panic(fmt.Errorf("PHP004 line %d: %s", line, msg)) }
 func (g *generator) function(f ir.Function, c string) {
 	if c == "" {
@@ -160,9 +166,13 @@ func (g *generator) function(f ir.Function, c string) {
 	g.emit("}\n")
 }
 func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, returnType string) {
+	previous := g.suppress
+	defer func() { g.suppress = previous }()
 	for _, s := range ss {
 		g.emit("// gohp:begin %d\n", s.Line)
 		switch s.Kind {
+		case "continue":
+			g.emit("continue\n") // Enclosing foreach and payload checked by semantic.
 		case "assign":
 			if s.Name == "this" || s.Name == "GLOBALS" || strings.HasPrefix(s.Name, "_") {
 				g.fail(s.Line, "reserved/global variable unsupported")
@@ -240,6 +250,9 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			g.fail(s.Line, "unsupported IR statement "+s.Kind)
 		}
 		g.emit("// gohp:end\n")
+		if s.Kind == "continue" {
+			g.suppress = true
+		}
 	}
 }
 func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
