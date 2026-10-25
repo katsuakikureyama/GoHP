@@ -1,5 +1,8 @@
 # Last insertion-order array key
 
+The matching first-key operation has its own
+[`array_key_first` contract](array-key-first-boundary.md).
+
 `array_key_last(array)` accepts exactly one actual array, with case-insensitive
 direct call spelling. It returns the last outer entry's stored int64 or string
 key, or canonical null for an empty array. Zero and an empty-string key are not

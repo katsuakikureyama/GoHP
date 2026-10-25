@@ -1,5 +1,10 @@
 # Gossip builder contract v0.1 (proposal)
 
+[`array_key_first`](array-key-first-boundary.md) extends the same WebMCP-excluded
+local compiler operation with first-key lookup. It does not adopt or replace
+Gossip's array_first value-returning polyfill, repin original-source evidence,
+or add a service/authentication route.
+
 [`array_key_last`](array-key-last-boundary.md) adds a read-only key lookup to the
 same WebMCP-excluded local generation capability. It does not repin Gossip or
 certify original array_last functions; no service/authentication route is added.

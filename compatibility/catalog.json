@@ -3,6 +3,23 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.array_key_first",
+      "kind": "builtin",
+      "name": "array_key_first(array)",
+      "implementation": "partial",
+      "contract": "One evaluated actual array argument; returns its first insertion-order stored int/string key or null for an empty array. Does not sort, inspect values or modify input/index metadata.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.array_key_first","test":"TestDifferential/array_key_first","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_key_first.php","assertions":["stdout","exit","typed first keys/null, unsorted order, normalization/replacement/append, first versus last, guarded first-value reads, single evaluation and callbacks"]},
+        {"case_id":"compiler.array_key_first","test":"TestArrayKeyFirstLoweringAndSourceMap","file":"internal/codegen/array_key_first_test.go","kind":"compiler","assertions":["case-insensitive direct call lowers with statement source map"]},
+        {"case_id":"negative.array_key_first.source","test":"TestArrayKeyFirstUnsupportedSource","file":"internal/codegen/array_key_first_test.go","kind":"negative","assertions":["arity, known nonarrays, undefined reads, named args and reserved redeclaration rejected before output"]},
+        {"case_id":"unit.runtime.array_key_first","test":"TestArrayKeyFirstOrderTypesAndPreservation","file":"runtime/array_key_first_test.go","kind":"unit","assertions":["null/typed extreme and binary keys, first insertion position, replacement/append and input/index metadata preservation"]},
+        {"case_id":"negative.array_key_first.domain","test":"TestArrayKeyFirstRejectsNonArrays","file":"runtime/array_key_first_test.go","kind":"negative","assertions":["nonarrays rejected without coercion"]},
+        {"case_id":"negative.array_key_first.runtime","test":"TestArrayKeyFirstRuntimeGuards","file":"tests/array_key_first_runtime_test.go","kind":"negative","assertions":["dynamic arguments guarded; empty result cannot bypass index-key guard and returned scalar cannot bypass array-return guard"]}
+      ],
+      "limitations": ["Existing array/key domain only; no weak coercion, named args or builtin callable lookup", "int|string|null retains unknown semantic kind and downstream guards; no union/narrowing inference", "No internal array-pointer APIs or PHP exception equivalence claim", "Not array_first value-returning polyfill; Gossip adoption needs separate pin and evidence"]
+    },
+    {
       "id": "php.builtin.array_key_last",
       "kind": "builtin",
       "name": "array_key_last(array)",

@@ -47,7 +47,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	}
 	for _, f := range p.Functions {
 		n := name(f.Name)
-		if n == "array_key_last" {
+		if n == "array_key_first" || n == "array_key_last" {
 			g.fail(f.Line, "reserved function "+n)
 		}
 		if n == "empty" {
@@ -402,6 +402,12 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 				g.fail(e.Line, "array_values expects one argument")
 			}
 			return "rt.ArrayValues(" + args(e.Args) + ")"
+		}
+		if n == "array_key_first" {
+			if len(e.Args) != 1 {
+				g.fail(e.Line, "array_key_first expects one argument")
+			}
+			return "rt.ArrayKeyFirst(" + args(e.Args) + ")"
 		}
 		if n == "array_key_last" {
 			if len(e.Args) != 1 {
