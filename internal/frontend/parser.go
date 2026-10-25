@@ -248,6 +248,13 @@ func (p *parser) function() ir.Function {
 			p.need(",")
 		}
 	}
+	if p.accept(":") {
+		t := p.pop()
+		if t.kind != "id" || !strings.EqualFold(t.text, "array") {
+			p.fail("only array return declarations are supported")
+		}
+		f.ReturnType = "array"
+	}
 	f.Body = p.block()
 	return f
 }
@@ -401,6 +408,28 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 	case "int", "string", "var":
 		e.Kind = t.kind
 	case "id":
+		if strings.EqualFold(t.text, "isset") {
+			// Keep the operand as an address, not an eagerly evaluated index.
+			// Only one defined array variable and one literal/variable key are
+			// supported; broader PHP isset forms remain outside this subset.
+			p.need("(")
+			base := p.pop()
+			if base.kind != "var" {
+				p.fail("isset requires a single indexed variable")
+			}
+			p.need("[")
+			key := p.pop()
+			if key.kind != "int" && key.kind != "string" && key.kind != "var" {
+				p.fail("isset key must be an integer/string literal or variable")
+			}
+			p.need("]")
+			p.need(")")
+			e = ir.Expr{Kind: "isset_index", Line: t.line, Args: []ir.Expr{
+				{Kind: "var", Text: base.text, Line: base.line},
+				{Kind: key.kind, Text: key.text, Line: key.line},
+			}}
+			break
+		}
 		// array(...) is a language construct, not a builtin call. Both literal
 		// spellings share the same IR and the existing closed semantic boundary.
 		if strings.EqualFold(t.text, "array") {

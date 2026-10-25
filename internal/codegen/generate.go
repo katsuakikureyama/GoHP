@@ -47,7 +47,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	}
 	for _, f := range p.Functions {
 		n := name(f.Name)
-		if _, ok := g.funcs[n]; ok || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "array_key_exists" || n == "array_is_list" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "is_array" || n == "strtolower" || n == "sprintf" || n == "str_replace" || n == "stripslashes" || n == "array_map" || n == "addslashes" {
+		if _, ok := g.funcs[n]; ok || n == "isset" || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "array_key_exists" || n == "array_is_list" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "is_array" || n == "strtolower" || n == "strcasecmp" || n == "sprintf" || n == "str_replace" || n == "stripslashes" || n == "array_map" || n == "addslashes" {
 			g.fail(f.Line, "duplicate or reserved function "+n)
 		}
 		g.funcs[n] = len(f.Params)
@@ -102,7 +102,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		}
 	}
 	g.emit("func main(){ v:=map[string]any{}; _=v\n")
-	g.stmts(p.Body, map[string]bool{}, false)
+	g.stmts(p.Body, map[string]bool{}, false, "")
 	g.emit("}\n")
 	out, err = format.Source([]byte(g.b.String()))
 	if err != nil {
@@ -135,13 +135,17 @@ func (g *generator) function(f ir.Function, c string) {
 		scope[n] = true
 		g.emit("v[%q]=rt.Clone(args[%d])\n", n, i)
 	}
-	g.stmts(f.Body, scope, true)
+	g.stmts(f.Body, scope, true, f.ReturnType)
 	if len(f.Body) == 0 || f.Body[len(f.Body)-1].Kind != "return" {
-		g.emit("return nil\n")
+		if f.ReturnType == "array" {
+			g.emit("return rt.ArrayReturn(nil)\n")
+		} else {
+			g.emit("return nil\n")
+		}
 	}
 	g.emit("}\n")
 }
-func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool) {
+func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, returnType string) {
 	for _, s := range ss {
 		g.emit("// gohp:begin %d\n", s.Line)
 		switch s.Kind {
@@ -175,21 +179,25 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool) {
 			if !inFunc {
 				g.fail(s.Line, "top-level return unsupported")
 			}
-			g.emit("return rt.Clone(%s)\n", g.expr(s.Expr, scope))
+			if returnType == "array" {
+				g.emit("return rt.ArrayReturn(%s)\n", g.expr(s.Expr, scope))
+			} else {
+				g.emit("return rt.Clone(%s)\n", g.expr(s.Expr, scope))
+			}
 		case "if":
 			g.emit("if rt.Bool(%s) {\n", g.expr(s.Expr, scope))
 			inner := map[string]bool{}
 			for k, v := range scope {
 				inner[k] = v
 			}
-			g.stmts(s.Body, inner, inFunc)
+			g.stmts(s.Body, inner, inFunc, returnType)
 			if s.ElseBody != nil {
 				g.emit("} else {\n")
 				other := map[string]bool{}
 				for k, v := range scope {
 					other[k] = v
 				}
-				g.stmts(s.ElseBody, other, inFunc)
+				g.stmts(s.ElseBody, other, inFunc, returnType)
 			}
 			g.emit("}\n")
 		case "foreach":
@@ -210,7 +218,7 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool) {
 			}
 			g.emit("v[%q]=rt.Clone(entry%d.Value)\n", s.Value, n)
 			inner[s.Value] = true
-			g.stmts(s.Body, inner, inFunc)
+			g.stmts(s.Body, inner, inFunc, returnType)
 			g.emit("}\n")
 		default:
 			g.fail(s.Line, "unsupported IR statement "+s.Kind)
@@ -284,6 +292,8 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		return "rt.NewArray(" + strings.Join(a, ",") + ")"
 	case "index":
 		return "rt.Get(" + args(e.Args) + ")"
+	case "isset_index":
+		return "rt.ArrayIsset(" + args(e.Args) + ")"
 	case "call":
 		n := name(e.Text)
 		if n == "array_map" {
@@ -332,6 +342,12 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 				g.fail(e.Line, "count expects one argument")
 			}
 			return "rt.Count(" + args(e.Args) + ")"
+		}
+		if n == "strcasecmp" {
+			if len(e.Args) != 2 {
+				g.fail(e.Line, "strcasecmp expects two arguments")
+			}
+			return "rt.StrCaseCmp(" + args(e.Args) + ")"
 		}
 		if n == "strlen" {
 			if len(e.Args) != 1 {

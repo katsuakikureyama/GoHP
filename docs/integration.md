@@ -42,6 +42,9 @@ The [one-level PHP array assignment and append](array-write-boundary.md) extensi
 within this excluded generation capability. Its writes concern simulated local
 PHP values, not service resources; no UI operation, route, authentication,
 external save/commit or automatic submission is introduced.
+Bounded [array return declarations](array-return-boundary.md) enforce simulated
+PHP return values within the same excluded local capability; no new user-facing
+operation, server resource or authentication path is introduced.
 No browser operation, server resource, authentication route or auto-submit is added.
 The [literal-only negative integer syntax](negative-integer-boundary.md) also
 uses this same excluded capability, with no new operation or authentication path.
@@ -100,6 +103,20 @@ runtime-guarded; see [the subset contract](sprintf-boundary.md).
 
 The boolean-control/type-predicate addition remains the same excluded local
 compiler capability; no authentication or user-facing service action is added.
+
+The [string-only strcasecmp extension](strcasecmp-boundary.md) retains that
+WebMCP exclusion. It introduces no route or authentication change. Its compiler
+original pin was based on #38. The current [charset/array integration](charset-array-integration.md)
+explicitly combines published #40 and #36; prior Gossip manifests/results
+are not upgraded automatically and retain their independent configurations.
+
+The control-flow/array-return integration combines published #42 and #41.
+Typed return validation and runtime guards propagate through both conditional
+arms, including normalized `elseif` / `else if` chains and nested `foreach`.
+`control_flow_array_integration.php` is an owned compiler fixture, not a
+WordPress original or evidence for a new Gossip compiler pin. This integration
+retains the excluded `gohp.cli.generate` capability and adds no service route,
+authentication change, deployment or automatic promotion.
 
 Report schema `gohp.build/v0.1` includes IR/compiler versions, source and generated
 SHA-256, input path, PHP target and `generated` status. Additive fields `output`

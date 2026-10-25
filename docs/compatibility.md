@@ -14,13 +14,15 @@ This table is the current curated summary, not a blanket support claim.
 | Scalar values | int64, strings, bool, null; literal-only negative decimal constants | `arrays.php`, `negative_integers.php`; no float or interpolation; [negative integer boundary](negative-integer-boundary.md) |
 | Operators | `+`, `.`, parentheses and full ternary | Integral coercion only; float promotion unsupported. Ternary is non-associative; no `?:`, `??` or object truthiness; [contract](ternary-stripslashes-boundary.md) |
 | Boolean control | Braced `if` / `elseif` / `else if` / `else`, short-circuit `&&` / `\|\|`, scalar `===` / `!==`, `(bool)`, prefix `!`/`!!` | Scalar/array truthiness only; no unbraced/alternative syntax, branch-local escape, object truthiness, array/object identity, loose `!=` or keyword logical operators; [contract](boolean-boundary.md) |
-| Functions | Named functions, fixed value arguments and returns | `core.php`; no optional/typed/by-reference/variadic args |
+| Functions | Named functions, fixed value arguments and returns; bounded global `: array` returns | `core.php`, `array_return.php`; [return contract](array-return-boundary.md); no optional/typed/by-reference/variadic args or typed methods |
 | Arrays | `[]` and `array(...)`; mixed ordered keys/values, reads, nested value copies, foreach; one-level element assignment and append to existing array variables | Literal construction keys; literal/variable int/string write keys. No auto-vivification, nested targets, references, unpacking or array union; [syntax](legacy-array-syntax.md), [write boundary](array-write-boundary.md) |
 | Classes | Public scalar defaults, no-arg construction, property reads, methods | `core.php`; no inheritance, constructors, visibility or static members |
 | Closures/dynamic callbacks | Unsupported | Only literal named one-argument user callbacks through one-array `array_map` are admitted; no general callable support; [contract](array-map-boundary.md) |
 | Exceptions/warnings | Unsupported PHP behavior | Nonzero runtime failures; never functional PASS |
 | Built-ins | `count(array)`, `strlen(string)`, `array_keys(array)`, `array_values(array)`, `array_key_exists(int\|string, array)`, `array_is_list(array)`, restricted `rtrim`, `is_bool`, `is_string`, `is_array`, ASCII `strtolower(string)`, `stripslashes(string)`, `addslashes(string)`, literal-callback `array_map` | Bounded arities/domains; [rtrim](rtrim-boundary.md), [boolean](boolean-boundary.md), [ternary](ternary-stripslashes-boundary.md), [literal callback](array-map-boundary.md); other builtins fail closed |
 | String formatting / replacement | `sprintf('%0Ns', string\|int64)` with canonical width 0–4096; `str_replace(string, string, string)` | [Zero-padding boundary](sprintf-boundary.md) / [replacement boundary](str-replace-boundary.md); no general formatting, array substitutions or count reference |
+| Case-insensitive string comparison | `strcasecmp(string, string)` | [ASCII byte comparison](strcasecmp-boundary.md); no non-string coercion or Unicode/locale folding |
+| Array-element presence | `isset($array[$key])` on a defined actual array | [Bounded isset](array-isset-boundary.md); one literal/variable int/string key, missing/null false; no undefined roots, nested/property/general isset |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |
@@ -94,6 +96,14 @@ rejects statically known mismatches such as `count(1)`, scalar `foreach`/indexin
 and a known class receiver using an absent property, method, or wrong arity.
 Values whose type genuinely depends on runtime input remain protected by explicit
 runtime failures; validation success is not a differential compatibility result.
+
+### Bounded strcasecmp contract
+
+Exactly two actual strings, ASCII-only case folding and integer byte comparison.
+No weak scalar conversion, Unicode folding or locale collation. Known bad
+arguments are rejected before generation; unknown values have a runtime guard.
+See the [contract and selected PHP implementation](strcasecmp-boundary.md).
+Original WordPress adoption requires separate pinned differential evidence.
 
 ### Bounded strlen contract
 

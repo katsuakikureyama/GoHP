@@ -63,7 +63,11 @@ Builtins currently include `count(array)`, bounded `strlen(string)` (byte
 length only, no implicit non-string coercion), `array_keys(array)` (one argument,
 ordered keys, no value filtering) and `array_values(array)` (ordered values,
 zero-based indexes, no flattening), literal-mask `rtrim`, `is_bool`, `is_string`, `is_array`
-and ASCII `strtolower(string)`. `array_key_exists(int|string, array)` checks
+and ASCII `strtolower(string)`. String-only `strcasecmp(string, string)` adds
+binary-safe ASCII case-insensitive comparison with an integer result; no
+coercion, Unicode folding or locale collation. See the
+[comparison boundary](docs/strcasecmp-boundary.md).
+`array_key_exists(int|string, array)` checks
 first-level key presence, including null-valued entries, without other key
 coercions. `array_is_list(array)` checks zero-based consecutive integer keys in
 insertion order (empty arrays are lists). See the compatibility contract and the linked
@@ -92,6 +96,15 @@ One-level `$array[$key] = $value` and `$array[] = $value` statements update
 existing array variables with detached value copies. Explicit keys must be
 int/string literals or variables; append uses PHP 8.3 integer-index progression.
 Nested targets, auto-vivification and references remain excluded.
+One-level `isset($array[$key])` probes a defined array variable without reading
+a missing element. Missing/null entries return false; other stored values return
+true. This is not general isset: undefined roots, nested indexes, properties,
+multiple operands and key coercions are excluded. See the
+[array isset boundary](docs/array-isset-boundary.md).
+Named global functions may declare `: array`; explicit returns and fallthrough
+are checked rather than silently dropping the declaration. Other return types,
+typed parameters and typed methods remain excluded. See the
+[array return boundary](docs/array-return-boundary.md).
 
 ### Active PHP target
 
@@ -121,6 +134,8 @@ See the [compatibility version policy](docs/compatibility.md#active-php-version-
 - [Literal callback mapping and string quoting boundary](docs/array-map-boundary.md)
 - [One-level array assignment and lvalue boundary](docs/array-write-boundary.md)
 - [Boolean validation subset](docs/boolean-boundary.md)
+- [String-only ASCII comparison](docs/strcasecmp-boundary.md)
+- [Combined charset and typed-array compiler](docs/charset-array-integration.md)
 - [Function/feature catalog and verification-ledger design](docs/compatibility-registry.md)
 - [Generate and browse function/feature evidence](docs/compatibility-ledger.md)
 - [Read Composer requirements without executing code](docs/compatibility.md#composer-metadata-inventory)
