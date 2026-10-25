@@ -29,13 +29,24 @@ coercions. No call-site return-type inference, typed method support or
 path-completeness analysis is implied. Existing IR version `0.1` is retained.
 
 The additive `Function.ParamTypes` is empty for all-untyped parameters; otherwise
-it aligns exactly with `Params` and contains only canonical `""` or `"array"`.
+it aligns exactly with `Params` and contains only canonical `""`, `"array"` or `"callable"`.
 All signatures are validated before any body/call is checked. Array parameters
 start with array scope type; known non-array direct arguments are rejected and
 unknown arguments use `rt.ArrayParameter` before the function body. The guard
 copies supported arrays and their key metadata. The annotation constrains entry,
 not later local assignments. Only named global fixed positional parameters are
 covered; [the boundary](array-parameter-boundary.md) excludes typed methods.
+
+Capture-free `arrow` expressions use additive `Expr.Params` and exactly one body
+operand; other expressions cannot carry parameter metadata. `invoke` requires
+a variable receiver followed by positional argument operands. Both validation
+and generation use fresh arrow-local scopes; no outer variable map is captured.
+Codegen emits a Go function wrapped in immutable `rt.Callable` metadata, not a
+PHP callable registry or interpreter. `rt.CallableParameter` checks entries;
+`rt.Invoke` checks the wrapper and exact arity, copies arguments and returns, and
+executes the generated function. Callable is a distinct semantic kind outside
+scalar/array truthiness, comparison and conversion domains. The
+[arrow boundary](arrow-callable-boundary.md) retains IR 0.1 and existing report schemas.
 
 The additive internal `Stmt.ElseBody` field retains IR version `0.1`, with nil
 for no else and a non-nil empty slice for an explicit empty else. Only if statements

@@ -35,6 +35,7 @@ Parent PASS results do not substitute for a new merged-configuration run.
 No parent PR is closed or overwritten. Main/release/deployment and Gossip source,
 pins and prior evidence are unchanged. The subsequent
 [array-parameter integration](array-parameter-integration.md) adds #51's bounded
-array arguments. Callable arguments, arrow callbacks and dynamic invocation
-still block the numeric-array original.
+array arguments. The [arrow integration](arrow-typed-integration.md) then adds
+bounded callable arguments and variable invocation; original-source adoption
+still requires separately pinned comparison.
 Local `gohp.cli.generate` remains WebMCP-excluded; no service/authentication change.

@@ -36,6 +36,10 @@ Earlier separate-stack evidence does not validate the resulting
 revision. Gossip's original-source units and compiler pins are unchanged here;
 they require independent validation before adopting this integrated revision.
 
+Capture-free [arrows and callable parameters](arrow-callable-boundary.md) remain
+inside the WebMCP-excluded `gohp.cli.generate` capability: developer-only local
+source translation, no browser operation, service route, authentication or auto-submit.
+
 Fixed positional [array parameters](array-parameter-boundary.md) extend the same
 local `gohp.cli.generate` operation; WebMCP remains excluded because this is
 developer-only source translation, with no browser/server operation or auth route.
@@ -144,7 +148,7 @@ No automatic plugin activation, DB migration, source upload or deployment occurs
 The [actual-bool return declaration](bool-return-boundary.md) extends named
 global functions only. It preserves the local `gohp.cli.generate` WebMCP exclusion
 and adds no service/auth route. Gossip's numeric-array original still needs
-callable/arrow dependencies plus a separately pinned comparison;
+a separately pinned comparison of the complete dependency stack;
 accepting `: bool` alone is not original-source compatibility or adoption.
 The [bool-return branch reconciliation](bool-return-integration.md) merges #48
 and #49 without duplicating the feature ID or runtime guard, preserving the old
@@ -152,7 +156,10 @@ evidence at its original revisions and requiring a new merged-configuration run.
 The [array-parameter integration](array-parameter-integration.md) brings #51's
 bounded array arguments onto that reconciled stack. Both parent fixture lists
 remain intact, with explicit input/output guard composition checks. This does
-not add callable parameters or promote Gossip's original-source compatibility.
+not itself add callable parameters or promote Gossip's original-source compatibility.
+The subsequent [arrow/typed-stack integration](arrow-typed-integration.md)
+adds #53's bounded generated-callable implementation while retaining all #52
+composition evidence. Original-source adoption remains a separate pinned check.
 
 Case-insensitive true/false/null literals normalize only those three predefined
 values to existing IR. This stays within the excluded local `gohp.cli.generate`

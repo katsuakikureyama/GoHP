@@ -4,9 +4,10 @@ Named global functions may declare `: array` (case-insensitive in source).
 The declaration is retained as canonical `Function.ReturnType = "array"` in
 the additive IR 0.1 field; the empty string preserves existing untyped behavior.
 Unknown IR type names are rejected rather than ignored. Typed class methods,
-non-array typed parameters and nullable/union/intersection types are not part of this
+unsupported parameter types and nullable/union/intersection types are not part of this
 contract. Actual-bool returns have a separate [bounded contract](bool-return-boundary.md).
 Array parameters have their own [entry-check contract](array-parameter-boundary.md).
+Generated-arrow callable parameters have a [separate contract](arrow-callable-boundary.md).
 
 Every explicit return in a typed function, including returns inside `if`,
 `elseif`, `else if`, `else` and `foreach`, is lowered through

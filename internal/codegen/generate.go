@@ -135,6 +135,8 @@ func (g *generator) function(f ir.Function, c string) {
 		scope[n] = true
 		if len(f.ParamTypes) != 0 && f.ParamTypes[i] == "array" {
 			g.emit("v[%q]=rt.ArrayParameter(args[%d])\n", n, i)
+		} else if len(f.ParamTypes) != 0 && f.ParamTypes[i] == "callable" {
+			g.emit("v[%q]=rt.CallableParameter(args[%d])\n", n, i)
 		} else {
 			g.emit("v[%q]=rt.Clone(args[%d])\n", n, i)
 		}
@@ -243,6 +245,18 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		return strings.Join(a, ",")
 	}
 	switch e.Kind {
+	case "arrow":
+		inner := map[string]bool{}
+		var bindings strings.Builder
+		for i, param := range e.Params {
+			inner[param] = true
+			fmt.Fprintf(&bindings, "v[%q]=args[%d];", param, i)
+		}
+		// This function has a fresh local v, never the enclosing scope's map.
+		// Invoke owns arity, argument copies and the returned-value copy.
+		return fmt.Sprintf("rt.NewCallable(%d,func(args ...any) any {v:=map[string]any{}; _=v; %s return %s})", len(e.Params), bindings.String(), g.expr(e.Args[0], inner))
+	case "invoke":
+		return "rt.Invoke(" + args(e.Args) + ")"
 	case "int":
 		return "int64(" + e.Text + ")"
 	case "string":

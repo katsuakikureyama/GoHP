@@ -25,8 +25,9 @@ returns an unknown integer element. These checks are about input/output type
 boundaries, not a claim of general callable or PHP error compatibility.
 
 The [array-parameter boundary](array-parameter-boundary.md) and
-[bool-return boundary](bool-return-boundary.md) remain partial. Callable/scalar
-parameters, arrow callbacks, dynamic invocation, nullable/union/intersection
+[bool-return boundary](bool-return-boundary.md) remain partial. The subsequent
+[arrow integration](arrow-typed-integration.md) adds bounded generated-callable
+parameters and variable invocation. Scalar/nullable/union/intersection parameter
 types, references, defaults and variadics remain unsupported. No WordPress
 original, Gossip pin or successful original-source count is changed; adoption
 requires separate pinned verification. PHP 8.4+ requires separate policy and

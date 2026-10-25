@@ -66,7 +66,7 @@ func TestArrayParameterUnsupportedSource(t *testing.T) {
 		{"nullable", "function take(?array $a) { return $a; }"},
 		{"union", "function take(array|bool $a) { return $a; }"},
 		{"intersection", "function take(array&X $a) { return $a; }"},
-		{"callable", "function take(callable $a) { return $a; }"},
+		{"string_type", "function take(string $a) { return $a; }"},
 		{"bool_type", "function take(bool $a) { return $a; }"},
 		{"default", "function take(array $a = []) { return $a; }"},
 		{"reference", "function take(array &$a) { return $a; }"},
@@ -91,7 +91,7 @@ func TestArrayParameterUnsupportedSource(t *testing.T) {
 }
 
 func TestArrayParameterMalformedIR(t *testing.T) {
-	for _, annotations := range [][]string{{"array", ""}, {"ARRAY"}, {"bool"}, {"callable"}, {"?array"}} {
+	for _, annotations := range [][]string{{"array", ""}, {"ARRAY"}, {"bool"}, {"CALLABLE"}, {"?array"}} {
 		p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Functions: []ir.Function{{
 			Name: "take", Params: []string{"a"}, ParamTypes: annotations, Line: 1,
 			Body: []ir.Stmt{{Kind: "return", Line: 1, Expr: ir.Expr{Kind: "var", Text: "a", Line: 1}}},
