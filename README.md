@@ -106,8 +106,11 @@ Named global functions may declare `: array` or `: bool`; explicit returns and f
 are checked rather than silently dropping the declaration. Bool returns require
 actual bool values, without weak scalar coercion. Fixed positional `array`
 parameters are checked before the body and receive detached value copies; see
-the [array parameter boundary](docs/array-parameter-boundary.md). Other parameter
-and return types and typed methods remain excluded. See the
+the [array parameter boundary](docs/array-parameter-boundary.md). Capture-free
+`fn($value, $key) => expression` arrows can be passed through global `callable`
+parameters and invoked through variables; [this bounded contract](docs/arrow-callable-boundary.md)
+does not include string/method callables, captures or typed arrow signatures.
+Other parameter and return types and typed methods remain excluded. See the
 [array return boundary](docs/array-return-boundary.md) and
 [bool return boundary](docs/bool-return-boundary.md).
 Strict scalar `in_array(needle, haystack, true)` is also available: the needle

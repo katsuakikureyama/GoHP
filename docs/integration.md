@@ -36,6 +36,10 @@ Earlier separate-stack evidence does not validate the resulting
 revision. Gossip's original-source units and compiler pins are unchanged here;
 they require independent validation before adopting this integrated revision.
 
+Capture-free [arrows and callable parameters](arrow-callable-boundary.md) remain
+inside the WebMCP-excluded `gohp.cli.generate` capability: developer-only local
+source translation, no browser operation, service route, authentication or auto-submit.
+
 Fixed positional [array parameters](array-parameter-boundary.md) extend the same
 local `gohp.cli.generate` operation; WebMCP remains excluded because this is
 developer-only source translation, with no browser/server operation or auth route.

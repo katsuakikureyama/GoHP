@@ -25,10 +25,11 @@ describes argument evaluation and default by-value passing; the
 describes declaration checks. Runtime rejection here is a Go failure, not PHP
 TypeError message, stack, catchability or error-side-effect equivalence.
 
-Excluded: callable/scalar/nullable/union/intersection parameter types, defaults,
+Excluded here: scalar/nullable/union/intersection parameter types, defaults,
 references, variadics, named arguments and typed methods. Return-type inference
 and path-completeness proofs are not added. Direct IR accepts no noncanonical
 annotations or misaligned metadata. Existing untyped IR remains valid.
+Generated-arrow `callable` parameters now have a [separate boundary](arrow-callable-boundary.md).
 
 `php.syntax.array-parameter-type` is partial. `array_parameter.php` compares
 stdout and normal exit with the admitted PHP 8.3 oracle: empty/mixed/nested
@@ -43,6 +44,8 @@ The independent PR #48 remains unchanged, not merged or closed here. Gossip
 must separately pin and compare original WordPress code; callable parameters,
 arrow callbacks and dynamic value/key invocation are still prerequisites.
 Existing Gossip pins and its successful original-source count are unchanged.
+The later arrow/callable stack incorporates both #50 and #51, retaining their histories;
+that newer boundary does not itself adopt WordPress originals either.
 
 Capability `gohp.cli.generate` remains explicitly WebMCP-excluded: local
 developer source translation, no browser surface, service operation, auth route,

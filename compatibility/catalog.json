@@ -19,7 +19,7 @@
         {"case_id":"negative.array_parameter.runtime","test":"TestArrayParameterRuntimeGuards","file":"tests/array_parameter_runtime_test.go","kind":"negative","assertions":["compiled unknown null/scalar/object arguments and scalar callback elements rejected"]},
         {"case_id":"negative.array_parameter.before_body","test":"TestArrayParameterGuardPrecedesFunctionBody","file":"tests/array_parameter_runtime_test.go","kind":"negative","assertions":["invalid unknown argument rejected without executing body marker"]}
       ],
-      "limitations": ["No callable/scalar/nullable/union/intersection parameter types, defaults, references, variadics, named arguments or typed methods", "No dynamic callable engine or return-type inference", "Runtime failure is not PHP TypeError/catchability/error-side-effect equivalence", "Gossip original-source adoption requires separate pins and differential evidence"]
+      "limitations": ["No scalar/nullable/union/intersection parameter types, defaults, references, variadics, named arguments or typed methods", "Generated-arrow callable contract is separate; no return-type inference", "Runtime failure is not PHP TypeError/catchability/error-side-effect equivalence", "Gossip original-source adoption requires separate pins and differential evidence"]
     },
     {
       "id": "php.syntax.bool-return-type",
@@ -38,7 +38,7 @@
         {"case_id":"negative.bool_return.ir","test":"TestBoolReturnRejectsNoncanonicalIR","file":"internal/codegen/bool_return_test.go","kind":"negative","assertions":["noncanonical/unsupported return-type IR is rejected before generation"]},
         {"case_id":"negative.bool_return.runtime","test":"TestBoolReturnRuntimeGuards","file":"tests/bool_return_runtime_test.go","kind":"negative","assertions":["compiled unknown non-bools across conditional/foreach returns and fallthrough fail explicitly"]}
       ],
-      "limitations": ["Actual bool values only; PHP weak scalar return coercion is outside this subset", "No typed methods/non-array parameters, nullable/union/intersection or boolean alias return types", "No path-completeness proof or inferred call return types", "Runtime rejection is not PHP TypeError/catchability equivalence", "Gossip numeric-array adoption still requires other dependencies and pinned original-source comparison"]
+      "limitations": ["Actual bool values only; PHP weak scalar return coercion is outside this subset", "No typed methods/scalar parameters, nullable/union/intersection or boolean alias return types", "No path-completeness proof or inferred call return types", "Runtime rejection is not PHP TypeError/catchability equivalence", "Gossip numeric-array adoption still requires other dependencies and pinned original-source comparison"]
     },
     {
       "id": "php.builtin.in-array-strict-scalar",
@@ -470,7 +470,7 @@
       "checks": [
         {"case_id": "diff.core", "test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["native PHP stdout equals generated Go stdout"]}
       ],
-      "limitations": ["No optional, non-array typed, variadic or by-reference parameters", "No closures or dynamic calls"]
+      "limitations": ["No optional, scalar typed, variadic or by-reference parameters", "Only capture-free generated arrows; no general callable resolution"]
     },
     {
       "id": "php.syntax.array-return-type",
@@ -494,7 +494,7 @@
         {"case_id": "negative.array_return.source", "test": "TestArrayReturnUnsupportedSourceFailsClosed", "file": "internal/codegen/array_return_test.go", "kind": "negative", "assertions": ["unsupported return/parameter types and bare or known non-array returns produce no generated output"]},
         {"case_id": "negative.array_return.runtime", "test": "TestArrayReturnRuntimeGuards", "file": "tests/array_return_runtime_test.go", "kind": "negative", "assertions": ["compiled unknown null/scalar returns and fallthrough fail explicitly"]}
       ],
-      "limitations": ["Only array and separately bounded bool return declarations; no nullable/union/intersection types, non-array typed parameters or typed methods", "No path-completeness proof or branch-sensitive narrowing", "Failure is not PHP TypeError/catchability equivalence; native harness compares stdout and normal exits", "Gossip adoption requires its own pinned original-source evidence"]
+      "limitations": ["Only array and separately bounded bool return declarations; no nullable/union/intersection types, scalar typed parameters or typed methods", "No path-completeness proof or branch-sensitive narrowing", "Failure is not PHP TypeError/catchability equivalence; native harness compares stdout and normal exits", "Gossip adoption requires its own pinned original-source evidence"]
     },
     {
       "id": "php.syntax.foreach",
@@ -1300,14 +1300,24 @@
     {
       "id": "php.syntax.closure",
       "kind": "syntax",
-      "name": "Closures and dynamic callbacks",
-      "implementation": "unsupported",
-      "contract": "Closure syntax fails closed.",
+      "name": "Capture-free arrows and generated callable invocation",
+      "implementation": "partial",
+      "contract": "Fixed untyped capture-free arrow expressions, generated-arrow-only global callable parameters and variable invocation; guarded exact arity and copied array arguments/results. Anonymous function syntax and general callable representations remain excluded.",
       "php_targets": ["8.3"],
       "checks": [
-        {"case_id": "negative.closure", "test": "TestUnsupported/closure", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["closure source is rejected with a diagnostic code"]}
+        {"case_id": "negative.closure", "test": "TestUnsupported/closure", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["anonymous function source is rejected with a diagnostic code"]},
+        {"case_id":"diff.arrow_callable","test":"TestDifferential/arrow_callable","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/arrow_callable.php","assertions":["stdout","exit","value/key order, empty and short-circuit behavior, mixed parameter forwarding, repeated/zero/nested calls and caller preservation"]},
+        {"case_id":"unit.callable.copy","test":"TestGeneratedCallableCopiesArgumentsAndResult","file":"runtime/callable_test.go","kind":"unit","assertions":["nested array arguments and results do not alias caller or callback storage"]},
+        {"case_id":"unit.callable.order","test":"TestGeneratedCallablePreservesArgumentCountAndOrder","file":"runtime/callable_test.go","kind":"unit","assertions":["each repeated invocation receives its exact ordered arguments once"]},
+        {"case_id":"negative.callable.domain_arity","test":"TestGeneratedCallableRejectsInvalidValuesAndArityBeforeCall","file":"runtime/callable_test.go","kind":"negative","assertions":["non-generated values rejected and incorrect arity never executes callback body"]},
+        {"case_id":"unit.callable.identity","test":"TestGeneratedCallableIsAnOpaqueCloneValue","file":"runtime/callable_test.go","kind":"unit","assertions":["clone and parameter entry preserve opaque immutable wrapper"]},
+        {"case_id":"compiler.arrow_callable.lowering","test":"TestArrowCallableIRAndLowering","file":"internal/codegen/arrow_callable_test.go","kind":"compiler","assertions":["canonical parameter metadata, arrow/invoke IR, guarded lowering and statement source map"]},
+        {"case_id":"negative.arrow_callable.source","test":"TestArrowCallableUnsupportedSource","file":"internal/codegen/arrow_callable_test.go","kind":"negative","assertions":["captures, richer signatures, general callables and scalar-domain misuse fail without generated output"]},
+        {"case_id":"negative.arrow_callable.ir","test":"TestArrowCallableMalformedIR","file":"internal/codegen/arrow_callable_test.go","kind":"negative","assertions":["malformed arrow/invoke/parameter metadata fails closed"]},
+        {"case_id":"negative.arrow_callable.runtime","test":"TestArrowCallableRuntimeGuards","file":"tests/arrow_callable_runtime_test.go","kind":"negative","assertions":["unknown invalid entries/receivers, missing/extra args and unknown callable boolean/strict conversion fail explicitly"]},
+        {"case_id":"negative.arrow_callable.before_body","test":"TestArrowCallableParameterGuardPrecedesFunctionBody","file":"tests/arrow_callable_runtime_test.go","kind":"negative","assertions":["invalid callable entry rejected before body marker"]}
       ],
-      "limitations": ["No closures or dynamic calls; literal one-argument named array_map callbacks have a separate partial contract"]
+      "limitations": ["No outer captures, anonymous functions, typed/static/default/reference/variadic arrows or callable return declarations", "Only generated arrows: no string/named/method/invokable-object callables; variable invocation only", "Exact arity, no general PHP error/exception/side-effect or Closure reflection/identity semantics", "Literal named array_map contract remains separate; no automatic Gossip original-source adoption"]
     },
     {
       "id": "php.syntax.array-element-assignment",

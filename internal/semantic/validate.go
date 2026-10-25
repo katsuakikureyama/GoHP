@@ -21,6 +21,7 @@ const (
 	nullKind
 	arrayKind
 	objectKind
+	callableKind
 )
 
 type valueType struct {
@@ -109,7 +110,7 @@ func validateParameterTypes(f ir.Function, method bool) error {
 		return malformed(f.Line, "parameter types must align with parameter names")
 	}
 	for _, annotation := range f.ParamTypes {
-		if annotation != "" && annotation != "array" {
+		if annotation != "" && annotation != "array" && annotation != "callable" {
 			return malformed(f.Line, "unsupported IR parameter type")
 		}
 		if method && annotation != "" {
@@ -120,6 +121,9 @@ func validateParameterTypes(f ir.Function, method bool) error {
 }
 
 func (v validator) function(f ir.Function, class string) error {
+	if strings.EqualFold(f.Name, "fn") {
+		return unsupported(f.Line, "fn is reserved for arrow expressions")
+	}
 	if f.ReturnType != "" && f.ReturnType != "array" && f.ReturnType != "bool" {
 		return malformed(f.Line, "unsupported IR return type")
 	}
@@ -140,6 +144,9 @@ func (v validator) function(f ir.Function, class string) error {
 		scope[param] = valueType{kind: unknownKind}
 		if len(f.ParamTypes) != 0 && f.ParamTypes[i] == "array" {
 			scope[param] = valueType{kind: arrayKind}
+		}
+		if len(f.ParamTypes) != 0 && f.ParamTypes[i] == "callable" {
+			scope[param] = valueType{kind: callableKind}
 		}
 	}
 	return v.stmts(f.Body, scope, f.ReturnType)
@@ -276,6 +283,9 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 }
 
 func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, error) {
+	if expr.Kind != "arrow" && expr.Params != nil {
+		return valueType{}, malformed(expr.Line, "only arrow expressions may declare parameters")
+	}
 	require := func(n int) error {
 		if len(expr.Args) != n {
 			return malformed(expr.Line, fmt.Sprintf("%s expression requires %d operands", expr.Kind, n))
@@ -283,6 +293,41 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		return nil
 	}
 	switch expr.Kind {
+	case "arrow":
+		if err := require(1); err != nil {
+			return valueType{}, err
+		}
+		if expr.Text != "" {
+			return valueType{}, malformed(expr.Line, "arrow expression must not have a name or annotation")
+		}
+		inner := map[string]valueType{}
+		for _, param := range expr.Params {
+			if !validName(param) || param == "this" || param == "GLOBALS" || strings.HasPrefix(param, "_") {
+				return valueType{}, unsupported(expr.Line, "invalid or reserved arrow parameter")
+			}
+			if _, duplicate := inner[param]; duplicate {
+				return valueType{}, unsupported(expr.Line, "duplicate arrow parameter")
+			}
+			inner[param] = valueType{kind: unknownKind}
+		}
+		// Do not import the outer scope. Codegen rejects any free variable,
+		// including one in a nested arrow: captures are outside this contract.
+		if _, err := v.expr(expr.Args[0], inner); err != nil {
+			return valueType{}, err
+		}
+		return valueType{kind: callableKind}, nil
+	case "invoke":
+		if expr.Text != "" || len(expr.Args) == 0 || expr.Args[0].Kind != "var" {
+			return valueType{}, malformed(expr.Line, "invocation requires a callable variable receiver")
+		}
+		args, err := v.exprs(expr.Args, scope)
+		if err != nil {
+			return valueType{}, err
+		}
+		if args[0].kind != callableKind && args[0].kind != unknownKind {
+			return valueType{}, unsupported(expr.Line, "invocation requires a generated arrow callable")
+		}
+		return valueType{kind: unknownKind}, nil
 	case "int":
 		if err := require(0); err != nil {
 			return valueType{}, err
@@ -379,12 +424,12 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		}
 	case "array":
 		for _, pair := range expr.Args {
-			if pair.Kind != "pair" || len(pair.Args) != 2 {
+			if pair.Kind != "pair" || len(pair.Args) != 2 || pair.Params != nil {
 				return valueType{}, malformed(pair.Line, "array entries must be key/value pairs")
 			}
 			key := pair.Args[0]
 			if key.Kind == "auto" {
-				if len(key.Args) != 0 {
+				if len(key.Args) != 0 || key.Params != nil {
 					return valueType{}, malformed(key.Line, "automatic array key has operands")
 				}
 			} else {
@@ -666,6 +711,9 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			for i, annotation := range v.parameters[strings.ToLower(expr.Text)] {
 				if annotation == "array" && args[i].kind != arrayKind && args[i].kind != unknownKind {
 					return valueType{}, unsupported(expr.Line, "array parameter requires an array argument")
+				}
+				if annotation == "callable" && args[i].kind != callableKind && args[i].kind != unknownKind {
+					return valueType{}, unsupported(expr.Line, "callable parameter requires a generated arrow")
 				}
 			}
 		}

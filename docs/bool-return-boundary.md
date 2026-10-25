@@ -17,7 +17,7 @@ unchanged. A named one-argument bool-return function can be an existing literal
 The [PHP type-declaration reference](https://www.php.net/manual/en/language.types.declarations.php)
 describes scalar coercions and return type enforcement. PHP may accept a scalar
 return that GoHP rejects under this boundary. Runtime rejection is not PHP
-TypeError text, stack or catchability equivalence. Typed methods/non-array parameters,
+TypeError text, stack or catchability equivalence. Typed methods/scalar parameters,
 nullable/union/intersection/standalone true or false return types, `boolean`
 aliases, general callable values and weak return coercions are excluded.
 
@@ -30,7 +30,7 @@ the narrower boundary independently of native error text.
 
 This removes only one prerequisite for Gossip's numeric-array candidate. Array
 parameters now have a separate [bounded contract](array-parameter-boundary.md).
-Callable parameters, arrow callbacks and dynamic invocation remain open;
+Capture-free arrow/callable invocation now has a separate [bounded contract](arrow-callable-boundary.md);
 the WordPress original/polyfill is not replaced, adopted or declared compatible.
 Gossip must pin and verify the complete dependency chain separately.
 

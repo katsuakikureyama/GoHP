@@ -246,10 +246,10 @@ func (p *parser) function() ir.Function {
 			paramType := ""
 			if p.peek().kind == "id" {
 				annotation := p.pop()
-				if !strings.EqualFold(annotation.text, "array") {
-					p.fail("only array parameter declarations are supported")
+				if !strings.EqualFold(annotation.text, "array") && !strings.EqualFold(annotation.text, "callable") {
+					p.fail("only array/callable parameter declarations are supported")
 				}
-				paramType, typed = "array", true
+				paramType, typed = strings.ToLower(annotation.text), true
 			}
 			f.Params = append(f.Params, p.name("var"))
 			paramTypes = append(paramTypes, paramType)
@@ -423,6 +423,22 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 	case "int", "string", "var":
 		e.Kind = t.kind
 	case "id":
+		if strings.EqualFold(t.text, "fn") {
+			p.need("(")
+			e = ir.Expr{Kind: "arrow", Line: t.line}
+			if !p.accept(")") {
+				for {
+					e.Params = append(e.Params, p.name("var"))
+					if p.accept(")") {
+						break
+					}
+					p.need(",")
+				}
+			}
+			p.need("=>")
+			e.Args = []ir.Expr{p.expr(0)}
+			break
+		}
 		if strings.EqualFold(t.text, "isset") {
 			// Keep the operand as an address, not an eagerly evaluated index.
 			// Only one defined array variable and one literal/variable key are
@@ -503,6 +519,13 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 		p.fail("unsupported expression")
 	}
 	for {
+		if p.accept("(") {
+			if e.Kind != "var" {
+				p.fail("dynamic invocation requires a callable variable")
+			}
+			e = ir.Expr{Kind: "invoke", Line: t.line, Args: append([]ir.Expr{e}, p.args(")")...)}
+			continue
+		}
 		if p.accept("[") {
 			idx := p.expr(0)
 			p.need("]")
