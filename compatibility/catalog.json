@@ -3,6 +3,23 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.array_key_last",
+      "kind": "builtin",
+      "name": "array_key_last(array)",
+      "implementation": "partial",
+      "contract": "One evaluated actual array argument; returns its last insertion-order stored int/string key or null for an empty array, without inspecting values or modifying input/index metadata.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.array_key_last","test":"TestDifferential/array_key_last","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_key_last.php","assertions":["stdout","exit","typed keys/null, insertion order, normalized keys, replacement/append, guarded last-element reads, single evaluation and callback composition"]},
+        {"case_id":"compiler.array_key_last","test":"TestArrayKeyLastLoweringAndSourceMap","file":"internal/codegen/array_key_last_test.go","kind":"compiler","assertions":["case-insensitive direct call lowers with statement source map"]},
+        {"case_id":"negative.array_key_last.source","test":"TestArrayKeyLastUnsupportedSource","file":"internal/codegen/array_key_last_test.go","kind":"negative","assertions":["arity, known nonarrays, undefined reads, named args and reserved redeclaration rejected before output"]},
+        {"case_id":"unit.runtime.array_key_last","test":"TestArrayKeyLastOrderTypesAndPreservation","file":"runtime/array_key_last_test.go","kind":"unit","assertions":["null and typed extreme/string keys, insertion order, normalization, replacement, unchanged values/index metadata and subsequent append"]},
+        {"case_id":"negative.array_key_last.domain","test":"TestArrayKeyLastRejectsNonArrays","file":"runtime/array_key_last_test.go","kind":"negative","assertions":["nonarrays rejected without coercion"]},
+        {"case_id":"negative.array_key_last.runtime","test":"TestArrayKeyLastRuntimeGuards","file":"tests/array_key_last_runtime_test.go","kind":"negative","assertions":["dynamic arguments guarded; empty-result null cannot bypass index-key guard and returned scalar cannot bypass array return guard"]}
+      ],
+      "limitations": ["Existing array/key domain only, no weak coercion, named args or builtin callable lookup", "int|string|null uses existing unknown semantic kind; downstream guards retained, no union/narrowing inference", "No internal array-pointer APIs or PHP exception equivalence claim", "Gossip original-source adoption requires separate compiler pin and evidence"]
+    },
+    {
       "id": "php.syntax.empty-array-variable",
       "kind": "syntax",
       "name": "empty on a defined array variable",
@@ -18,7 +35,7 @@
         {"case_id":"negative.array_empty.domain","test":"TestArrayEmptyRejectsNonArrays","file":"runtime/array_empty_test.go","kind":"negative","assertions":["runtime rejects nonarrays rather than accepting general PHP empty domain"]},
         {"case_id":"negative.array_empty.runtime","test":"TestArrayEmptyRuntimeGuards","file":"tests/array_empty_runtime_test.go","kind":"negative","assertions":["compiled unknown null/bool/string/integer values and arrow path cannot bypass array guard"]}
       ],
-      "limitations": ["Not general PHP empty: no undefined-variable suppression, scalar/object operands, array-element/property probes or arbitrary expressions", "No named arguments or callable lookup for this language construct", "Runtime rejection is not PHP warning/exception equivalence", "Gossip original-source adoption needs separate pin and evidence; array_key_last remains unsupported"]
+      "limitations": ["Not general PHP empty: no undefined-variable suppression, scalar/object operands, array-element/property probes or arbitrary expressions", "No named arguments or callable lookup for this language construct", "Runtime rejection is not PHP warning/exception equivalence", "Gossip original-source adoption needs separate pin and evidence; array_key_last has its own bounded contract"]
     },
     {
       "id": "php.builtin.is_null",
