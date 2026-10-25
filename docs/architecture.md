@@ -40,7 +40,8 @@ Values currently use Go `any`: int64, byte strings, bool, null, ordered arrays a
 native generated class pointers. PHP arrays have insertion order, numeric-string
 key normalization, last-value replacement without reordering and independent
 nested copies on assignments, arguments and returns. This eager copy models value
-semantics for the supported immutable-array operations; it does not implement
+semantics for supported array operations, including functional root-binding
+replacement for one-level writes; it does not implement
 PHP references or production copy-on-write optimization. Object identity remains
 pointer identity. Class methods are real generated Go methods; interface assertions
 provide method dispatch, not an AST/opcode evaluator. Only public scalar property
@@ -64,7 +65,9 @@ results.
 ## Next decisions
 
 Adopt a full version-aware parser adapter; extend validation as the type model
-grows. Design explicit lvalue/reference cells before array writes or
-closures. Add scalar types and conversions with warning/exception differential
+grows. The [one-level assignment design](array-write-boundary.md) uses an explicit
+root-binding target and functional array replacement, not reference cells.
+Nested lvalues/references and closures require a further location/cell design.
+Add scalar types and conversions with warning/exception differential
 fixtures; then inheritance and include/autoload boundaries. Source maps, structured
 runtime diagnostics and persistent compatibility reports remain open work.

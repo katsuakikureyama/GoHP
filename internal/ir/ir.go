@@ -12,6 +12,7 @@ type Stmt struct {
 	Kind, Name string
 	Line       int
 	Expr       Expr
+	Target     Expr // assign_index only: index(variable, literal-or-variable key)
 	Body       []Stmt
 	Key, Value string
 }

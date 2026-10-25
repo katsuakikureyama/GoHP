@@ -44,10 +44,12 @@ not general side-effect, warning, stderr or exception equivalence.
 Existing corpus entries are retained. That earlier integration check is linked to
 `php.syntax.full-ternary` and `php.builtin.stripslashes-string`; it does not turn
 unsupported features into supported ones. Invalid domains keep existing static
-and runtime guards. References, array writes, general callbacks, coercion,
+and runtime guards. References, nested/append array targets, general callbacks, coercion,
 short ternary/coalescing and object truthiness remain excluded. Explicit finite
 recursion through a literal declared callback is now admitted only by the
 separate [one-array mapping contract](array-map-boundary.md).
+One-level value writes are separately admitted by the
+[root-binding assignment contract](array-write-boundary.md), not general lvalues.
 
 ## Gossip adoption is separate
 

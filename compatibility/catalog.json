@@ -62,7 +62,7 @@
         {"case_id": "negative.legacy_array_bareword", "test": "TestUnsupported/legacy_array_bareword", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["bare legacy array keyword is rejected with a diagnostic code"]},
         {"case_id": "unit.runtime.max_array_key", "test": "TestExplicitMaxArrayKeyOnlyBlocksFollowingAutomaticKey", "file": "runtime/runtime_test.go", "kind": "unit", "assertions": ["automatic key after maximum integer fails explicitly"]}
       ],
-      "limitations": ["No array union or writes", "No references or unpacking", "Only literal integer/string keys; dynamic and boolean keys are rejected"]
+      "limitations": ["No array union; one-level writes have a separate contract", "No references or unpacking", "Only literal integer/string keys in array construction; dynamic and boolean construction keys are rejected"]
     },
     {
       "id": "php.syntax.array-index-read",
@@ -569,14 +569,42 @@
       "limitations": ["No closures or dynamic calls; literal one-argument named array_map callbacks have a separate partial contract"]
     },
     {
-      "id": "php.syntax.array-write-and-reference",
+      "id": "php.syntax.array-element-assignment",
       "kind": "syntax",
-      "name": "Array writes and references",
-      "implementation": "unsupported",
-      "contract": "Array element assignment and reference assignment fail closed.",
+      "name": "One-level existing array element assignment",
+      "implementation": "partial",
+      "contract": "Assign to one literal-or-variable int/string key of an existing array variable using a detached root/value copy; replace without reordering, insert at the end.",
       "php_targets": ["8.3"],
       "checks": [
-        {"case_id": "negative.array_write", "test": "TestUnsupported/array_write", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["array element assignment is rejected"]},
+        {"case_id":"diff.array_write","test":"TestDifferential/array_write","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_write.php","assertions":["one-level replacement/insertion, key normalization/order, value copies, RHS snapshots and foreach snapshot behavior match native PHP"]},
+        {"case_id":"unit.runtime.array_set_copy","test":"TestArraySetCopyAndOrder","file":"runtime/array_set_test.go","kind":"unit","assertions":["root and inserted nested storage are isolated; normalized key order and index metadata are preserved"]},
+        {"case_id":"negative.runtime.array_set_domain","test":"TestArraySetRejectsInvalidDomain","file":"runtime/array_set_test.go","kind":"negative","assertions":["non-array roots and non-int/string keys fail explicitly"]},
+        {"case_id":"compiler.array_write_lowering","test":"TestArrayWriteLoweringAndSourceMap","file":"internal/codegen/array_write_test.go","kind":"compiler","assertions":["explicit root-binding update lowers through ArraySet with statement source mapping"]},
+        {"case_id":"negative.ir.array_write_target","test":"TestArrayWriteMalformedTarget","file":"internal/codegen/array_write_test.go","kind":"negative","assertions":["malformed or nested assignment target IR is rejected safely"]},
+        {"case_id":"negative.array_write_dynamic","test":"TestArrayWriteRuntimeGuards","file":"tests/array_write_runtime_test.go","kind":"negative","assertions":["generated binary rejects dynamic non-array roots and non-int/string keys; no native error equivalence claim"]},
+        {"case_id":"negative.array_write_append","test":"TestUnsupported/array_write_append","file":"tests/differential_test.go","kind":"negative","assertions":["append form is rejected before generation"]},
+        {"case_id":"negative.array_write_undefined","test":"TestUnsupported/array_write_undefined","file":"tests/differential_test.go","kind":"negative","assertions":["undefined form is rejected before generation"]},
+        {"case_id":"negative.array_write_null","test":"TestUnsupported/array_write_null","file":"tests/differential_test.go","kind":"negative","assertions":["null form is rejected before generation"]},
+        {"case_id":"negative.array_write_scalar","test":"TestUnsupported/array_write_scalar","file":"tests/differential_test.go","kind":"negative","assertions":["scalar form is rejected before generation"]},
+        {"case_id":"negative.array_write_bool_key","test":"TestUnsupported/array_write_bool_key","file":"tests/differential_test.go","kind":"negative","assertions":["bool key form is rejected before generation"]},
+        {"case_id":"negative.array_write_null_key","test":"TestUnsupported/array_write_null_key","file":"tests/differential_test.go","kind":"negative","assertions":["null key form is rejected before generation"]},
+        {"case_id":"negative.array_write_key_call","test":"TestUnsupported/array_write_key_call","file":"tests/differential_test.go","kind":"negative","assertions":["key call form is rejected before generation"]},
+        {"case_id":"negative.array_write_key_expression","test":"TestUnsupported/array_write_key_expression","file":"tests/differential_test.go","kind":"negative","assertions":["key expression form is rejected before generation"]},
+        {"case_id":"negative.array_write_reference","test":"TestUnsupported/array_write_reference","file":"tests/differential_test.go","kind":"negative","assertions":["reference form is rejected before generation"]},
+        {"case_id":"negative.array_write_property","test":"TestUnsupported/array_write_property","file":"tests/differential_test.go","kind":"negative","assertions":["property form is rejected before generation"]},
+        {"case_id":"negative.array_write_conditional_root","test":"TestUnsupported/array_write_conditional_root","file":"tests/differential_test.go","kind":"negative","assertions":["conditional root form is rejected before generation"]}
+      ],
+      "limitations": ["No nested/append/property/reference lvalues, compound writes or unset","No undefined/null/scalar auto-vivification or bool/null/float key conversion","No effectful key expressions, new object alias or PHP warning/exception equivalence","Eager value copies, not Zend copy-on-write or general reference cells"]
+    },
+    {
+      "id": "php.syntax.array-write-and-reference",
+      "kind": "syntax",
+      "name": "Nested array writes and references",
+      "implementation": "unsupported",
+      "contract": "Nested array targets and reference assignment fail closed; one-level value assignment has a separate partial contract.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id": "negative.array_nested_write", "test": "TestUnsupported/array_nested_write", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["nested array assignment is rejected"]},
         {"case_id": "negative.reference", "test": "TestUnsupported/reference", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["reference assignment is rejected"]}
       ],
       "limitations": ["Copy-on-write and PHP reference semantics are not implemented"]

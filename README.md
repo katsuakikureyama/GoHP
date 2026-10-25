@@ -70,6 +70,9 @@ formatting, array substitutions, coercions and by-reference count are excluded.
 The callback subset admits `array_map('declared_function', array)` with one
 array and one literal one-argument user function, including finite recursion.
 String-only `addslashes` is byte quoting, not SQL/HTML/shell sanitization.
+One-level `$array[$key] = $value` statements update existing array variables
+with detached value copies. Keys must be int/string literals or variables;
+append, nested targets, auto-vivification and references remain excluded.
 
 ### Active PHP target
 
@@ -97,6 +100,7 @@ See the [compatibility version policy](docs/compatibility.md#active-php-version-
 - [Full ternary and string-only `stripslashes` boundary](docs/ternary-stripslashes-boundary.md)
 - [Combined conditional/array compiler boundary](docs/gossip-compiler-integration.md)
 - [Literal callback mapping and string quoting boundary](docs/array-map-boundary.md)
+- [One-level array assignment and lvalue boundary](docs/array-write-boundary.md)
 - [Boolean validation subset](docs/boolean-boundary.md)
 - [Function/feature catalog and verification-ledger design](docs/compatibility-registry.md)
 - [Generate and browse function/feature evidence](docs/compatibility-ledger.md)

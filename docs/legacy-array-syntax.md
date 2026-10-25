@@ -13,10 +13,13 @@ Included within the existing subset:
   of the `array` keyword. This is not generalized case-insensitive keyword support.
 - Array literals returned by named, untyped functions in the closed subset.
 
-No new runtime semantics are introduced. References, unpacking, array writes,
-dynamic keys, boolean keys, union, typed declarations and arbitrary PHP syntax
+This literal syntax introduces no new runtime semantics. References, unpacking,
+dynamic construction keys, boolean keys, union, typed declarations and arbitrary PHP syntax
 remain unsupported. Malformed delimiters, missing elements and a bare `array`
 identifier must fail. Unknown ordinary function calls still fail closed.
+One-level element writes are now covered separately by the
+[existing-array assignment contract](array-write-boundary.md); nested/append
+targets and reference semantics remain excluded.
 
 `tests/fixtures/legacy_arrays.php` is repository-owned differential input;
 it does not vendor or rewrite WordPress. `TestDifferential/legacy_arrays` is

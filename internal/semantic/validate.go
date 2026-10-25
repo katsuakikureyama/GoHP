@@ -125,6 +125,25 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType) error {
 				return err
 			}
 			scope[stmt.Name] = t
+		case "assign_index":
+			target := stmt.Target
+			if target.Kind != "index" || len(target.Args) != 2 || target.Args[0].Kind != "var" || stmt.Name != "" {
+				return malformed(stmt.Line, "array assignment requires an indexed variable target")
+			}
+			base, key := target.Args[0], target.Args[1]
+			if key.Kind != "int" && key.Kind != "string" && key.Kind != "var" {
+				return unsupported(stmt.Line, "array assignment key must be an integer/string literal or variable")
+			}
+			if _, ok := scope[base.Text]; !ok {
+				return unsupported(stmt.Line, "array assignment requires an existing variable")
+			}
+			if _, err := v.expr(target, scope); err != nil {
+				return err
+			}
+			if _, err := v.expr(stmt.Expr, scope); err != nil {
+				return err
+			}
+			scope[base.Text] = valueType{kind: arrayKind}
 		case "echo":
 			t, err := v.expr(stmt.Expr, scope)
 			if err != nil {
