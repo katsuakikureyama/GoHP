@@ -1,7 +1,5 @@
 package runtime
 
-import "math"
-
 // ArraySet returns a detached array value for a one-level root binding write.
 // It never autovivifies, appends implicitly, or mutates the input's storage.
 func ArraySet(base, key, value any) any {
@@ -18,12 +16,8 @@ func ArraySet(base, key, value any) any {
 			return output
 		}
 	}
-	if n, ok := key.(int64); ok && (n >= output.next || len(output.Entries) == 0) {
-		if n == math.MaxInt64 {
-			output.nextBlocked = true
-		} else {
-			output.next = n + 1
-		}
+	if n, ok := key.(int64); ok {
+		output.noteIntegerKey(n)
 	}
 	output.Entries = append(output.Entries, Entry{Key: key, Value: value})
 	return output

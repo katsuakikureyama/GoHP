@@ -22,6 +22,9 @@ Existing normalized keys are replaced without moving their position; new keys
 are inserted at the end. Integer/string normalization is the existing `Key`
 contract. Static invalid domains fail before generation, unknown values are
 guarded at runtime. Failure behavior is not PHP warning/exception equivalence.
+Integer-index bookkeeping is shared with literal construction, including the
+[PHP 8.3 negative-key boundary](array-index-boundary.md). Copies preserve this
+state; this does not enable append statements.
 
 ## Excluded forms
 

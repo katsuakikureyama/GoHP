@@ -20,6 +20,8 @@ identifier must fail. Unknown ordinary function calls still fail closed.
 One-level element writes are now covered separately by the
 [existing-array assignment contract](array-write-boundary.md); nested/append
 targets and reference semantics remain excluded.
+Both literal forms share the corrected
+[PHP 8.3 automatic-index behavior](array-index-boundary.md) for negative keys.
 
 `tests/fixtures/legacy_arrays.php` is repository-owned differential input;
 it does not vendor or rewrite WordPress. `TestDifferential/legacy_arrays` is

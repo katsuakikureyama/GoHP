@@ -52,6 +52,8 @@ fixtures check duplicate/numeric array keys, nested arrays, scalar conversions
 and PHP 8.3 operator precedence. The `legacy_arrays.php` fixture
 also covers `array(...)` syntax, empty returns, mixed nesting with `[]`, trailing
 commas and case-insensitive `array` spelling within the same closed array subset.
+Automatic literal keys now follow PHP 8.3's negative-integer progression, also
+after string-only entries; see the [array index boundary](docs/array-index-boundary.md).
 Unsupported syntax must fail
 with a diagnostic; a separate runtime-negative test must fail on a missing key.
 Compilation alone never proves PHP compatibility.

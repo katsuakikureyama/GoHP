@@ -11,9 +11,25 @@ import (
 
 type Entry struct{ Key, Value any }
 type Array struct {
-	Entries     []Entry
-	next        int64
-	nextBlocked bool
+	Entries         []Entry
+	next            int64
+	nextInitialized bool
+	nextBlocked     bool
+}
+
+// noteIntegerKey tracks PHP 8.3's next automatic key independently of string
+// entries. The zero value starts at 0 for automatic insertion, but the first
+// explicit integer key (including a negative one) establishes its own successor.
+func (a *Array) noteIntegerKey(n int64) {
+	if a.nextBlocked || (a.nextInitialized && n < a.next) {
+		return
+	}
+	a.nextInitialized = true
+	if n == math.MaxInt64 {
+		a.nextBlocked = true
+	} else {
+		a.next = n + 1
+	}
 }
 
 func Key(v any) any {
@@ -40,12 +56,8 @@ func NewArray(es ...Entry) Array {
 			k = a.next
 		}
 		k = Key(k)
-		if n, ok := k.(int64); ok && n >= a.next {
-			if n == math.MaxInt64 {
-				a.nextBlocked = true
-			} else {
-				a.next = n + 1
-			}
+		if n, ok := k.(int64); ok {
+			a.noteIntegerKey(n)
 		}
 		found := false
 		for i := range a.Entries {
@@ -63,7 +75,8 @@ func NewArray(es ...Entry) Array {
 }
 func Clone(v any) any {
 	if a, ok := v.(Array); ok {
-		b := Array{next: a.next, nextBlocked: a.nextBlocked}
+		b := a
+		b.Entries = nil
 		for _, e := range a.Entries {
 			b.Entries = append(b.Entries, Entry{e.Key, Clone(e.Value)})
 		}
@@ -161,7 +174,7 @@ func ArrayKeys(v any) any {
 	if !ok {
 		panic("array_keys requires array")
 	}
-	keys := Array{Entries: make([]Entry, len(a.Entries)), next: int64(len(a.Entries))}
+	keys := Array{Entries: make([]Entry, len(a.Entries)), next: int64(len(a.Entries)), nextInitialized: len(a.Entries) > 0}
 	for i, e := range a.Entries {
 		keys.Entries[i] = Entry{Key: int64(i), Value: e.Key}
 	}
@@ -175,7 +188,7 @@ func ArrayValues(v any) any {
 	if !ok {
 		panic("array_values requires array")
 	}
-	values := Array{Entries: make([]Entry, len(a.Entries)), next: int64(len(a.Entries))}
+	values := Array{Entries: make([]Entry, len(a.Entries)), next: int64(len(a.Entries)), nextInitialized: len(a.Entries) > 0}
 	for i, e := range a.Entries {
 		values.Entries[i] = Entry{Key: int64(i), Value: Clone(e.Value)}
 	}
