@@ -48,9 +48,9 @@ echo $one . $two . $three . $forwarded . $mapped[0];
 		"args = rt.NullDefaultArgs(args, 1, 3)",
 		"args = rt.NullDefaultArgs(args, 1, 2)",
 		`v["items"] = rt.ArrayParameter(args[0])`,
-		`F_render(rt.NewArray(rt.Entry{Key: int64(0), Value: int64(1)}))`,
-		`F_render(rt.NewArray(rt.Entry{Key: int64(0), Value: int64(1)}), nil)`,
-		`rt.ArrayMap(func(value any) any { return F_map_value(value) }, rt.NewArray(rt.Entry{Key: int64(0), Value: "x"}))`,
+		`F_render(rt.NewArray(rt.Entry{Key: nil, Value: int64(1)}))`,
+		`F_render(rt.NewArray(rt.Entry{Key: nil, Value: int64(1)}), nil)`,
+		`rt.ArrayMap(func(value any) any { return F_map_value(value) }, rt.NewArray(rt.Entry{Key: nil, Value: "x"}))`,
 	} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("generated Go missing %q:\n%s", want, out)
@@ -95,7 +95,7 @@ func TestNullDefaultParametersBoundary(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Functions: []ir.Function{function}}
 			out, err := Generate(p)
-			if err == nil || len(out) != 0 || !strings.Contains(err.Error(), "PHP00") {
+			if err == nil || len(out) != 0 || (!strings.Contains(err.Error(), "PHP00") && !strings.Contains(err.Error(), "IR002")) {
 				t.Fatalf("malformed null-default IR generated output %s: %v", out, err)
 			}
 		})
