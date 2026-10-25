@@ -102,7 +102,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		}
 	}
 	g.emit("func main(){ v:=map[string]any{}; _=v\n")
-	g.stmts(p.Body, map[string]bool{}, false)
+	g.stmts(p.Body, map[string]bool{}, false, "")
 	g.emit("}\n")
 	out, err = format.Source([]byte(g.b.String()))
 	if err != nil {
@@ -135,13 +135,17 @@ func (g *generator) function(f ir.Function, c string) {
 		scope[n] = true
 		g.emit("v[%q]=rt.Clone(args[%d])\n", n, i)
 	}
-	g.stmts(f.Body, scope, true)
+	g.stmts(f.Body, scope, true, f.ReturnType)
 	if len(f.Body) == 0 || f.Body[len(f.Body)-1].Kind != "return" {
-		g.emit("return nil\n")
+		if f.ReturnType == "array" {
+			g.emit("return rt.ArrayReturn(nil)\n")
+		} else {
+			g.emit("return nil\n")
+		}
 	}
 	g.emit("}\n")
 }
-func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool) {
+func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, returnType string) {
 	for _, s := range ss {
 		g.emit("// gohp:begin %d\n", s.Line)
 		switch s.Kind {
@@ -175,14 +179,18 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool) {
 			if !inFunc {
 				g.fail(s.Line, "top-level return unsupported")
 			}
-			g.emit("return rt.Clone(%s)\n", g.expr(s.Expr, scope))
+			if returnType == "array" {
+				g.emit("return rt.ArrayReturn(%s)\n", g.expr(s.Expr, scope))
+			} else {
+				g.emit("return rt.Clone(%s)\n", g.expr(s.Expr, scope))
+			}
 		case "if":
 			g.emit("if rt.Bool(%s) {\n", g.expr(s.Expr, scope))
 			inner := map[string]bool{}
 			for k, v := range scope {
 				inner[k] = v
 			}
-			g.stmts(s.Body, inner, inFunc)
+			g.stmts(s.Body, inner, inFunc, returnType)
 			g.emit("}\n")
 		case "foreach":
 			if s.Value == "this" || s.Key == "this" || s.Key != "" && s.Key == s.Value {
@@ -202,7 +210,7 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool) {
 			}
 			g.emit("v[%q]=rt.Clone(entry%d.Value)\n", s.Value, n)
 			inner[s.Value] = true
-			g.stmts(s.Body, inner, inFunc)
+			g.stmts(s.Body, inner, inFunc, returnType)
 			g.emit("}\n")
 		default:
 			g.fail(s.Line, "unsupported IR statement "+s.Kind)

@@ -17,10 +17,11 @@ type Stmt struct {
 	Key, Value string
 }
 type Function struct {
-	Name   string
-	Params []string
-	Body   []Stmt
-	Line   int
+	Name       string
+	Params     []string
+	Body       []Stmt
+	Line       int
+	ReturnType string // Empty (untyped) or "array" on a named global function.
 }
 type Property struct {
 	Name  string

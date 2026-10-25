@@ -30,6 +30,25 @@
       "limitations": ["No optional, typed, variadic or by-reference parameters", "No closures or dynamic calls"]
     },
     {
+      "id": "php.syntax.array-return-type",
+      "kind": "syntax",
+      "name": "Array return declarations on named global functions",
+      "implementation": "partial",
+      "contract": "Retains : array and guards each explicit return and fallthrough; actual arrays are copied, known non-array returns fail before generation, unknown values fail at runtime.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id": "diff.array_return", "test": "TestDifferential/array_return", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/array_return.php", "assertions": ["stdout", "exit", "typed empty/associative/nested arrays, early returns, forward calls, single evaluation and caller array isolation"]},
+        {"case_id": "unit.array_return.copy", "test": "TestArrayReturnCopiesArrayValuesAndMetadata", "file": "runtime/array_return_test.go", "kind": "unit", "assertions": ["nested arrays and key metadata survive without storage aliasing"]},
+        {"case_id": "negative.array_return.domain", "test": "TestArrayReturnRejectsNonArrays", "file": "runtime/array_return_test.go", "kind": "negative", "assertions": ["null and scalar values are rejected rather than cast"]},
+        {"case_id": "compiler.array_return.paths", "test": "TestArrayReturnTypeIsRetainedAndGuardsEveryReturnPath", "file": "internal/codegen/array_return_test.go", "kind": "compiler", "assertions": ["IR retains the annotation and nested return/fallthrough guards are emitted"]},
+        {"case_id": "compiler.array_return.forward", "test": "TestArrayReturnTypeMixedCaseAndForwardCallLowering", "file": "internal/codegen/array_return_test.go", "kind": "compiler", "assertions": ["case-insensitive source annotations normalize and forward calls remain guarded"]},
+        {"case_id": "negative.array_return.ir", "test": "TestArrayReturnTypeMalformedIRAndTypedMethodsFailClosed", "file": "internal/codegen/array_return_test.go", "kind": "negative", "assertions": ["noncanonical/unsupported IR types and typed methods are rejected"]},
+        {"case_id": "negative.array_return.source", "test": "TestArrayReturnUnsupportedSourceFailsClosed", "file": "internal/codegen/array_return_test.go", "kind": "negative", "assertions": ["unsupported types/typed parameters/bare or known non-array returns produce no generated output"]},
+        {"case_id": "negative.array_return.runtime", "test": "TestArrayReturnRuntimeGuards", "file": "tests/array_return_runtime_test.go", "kind": "negative", "assertions": ["compiled unknown null/scalar returns and fallthrough fail explicitly"]}
+      ],
+      "limitations": ["No other/nullable/union/intersection return types, typed parameters or typed methods", "No path-completeness proof or branch-sensitive narrowing", "Failure is not PHP TypeError/catchability equivalence; native harness compares stdout and normal exits", "Gossip adoption requires its own pinned original-source evidence"]
+    },
+    {
       "id": "php.syntax.foreach",
       "kind": "syntax",
       "name": "foreach over supported arrays",

@@ -37,9 +37,10 @@ rejections. Generated-code negative tests cover unknown argument domain guards.
 native harness checks stdout and normal exits only; general stderr, exceptions
 and external side effects are not compared.
 
-WordPress `wp_array_slice_assoc` is a candidate consumer, not yet verified. Its
-original `: array` return declaration still needs a separate checked contract;
-silently dropping that type is not an integration. No Gossip source, compiler
+WordPress `wp_array_slice_assoc` is a candidate consumer, not verified by this
+synthetic fixture. Its original `: array` return declaration now has a separate
+[checked contract](array-return-boundary.md); accepting syntax alone is not an
+integration. No Gossip source, compiler
 pin, original excerpt, corpus or prior evidence is changed by this feature.
 
 This remains the WebMCP-excluded local `gohp.cli.generate` capability: local

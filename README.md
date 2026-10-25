@@ -81,6 +81,10 @@ a missing element. Missing/null entries return false; other stored values return
 true. This is not general isset: undefined roots, nested indexes, properties,
 multiple operands and key coercions are excluded. See the
 [array isset boundary](docs/array-isset-boundary.md).
+Named global functions may declare `: array`; explicit returns and fallthrough
+are checked rather than silently dropping the declaration. Other return types,
+typed parameters and typed methods remain excluded. See the
+[array return boundary](docs/array-return-boundary.md).
 
 ### Active PHP target
 

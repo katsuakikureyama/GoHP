@@ -248,6 +248,13 @@ func (p *parser) function() ir.Function {
 			p.need(",")
 		}
 	}
+	if p.accept(":") {
+		t := p.pop()
+		if t.kind != "id" || !strings.EqualFold(t.text, "array") {
+			p.fail("only array return declarations are supported")
+		}
+		f.ReturnType = "array"
+	}
 	f.Body = p.block()
 	return f
 }
