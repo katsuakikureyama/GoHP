@@ -163,7 +163,7 @@ func lex(s string) ([]token, error) {
 		if matched {
 			continue
 		}
-		if strings.ContainsRune("(){}[];,=+.-", rune(c)) {
+		if strings.ContainsRune("(){}[];,=+.-?:", rune(c)) {
 			ts = append(ts, token{string(c), ln, "sym"})
 			i++
 			continue
@@ -339,6 +339,12 @@ func (p *parser) prec(t token) int {
 	return 0
 }
 func (p *parser) expr(min int) ir.Expr {
+	return p.exprMode(min, true)
+}
+
+// The final operand cannot contain an unparenthesized ternary in PHP 8.
+// Parentheses call expr again, intentionally resetting this restriction.
+func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 	t := p.pop()
 	e := ir.Expr{Line: t.line, Text: t.text}
 	switch t.kind {
@@ -415,6 +421,22 @@ func (p *parser) expr(min int) ir.Expr {
 		if op.text == "===" && p.peek().kind == "sym" && p.peek().text == "===" {
 			p.fail("strict equality is non-associative; use parentheses")
 		}
+	}
+	if min == 0 && p.peek().kind == "sym" && p.peek().text == "?" {
+		if !allowTernary {
+			p.fail("ternary is non-associative; use parentheses")
+		}
+		question := p.pop()
+		if p.peek().kind == "sym" && p.peek().text == ":" {
+			p.fail("short ternary is unsupported")
+		}
+		yes := p.expr(0)
+		if p.peek().kind != "sym" {
+			p.fail("expected ternary colon")
+		}
+		p.need(":")
+		no := p.exprMode(0, false)
+		e = ir.Expr{Kind: "ternary", Args: []ir.Expr{e, yes, no}, Line: question.line}
 	}
 	return e
 }

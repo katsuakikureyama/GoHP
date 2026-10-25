@@ -21,6 +21,13 @@ name/arity/scope checks and lowers IR into direct Go calls, loops and structs.
 The CLI is the initial versioned adapter boundary, not a public Go API promise.
 No WordPress hooks or special compiler behavior exist in the core.
 
+The additive `ternary` IR kind keeps IR version `0.1` and uses ordered `Args`
+for condition, yes and no (no schema-field change). It lowers through a local
+closure so the condition is evaluated once and the unselected arm is lazy;
+semantic validation still checks all three operands and retains an unknown type
+for mixed branch types. The string-only `stripslashes` runtime boundary is
+byte-oriented and remains separate from WordPress recursive helpers.
+
 ## Values and semantics
 
 Values currently use Go `any`: int64, byte strings, bool, null, ordered arrays and

@@ -30,9 +30,9 @@ accepted integration target: adding it requires a separate policy/matrix and
 Gossip-owned compatibility decision. Historical 7.4 archives are readable but
 must not be used to approve a new candidate.
 
-This integration combines the array/builtin stack through PR #20 with the
-bounded sprintf/str_replace stack through PR #21, including the shared 8.3
-oracle policy. Earlier separate-stack evidence does not validate the resulting
+This integration combines the conditional/array/string stack through PR #24
+with PR #25's is_array predicate, including the shared 8.3 oracle policy.
+Earlier separate-stack evidence does not validate the resulting
 revision. Gossip's original-source units and compiler pins are unchanged here;
 they require independent validation before adopting this integrated revision.
 
@@ -66,6 +66,16 @@ The three-string `str_replace` addition remains the same excluded local
 `gohp.cli.generate` capability, with no UI operation, route or authentication
 change. Array/count/coercion forms remain outside its
 [explicit subset contract](str-replace-boundary.md).
+
+The full ternary and string-only `stripslashes` addition remains the same
+excluded local `gohp.cli.generate` capability. It adds no browser operation,
+service resource, authentication route, or auto-submit; short/coalesce ternary,
+recursive WordPress unescaping and scalar/object coercion remain outside its
+[explicit subset contract](ternary-stripslashes-boundary.md).
+
+The [conditional/array compiler integration](gossip-compiler-integration.md)
+preserves that exclusion and the existing operation boundary. Combining these
+compiler subsets introduces no additional browser/service capability.
 
 The bounded `sprintf('%0Ns', value)` addition remains the same excluded local
 `gohp.cli.generate` capability: developer-only source translation, no browser
