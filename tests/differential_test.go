@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "array_map", "array_set", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -174,7 +174,7 @@ func TestUnsupported(t *testing.T) {
 		{name: "magic_constructor", src: "<?php class X { public function __construct() {} }"},
 		{name: "nondecimal_integer", src: "<?php $a = 012;"},
 		{name: "reference", src: "<?php $a = &$b;"},
-		{name: "array_write", src: "<?php $a = [1]; $a[0] = 2;"},
+		{name: "array_write_nested", src: "<?php $a = [[1]]; $a[0][0] = 2;"},
 		{name: "top_level_return", src: "<?php return 1;"},
 		{name: "count_scalar", src: "<?php echo count(1);"},
 		{name: "rtrim_missing_argument", src: "<?php echo rtrim('x');"},

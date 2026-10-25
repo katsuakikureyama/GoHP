@@ -55,6 +55,14 @@ commas and case-insensitive `array` spelling within the same closed array subset
 Unsupported syntax must fail
 with a diagnostic; a separate runtime-negative test must fail on a missing key.
 Compilation alone never proves PHP compatibility.
+
+### Explicit array writes
+
+The bounded statement `$a[$key] = $value` updates an initialized local array
+with an integer/string key, preserving order and independent nested-array copies.
+No append, implicit creation, nested target or reference semantics are added;
+see [array-write boundary](docs/array-write-boundary.md).
+
 Builtins currently include `count(array)`, bounded `strlen(string)` (byte
 length only, no implicit non-string coercion), `array_keys(array)` (one argument,
 ordered keys, no value filtering) and `array_values(array)` (ordered values,

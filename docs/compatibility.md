@@ -15,7 +15,7 @@ This table is the current curated summary, not a blanket support claim.
 | Operators | `+`, `.`, parentheses and full ternary | Integral coercion only; float promotion unsupported. Ternary is non-associative; no `?:`, `??` or object truthiness; [contract](ternary-stripslashes-boundary.md) |
 | Boolean control | Braced one-arm `if`, short-circuit `&&`, scalar `===`, `(bool)` | Scalar/array truthiness only; no else/elseif, array/object identity or other comparison operators; [contract](boolean-boundary.md) |
 | Functions | Named functions, fixed value arguments and returns | `core.php`; no optional/typed/by-reference/variadic args |
-| Arrays | `[]` and `array(...)`; mixed ordered keys/values, reads, nested value copies, foreach | Literal int/string keys; no writes, references, unpacking or array union; see [syntax boundary](legacy-array-syntax.md) |
+| Arrays | `[]` and `array(...)`; mixed ordered keys/values, reads, nested value copies, foreach, explicit single-index local writes | int/string keys; no append/implicit creation/nested write targets, references, unpacking or array union; see [syntax](legacy-array-syntax.md) and [write boundary](array-write-boundary.md) |
 | Classes | Public scalar defaults, no-arg construction, property reads, methods | `core.php`; no inheritance, constructors, visibility or static members |
 | Closures/dynamic callbacks | Unsupported | Only literal named one-argument user callbacks through one-array `array_map` are admitted; no general callable support; [contract](array-map-boundary.md) |
 | Exceptions/warnings | Unsupported PHP behavior | Nonzero runtime failures; never functional PASS |

@@ -38,7 +38,11 @@ they require independent validation before adopting this integrated revision.
 
 Capability/WebMCP scope: `gohp.cli.generate` is explicitly **excluded** from browser
 WebMCP exposure because it is a local compiler writing caller-owned build files.
+The bounded [single-index array write](array-write-boundary.md) changes only
+generated program-local values and remains within this exclusion; Gossip pins
+and prior original-source evidence are unchanged.
 No browser operation, server resource, authentication route or auto-submit is added.
+
 The same local generation operation now also accepts bounded `strlen(string)`
 calls; its [string-only byte-length contract](compatibility.md#bounded-strlen-contract)
 does not add a service operation or change this WebMCP exclusion.

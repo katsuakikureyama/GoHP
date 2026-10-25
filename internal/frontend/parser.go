@@ -317,6 +317,12 @@ func (p *parser) stmt() ir.Stmt {
 		}
 		s.Kind = "assign"
 		s.Name = p.name("var")
+		if p.accept("[") {
+			s.Kind = "array_set"
+			index := p.expr(0)
+			s.Index = &index
+			p.need("]")
+		}
 		p.need("=")
 		s.Expr = p.expr(0)
 		p.need(";")

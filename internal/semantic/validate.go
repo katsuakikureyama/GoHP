@@ -115,7 +115,32 @@ func (v validator) function(f ir.Function, class string) error {
 
 func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType) error {
 	for _, stmt := range stmts {
+		if stmt.Kind != "array_set" && stmt.Index != nil {
+			return malformed(stmt.Line, "index operand only allowed on array_set")
+		}
 		switch stmt.Kind {
+		case "array_set":
+			if !validName(stmt.Name) || stmt.Index == nil || len(stmt.Body) != 0 || stmt.Key != "" || stmt.Value != "" {
+				return malformed(stmt.Line, "array_set requires named variable, explicit index and value")
+			}
+			if stmt.Name == "this" || stmt.Name == "GLOBALS" || strings.HasPrefix(stmt.Name, "_") {
+				return unsupported(stmt.Line, "reserved/global array write unsupported")
+			}
+			base, exists := scope[stmt.Name]
+			if !exists || base.kind != arrayKind && base.kind != unknownKind {
+				return unsupported(stmt.Line, "array write requires an initialized array variable")
+			}
+			key, err := v.expr(*stmt.Index, scope)
+			if err != nil {
+				return err
+			}
+			if key.kind != intKind && key.kind != stringKind && key.kind != unknownKind {
+				return unsupported(stmt.Line, "array write key requires integer or string")
+			}
+			if _, err := v.expr(stmt.Expr, scope); err != nil {
+				return err
+			}
+			scope[stmt.Name] = valueType{kind: arrayKind}
 		case "assign":
 			if !validName(stmt.Name) {
 				return malformed(stmt.Line, "invalid assignment target")

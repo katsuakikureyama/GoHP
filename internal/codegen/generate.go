@@ -145,6 +145,16 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool) {
 	for _, s := range ss {
 		g.emit("// gohp:begin %d\n", s.Line)
 		switch s.Kind {
+		case "array_set":
+			if !scope[s.Name] || s.Name == "this" || s.Name == "GLOBALS" || strings.HasPrefix(s.Name, "_") {
+				g.fail(s.Line, "array write requires initialized non-reserved variable")
+			}
+			// Materialize key and RHS once. Only local named bases are allowed;
+			// no references, globals or dynamic lvalues can replace the base here.
+			key, value := g.expr(*s.Index, scope), g.expr(s.Expr, scope)
+			g.serial++
+			n := g.serial
+			g.emit("{ var key%d any = %s; var value%d any = %s; v[%q] = rt.ArraySet(v[%q], key%d, value%d) }\n", n, key, n, value, s.Name, s.Name, n, n)
 		case "assign":
 			if s.Name == "this" || s.Name == "GLOBALS" || strings.HasPrefix(s.Name, "_") {
 				g.fail(s.Line, "reserved/global variable unsupported")

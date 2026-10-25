@@ -572,14 +572,22 @@
       "id": "php.syntax.array-write-and-reference",
       "kind": "syntax",
       "name": "Array writes and references",
-      "implementation": "unsupported",
-      "contract": "Array element assignment and reference assignment fail closed.",
+      "implementation": "partial",
+      "contract": "Single explicit int/string index assignment to an initialized local array variable replaces or inserts a copied value while preserving key order and independent nested arrays. References remain unsupported.",
       "php_targets": ["8.3"],
       "checks": [
-        {"case_id": "negative.array_write", "test": "TestUnsupported/array_write", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["array element assignment is rejected"]},
+        {"case_id": "diff.array_set", "test": "TestDifferential/array_set", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/array_set.php"},
+        {"case_id": "unit.codegen.array_set", "test": "TestArraySetParsesAndLowersToRuntimeBoundary", "file": "internal/codegen/array_set_test.go", "kind": "unit", "assertions": ["single-index statement is explicit IR and lowers to runtime boundary"]},
+        {"case_id": "negative.codegen.array_set", "test": "TestArraySetKnownUnsupportedSourceFailsBeforeGeneration", "file": "internal/codegen/array_set_test.go", "kind": "negative", "assertions": ["undefined/scalar targets, invalid keys and excluded assignment forms fail before generation"]},
+        {"case_id": "negative.ir.array_set", "test": "TestArraySetMalformedIRIsRejectedBeforeGeneration", "file": "internal/codegen/array_set_test.go", "kind": "negative", "assertions": ["missing index, invalid statement fields and reserved/undefined bases rejected"]},
+        {"case_id": "unit.runtime.array_set_order", "test": "TestArraySetReplacesInOrderAndAppendsExplicitNormalizedKeys", "file": "runtime/array_set_test.go", "kind": "unit", "assertions": ["normalized keys, replacement position and explicit insertion order"]},
+        {"case_id": "unit.runtime.array_set_copy", "test": "TestArraySetCopiesNestedInputAndAssignedValueIncludingSelfSnapshot", "file": "runtime/array_set_test.go", "kind": "unit", "assertions": ["input and assigned nested arrays are independent, including finite self snapshot"]},
+        {"case_id": "unit.runtime.array_set_metadata", "test": "TestArraySetPreservesAndUpdatesExplicitKeyMetadataAtMaxInt64", "file": "runtime/array_set_test.go", "kind": "unit", "assertions": ["explicit-key metadata retained without overflowing int64"]},
+        {"case_id": "negative.runtime.array_set", "test": "TestArraySetRejectsInvalidArrayAndKeyTypes", "file": "runtime/array_set_test.go", "kind": "negative", "assertions": ["non-array and unsupported key types fail explicitly without conversion"]},
+        {"case_id": "negative.array_write_nested", "test": "TestUnsupported/array_write_nested", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["nested array write targets remain rejected"]},
         {"case_id": "negative.reference", "test": "TestUnsupported/reference", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["reference assignment is rejected"]}
       ],
-      "limitations": ["Copy-on-write and PHP reference semantics are not implemented"]
+      "limitations": ["No append, implicit array creation, nested/property/string-offset writes, compound/assignment expressions or references", "Only actual arrays and integer/string keys; no weak key coercion or PHP diagnostic equivalence", "Eager value copies, not copy-on-write optimization; no object alias/cycle or negative-index append guarantee"]
     },
     {
       "id": "php.syntax.include-require",

@@ -12,6 +12,7 @@ type Stmt struct {
 	Kind, Name string
 	Line       int
 	Expr       Expr
+	Index      *Expr // Only array_set: one explicit key on the named local variable.
 	Body       []Stmt
 	Key, Value string
 }
