@@ -137,6 +137,12 @@ exact GoHP Git revision and Go toolchain, build source against the same runtime
 revision, and execute isolated differential fixtures before promoting status.
 No automatic plugin activation, DB migration, source upload or deployment occurs.
 
+Direct negative-literal keys in bounded array-element `isset` reuse the existing
+integer IR and runtime presence probe. This parser consistency extension remains
+within the excluded local `gohp.cli.generate` capability: no general key-expression
+evaluation, service operation, authentication route or external resource write.
+Gossip compiler pins and prior evidence are not automatically upgraded.
+
 Gossip owns WordPress hook semantics, host/plugin manifests, release slots and
 compatibility policy; future WordPress adapters belong outside the compiler core.
 No whole WordPress core/plugin conversion works yet. Next cross-project requests:

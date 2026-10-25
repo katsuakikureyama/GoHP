@@ -16,7 +16,9 @@ integer addition. Tests use a 64-bit PHP oracle; no 32-bit compatibility is clai
 
 Negative constants are admitted wherever the existing subset admits integer
 literals: values, arguments/returns, public scalar property defaults, literal
-array keys, index reads and one-level writes. They compose with existing `+`,
+array keys, index reads, one-level writes and bounded array-element `isset`
+probes. The isset key grammar still excludes parentheses and general expressions,
+even where ordinary expression contexts allow them. They compose with existing `+`,
 concatenation, strict equality and ternary expressions. Short/legacy arrays and
 append retain their existing ordering, normalization and PHP 8.3 index rules.
 

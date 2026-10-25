@@ -419,14 +419,17 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 			}
 			p.need("[")
 			key := p.pop()
-			if key.kind != "int" && key.kind != "string" && key.kind != "var" {
+			keyExpr := ir.Expr{Kind: key.kind, Text: key.text, Line: key.line}
+			if key.kind == "sym" && key.text == "-" {
+				keyExpr = p.negativeInteger(key)
+			} else if key.kind != "int" && key.kind != "string" && key.kind != "var" {
 				p.fail("isset key must be an integer/string literal or variable")
 			}
 			p.need("]")
 			p.need(")")
 			e = ir.Expr{Kind: "isset_index", Line: t.line, Args: []ir.Expr{
 				{Kind: "var", Text: base.text, Line: base.line},
-				{Kind: key.kind, Text: key.text, Line: key.line},
+				keyExpr,
 			}}
 			break
 		}
@@ -457,17 +460,7 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 		case "!":
 			e = ir.Expr{Kind: "not", Args: []ir.Expr{p.expr(6)}, Line: t.line}
 		case "-":
-			// Only negate a decimal integer token, already range-checked by lex.
-			// In particular, 9223372036854775808 must not become an int64 by
-			// folding its sign: PHP first interprets that positive token as float.
-			if p.peek().kind != "int" {
-				p.fail("minus requires a decimal integer literal")
-			}
-			n := p.pop()
-			e.Kind, e.Text = "int", "-"+n.text
-			if n.text == "0" {
-				e.Text = "0"
-			}
+			e = p.negativeInteger(t)
 		case "(":
 			// The supported cast spelling is deliberately narrow. Looking ahead
 			// keeps ordinary parenthesized expressions intact.
@@ -530,6 +523,21 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 		p.need(":")
 		no := p.exprMode(0, false)
 		e = ir.Expr{Kind: "ternary", Args: []ir.Expr{e, yes, no}, Line: question.line}
+	}
+	return e
+}
+
+// negativeInteger folds only a range-checked decimal token, never an expression.
+// The positive token in -9223372036854775808 is outside the integer subset and
+// is rejected by lex before folding. Keep the minus token's source position.
+func (p *parser) negativeInteger(sign token) ir.Expr {
+	if p.peek().kind != "int" {
+		p.fail("minus requires a decimal integer literal")
+	}
+	n := p.pop()
+	e := ir.Expr{Kind: "int", Text: "-" + n.text, Line: sign.line}
+	if n.text == "0" {
+		e.Text = "0"
 	}
 	return e
 }

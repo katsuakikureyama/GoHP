@@ -968,6 +968,7 @@
       "contract": "Fold one minus followed by an admitted decimal integer token to signed int64 IR; whitespace/comments are allowed and -0 is integer zero.",
       "php_targets": ["8.3"],
       "checks": [
+        {"case_id":"diff.isset_negative_keys","test":"TestDifferential/isset_negative_keys","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/isset_negative_keys.php","assertions":["stdout","exit","negative literal presence/null/falsy boundaries, canonical zero, integer bounds, short-circuiting and unchanged array metadata"]},
         {"case_id":"diff.negative_integers","test":"TestDifferential/negative_integers","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/negative_integers.php","assertions":["negative decimal constants, scalar contexts, array keys/write/append, zero and integer bounds match native output"]},
         {"case_id":"unit.frontend.negative_integer_ir","test":"TestNegativeIntegerLiteralIR","file":"internal/frontend/negative_integer_test.go","kind":"unit","assertions":["literal-only minus folds to int IR with canonical zero and the minus source line"]},
         {"case_id":"compiler.negative_integer_lowering","test":"TestNegativeIntegerLiteralLowering","file":"internal/codegen/negative_integer_test.go","kind":"compiler","assertions":["negative literal keys and values use existing int64 lowering and retain statement source maps"]},
@@ -1501,6 +1502,9 @@
       "contract": "isset($array[$key]) probes a defined real array with one integer/string literal or variable key; missing/null entries are false and other stored values are true, without eagerly reading or mutating the element.",
       "php_targets": ["8.3"],
       "checks": [
+        {"case_id":"diff.isset_negative_keys","test":"TestDifferential/isset_negative_keys","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/isset_negative_keys.php","assertions":["stdout","exit","negative literal presence/null/falsy boundaries, canonical zero, integer bounds, short-circuiting and unchanged array metadata"]},
+        {"case_id":"compiler.isset_negative_literal","test":"TestIssetNegativeLiteralLowering","file":"internal/codegen/isset_negative_test.go","kind":"compiler","assertions":["signed int IR, canonical zero and minus source line lower through ArrayIsset with statement source mapping"]},
+        {"case_id":"negative.isset_negative_literal","test":"TestIssetNegativeLiteralBoundary","file":"internal/codegen/isset_negative_test.go","kind":"negative","assertions":["general negation, expressions, parentheses, nondecimal/float/overflow tokens remain rejected"]},
         {"case_id":"diff.membership_control_flow","test":"TestDifferential/membership_control_flow","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/membership_control_flow.php","assertions":["stdout","exit","strict membership in conditional typed returns and callbacks, isset selection, short-circuiting, single operand evaluation and negative-key copy isolation"]},
         {"case_id":"diff.control_flow_array_integration","test":"TestDifferential/control_flow_array_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/control_flow_array_integration.php","assertions":["stdout","exit","typed returns across conditional arms and foreach, isset/strcasecmp, typed callbacks, negative-key append and caller/copy isolation"]},
         {"case_id":"diff.charset_array_integration","test":"TestDifferential/charset_array_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/charset_array_integration.php","assertions":["stdout","exit","typed-return/isset/logical/string composition, ordered mixed keys, shallow callback classification, caller preservation and copy isolation"]},
@@ -1515,6 +1519,7 @@
       ],
       "limitations": [
         "No simple-variable or multi-operand isset; undefined/null/scalar roots, nested indexes and object/string offsets are excluded",
+        "Negative key literals use one minus and magnitude 0..9223372036854775807; no general negation or arithmetic key expressions",
         "No effectful or parenthesized root/key expressions, references or bool/null/float key coercions",
         "Runtime guards are not PHP warning/exception equivalence; native comparison covers stdout and normal exits only",
         "WordPress typed-return helper integration and Gossip compiler adoption are not yet verified"

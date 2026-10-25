@@ -98,7 +98,8 @@ int/string literals or variables; append uses PHP 8.3 integer-index progression.
 Nested targets, auto-vivification and references remain excluded.
 One-level `isset($array[$key])` probes a defined array variable without reading
 a missing element. Missing/null entries return false; other stored values return
-true. This is not general isset: undefined roots, nested indexes, properties,
+true. Literal negative integer keys are accepted with the same bounded decimal
+negation rules as array reads/writes. This is not general isset: undefined roots, nested indexes, properties,
 multiple operands and key coercions are excluded. See the
 [array isset boundary](docs/array-isset-boundary.md).
 Named global functions may declare `: array`; explicit returns and fallthrough

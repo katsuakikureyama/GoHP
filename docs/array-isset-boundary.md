@@ -3,6 +3,10 @@
 `isset($array[$key])` checks a single element of an already-defined array
 variable. The key is an integer/string literal or an already-defined variable
 whose actual value is int64/string. The construct name is case-insensitive.
+Direct negative decimal literals such as `isset($array[-5])` use the same
+[literal-only negation boundary](negative-integer-boundary.md) as reads/writes:
+one minus, magnitude 0 through 9223372036854775807, optional whitespace/comments,
+and `-0` normalized to integer zero. No general key-expression parsing is added.
 Missing keys and stored null return false. All other supported stored values,
 including false, zero, empty strings and empty arrays, return true. Existing
 PHP integer/string key normalization is shared with array reads and writes.
@@ -21,9 +25,11 @@ This is not general PHP isset: no simple-variable probe, multiple operands,
 undefined/null/scalar roots, nested indexes, object properties, string offsets,
 effectful root/key expressions, parenthesized operands/keys, references or
 bool/null/float key coercions. Direct IR calls named isset and global function
-redeclarations are rejected. Unary negative literal syntax remains outside the
-frontend; negative integer keys can arrive through existing variables or numeric
-string normalization. Dynamic domain rejection is a Go guard, not a claim of PHP
+redeclarations are rejected. Variable/call negation, repeated signs, arithmetic
+key expressions and parenthesized keys remain unsupported. The out-of-range
+positive token in `-9223372036854775808` is rejected before sign folding;
+existing int64 variables and numeric string normalization retain their behavior.
+Dynamic domain rejection is a Go guard, not a claim of PHP
 warning/exception equivalence. Broader behavior is described in the
 [PHP isset reference](https://www.php.net/manual/en/function.isset.php).
 
@@ -36,6 +42,12 @@ rejections. Generated-code negative tests cover unknown argument domain guards.
 >=8.3.36, including a key-selection loop using existing indexed writes. The
 native harness checks stdout and normal exits only; general stderr, exceptions
 and external side effects are not compared.
+
+`TestDifferential/isset_negative_keys` covers direct negative keys, null/falsy
+values, canonical zero, the admitted integer boundary, short-circuiting and
+probe non-mutation. Compiler checks preserve int IR/source mapping and reject
+out-of-bound syntax. The shared literal-folding helper adds no runtime or IR
+operation; existing negative-literal checks continue to cover other contexts.
 
 WordPress `wp_array_slice_assoc` is a candidate consumer, not verified by this
 synthetic fixture. Its original `: array` return declaration now has a separate
