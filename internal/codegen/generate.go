@@ -47,7 +47,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	}
 	for _, f := range p.Functions {
 		n := name(f.Name)
-		if _, ok := g.funcs[n]; ok || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "array_key_exists" || n == "array_is_list" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "strtolower" || n == "sprintf" || n == "str_replace" {
+		if _, ok := g.funcs[n]; ok || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "array_key_exists" || n == "array_is_list" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "is_array" || n == "strtolower" || n == "sprintf" || n == "str_replace" {
 			g.fail(f.Line, "duplicate or reserved function "+n)
 		}
 		g.funcs[n] = len(f.Params)
@@ -262,7 +262,7 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 			}
 			return "rt.SprintfZeroPad(" + args(e.Args) + ")"
 		}
-		booleanBuiltins := map[string]string{"is_bool": "IsBool", "is_string": "IsString", "strtolower": "StrToLower"}
+		booleanBuiltins := map[string]string{"is_bool": "IsBool", "is_string": "IsString", "is_array": "IsArray", "strtolower": "StrToLower"}
 		if builtin, ok := booleanBuiltins[n]; ok {
 			if len(e.Args) != 1 {
 				g.fail(e.Line, n+" expects one argument")

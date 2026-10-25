@@ -54,6 +54,10 @@ The one-argument `array_is_list(array)` [list-status check](compatibility.md#bou
 has the same local compiler exclusion; it adds no service operation or route.
 Changing the PHP oracle policy or adding a later series likewise adds no browser
 operation, resource, authentication route, WebMCP capability, or auto-submit.
+The one-argument `is_array(value)` type predicate also remains within the same
+excluded local `gohp.cli.generate` capability. It returns bool without changing
+the value, and adds no route, authentication or automatic submission. Its
+[bounded contract and evidence](boolean-boundary.md) do not validate Gossip pins.
 The legacy `array(...)` frontend addition stays within this excluded local
 compiler capability; it adds no service operation or authentication change.
 The literal-mask `rtrim` addition also stays within this exclusion; it does not

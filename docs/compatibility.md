@@ -19,7 +19,7 @@ This table is the current curated summary, not a blanket support claim.
 | Classes | Public scalar defaults, no-arg construction, property reads, methods | `core.php`; no inheritance, constructors, visibility or static members |
 | Closures/callbacks/dynamic calls | Unsupported | Negative closure fixture; no claim of coverage |
 | Exceptions/warnings | Unsupported PHP behavior | Nonzero runtime failures; never functional PASS |
-| Built-ins | `count(array)`, `strlen(string)`, `array_keys(array)`, `array_values(array)`, `array_key_exists(int\|string, array)`, `array_is_list(array)`, restricted `rtrim`, `is_bool`, `is_string`, ASCII `strtolower(string)` | Bounded arities/domains below and in [rtrim](rtrim-boundary.md) / [boolean](boolean-boundary.md); other builtins fail closed |
+| Built-ins | `count(array)`, `strlen(string)`, `array_keys(array)`, `array_values(array)`, `array_key_exists(int\|string, array)`, `array_is_list(array)`, restricted `rtrim`, `is_bool`, `is_string`, `is_array`, ASCII `strtolower(string)` | Bounded arities/domains below and in [rtrim](rtrim-boundary.md) / [boolean](boolean-boundary.md); other builtins fail closed |
 | String formatting / replacement | `sprintf('%0Ns', string\|int64)` with canonical width 0–4096; `str_replace(string, string, string)` | [Zero-padding boundary](sprintf-boundary.md) / [replacement boundary](str-replace-boundary.md); no general formatting, array substitutions or count reference |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |

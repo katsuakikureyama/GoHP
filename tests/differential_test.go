@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "rtrim", "sprintf", "str_replace", "booleans", "feature_integration", "string_array_integration"} {
+	for _, fixture := range []string{"core", "arrays", "legacy_arrays", "max_array_key", "precedence", "strlen", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "rtrim", "sprintf", "str_replace", "booleans", "feature_integration", "string_array_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -255,6 +255,10 @@ func TestUnsupported(t *testing.T) {
 		{name: "is_string_extra_argument", src: "<?php echo is_string('x', 'y');"},
 		{name: "is_bool_redeclare", src: "<?php function Is_Bool() { return true; }"},
 		{name: "is_string_redeclare", src: "<?php function is_STRING() { return true; }"},
+		{name: "is_array_missing_argument", src: "<?php echo is_array();"},
+		{name: "is_array_extra_argument", src: "<?php echo is_array([], []);"},
+		{name: "is_array_redeclare", src: "<?php function Is_ArRaY($value) { return true; }"},
+		{name: "is_array_bool_as_array", src: "<?php echo count(is_array([]));"},
 		{name: "strtolower_missing_argument", src: "<?php echo strtolower();"},
 		{name: "strtolower_extra_argument", src: "<?php echo strtolower('X', 'Y');"},
 		{name: "strtolower_int_input", src: "<?php echo strtolower(1);"},

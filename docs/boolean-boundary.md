@@ -17,7 +17,11 @@ It is not general PHP control flow or object/coercion compatibility.
 - `(bool)` and condition truthiness accept nil, bool, int64, string and GoHP
   arrays only. False values are nil, false, integer zero, empty string, string
   `"0"` and empty arrays. Unsupported dynamic value types fail explicitly.
-- `is_bool` and `is_string` take exactly one value and return type predicates.
+- `is_bool`, `is_string` and `is_array` take exactly one value and return bool
+  type predicates. `is_array` accepts existing scalar/null/array/class-instance
+  values: empty, indexed and associative arrays are true; all non-arrays are
+  false. It does not convert, walk or mutate the value. Array-like objects are
+  not arrays; no float/resource/extension-value syntax is added.
 - `strtolower` takes exactly one actual string, mapping ASCII A–Z bytes to a–z
   and leaving other bytes unchanged. No weak coercion or Unicode case folding.
   PHP 8.3 uses ASCII semantics. The oracle additionally selects and verifies
@@ -27,7 +31,8 @@ It is not general PHP control flow or object/coercion compatibility.
 PHP references: [boolean conversion](https://www.php.net/manual/en/language.types.boolean.php),
 [short-circuit operators](https://www.php.net/manual/en/language.operators.logical.php),
 [precedence](https://www.php.net/manual/en/language.operators.precedence.php), and
-[strtolower](https://www.php.net/manual/en/function.strtolower.php).
+[strtolower](https://www.php.net/manual/en/function.strtolower.php), and
+[is_array](https://www.php.net/manual/en/function.is-array.php).
 
 ## Scope and evidence
 
@@ -48,6 +53,14 @@ Explicit negative checks cover unsupported syntax, domains, builtin arities,
 reserved declarations and branch-local variable escape. Runtime checks preserve
 failure boundaries for unsupported dynamic values. The catalog records partial
 contracts and target-specific results, never unconditional support.
+
+The separate `is_array.php` fixture observes predicate results using `is_bool`
+and strict true/false comparison, covers both array syntaxes and generated
+objects, and checks single argument evaluation and short-circuit array guards.
+It checks original values after calls. Runtime-only tests also distinguish
+native Go slices/maps/pointers from the runtime's Array representation; those
+Go values do not imply new PHP source types. The predicate does not add
+branch-sensitive type narrowing: both sides of `&&` are statically validated.
 
 Current native runs use PHP 8.3.36 or newer within 8.3 under the shared policy.
 The former 7.4 / older 8.3 evidence is historical; 8.4+ needs separate admission

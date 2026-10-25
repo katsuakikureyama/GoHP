@@ -273,6 +273,10 @@ func Identical(a, b any) bool {
 func IsBool(v any) bool   { _, ok := v.(bool); return ok }
 func IsString(v any) bool { _, ok := v.(string); return ok }
 
+// IsArray inspects the value's type, not its contents or truthiness. Native Go
+// slices, maps and pointers are not PHP arrays in this runtime's value model.
+func IsArray(v any) bool { _, ok := v.(Array); return ok }
+
 // StrToLower uses PHP 8.3 ASCII byte mapping;
 // locale-sensitive case mapping and non-string coercion are not supported.
 func StrToLower(v any) any {
