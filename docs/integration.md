@@ -42,6 +42,9 @@ The [one-level PHP array assignment and append](array-write-boundary.md) extensi
 within this excluded generation capability. Its writes concern simulated local
 PHP values, not service resources; no UI operation, route, authentication,
 external save/commit or automatic submission is introduced.
+Bounded [array return declarations](array-return-boundary.md) enforce simulated
+PHP return values within the same excluded local capability; no new user-facing
+operation, server resource or authentication path is introduced.
 No browser operation, server resource, authentication route or auto-submit is added.
 The [literal-only negative integer syntax](negative-integer-boundary.md) also
 uses this same excluded capability, with no new operation or authentication path.
@@ -101,8 +104,9 @@ compiler capability; no authentication or user-facing service action is added.
 
 The [string-only strcasecmp extension](strcasecmp-boundary.md) retains that
 WebMCP exclusion. It introduces no route or authentication change. Its compiler
-pin is based on #38; the separate #36 array-return stack is not implicitly
-included, and existing Gossip manifests/results are not upgraded automatically.
+original pin was based on #38. The current [charset/array integration](charset-array-integration.md)
+explicitly combines published #40 and #36; prior Gossip manifests/results
+are not upgraded automatically and retain their independent configurations.
 
 Report schema `gohp.build/v0.1` includes IR/compiler versions, source and generated
 SHA-256, input path, PHP target and `generated` status. Additive fields `output`

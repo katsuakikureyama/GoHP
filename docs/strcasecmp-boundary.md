@@ -27,9 +27,10 @@ guards; generated-binary negative tests require explicit guard failure.
 The native harness observes stdout/normal exit, not general stderr, PHP
 warning/exception/TypeError text, catchability or external side effects.
 
-This branch is based on published logical/strict-comparison stack #38
-(`58105a31293772be3b08208ebeffcfa1fe76b98b`), not array-return stack #36.
-The latter's isset and return-declaration additions are not integrated here.
+The original strcasecmp branch #40 was based on published logical/strict-
+comparison stack #38 (`58105a31293772be3b08208ebeffcfa1fe76b98b`). The current
+[charset/array integration](charset-array-integration.md) explicitly merges
+#40 with #36's isset and array-return declarations; it needs fresh evidence.
 Existing Gossip manifests and previous evidence remain pinned separately.
 The target original helper is WordPress `_is_utf8_charset` (compat.php102–111),
 whose unchanged source also needs the existing `!`, `||`, `is_string` and

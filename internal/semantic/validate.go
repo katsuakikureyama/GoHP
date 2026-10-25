@@ -93,10 +93,16 @@ func Validate(p ir.Program) error {
 			}
 		}
 	}
-	return v.stmts(p.Body, map[string]valueType{})
+	return v.stmts(p.Body, map[string]valueType{}, "")
 }
 
 func (v validator) function(f ir.Function, class string) error {
+	if f.ReturnType != "" && f.ReturnType != "array" {
+		return malformed(f.Line, "unsupported IR return type")
+	}
+	if class != "" && f.ReturnType != "" {
+		return unsupported(f.Line, "typed method returns are unsupported")
+	}
 	if !validName(f.Name) {
 		return malformed(f.Line, "invalid function name")
 	}
@@ -110,10 +116,10 @@ func (v validator) function(f ir.Function, class string) error {
 		}
 		scope[param] = valueType{kind: unknownKind}
 	}
-	return v.stmts(f.Body, scope)
+	return v.stmts(f.Body, scope, f.ReturnType)
 }
 
-func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType) error {
+func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType string) error {
 	for _, stmt := range stmts {
 		switch stmt.Kind {
 		case "assign":
@@ -172,8 +178,12 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType) error {
 				return unsupported(stmt.Line, "echo requires a supported scalar")
 			}
 		case "return":
-			if _, err := v.expr(stmt.Expr, scope); err != nil {
+			t, err := v.expr(stmt.Expr, scope)
+			if err != nil {
 				return err
+			}
+			if returnType == "array" && t.kind != arrayKind && t.kind != unknownKind {
+				return unsupported(stmt.Line, "array return requires an array value")
 			}
 		case "foreach":
 			if !validName(stmt.Value) || stmt.Key != "" && !validName(stmt.Key) {
@@ -191,7 +201,7 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType) error {
 			if stmt.Key != "" {
 				inner[stmt.Key] = valueType{kind: unknownKind}
 			}
-			if err := v.stmts(stmt.Body, inner); err != nil {
+			if err := v.stmts(stmt.Body, inner, returnType); err != nil {
 				return err
 			}
 			// A foreach body may not execute. Existing variables changed inside it
@@ -211,7 +221,7 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType) error {
 				return unsupported(stmt.Line, "if condition requires a supported value")
 			}
 			inner := cloneScope(scope)
-			if err := v.stmts(stmt.Body, inner); err != nil {
+			if err := v.stmts(stmt.Body, inner, returnType); err != nil {
 				return err
 			}
 			// A one-arm if body may not execute. Validate it in full, but do not
@@ -370,6 +380,40 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			return valueType{}, unsupported(expr.Line, "boolean cast requires a supported value")
 		}
 		return valueType{kind: boolKind}, nil
+	case "isset_index":
+		if err := require(2); err != nil {
+			return valueType{}, err
+		}
+		base, key := expr.Args[0], expr.Args[1]
+		if expr.Text != "" || base.Kind != "var" {
+			return valueType{}, malformed(expr.Line, "isset requires an indexed variable")
+		}
+		if key.Kind != "int" && key.Kind != "string" && key.Kind != "var" {
+			return valueType{}, unsupported(expr.Line, "isset key must be an integer/string literal or variable")
+		}
+		if _, ok := scope[base.Text]; !ok {
+			return valueType{}, unsupported(expr.Line, "isset requires an existing array variable")
+		}
+		if key.Kind == "var" {
+			if _, ok := scope[key.Text]; !ok {
+				return valueType{}, unsupported(expr.Line, "isset requires an existing key variable")
+			}
+		}
+		baseType, err := v.expr(base, scope)
+		if err != nil {
+			return valueType{}, err
+		}
+		keyType, err := v.expr(key, scope)
+		if err != nil {
+			return valueType{}, err
+		}
+		if baseType.kind != arrayKind && baseType.kind != unknownKind {
+			return valueType{}, unsupported(expr.Line, "isset requires an array")
+		}
+		if keyType.kind != intKind && keyType.kind != stringKind && keyType.kind != unknownKind {
+			return valueType{}, unsupported(expr.Line, "isset key must be an integer or string")
+		}
+		return valueType{kind: boolKind}, nil
 	case "index":
 		if err := require(2); err != nil {
 			return valueType{}, err
@@ -390,6 +434,9 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		}
 		return valueType{kind: unknownKind}, nil
 	case "call":
+		if strings.EqualFold(expr.Text, "isset") {
+			return valueType{}, malformed(expr.Line, "isset must use the isset_index language construct")
+		}
 		if !validName(expr.Text) {
 			return valueType{}, malformed(expr.Line, "invalid function name")
 		}

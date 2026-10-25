@@ -12,6 +12,7 @@
         "8.3"
       ],
       "checks": [
+        {"case_id":"diff.charset_array_integration","test":"TestDifferential/charset_array_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/charset_array_integration.php","assertions":["stdout","exit","typed-return/isset/logical/string composition, ordered mixed keys, shallow callback classification, caller preservation and copy isolation"]},
         {
           "case_id": "diff.strcasecmp",
           "test": "TestDifferential/strcasecmp",
@@ -171,7 +172,7 @@
         "No scalar coercion, object conversion, Unicode case folding or locale collation",
         "Only result sign is a portable PHP API promise; numeric evidence is for selected PHP 8.3 oracle",
         "No PHP error/exception or general operand evaluation-order equivalence",
-        "Gossip original-source adoption and separate array-return stack require independent integration"
+        "New Gossip original-source bundle requires independent pinned execution; older pins and results remain separate"
       ]
     },
     {
@@ -200,6 +201,26 @@
         {"case_id": "diff.core", "test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["native PHP stdout equals generated Go stdout"]}
       ],
       "limitations": ["No optional, typed, variadic or by-reference parameters", "No closures or dynamic calls"]
+    },
+    {
+      "id": "php.syntax.array-return-type",
+      "kind": "syntax",
+      "name": "Array return declarations on named global functions",
+      "implementation": "partial",
+      "contract": "Retains : array and guards each explicit return and fallthrough; actual arrays are copied, known non-array returns fail before generation, unknown values fail at runtime.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.charset_array_integration","test":"TestDifferential/charset_array_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/charset_array_integration.php","assertions":["stdout","exit","typed-return/isset/logical/string composition, ordered mixed keys, shallow callback classification, caller preservation and copy isolation"]},
+        {"case_id": "diff.array_return", "test": "TestDifferential/array_return", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/array_return.php", "assertions": ["stdout", "exit", "typed empty/associative/nested arrays, early returns, forward calls, single evaluation and caller array isolation"]},
+        {"case_id": "unit.array_return.copy", "test": "TestArrayReturnCopiesArrayValuesAndMetadata", "file": "runtime/array_return_test.go", "kind": "unit", "assertions": ["nested arrays and key metadata survive without storage aliasing"]},
+        {"case_id": "negative.array_return.domain", "test": "TestArrayReturnRejectsNonArrays", "file": "runtime/array_return_test.go", "kind": "negative", "assertions": ["null and scalar values are rejected rather than cast"]},
+        {"case_id": "compiler.array_return.paths", "test": "TestArrayReturnTypeIsRetainedAndGuardsEveryReturnPath", "file": "internal/codegen/array_return_test.go", "kind": "compiler", "assertions": ["IR retains the annotation and nested return/fallthrough guards are emitted"]},
+        {"case_id": "compiler.array_return.forward", "test": "TestArrayReturnTypeMixedCaseAndForwardCallLowering", "file": "internal/codegen/array_return_test.go", "kind": "compiler", "assertions": ["case-insensitive source annotations normalize and forward calls remain guarded"]},
+        {"case_id": "negative.array_return.ir", "test": "TestArrayReturnTypeMalformedIRAndTypedMethodsFailClosed", "file": "internal/codegen/array_return_test.go", "kind": "negative", "assertions": ["noncanonical/unsupported IR types and typed methods are rejected"]},
+        {"case_id": "negative.array_return.source", "test": "TestArrayReturnUnsupportedSourceFailsClosed", "file": "internal/codegen/array_return_test.go", "kind": "negative", "assertions": ["unsupported types/typed parameters/bare or known non-array returns produce no generated output"]},
+        {"case_id": "negative.array_return.runtime", "test": "TestArrayReturnRuntimeGuards", "file": "tests/array_return_runtime_test.go", "kind": "negative", "assertions": ["compiled unknown null/scalar returns and fallthrough fail explicitly"]}
+      ],
+      "limitations": ["No other/nullable/union/intersection return types, typed parameters or typed methods", "No path-completeness proof or branch-sensitive narrowing", "Failure is not PHP TypeError/catchability equivalence; native harness compares stdout and normal exits", "Gossip adoption requires its own pinned original-source evidence"]
     },
     {
       "id": "php.syntax.foreach",
@@ -1205,6 +1226,31 @@
         "No undefined/null/scalar auto-vivification, compound assignment or unset",
         "Int64 overflow fails explicitly, not PHP warning/exception equivalence",
         "Eager array copies; no new object alias, cyclic reference or Zend copy-on-write semantics"
+      ]
+    },
+    {
+      "id": "php.syntax.isset-array-element",
+      "kind": "syntax",
+      "name": "Single array-element isset",
+      "implementation": "partial",
+      "contract": "isset($array[$key]) probes a defined real array with one integer/string literal or variable key; missing/null entries are false and other stored values are true, without eagerly reading or mutating the element.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.charset_array_integration","test":"TestDifferential/charset_array_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/charset_array_integration.php","assertions":["stdout","exit","typed-return/isset/logical/string composition, ordered mixed keys, shallow callback classification, caller preservation and copy isolation"]},
+        {"case_id": "diff.array_isset", "test": "TestDifferential/array_isset", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/array_isset.php", "assertions": ["stdout", "exit", "missing/null versus present falsy entries and indexed selection with caller input observation"]},
+        {"case_id": "unit.array_isset.presence", "test": "TestArrayIssetPresenceNilAndFalsyValues", "file": "runtime/array_isset_test.go", "kind": "unit", "assertions": ["missing/null false, false/zero/empty string/empty array/nested array true; input unchanged"]},
+        {"case_id": "unit.array_isset.keys", "test": "TestArrayIssetNormalizesIntegerStringKeys", "file": "runtime/array_isset_test.go", "kind": "unit", "assertions": ["canonical numeric and negative keys normalize; leading-zero/NUL/UTF-8 keys remain distinct"]},
+        {"case_id": "unit.array_isset.domain", "test": "TestArrayIssetRejectsOutsideBoundedDomain", "file": "runtime/array_isset_test.go", "kind": "unit", "assertions": ["non-array roots and unsupported key types fail explicitly"]},
+        {"case_id": "compiler.array_isset.lowering", "test": "TestArrayIssetLowersWithoutIndexReadAndPreservesExpressionContexts", "file": "internal/codegen/array_isset_test.go", "kind": "compiler", "assertions": ["case-insensitive construct uses ArrayIsset rather than Get, with expression contexts and statement source map"]},
+        {"case_id": "negative.array_isset.source", "test": "TestArrayIssetStrictSourceFormsFailClosed", "file": "internal/codegen/array_isset_test.go", "kind": "negative", "assertions": ["forms outside the one-level defined-variable and literal/variable-key boundary fail before generation"]},
+        {"case_id": "negative.array_isset.ir", "test": "TestArrayIssetMalformedIRAndRedeclarationFailBeforeGeneration", "file": "internal/codegen/array_isset_test.go", "kind": "negative", "assertions": ["malformed address IR, normal call IR and global isset redeclaration fail before generation"]},
+        {"case_id": "negative.array_isset.runtime", "test": "TestArrayIssetRuntimeGuards", "file": "tests/array_isset_runtime_test.go", "kind": "negative", "assertions": ["compiled unknown arguments reject null/string roots and bool/null keys"]}
+      ],
+      "limitations": [
+        "No simple-variable or multi-operand isset; undefined/null/scalar roots, nested indexes and object/string offsets are excluded",
+        "No effectful or parenthesized root/key expressions, references or bool/null/float key coercions",
+        "Runtime guards are not PHP warning/exception equivalence; native comparison covers stdout and normal exits only",
+        "WordPress typed-return helper integration and Gossip compiler adoption are not yet verified"
       ]
     },
     {
