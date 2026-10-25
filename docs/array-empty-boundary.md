@@ -24,8 +24,9 @@ The owned `array_empty.php` fixture compares stdout and normal exits with PHP 8.
 >=8.3.36. Compiler checks cover IR/source maps and excluded forms; runtime tests
 cover preservation and generated-code guards. The catalog entry remains partial.
 This compiler prerequisite does not certify Gossip's unchanged WordPress functions:
-new compiler pins and original-source evidence are separate. `array_key_last`
-remains unsupported. PHP 8.4+ needs separate policy and validation.
+new compiler pins and original-source evidence are separate. Bounded
+[`array_key_last`](array-key-last-boundary.md) is a separate contract; guard the
+empty case before using its result as an index. PHP 8.4+ needs separate validation.
 
 Capability `gohp.cli.generate` remains WebMCP-excluded local developer tooling.
 No new server operation, route, authentication, dependency, release or deployment.

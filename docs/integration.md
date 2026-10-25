@@ -1,5 +1,9 @@
 # Gossip builder contract v0.1 (proposal)
 
+[`array_key_last`](array-key-last-boundary.md) adds a read-only key lookup to the
+same WebMCP-excluded local generation capability. It does not repin Gossip or
+certify original array_last functions; no service/authentication route is added.
+
 Bounded [array-variable empty](array-empty-boundary.md) is part of local
 `gohp.cli.generate`, still WebMCP-excluded. It adds no route/authentication or
 server operation; Gossip original-source pins and evidence remain separate.

@@ -655,6 +655,17 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 			return valueType{kind: arrayKind}, nil
 		}
+		if strings.EqualFold(expr.Text, "array_key_last") {
+			if len(args) != 1 {
+				return valueType{}, unsupported(expr.Line, "array_key_last expects one argument")
+			}
+			if args[0].kind != arrayKind && args[0].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "array_key_last requires an array")
+			}
+			// int|string|null has no dedicated union in the current type model.
+			// Preserve downstream runtime guards instead of promising an int key.
+			return valueType{kind: unknownKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "array_values") {
 			if len(args) != 1 {
 				return valueType{}, unsupported(expr.Line, "array_values expects one argument")
