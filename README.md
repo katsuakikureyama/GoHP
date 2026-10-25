@@ -67,7 +67,8 @@ and ASCII `strtolower(string)`. String-only `strcasecmp(string, string)` adds
 binary-safe ASCII case-insensitive comparison with an integer result; no
 coercion, Unicode folding or locale collation. See the
 [comparison boundary](docs/strcasecmp-boundary.md).
-[`array_key_last(array)`](docs/array-key-last-boundary.md) returns the last
+[`array_key_first(array)`](docs/array-key-first-boundary.md) and
+[`array_key_last(array)`](docs/array-key-last-boundary.md) return the first/last
 insertion-order int/string key, or null for an empty array, without modifying it.
 `array_key_exists(int|string, array)` checks
 first-level key presence, including null-valued entries, without other key

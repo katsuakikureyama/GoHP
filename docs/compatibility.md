@@ -26,6 +26,7 @@ This table is the current curated summary, not a blanket support claim.
 | Strict scalar membership | `in_array(scalar, scalar-valued array, true)` | [Closed strict boundary](in-array-strict-boundary.md); no loose mode or array/object values |
 | Array emptiness | `empty($arrayVariable)` on a defined actual array | [Bounded empty](array-empty-boundary.md); outer count only, no undefined/scalar/index/property/expression operands |
 | Last array key | `array_key_last(array)` | [Bounded last key](array-key-last-boundary.md); insertion-order int/string key or null, input unchanged; guard empty before indexing |
+| First array key | `array_key_first(array)` | [Bounded first key](array-key-first-boundary.md); first insertion-order key, not minimum key/value; same empty-result guard |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |
