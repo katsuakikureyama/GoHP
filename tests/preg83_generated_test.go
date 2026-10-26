@@ -94,7 +94,7 @@ func TestPreg83GeneratedNativeComparison(t *testing.T) {
 	cmd.Stderr = &phpStderr
 	phpOutput, err := cmd.Output()
 	if err != nil || phpStderr.Len() != 0 {
-		t.Fatalf("native oracle: error=%v stderr=%s", err, phpStderr.String())
+		t.Fatalf("native oracle: error=%v stderr=%s stdout=%s", err, phpStderr.String(), phpOutput)
 	}
 
 	var got, want any
@@ -192,7 +192,7 @@ function gohp_preg83_generated_typed($value) {
     }
     return ['type' => 'array', 'entries' => $entries];
 }
-if (PHP_VERSION !== '8.3.36' || PHP_INT_SIZE !== 8 || setlocale(LC_CTYPE, 0) !== 'C' ||
+if (PHP_VERSION !== '8.3.36' || PHP_INT_SIZE !== 8 || setlocale(LC_CTYPE, 'C') !== 'C' ||
     PCRE_VERSION !== '10.42 2022-12-12' ||
     ini_get('pcre.jit') !== '0' || ini_get('pcre.backtrack_limit') !== '100000' || ini_get('pcre.recursion_limit') !== '10000') {
     throw new RuntimeException('requires pinned PHP8.3.36 64-bit C locale CLI');
