@@ -3,6 +3,20 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.form-feed-escape",
+      "kind": "syntax",
+      "name": "Bounded form-feed string escape",
+      "implementation": "partial",
+      "contract": "Double-quoted backslash-f decodes to byte 0x0C; single-quoted and escaped-backslash forms retain literal bytes. Embedded/repeated escapes preserve string values and physical source-line accounting. Other escape/interpolation boundaries remain closed.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.form_feed","test":"TestDifferential/form_feed","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/form_feed.php","assertions":["stdout","exit","decoded/literal lengths and identity, keys and argument/return preservation, whitespace tokenizer composition"]},
+        {"case_id":"unit.frontend.form_feed","test":"TestFormFeedLiteralIR","file":"internal/frontend/form_feed_test.go","kind":"unit","assertions":["exact byte12 vs literal backslash-f, repeated/mixed escapes, physical vs decoded source-line tracking"]},
+        {"case_id":"negative.form_feed.boundary","test":"TestFormFeedEscapeBoundary","file":"internal/frontend/form_feed_test.go","kind":"negative","assertions":["other escapes/interpolation remain unsupported, unterminated literals reject without panic"]}
+      ],
+      "limitations": ["Not general PHP string syntax: other unsupported escapes, interpolation and heredoc/nowdoc remain excluded", "Owned tokenizer fixture is not original WordPress render execution or consumer adoption; actual HTML processor remains unavailable"]
+    },
+    {
       "id": "php.syntax.call-statement",
       "kind": "syntax",
       "name": "Standalone supported calls with discarded results",
@@ -16,7 +30,7 @@
         {"case_id":"negative.call_statement.ir","test":"TestCallStatementMalformedIR","file":"internal/codegen/call_statement_test.go","kind":"negative","assertions":["hidden statement fields, missing/invalid expressions/receivers and malformed call payloads reject before output without panic"]},
         {"case_id":"negative.call_statement.runtime","test":"TestCallStatementRuntimeGuards","file":"tests/call_statement_runtime_test.go","kind":"negative","assertions":["discarded results do not bypass builtin/method domains, typed returns, callable arity/domain or tokenizer-state guards"]}
       ],
-      "limitations": ["Supported calls only; no general expression statements, bare construction, parenthesized/chained receivers, nullsafe/static/dynamic method calls", "Existing function/class/arrow/value boundaries remain; no foreign-object binding, string callable lookup, destructor or warning/exception equivalence", "Original render caller still requires form-feed escape and actual HTML processor; owned fixture is not unchanged WordPress acceptance or Gossip adoption"]
+      "limitations": ["Supported calls only; no general expression statements, bare construction, parenthesized/chained receivers, nullsafe/static/dynamic method calls", "Existing function/class/arrow/value boundaries remain; no foreign-object binding, string callable lookup, destructor or warning/exception equivalence", "Original render caller still requires actual HTML processor; owned fixture is not unchanged WordPress acceptance or Gossip adoption"]
     },
     {
       "id": "php.builtin.strtok",

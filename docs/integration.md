@@ -2,8 +2,9 @@
 
 [Standalone call statements](call-statement-boundary.md) now express the
 render caller's discarded-result method call without a dummy assignment.
-The [source dependency audit](render-dependencies.md) records remaining `\f`
-lexing and original HTML tag-processor dependencies. No unchanged render PASS,
+The [source dependency audit](render-dependencies.md) records resolved
+[form-feed lexing](form-feed-boundary.md) and remaining original HTML
+tag-processor dependencies. No unchanged render PASS,
 HTML substitute, host binding or Gossip repin is introduced. Gossip #41's
 separate 16-case data-class evidence is recorded there without summing prior
 24/334 configurations or inferring adoption of later compiler increments.
