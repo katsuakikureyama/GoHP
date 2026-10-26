@@ -33,3 +33,15 @@ reference execution. Native PHP expectations were recorded separately in #82.
 
 No service operation is added; the existing local `gohp.cli.generate` WebMCP
 exclusion remains applicable. No Gossip compiler pin changes are required.
+
+## Verification
+
+At commit `01a28db` (Go 1.23.0, darwin/arm64), with
+`GOCACHE=/tmp/gohp-go-cache GOPROXY=off GOTOOLCHAIN=go1.23.0`:
+
+- `go test -count=1 ./internal/storage`: PASS (7 tests, 0.194s).
+- `go vet ./internal/storage`: PASS.
+
+The PHP-only specification from #82 is reused as the behavioral reference; no
+new PHP execution or generated-reference comparison is claimed. Remaining R1
+array/temporary/frame integration and R2–R5 are not complete.
