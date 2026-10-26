@@ -32,7 +32,7 @@ func TestScalarFrameSelection(t *testing.T) {
 		{"array_branch", `function selected() { $x = 1; if (false) { $x = []; } return $x; }`, false},
 		{"dead_array", `function selected() { return 1; $x = []; }`, false},
 		{"foreach", `function selected() { foreach ([1] as $x) { return $x; } return null; }`, false},
-		{"builtin", `function selected() { return strlen('x'); }`, false},
+		{"builtin", `function selected() { return strlen('x'); }`, true},
 		{"user_call", `function other() { return 1; } function selected() { return other(); }`, false},
 		{"object", `class Item {} function selected() { return new Item(); }`, false},
 		{"arrow", `function selected() { $f = fn($x) => $x; return $f(1); }`, false},

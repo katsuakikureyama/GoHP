@@ -25,7 +25,8 @@ entirely closed scalar body now qualifies for the existing
 [generated ScalarFrame](generated-scalar-frames.md). Every argument is checked
 before its first Write. The deferred Close is installed before initialization,
 so a later parameter failure also releases already initialized locals. Nullary
-selection remains valid. Mixed/untyped parameters, calls, array/object producers,
+selection remains valid, including the explicit pure-builtin subset documented
+there when every operand is scalar. Mixed/untyped parameters, unlisted calls, array/object producers,
 methods and arrows keep legacy maps; no caller-based or runtime guessing selects
 storage. General frame/shared-array ownership and PHP references remain unfinished.
 

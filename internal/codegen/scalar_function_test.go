@@ -42,7 +42,7 @@ function reassign(int $n) { $n = 'changed'; return strlen($n); }
 			t.Fatalf("guard missing/late %s:\n%s", guard, s)
 		}
 	}
-	if strings.Count(s, "rt.NewScalarFrame()") != 1 || !strings.Contains(s, `rt.BoolReturn(v.Read("b"))`) ||
+	if strings.Count(s, "rt.NewScalarFrame()") != 2 || !strings.Contains(s, `rt.BoolReturn(v.Read("b"))`) ||
 		strings.Index(s, "defer v.Close()") > strings.Index(s, "rt.ScalarParameter") {
 		t.Fatalf("frame selection/lifetime/return: %s", s)
 	}

@@ -142,7 +142,7 @@ substitute a custom Go hook engine for untested original `WP_Hook` behavior.
 | Stage | Deliverable / exit condition | Status |
 |---|---|---|
 | R0 | Design and executable PHP-only reference contracts; record exact native run separately | This change; GoHP reference support remains unsupported |
-| R1 | Internal slot/value ownership primitives and shared-array separation design implemented behind closed boundaries; existing no-reference behavior preserved | Partial: scalar slots, explicit Frame release and nullary scalar codegen integration implemented; shared-array storage, temporary ownership and general frame integration pending |
+| R1 | Internal slot/value ownership primitives and shared-array separation design implemented behind closed boundaries; existing no-reference behavior preserved | Partial: scalar slots, explicit Frame release and closed nullary/exact-scalar-parameter codegen including selected pure builtins implemented; shared-array storage, temporary ownership and general frame integration pending |
 | R2 | Bounded variable reference assignment/unset, explicit address IR and binding lifetime; source + malformed-IR negatives and PHP/Go comparisons | Not implemented |
 | R3 | Reference-bearing arrays, element/declared-property locations, copy-timing and lifetime cases; key order/next-index and existing copy isolation retained | Not implemented |
 | R4 | By-reference parameters/returns, reference foreach and closure captures, each with explicit bounded contracts and call-path evidence | Not implemented |
