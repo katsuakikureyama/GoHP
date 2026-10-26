@@ -1,7 +1,8 @@
 // Package storage contains the internal reference-storage foundation. It is
 // exposed to closed scalar generated functions through runtime.ScalarFrame;
-// reference bindings remain internal until address IR is integrated. Only
-// null, bool, int64 and string values are admitted.
+// reference bindings remain internal until address IR is integrated. Slots
+// admit only null, bool, int64 and string. ScalarArray owns containers of such
+// slots internally; array handles themselves are not admitted as slot values.
 package storage
 
 // Slot is one binding, not a PHP value. Slots must only be used by pointer and
@@ -14,7 +15,7 @@ type Slot struct {
 }
 
 // cell counts bindings, not Go pointers. A single remaining owner stays valid;
-// future array separation, not scalar reads, will decide when to unwrap cells.
+// array separation, not scalar reads, decides when to unwrap cells.
 type cell struct {
 	value  any
 	owners int

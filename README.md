@@ -78,6 +78,9 @@ The [first generated-frame integration](docs/generated-scalar-frames.md) now
 uses owned storage for closed scalar functions with no arguments or all exact
 scalar-typed arguments, including an explicit scalar-only builtin subset; other scopes keep
 their existing value semantics.
+An [internal shared scalar array foundation](docs/shared-scalar-array-storage.md)
+now tracks container/reference ownership and copy timing. It is not connected
+to generated array operations yet; PHP references remain unsupported.
 Declared public properties now accept bounded [simple assignment](docs/public-property-write.md)
 through a statically known generated-class variable (including known aliases
 and method `$this`). Arrays detach at write/read boundaries; object identifiers

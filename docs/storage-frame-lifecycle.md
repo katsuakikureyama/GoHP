@@ -50,8 +50,9 @@ The PHP-only reference specification from #82 remains separate and unchanged;
 its PHP 8.3 observations are not inherited by PHP 8.4. This increment requires
 no new native-only run because it neither admits nor generates new PHP syntax.
 
-R1 is still partial: general generated-frame integration, address IR, temporary and
-shared-array ownership, detach-on-write, cyclic values and PHP destructor order
+R1 is still partial: [internal shared scalar containers](shared-scalar-array-storage.md)
+now implement bounded separation, but general generated-frame integration,
+address IR, nested/temporary/shared-array runtime ownership, cyclic values and PHP destructor order
 are not implemented. Map iteration during Close has no destructor-order meaning
 in the scalar-only domain. Existing array/object value semantics remain unchanged.
 The separate scalar integration records generated-call and target-specific
