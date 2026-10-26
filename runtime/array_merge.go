@@ -22,7 +22,7 @@ func ArrayMerge(values ...any) any {
 			} else {
 				// Array storage already contains normalized int64/string keys.
 				key = index
-				output.noteIntegerKey(index)
+				output.index.Observe(index)
 				index++
 			}
 			output.Entries = append(output.Entries, Entry{Key: key, Value: Clone(entry.Value)})

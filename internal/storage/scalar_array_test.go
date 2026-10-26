@@ -33,21 +33,21 @@ func TestScalarArrayValuesAndCopy(t *testing.T) {
 
 	zero.Write("null", nil)
 	zero.Write(int64(1), "integer-key")
-	zero.Write("1", "string-key")
+	zero.Write("1", "canonical-string-key")
 	zero.Write("bool", true)
 	zero.Write("int", int64(-7))
 	zero.Write("bool", false) // Replacement retains insertion order.
 
 	requireArrayRead(t, &zero, "null", nil, true)
-	requireArrayRead(t, &zero, int64(1), "integer-key", true)
-	requireArrayRead(t, &zero, "1", "string-key", true)
+	requireArrayRead(t, &zero, int64(1), "canonical-string-key", true)
+	requireArrayRead(t, &zero, "1", "canonical-string-key", true)
 	requireArrayRead(t, &zero, "bool", false, true)
 	requireArrayRead(t, &zero, "int", int64(-7), true)
-	requireArrayKeys(t, &zero, []any{"null", int64(1), "1", "bool", "int"})
+	requireArrayKeys(t, &zero, []any{"null", int64(1), "bool", "int"})
 
 	keys := zero.Keys()
 	keys[0] = "changed-snapshot"
-	requireArrayKeys(t, &zero, []any{"null", int64(1), "1", "bool", "int"})
+	requireArrayKeys(t, &zero, []any{"null", int64(1), "bool", "int"})
 
 	copy := zero.Copy()
 	defer copy.Close()
@@ -184,6 +184,7 @@ func TestScalarArrayRejectsInvalidUse(t *testing.T) {
 		"Bind":      func() { array.Bind("plain", source) },
 		"Reference": func() { array.Reference("plain") },
 		"Copy":      func() { array.Copy() },
+		"Append":    func() { array.Append("after-close") },
 	} {
 		t.Run("closed_"+name, func(t *testing.T) { requirePanic(t, action) })
 	}
@@ -197,6 +198,7 @@ func TestScalarArrayRejectsInvalidUse(t *testing.T) {
 		"Bind":      func() { nilArray.Bind("plain", source) },
 		"Reference": func() { nilArray.Reference("plain") },
 		"Copy":      func() { nilArray.Copy() },
+		"Append":    func() { nilArray.Append("value") },
 		"Close":     func() { nilArray.Close() },
 	} {
 		t.Run("nil_"+name, func(t *testing.T) { requirePanic(t, action) })

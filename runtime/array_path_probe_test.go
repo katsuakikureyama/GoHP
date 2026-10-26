@@ -22,7 +22,7 @@ func TestArrayPathProbeValuesAndCopy(t *testing.T) {
 	if !present || !ok {
 		t.Fatalf("nested array probe = (%#v, %t), want present Array", got, present)
 	}
-	if array.next != -4 || !array.nextInitialized || array.nextBlocked {
+	if array.index.Next() != -4 {
 		t.Fatalf("nested array metadata = %#v, want preserved negative-key successor", array)
 	}
 	array.Entries[0].Value.(Array).Entries[0].Value = "changed"
@@ -60,7 +60,7 @@ func TestArrayPathProbeBoundaries(t *testing.T) {
 	bareArray := NewArray(Entry{Key: int64(-2), Value: NewArray(Entry{Key: "child", Value: "original"})})
 	got, present := ArrayPathProbe(bareArray)
 	copy, ok := got.(Array)
-	if !present || !ok || copy.next != bareArray.next || copy.nextInitialized != bareArray.nextInitialized || copy.nextBlocked != bareArray.nextBlocked {
+	if !present || !ok || copy.index != bareArray.index {
 		t.Fatalf("bare array probe = (%#v, %t), want detached present array", got, present)
 	}
 	copy.Entries[0].Value.(Array).Entries[0].Value = "changed"

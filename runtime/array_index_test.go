@@ -62,7 +62,7 @@ func TestArrayIndexStateAfterValueOperations(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			got := ArraySet(tt.base, tt.key, "written").(Array)
-			if got.next != tt.next || !got.nextInitialized || got.nextBlocked {
+			if got.index.Next() != tt.next {
 				t.Fatalf("index state = %#v, want next %d", got, tt.next)
 			}
 			if Get(got, tt.key) != "written" {
@@ -74,9 +74,8 @@ func TestArrayIndexStateAfterValueOperations(t *testing.T) {
 	maximum := NewArray(Entry{Key: int64(math.MaxInt64)})
 	for _, copied := range []Array{Clone(maximum).(Array), ArrayMap(identity, maximum).(Array)} {
 		for _, key := range []any{"-5", int64(math.MaxInt64)} {
-			if got := ArraySet(copied, key, "written").(Array); !got.nextBlocked {
-				t.Fatal("maximum-key guard lost after copy/write")
-			}
+			got := ArraySet(copied, key, "written").(Array)
+			assertArrayAppendPanic(t, func() { ArrayAppend(got, nil) }, "array key overflow unsupported")
 		}
 	}
 }

@@ -28,7 +28,7 @@ before any write. Supporting arrays here by calling the existing eager Clone
 would violate the copy-timing contracts in [the design](reference-value-model.md).
 [Shared scalar containers](shared-scalar-array-storage.md) now own these Slots
 and separate on writes without admitting array handles as Slot values. General
-array-value/temporary ownership, PHP key/index policy, generated locations for
+array-value/temporary ownership and generated locations for
 elements/properties and cyclic values remain unfinished R1/R3 work.
 
 Tests exercise alias writes, ordinary scalar copies, rebinding, unset/recreation,

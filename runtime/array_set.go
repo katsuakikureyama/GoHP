@@ -17,7 +17,7 @@ func ArraySet(base, key, value any) any {
 		}
 	}
 	if n, ok := key.(int64); ok {
-		output.noteIntegerKey(n)
+		output.index.Observe(n)
 	}
 	output.Entries = append(output.Entries, Entry{Key: key, Value: value})
 	return output

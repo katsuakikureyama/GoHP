@@ -17,7 +17,7 @@ func TestArrayEmptyOuterCountAndPreservation(t *testing.T) {
 		if ArrayEmpty(input) {
 			t.Fatalf("singleton array is not empty: %#v", value)
 		}
-		if len(input.Entries) != 1 || input.Entries[0].Key != before.Entries[0].Key || input.next != before.next || input.nextInitialized != before.nextInitialized || input.nextBlocked != before.nextBlocked {
+		if len(input.Entries) != 1 || input.Entries[0].Key != before.Entries[0].Key || input.index != before.index {
 			t.Fatal("empty changed input structure/index metadata")
 		}
 	}

@@ -45,7 +45,7 @@ func TestObjectToArrayUsesGeneratedPropertySnapshotOnce(t *testing.T) {
 	if !reflect.DeepEqual(got, snapshot.properties) {
 		t.Fatalf("array cast = %#v, want %#v", got, snapshot.properties)
 	}
-	if got.next != snapshot.properties.next || got.nextInitialized != snapshot.properties.nextInitialized || got.nextBlocked != snapshot.properties.nextBlocked {
+	if got.index != snapshot.properties.index {
 		t.Fatal("array cast lost property-array metadata")
 	}
 	if got.Entries[2].Value != identity {

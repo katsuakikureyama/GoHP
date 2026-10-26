@@ -20,7 +20,7 @@ func TestArrayParameterClonesArrayAndMetadata(t *testing.T) {
 	if !reflect.DeepEqual(got, input) {
 		t.Fatalf("array parameter = %#v, want %#v", got, input)
 	}
-	if got.next != input.next || got.nextInitialized != input.nextInitialized || got.nextBlocked != input.nextBlocked {
+	if got.index != input.index {
 		t.Fatal("array parameter lost next-index metadata")
 	}
 

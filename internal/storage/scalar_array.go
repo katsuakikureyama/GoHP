@@ -1,12 +1,14 @@
 package storage
 
+import "github.com/katsuakikureyama/GoHP/internal/arraykey"
+
 // ScalarArray is an owned handle to ordered, scalar-only array storage. Handles
 // must be used by pointer, never copied as Go values, and are not concurrent.
 // Copy explicitly retains shared storage; Close releases one handle. Go GC is
 // not semantic release. The zero value is an open, empty handle.
 //
-// Keys are exact int64/string identities, with no PHP key normalization or
-// automatic index policy. Elements admit the same values as Slot. This internal
+// Keys use the runtime's bounded int64/string normalization and automatic index
+// policy. Elements admit the same values as Slot. This internal
 // foundation is not a runtime.Array replacement or a generated-code API yet.
 type ScalarArray struct {
 	data   *scalarArrayData
@@ -18,6 +20,7 @@ type ScalarArray struct {
 type scalarArrayData struct {
 	owners  int
 	entries []scalarArrayEntry
+	index   arraykey.Index
 }
 
 type scalarArrayEntry struct {
@@ -30,14 +33,6 @@ func NewScalarArray() *ScalarArray { return &ScalarArray{} }
 func (array *ScalarArray) requireOpen() {
 	if array == nil || array.closed {
 		panic("storage operation requires an open scalar array")
-	}
-}
-
-func scalarArrayKey(key any) {
-	switch key.(type) {
-	case int64, string:
-	default:
-		panic("storage scalar array key requires int64 or string")
 	}
 }
 
@@ -56,7 +51,7 @@ func (array *ScalarArray) find(key any) *Slot {
 // separate storage or become present null. Scalar values are immutable copies.
 func (array *ScalarArray) Read(key any) (any, bool) {
 	array.requireOpen()
-	scalarArrayKey(key)
+	key = arraykey.Normalize(key)
 	if slot := array.find(key); slot != nil {
 		return slot.Read()
 	}
@@ -99,7 +94,7 @@ func (array *ScalarArray) separate() {
 		return
 	}
 	old := array.data
-	next := &scalarArrayData{owners: 1, entries: make([]scalarArrayEntry, 0, len(old.entries))}
+	next := &scalarArrayData{owners: 1, entries: make([]scalarArrayEntry, 0, len(old.entries)), index: old.index}
 	for _, entry := range old.entries {
 		copy := &Slot{}
 		if entry.slot.ref != nil && entry.slot.ref.owners > 1 {
@@ -122,6 +117,9 @@ func (array *ScalarArray) local(key any) *Slot {
 	}
 	slot := &Slot{}
 	array.data.entries = append(array.data.entries, scalarArrayEntry{key: key, slot: slot})
+	if n, ok := key.(int64); ok {
+		array.data.index.Observe(n)
+	}
 	return slot
 }
 
@@ -130,17 +128,33 @@ func (array *ScalarArray) local(key any) *Slot {
 // behavior even when no visible element value was changed by the failed write.
 func (array *ScalarArray) Write(key, value any) {
 	array.requireOpen()
-	scalarArrayKey(key)
+	key = arraykey.Normalize(key)
 	scalar(value)
 	array.separate()
 	array.local(key).Write(value)
+}
+
+// Append inserts an ordinary scalar at the next automatic key and returns that
+// key. Invalid values and exhausted indices must reject before separation,
+// preserving both the index and reference sharing on failure.
+func (array *ScalarArray) Append(value any) int64 {
+	array.requireOpen()
+	scalar(value)
+	var index arraykey.Index
+	if array.data != nil {
+		index = array.data.index
+	}
+	key := index.Next()
+	array.separate()
+	array.local(key).Write(value)
+	return key
 }
 
 // Bind replaces only this element binding with an alias of source. The source
 // remains independently owned and an undefined source becomes present null.
 func (array *ScalarArray) Bind(key any, source *Slot) {
 	array.requireOpen()
-	scalarArrayKey(key)
+	key = arraykey.Normalize(key)
 	if source == nil {
 		panic("storage reference requires a slot")
 	}
@@ -153,7 +167,7 @@ func (array *ScalarArray) Bind(key any, source *Slot) {
 // Unset the returned Slot; rebinding it never replaces the element binding.
 func (array *ScalarArray) Reference(key any) *Slot {
 	array.requireOpen()
-	scalarArrayKey(key)
+	key = arraykey.Normalize(key)
 	array.separate()
 	alias := &Slot{}
 	alias.Bind(array.local(key))

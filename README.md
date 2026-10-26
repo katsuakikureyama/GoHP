@@ -81,6 +81,8 @@ their existing value semantics.
 An [internal shared scalar array foundation](docs/shared-scalar-array-storage.md)
 now tracks container/reference ownership and copy timing. It is not connected
 to generated array operations yet; PHP references remain unsupported.
+The runtime and these internal containers share a bounded
+[key normalization and automatic-index policy](docs/array-index-boundary.md).
 Declared public properties now accept bounded [simple assignment](docs/public-property-write.md)
 through a statically known generated-class variable (including known aliases
 and method `$this`). Arrays detach at write/read boundaries; object identifiers

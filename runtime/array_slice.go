@@ -56,7 +56,7 @@ func ArraySlice(value, offsetValue, lengthValue, preserveKeys any) any {
 				index++
 			}
 			key = integer
-			output.noteIntegerKey(integer)
+			output.index.Observe(integer)
 		}
 		output.Entries = append(output.Entries, Entry{Key: key, Value: Clone(entry.Value)})
 	}

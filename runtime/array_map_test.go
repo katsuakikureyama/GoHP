@@ -28,7 +28,7 @@ func TestArrayMapPreservesKeysOrderAndValueIsolation(t *testing.T) {
 	if !ok {
 		t.Fatal("array_map did not return an array")
 	}
-	if got.next != input.next || got.nextBlocked != input.nextBlocked {
+	if got.index != input.index {
 		t.Fatal("array_map lost next-index metadata")
 	}
 	want := []Entry{
@@ -56,9 +56,10 @@ func TestArrayMapPreservesKeysOrderAndValueIsolation(t *testing.T) {
 	}
 	maxKey := NewArray(Entry{Key: int64(math.MaxInt64), Value: "last"})
 	maxMapped := ArrayMap(func(value any) any { return value }, maxKey).(Array)
-	if !reflect.DeepEqual(maxMapped, maxKey) || !maxMapped.nextBlocked {
+	if !reflect.DeepEqual(maxMapped, maxKey) {
 		t.Fatal("maximum integer key or blocked next-index metadata was lost")
 	}
+	assertArrayAppendPanic(t, func() { ArrayAppend(maxMapped, nil) }, "array key overflow unsupported")
 }
 
 func TestArrayMapEmptyAndInvalidArguments(t *testing.T) {
