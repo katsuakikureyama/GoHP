@@ -1,0 +1,107 @@
+=== RUN   TestMatchReportsNumericCapturesAndNativeNameTableOrder
+=== PAUSE TestMatchReportsNumericCapturesAndNativeNameTableOrder
+=== RUN   TestMatchDistinguishesUnmatchedEmptyAndTrailingCaptures
+=== PAUSE TestMatchDistinguishesUnmatchedEmptyAndTrailingCaptures
+=== RUN   TestMatchUsesRawBytesAndByteOffsets
+=== PAUSE TestMatchUsesRawBytesAndByteOffsets
+=== RUN   TestMatchUsesFixedDotAllProfile
+=== PAUSE TestMatchUsesFixedDotAllProfile
+=== RUN   TestMatchReturnsNoMatchAndUnknownEngineFailuresDistinctly
+=== PAUSE TestMatchReturnsNoMatchAndUnknownEngineFailuresDistinctly
+=== RUN   TestMatchCopiesReturnedBytes
+=== PAUSE TestMatchCopiesReturnedBytes
+=== RUN   TestMatchReturnsTypedErrorsForMalformedAndInvalidInput
+=== PAUSE TestMatchReturnsTypedErrorsForMalformedAndInvalidInput
+=== RUN   TestMatchHonorsKnownRawStatusAndMaximumCaptureBound
+=== PAUSE TestMatchHonorsKnownRawStatusAndMaximumCaptureBound
+=== RUN   TestRetainedConsumerReference
+=== RUN   TestRetainedConsumerReference/empty_document
+=== RUN   TestRetainedConsumerReference/plain_text
+=== RUN   TestRetainedConsumerReference/core_opener
+=== RUN   TestRetainedConsumerReference/core_closer
+=== RUN   TestRetainedConsumerReference/core_void
+=== RUN   TestRetainedConsumerReference/namespaced_opener
+=== RUN   TestRetainedConsumerReference/nonempty_json_attributes
+=== RUN   TestRetainedConsumerReference/empty_json_attributes
+=== RUN   TestRetainedConsumerReference/nested_unicode_attributes
+=== RUN   TestRetainedConsumerReference/invalid_json_attributes
+=== RUN   TestRetainedConsumerReference/brace_inside_json_string
+=== RUN   TestRetainedConsumerReference/multiline_comment
+=== RUN   TestRetainedConsumerReference/missing_space_after_comment_open
+=== RUN   TestRetainedConsumerReference/unterminated_comment
+=== RUN   TestRetainedConsumerReference/invalid_utf8_attributes
+=== RUN   TestRetainedConsumerReference/adjacent_comments_second_offset
+=== RUN   TestRetainedConsumerReference/multibyte_prefix
+=== RUN   TestRetainedConsumerReference/nul_prefix
+=== RUN   TestRetainedConsumerReference/invalid_utf8_prefix
+=== RUN   TestRetainedConsumerReference/at_end_offset
+=== RUN   TestRetainedConsumerReference/negative_document_start_offset
+=== RUN   TestRetainedConsumerReference/offset_inside_utf8_prefix
+=== RUN   TestRetainedConsumerReference/long_unterminated_json_attribute
+=== RUN   TestRetainedConsumerReference/backtrack_limit_one
+--- PASS: TestRetainedConsumerReference (0.01s)
+    --- PASS: TestRetainedConsumerReference/empty_document (0.00s)
+    --- PASS: TestRetainedConsumerReference/plain_text (0.00s)
+    --- PASS: TestRetainedConsumerReference/core_opener (0.00s)
+    --- PASS: TestRetainedConsumerReference/core_closer (0.00s)
+    --- PASS: TestRetainedConsumerReference/core_void (0.00s)
+    --- PASS: TestRetainedConsumerReference/namespaced_opener (0.00s)
+    --- PASS: TestRetainedConsumerReference/nonempty_json_attributes (0.00s)
+    --- PASS: TestRetainedConsumerReference/empty_json_attributes (0.00s)
+    --- PASS: TestRetainedConsumerReference/nested_unicode_attributes (0.00s)
+    --- PASS: TestRetainedConsumerReference/invalid_json_attributes (0.00s)
+    --- PASS: TestRetainedConsumerReference/brace_inside_json_string (0.00s)
+    --- PASS: TestRetainedConsumerReference/multiline_comment (0.00s)
+    --- PASS: TestRetainedConsumerReference/missing_space_after_comment_open (0.00s)
+    --- PASS: TestRetainedConsumerReference/unterminated_comment (0.00s)
+    --- PASS: TestRetainedConsumerReference/invalid_utf8_attributes (0.00s)
+    --- PASS: TestRetainedConsumerReference/adjacent_comments_second_offset (0.00s)
+    --- PASS: TestRetainedConsumerReference/multibyte_prefix (0.00s)
+    --- PASS: TestRetainedConsumerReference/nul_prefix (0.00s)
+    --- PASS: TestRetainedConsumerReference/invalid_utf8_prefix (0.00s)
+    --- PASS: TestRetainedConsumerReference/at_end_offset (0.00s)
+    --- PASS: TestRetainedConsumerReference/negative_document_start_offset (0.00s)
+    --- PASS: TestRetainedConsumerReference/offset_inside_utf8_prefix (0.00s)
+    --- PASS: TestRetainedConsumerReference/long_unterminated_json_attribute (0.00s)
+    --- PASS: TestRetainedConsumerReference/backtrack_limit_one (0.00s)
+=== CONT  TestMatchReportsNumericCapturesAndNativeNameTableOrder
+=== CONT  TestMatchReturnsNoMatchAndUnknownEngineFailuresDistinctly
+--- PASS: TestMatchReportsNumericCapturesAndNativeNameTableOrder (0.00s)
+=== CONT  TestMatchDistinguishesUnmatchedEmptyAndTrailingCaptures
+=== CONT  TestMatchUsesFixedDotAllProfile
+=== CONT  TestMatchReturnsTypedErrorsForMalformedAndInvalidInput
+--- PASS: TestMatchReturnsNoMatchAndUnknownEngineFailuresDistinctly (0.00s)
+=== RUN   TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/negative_offset
+=== CONT  TestMatchHonorsKnownRawStatusAndMaximumCaptureBound
+=== CONT  TestMatchCopiesReturnedBytes
+=== CONT  TestMatchUsesRawBytesAndByteOffsets
+--- PASS: TestMatchCopiesReturnedBytes (0.00s)
+--- PASS: TestMatchDistinguishesUnmatchedEmptyAndTrailingCaptures (0.00s)
+--- PASS: TestMatchUsesFixedDotAllProfile (0.00s)
+--- PASS: TestMatchUsesRawBytesAndByteOffsets (0.00s)
+=== RUN   TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/offset_after_subject
+=== RUN   TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/unknown_profile
+=== RUN   TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/zero_match_limit
+=== RUN   TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/match_limit_above_profile_cap
+=== RUN   TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/zero_depth_limit
+=== RUN   TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/depth_limit_above_profile_cap
+=== RUN   TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/zero_heap_limit
+=== RUN   TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/heap_limit_above_profile_cap
+=== RUN   TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/pattern_larger_than_bound
+=== RUN   TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/subject_larger_than_bound
+=== RUN   TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/captures_larger_than_bound
+--- PASS: TestMatchReturnsTypedErrorsForMalformedAndInvalidInput (0.00s)
+    --- PASS: TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/negative_offset (0.00s)
+    --- PASS: TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/offset_after_subject (0.00s)
+    --- PASS: TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/unknown_profile (0.00s)
+    --- PASS: TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/zero_match_limit (0.00s)
+    --- PASS: TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/match_limit_above_profile_cap (0.00s)
+    --- PASS: TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/zero_depth_limit (0.00s)
+    --- PASS: TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/depth_limit_above_profile_cap (0.00s)
+    --- PASS: TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/zero_heap_limit (0.00s)
+    --- PASS: TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/heap_limit_above_profile_cap (0.00s)
+    --- PASS: TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/pattern_larger_than_bound (0.00s)
+    --- PASS: TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/subject_larger_than_bound (0.00s)
+    --- PASS: TestMatchReturnsTypedErrorsForMalformedAndInvalidInput/captures_larger_than_bound (0.00s)
+--- PASS: TestMatchHonorsKnownRawStatusAndMaximumCaptureBound (0.00s)
+PASS
