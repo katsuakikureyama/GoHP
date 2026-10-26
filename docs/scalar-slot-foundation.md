@@ -15,9 +15,11 @@ and writing it elsewhere does not propagate the outer reference.
 Each reference cell counts logical bindings. Bind retains its new cell before
 releasing the old one; Unset deterministically releases an owner and clears the
 contents on last release. These counts must not use Go GC/finalizers. Slots are
-pointer-only, must not be copied, and are not concurrency-safe. Future generated
-frames must explicitly release every binding on all exit paths. Such frame
-integration and lifetime enforcement are not implemented by this increment.
+pointer-only, must not be copied, and are not concurrency-safe.
+[Scalar Frame lifecycle](storage-frame-lifecycle.md) now provides named local
+bindings with explicit Close and separately owned exported references. Future
+generated frames must use explicit release on all exit paths; that codegen
+integration and temporary ownership are still unimplemented.
 
 Arrays, objects, callables, host pointers and cells passed as values are rejected
 before any write. Supporting arrays here by calling the existing eager Clone
@@ -50,4 +52,4 @@ At commit `01a28db` (Go 1.23.0, darwin/arm64), with
 
 The PHP-only specification from #82 is reused as the behavioral reference; no
 new PHP execution or generated-reference comparison is claimed. Remaining R1
-array/temporary/frame integration and R2–R5 are not complete.
+array/temporary/generated-frame integration and R2–R5 are not complete.

@@ -1,12 +1,14 @@
 # Reference, value and assignment foundation
 
-Status: **design + native-oracle specification; scalar-only internal slots implemented**.
+Status: **design + native-oracle specification; scalar-only internal slots and explicit Frame release implemented**.
 Baseline: main `565e65e6c9d8e211b06779739bfba76b07c4d92d` (#81).
 Target: PHP 8.3, oracle floor 8.3.36. Later series need separate policy and
 evidence; they must not inherit these results. No compiler/runtime/IR changes
 were introduced by the original design or its PHP-only specification. The first
 implementation is [scalar slot infrastructure](scalar-slot-foundation.md), kept
-separate from generated programs; PHP reference syntax remains unsupported.
+separate from generated programs, now with [explicit scalar Frame lifecycle](storage-frame-lifecycle.md);
+PHP reference syntax remains unsupported. The native specification below is
+still PHP 8.3-only even though the compiler now has an independent PHP 8.4 target.
 
 ## Decision
 
@@ -139,14 +141,14 @@ substitute a custom Go hook engine for untested original `WP_Hook` behavior.
 | Stage | Deliverable / exit condition | Status |
 |---|---|---|
 | R0 | Design and executable PHP-only reference contracts; record exact native run separately | This change; GoHP reference support remains unsupported |
-| R1 | Internal slot/value ownership primitives and shared-array separation design implemented behind closed boundaries; existing no-reference behavior preserved | Partial: scalar slots implemented; shared-array storage and frame/temporary ownership integration pending |
+| R1 | Internal slot/value ownership primitives and shared-array separation design implemented behind closed boundaries; existing no-reference behavior preserved | Partial: scalar slots and explicit Frame release implemented; shared-array storage, temporary ownership and generated-frame integration pending |
 | R2 | Bounded variable reference assignment/unset, explicit address IR and binding lifetime; source + malformed-IR negatives and PHP/Go comparisons | Not implemented |
 | R3 | Reference-bearing arrays, element/declared-property locations, copy-timing and lifetime cases; key order/next-index and existing copy isolation retained | Not implemented |
 | R4 | By-reference parameters/returns, reference foreach and closure captures, each with explicit bounded contracts and call-path evidence | Not implemented |
 | R5 | Generic dynamic callable forms and original application acceptance (full block parser, then hooks) | Not implemented; not implied by R0–R4 |
 
 Next bounded implementation: R1's shared-array storage and ownership integration,
-building on scalar slot/read/value-write/bind/unset primitives. Keep parser acceptance unchanged;
+building on scalar slot/read/value-write/bind/unset and explicit Frame release. Keep parser acceptance unchanged;
 exercise real alias/copy/lifetime contracts, then integrate the storage model
 across codegen/runtime boundaries in reviewed increments. If a narrower scalar
 R2 subset precedes array migration, reject arrays/objects/unsupported locations
