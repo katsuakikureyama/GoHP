@@ -1,7 +1,10 @@
 # GoHP — Go Hypertext Processor
 
-GoHP is an experimental, general-purpose PHP-to-Go **source transpiler**. The
-Phase 0 compiler emits readable Go functions and native structs, builds with Go,
+GoHP is an experimental, general-purpose PHP-to-Go **source transpiler designed
+to verify compatibility separately for PHP 8.x version targets**. The first active
+target is PHP 8.3, with a native oracle floor of 8.3.36; later series require
+their own semantics and evidence. See the [version-specific compatibility policy](docs/php-version-compatibility.md).
+The Phase 0 compiler emits readable Go functions and native structs, builds with Go,
 and runs without PHP. It does not embed an opcode interpreter. It is not ready
 to run WordPress, arbitrary Composer packages, or customer applications.
 
@@ -60,8 +63,10 @@ Unsupported syntax must fail
 with a diagnostic; a separate runtime-negative test must fail on a missing key.
 Compilation alone never proves PHP compatibility.
 The next structural milestone is the [reference/value/assignment foundation](docs/reference-value-model.md):
-storage locations, aliases and reference-aware array separation. Its native-PHP
-specification is not generated-Go evidence; references remain unsupported.
+storage locations, aliases and reference-aware array separation. The first
+[internal scalar-slot slice](docs/scalar-slot-foundation.md) is implemented but
+not connected to generated code. Its unit checks and native-PHP specification
+are not generated-Go reference evidence; reference syntax remains unsupported.
 Declared public properties now accept bounded [simple assignment](docs/public-property-write.md)
 through a statically known generated-class variable (including known aliases
 and method `$this`). Arrays detach at write/read boundaries; object identifiers
