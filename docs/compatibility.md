@@ -63,7 +63,7 @@ and evidence. Other builtins fail closed.
 |---|---|
 | References, exceptions and warnings | PHP references are unsupported; warnings/exceptions are not modeled. Runtime failures are nonzero failures, never functional PASS. |
 | Source loading and dependencies | `include` / `require` / autoload / namespaces are unsupported. Composer has no resolver/package support; metadata inspection never executes Composer hooks. |
-| Database and extensions | `mysqli`, PDO, SQLite, `mbstring`, `iconv`, cURL, GD, XML, PCRE and serialization are unsupported. Do not assume a Go library is PHP-equivalent. |
+| Database and extensions | `mysqli`, PDO, SQLite, `mbstring`, `iconv`, cURL, GD, XML, PCRE and serialization are unsupported. The [optional PCRE2 engine bridge](optional-pcre2-bridge.md) is internal only: no PHP `preg_*` or compiler admission. Do not assume a Go library is PHP-equivalent. |
 | WordPress applications | WordPress, plugins and themes are not runnable; adoption needs an independent adapter and pinned oracle. |
 
 ## Combined subset validation
