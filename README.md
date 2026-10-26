@@ -70,7 +70,9 @@ Builtins currently include `count(array)`, bounded `strlen(string)` (byte
 length only, no implicit non-string coercion), `array_keys(array)` (one argument,
 ordered keys, no value filtering) and `array_values(array)` (ordered values,
 zero-based indexes, no flattening), literal-mask `rtrim`, `is_bool`, `is_string`, `is_int`, `is_null`, `is_array`
-and ASCII `strtolower(string)`. String-only `strcasecmp(string, string)` adds
+and ASCII `strtolower(string)`. [`is_object(value)`](docs/is-object-boundary.md)
+recognizes generated class instances and generated arrows (PHP Closures), not
+arrays/scalars or arbitrary foreign Go values. String-only `strcasecmp(string, string)` adds
 binary-safe ASCII case-insensitive comparison with an integer result; no
 coercion, Unicode folding or locale collation. See the
 [comparison boundary](docs/strcasecmp-boundary.md).

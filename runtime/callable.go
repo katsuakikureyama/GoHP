@@ -7,6 +7,12 @@ type Callable struct {
 	call  func(...any) any
 }
 
+// PHPObject reflects that PHP's Closure is an object, without making class
+// instances callable or adding closure properties/methods to this subset.
+func (callable *Callable) PHPObject() bool {
+	return callable != nil && callable.call != nil && callable.arity >= 0
+}
+
 func NewCallable(arity int, call func(...any) any) *Callable {
 	if arity < 0 || call == nil {
 		panic("invalid generated callable")
