@@ -24,7 +24,7 @@ Require a successful CI job before using its artifacts as release evidence.
 - `catalog.json`: the exact validated catalog used for this run, hash-bound to the report.
 - `go-test.jsonl`: exact Go test event stream, including failures and phase data.
 - `go-test.stderr`: test process stderr (infrastructure/build failures included).
-- `run.json`: `gohp.compatibility.run/v0.2` metadata, case evidence and feature rows.
+- `run.json`: `gohp.compatibility.run/v0.3` metadata, case evidence and feature rows.
 - `summary.md`: human-readable function/feature table for the selected target,
   with implementation state, bounded result, case IDs and limitations.
 
@@ -56,11 +56,40 @@ Differential cases emit phase evidence from the **existing execution**, not a
 second run: parse, Go generation, Go build, Go execution and comparison. A
 differential PASS requires the matching case/target/oracle version, current
 fixture hash, generated-source hash, successful phases, equal stdout and both
-successful exits. Stderr, warnings/exception identity and side effects remain
-`not-checked`; negative and tooling tests never become PHP-equivalence proof.
+successful exits. Positive differential cases additionally require the bounded
+`quiet-success/v1` check: native PHP and generated Go must each have an empty
+stderr stream. `phase.quiet_stderr` records that check's `pass`, `fail` or
+`not-checked` status. This is not equality of diagnostic text: the general
+`comparisons.stderr`, `comparisons.exceptions` and
+`comparisons.side_effects` dimensions remain `not-checked`. Negative and
+tooling tests never become PHP-equivalence proof.
 Parent/package/process failure, absent events and skipped cases cannot produce
 a green feature verdict. Unsupported entries remain unsupported even when their
 expected-rejection checks pass.
+
+For every eligible positive differential case, raw test events carry a
+`diagnostics` observation with profile `quiet-success/v1`, the fixed native-PHP option-prefix
+arguments `["-d","error_reporting=-1","-d","display_errors=stderr","-d","display_startup_errors=1","-d","log_errors=0","-d","html_errors=0"]`,
+its `pass`/`fail`/`not-checked` status, and `{bytes, sha256}` for each process
+whose stderr was observed. It intentionally does not store raw stderr. A failed
+process can therefore retain its byte count and hash without publishing its
+diagnostic output; a process that did not run has no observation. The raw event
+stream, including this profile and its arguments, remains SHA-256-bound by
+`event_sha256` and is replay-validated by the archive view.
+
+The recorded `php_args` contains only these fixed options; the harness appends
+the catalog fixture path or the source-fingerprint-bound booleans wrapper to the
+actual invocation. Each saved-view run retains its original `run_schema`.
+
+Those `-d` overrides apply only to the actual native PHP fixture process. They
+do not change the startup-baseline/version probe, Go build or generated Go
+execution. The booleans fixture still sets and verifies `LC_CTYPE=C` in that
+same native process before requiring the fixture. A fixture can itself change
+or suppress warnings, so this remains neither a complete effective-state record
+nor a general warning, exception or diagnostic-equivalence claim. The profile
+uses PHP's documented command-line `-d` option and error-display configuration;
+see [command-line options](https://www.php.net/manual/en/features.commandline.options.php)
+and [error handling configuration](https://www.php.net/manual/en/errorfunc.configuration.php).
 
 Reports record the catalog/event hashes, actual toolchain and PHP version,
 platform, build flags, source fingerprint and a bounded PHP CLI startup baseline.
@@ -140,9 +169,10 @@ executes trusted repository tests and writes local artifacts. No browser/server
 route, MCP protocol, session forwarding, auto-submit or new authentication path
 is introduced. CI artifact upload is an explicit workflow step using existing
 GitHub Actions authorization, not a hidden action of the CLI.
-The v0.2 PHP baseline and its hash are runner-produced audit metadata, not
-caller-supplied capability inputs or a configuration API; this change does not
-add an inspect/search/state/link operation or alter the exclusion.
+The v0.2 PHP baseline and its hash, and the v0.3 per-case quiet-success audit
+metadata, are runner-produced rather than caller-supplied capability inputs or
+configuration APIs; this change does not add an inspect/search/state/link
+operation or alter the exclusion.
 
 ## Browse saved runs without rerunning tests
 
@@ -156,7 +186,7 @@ go run ./cmd/gohp-compat-view -target 8.4 -format json build/php84-run
 ```
 
 The CLI does not fetch artifacts, invoke tests/PHP/Git, change evidence or write
-output files; it prints Markdown (default) or `gohp.compatibility.view/v0.2` JSON
+output files; it prints Markdown (default) or `gohp.compatibility.view/v0.3` JSON
 to stdout. `go run` itself compiles the trusted Go tool and may populate the Go
 build cache; a prebuilt binary needs neither Go nor the source checkout.
 
@@ -175,7 +205,9 @@ This is **internal consistency**, not authenticity or fresh verification:
 source/fixture/generated bytes are not included in archives and cannot be
 rehash-checked here. v0.2 archives additionally bind a bounded pre-suite PHP
 CLI baseline, but that still is not an effective per-fixture configuration or a
-complete environment capture. A malicious producer can fabricate a consistent bundle.
+complete environment capture. v0.3 archives additionally replay the hash-bound
+quiet-success observation, which is an empty-stream check rather than diagnostic
+equivalence. A malicious producer can fabricate a consistent bundle.
 Metadata, environment identities and exit codes are producer assertions, not
 signed attestations. CI job status and subsequent smoke checks are not proven
 by the archived test report. Consult the trusted CI job before release use.
@@ -227,10 +259,11 @@ source run/attempt/URL and hashes for audit, but is not a new evidence authority
 WebMCP: **excluded**, local development evidence reader with no browser surface,
 MCP route, credentials, auto-submit, publication or remote authentication.
 Its catalog checks are Go tooling tests, never proof of PHP semantics.
-The v0.2 view always emits its own schema while accepting historical v0.1 and
-current v0.2 runs; it does not synthesize a baseline for v0.1 evidence. Reading
-the additional metadata adds no callable operation or authority and remains
-within this capability's exclusion.
+The v0.3 view always emits its own schema while strictly accepting historical
+v0.1/v0.2 and current v0.3 runs. It does not synthesize a baseline for v0.1 or
+a quiet-success observation for v0.1/v0.2 evidence. Reading the additional
+metadata adds no callable operation or authority and remains within this
+capability's exclusion.
 
 ## Remaining work
 

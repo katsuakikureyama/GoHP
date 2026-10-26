@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -14,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/katsuakikureyama/GoHP/internal/codegen"
+	"github.com/katsuakikureyama/GoHP/internal/compat"
 	"github.com/katsuakikureyama/GoHP/internal/frontend"
 	"github.com/katsuakikureyama/GoHP/internal/phpversion"
 )
@@ -26,13 +28,59 @@ const (
 )
 
 type differentialEvidence struct {
-	CaseID          string            `json:"case_id"`
-	PHPTarget       string            `json:"php_target"`
-	PHPVersion      string            `json:"php_version"`
-	FixtureSHA256   string            `json:"fixture_sha256"`
-	GeneratedSHA256 string            `json:"generated_sha256"`
-	Phases          map[string]string `json:"phases"`
-	Comparisons     map[string]string `json:"comparisons"`
+	CaseID          string                     `json:"case_id"`
+	PHPTarget       string                     `json:"php_target"`
+	PHPVersion      string                     `json:"php_version"`
+	FixtureSHA256   string                     `json:"fixture_sha256"`
+	GeneratedSHA256 string                     `json:"generated_sha256"`
+	Phases          map[string]string          `json:"phases"`
+	Comparisons     map[string]string          `json:"comparisons"`
+	Diagnostics     *compat.DiagnosticEvidence `json:"diagnostics,omitempty"`
+}
+
+type capturedCommand struct {
+	stdout      []byte
+	stderr      []byte
+	err         error
+	observation *compat.StderrObservation
+}
+
+// captureCommand retains separate streams without logging their contents.
+// A launch error has no observation: the command never reached a completed
+// process. A normal exit and an ExitError both have an observed stderr stream.
+func captureCommand(cmd *exec.Cmd) capturedCommand {
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	result := capturedCommand{stdout: stdout.Bytes(), stderr: stderr.Bytes(), err: err}
+	var exitError *exec.ExitError
+	if err == nil || errors.As(err, &exitError) {
+		result.observation = &compat.StderrObservation{
+			Bytes:  len(result.stderr),
+			SHA256: sha256Hex(result.stderr),
+		}
+	}
+	return result
+}
+
+func quietFixturePHPArgs(fixture, file string) []string {
+	args := compat.QuietPHPArgs()
+	if fixture == "booleans" {
+		// Set and verify the locale in the same process as the oracle.
+		return append(args, "-r", "if (setlocale(LC_CTYPE, 'C') !== 'C' || setlocale(LC_CTYPE, 0) !== 'C') { throw new RuntimeException('LC_CTYPE must be C'); } require $argv[1];", "--", file)
+	}
+	return append(args, file)
+}
+
+func diagnosticStatus(php, goRun *compat.StderrObservation) string {
+	if (php != nil && php.Bytes != 0) || (goRun != nil && goRun.Bytes != 0) {
+		return phaseFail
+	}
+	if php == nil || goRun == nil {
+		return comparisonNotChecked
+	}
+	return phasePass
 }
 
 func phpTarget(t *testing.T) string {
@@ -63,6 +111,8 @@ func TestDifferential(t *testing.T) {
 	}
 	for _, fixture := range []string{"integer_subtraction", "parser_output", "scalar_constructor", "form_feed", "call_statements", "constructor_null_defaults", "strtok", "block_constructor", "while_loop", "foreach_break", "property_write", "str_starts_with", "is_object", "str_contains", "nested_array_probes", "array_slice", "literal_null_identity", "null_defaults", "continue_foreach", "isset_forms", "in_array_strict", "membership_control_flow", "isset_negative_keys", "literal_case", "arrow_callable", "arrow_typed_composition", "array_parameter", "array_parameter_bool_composition", "bool_return", "bool_return_composition", "core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "strict_not_equal", "if_else", "elseif", "precedence", "strlen", "strcasecmp", "foreach_continue", "array_merge", "array_reverse", "array_key_first", "array_key_last", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "is_int", "is_null", "array_map", "array_write", "array_append", "array_empty", "array_isset", "array_return", "charset_array_integration", "control_flow_array_integration", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
 		t.Run(fixture, func(t *testing.T) {
+			file := filepath.Join("fixtures", fixture+".php")
+			phpArgs := quietFixturePHPArgs(fixture, file)
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
 				PHPTarget:  target,
@@ -73,6 +123,7 @@ func TestDifferential(t *testing.T) {
 				Comparisons: map[string]string{
 					"stdout": comparisonNotChecked, "exit": comparisonNotChecked, "stderr": comparisonNotChecked, "exceptions": comparisonNotChecked, "side_effects": comparisonNotChecked,
 				},
+				Diagnostics: &compat.DiagnosticEvidence{Profile: compat.QuietSuccessProfile, PHPArgs: compat.QuietPHPArgs(), Status: comparisonNotChecked},
 			}
 			defer func() {
 				encoded, err := json.Marshal(evidence)
@@ -82,7 +133,6 @@ func TestDifferential(t *testing.T) {
 				}
 				t.Logf("GOHP_CASE %s", encoded)
 			}()
-			file := filepath.Join("fixtures", fixture+".php")
 			src, e := os.ReadFile(file)
 			if e != nil {
 				t.Fatal(e)
@@ -113,40 +163,42 @@ func TestDifferential(t *testing.T) {
 				t.Fatalf("build: %v\n%s\n%s", e, o, generated)
 			}
 			evidence.Phases["go-build"] = phasePass
-			phpArgs := []string{file}
-			if fixture == "booleans" {
-				// Set and verify the locale in the same process as the oracle.
-				phpArgs = []string{"-r", "if (setlocale(LC_CTYPE, 'C') !== 'C' || setlocale(LC_CTYPE, 0) !== 'C') { throw new RuntimeException('LC_CTYPE must be C'); } require $argv[1];", "--", file}
-			}
-			want, e := exec.Command(php, phpArgs...).Output()
-			if e != nil {
-				evidence.Phases["differential"] = phaseFail
-				t.Fatal(e)
-			}
+			phpRun := captureCommand(exec.Command(php, phpArgs...))
+			evidence.Diagnostics.PHP = phpRun.observation
 			native := exec.Command(binary)
-			if fixture == "booleans" {
-				// Keep the versioned GOHP_CASE payload unchanged; the raw event
-				// archive retains this separately recorded oracle precondition.
+			if fixture == "booleans" && phpRun.err == nil {
+				// This per-fixture precondition is distinct from quiet stderr.
 				t.Log("PHP LC_CTYPE=C selected and verified in the oracle process")
 			}
 			native.Env = []string{"PATH="} // The emitted binary must run without discovering PHP.
-			got, e := native.Output()
-			if e != nil {
+			goRun := captureCommand(native)
+			evidence.Diagnostics.Go = goRun.observation
+			evidence.Diagnostics.Status = diagnosticStatus(phpRun.observation, goRun.observation)
+			if goRun.err != nil {
 				evidence.Phases["go-execute"] = phaseFail
 				evidence.Comparisons["exit"] = phaseFail
-				t.Fatal(e)
+				evidence.Phases["differential"] = phaseFail
+				t.Fatalf("generated Go execution failed: %v", goRun.err)
 			}
 			evidence.Phases["go-execute"] = phasePass
-			if !bytes.Equal(got, want) {
+			if phpRun.err != nil {
+				evidence.Phases["differential"] = phaseFail
+				evidence.Comparisons["exit"] = phaseFail
+				t.Fatalf("native PHP execution failed: %v", phpRun.err)
+			}
+			evidence.Comparisons["exit"] = phasePass
+			if !bytes.Equal(goRun.stdout, phpRun.stdout) {
 				evidence.Phases["differential"] = phaseFail
 				evidence.Comparisons["stdout"] = phaseFail
-				evidence.Comparisons["exit"] = phasePass
-				t.Fatalf("PHP=%q Go=%q", want, got)
+				t.Fatalf("PHP=%q Go=%q", phpRun.stdout, goRun.stdout)
+			}
+			evidence.Comparisons["stdout"] = phasePass
+			if evidence.Diagnostics.Status != phasePass {
+				evidence.Phases["differential"] = phaseFail
+				t.Fatal("positive fixture emitted diagnostic output")
 			}
 			evidence.Phases["differential"] = phasePass
-			evidence.Comparisons["stdout"] = phasePass
-			evidence.Comparisons["exit"] = phasePass
-			t.Logf("PHP %s and generated Go match: %q", target, got)
+			t.Logf("PHP %s and generated Go match: %q", target, goRun.stdout)
 		})
 	}
 }

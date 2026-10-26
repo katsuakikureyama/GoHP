@@ -1,4 +1,4 @@
-# Compatibility registry and verification ledger (design v0.2)
+# Compatibility registry and verification ledger (design v0.3)
 
 ## Decision and delivery status
 
@@ -49,7 +49,7 @@ Appearing in a fixture does not prove every aspect of a feature.
 
 ## Run ledger: what was checked and passed?
 
-CI publishes a distinct `gohp.compatibility.run/v0.2` JSON artifact for each
+CI publishes a distinct `gohp.compatibility.run/v0.3` JSON artifact for each
 active target job: PHP 8.3 and PHP 8.4. The same bounded corpus is executed
 independently for each target. A later series receives its own policy/matrix
 entry and artifact only after it is explicitly enabled.
@@ -72,16 +72,30 @@ report would require a different commit. Record:
 - Separate `parse`, `codegen`, `go-build`, `go-execute`, `differential` phases,
   each `not-run`, `pass`, `fail`, `skip` or `error`. Unit/compiler/negative checks
   retain their own kind; they must not be relabeled differential.
-- Measured comparisons: stdout bytes, exits, stderr/warnings, exception identity,
-  filesystem/DB side effects, etc. Unmeasured dimensions are `not-checked`.
+- Measured comparisons: stdout bytes and successful exits, plus a bounded
+  per-positive-case empty-stderr observation. The `quiet-success/v1` profile
+  starts the native fixture process with
+  `-d error_reporting=-1 -d display_errors=stderr -d display_startup_errors=1
+  -d log_errors=0 -d html_errors=0`; it records only each process's stderr byte
+  count and SHA-256, never raw diagnostic text. `phase.quiet_stderr` is pass
+  only when both streams are empty. General stderr/warnings, exception identity
+  and filesystem/DB side effects remain `not-checked`.
   Expected rejection/failure has an explicit expectation and diagnostic.
 - Logs or log hashes, both oracle/generated outcomes and the aggregate job
   result. Infrastructure errors are neither semantic failures nor success.
 
-The current differential harness measures stdout equality and successful exit
-only. The missing-key check measures explicit Go failure and source-map location,
-not equivalent PHP errors. Source-map checks are compiler tooling tests, not PHP
-language compatibility evidence.
+The current differential harness measures stdout equality and successful exit,
+and for positive fixture processes the `quiet-success/v1` empty-stderr check.
+The profile is deliberately narrower than diagnostic equivalence: matching
+non-empty stderr does not pass, and it does not compare warning, error or
+exception text. The explicit PHP arguments apply only to the fixture process,
+including the booleans wrapper which still establishes `LC_CTYPE=C`; they do not
+alter the startup baseline/version probe, Go build or generated Go execution.
+A fixture may override or suppress warnings itself, so the record is not an
+effective per-fixture configuration capture. The missing-key check measures
+explicit Go failure and source-map location, not equivalent PHP errors.
+Source-map checks are compiler tooling tests, not PHP language compatibility
+evidence.
 
 The PHP baseline is intentionally not a full environment, `phpinfo`, INI dump
 or per-fixture effective-state capture. A fixture may change its own process
@@ -94,8 +108,9 @@ claim diagnostic equivalence. The selected values use PHP's documented
 [`get_loaded_extensions`](https://www.php.net/manual/en/function.get-loaded-extensions.php),
 [`setlocale`](https://www.php.net/manual/en/function.setlocale.php) and
 [`date_default_timezone_get`](https://www.php.net/manual/en/function.date-default-timezone-get.php)
-interfaces. Readers accept v0.1 evidence as historical scope without inventing
-a missing baseline; their generated view is v0.2.
+interfaces. Readers strictly retain v0.1/v0.2 evidence as its historical scope:
+they invent neither a missing baseline nor a quiet-success observation. Their
+generated view is v0.3.
 
 ### Derived per-target view
 
@@ -120,7 +135,7 @@ decision with provenance. Missing evidence never becomes green. Do not average
 mixed targets into a universal compatibility percentage. Tooling entries show
 `compiler-check-pass`, never differential PASS from Go-only unit tests.
 
-There is no blanket `supported`/Done state in v0.2. Future support claims need
+There is no blanket `supported`/Done state in v0.3. Future support claims need
 an owner-reviewed bounded contract, all required cases for every claimed target,
 explicit negative boundaries and all claimed observable dimensions. Arbitrary
 WordPress/Composer application compatibility cannot be derived by counting green

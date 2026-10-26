@@ -24,7 +24,10 @@ func Markdown(r Report) []byte {
 		b.WriteString("This evidence is run-scoped and must not be treated as a current-release pass.\n\n")
 	}
 	writeBaselineMarkdown(&b, r.Metadata)
-	b.WriteString("`differential-pass (case-limited)` covers only its listed fixture cases. Stderr, exception and side-effect comparisons are not measured.\n\n")
+	if r.Schema == RunSchema {
+		b.WriteString("run/v0.3 positive fixtures require empty PHP and Go stderr under quiet-success/v1; this is not arbitrary diagnostic equivalence.\n\n")
+	}
+	b.WriteString("`differential-pass (case-limited)` covers only its listed fixture cases. Arbitrary stderr/warning equivalence, exception and side-effect comparisons are not measured.\n\n")
 	b.WriteString("| Feature | PHP target | Implementation | Status | Contract / limitations | Evidence cases |\n")
 	b.WriteString("|---|---|---|---|---|---|\n")
 	for _, feature := range r.Features {
@@ -38,11 +41,18 @@ func Markdown(r Report) []byte {
 		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s — %s | %s |\n", md(feature.ID), md(feature.Target), md(feature.Implementation), md(feature.Status), md(feature.Contract), md(limits), md(strings.Join(feature.Checks, ", ")))
 	}
 	b.WriteString("\n## Cases\n\n")
-	b.WriteString("| Case | Kind | Status | Detail |\n|---|---|---|---|\n")
+	b.WriteString("| Case | Kind | Status | Quiet stderr | Detail |\n|---|---|---|---|---|\n")
 	for _, testCase := range r.Cases {
-		fmt.Fprintf(&b, "| %s | %s | %s | %s |\n", md(testCase.ID), md(testCase.Kind), md(testCase.Status), md(testCase.Detail))
+		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s |\n", md(testCase.ID), md(testCase.Kind), md(testCase.Status), md(quietStderrStatus(testCase)), md(testCase.Detail))
 	}
 	return b.Bytes()
+}
+
+func quietStderrStatus(c CaseEvidence) string {
+	if c.Phase == nil || c.Phase.QuietStderr == "" {
+		return "not-checked"
+	}
+	return c.Phase.QuietStderr
 }
 
 func writeBaselineMarkdown(b *bytes.Buffer, m Metadata) {
