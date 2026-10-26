@@ -65,7 +65,8 @@ and method `$this`). Arrays detach at write/read boundaries; object identifiers
 retain identity. This adds neither dynamic properties nor unknown receiver writes.
 Simple data classes also support [fixed public constructors and known-object
 array snapshots](docs/block-data-constructor.md), including implicit-null public
-properties. No inheritance, typed/defaulted constructors or general array casts.
+properties and trailing untyped `= null` constructor defaults. No inheritance,
+typed/non-null-default constructors, ordinary method defaults or general array casts.
 Bounded [`while (condition) { body }`](docs/while-boundary.md) re-evaluates its
 condition before each iteration. Bare [`continue;`](docs/foreach-continue-boundary.md)
 and [`break;`](docs/foreach-break-boundary.md) target the nearest enclosing

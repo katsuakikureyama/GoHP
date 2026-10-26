@@ -24,22 +24,38 @@
       "limitations": ["Actual strings only; no weak coercion, null second argument, named/unpacked args, builtin callable lookup or warning/exception/message equivalence", "Uninitialized or cleared-state continuation rejects instead of emitting PHP warnings; input retained until context disposal/replacement", "Execution must be fresh per logical request, not copied/reused across requests or shared concurrently; context-aware generated APIs are experimental and emitted only for stateful programs", "No general PHP global state, HTTP lifecycle, Unicode segmentation or unchanged WordPress render claim; HTML processor and consumer adoption remain separate"]
     },
     {
+      "id": "php.syntax.constructor-null-defaults",
+      "kind": "syntax",
+      "name": "Trailing untyped null defaults on public constructors",
+      "implementation": "partial",
+      "contract": "Public untyped __construct may declare a trailing case-insensitive null-default suffix. New accepts required minimum through declared maximum, fills omitted slots with canonical null before ordinary copies, and preserves caller Execution when present.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.constructor_null_defaults","test":"TestDifferential/constructor_null_defaults","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/constructor_null_defaults.php","assertions":["stdout","exit","omitted/null/zero, zero-argument all-optional, case-insensitive names, argument/body ordering, fresh instances and shared strtok execution"]},
+        {"case_id":"compiler.constructor_null_defaults","test":"TestConstructorNullDefaults","file":"internal/codegen/constructor_null_defaults_test.go","kind":"compiler","assertions":["optional suffix IR, runtime min/max guard and constructor statement maps"]},
+        {"case_id":"negative.constructor_null_defaults.source","test":"TestConstructorNullDefaultsBoundaries","file":"internal/codegen/constructor_null_defaults_test.go","kind":"negative","assertions":["below/above arity, required-after-optional, typed/nonpublic constructors, ordinary method defaults and direct re-entry reject"]},
+        {"case_id":"negative.constructor_null_defaults.ir","test":"TestConstructorNullDefaultsMalformedIR","file":"internal/codegen/constructor_null_defaults_test.go","kind":"negative","assertions":["negative/excessive optional suffix counts reject before generation"]},
+        {"case_id":"negative.constructor_null_defaults.runtime","test":"TestConstructorNullDefaultsRuntimeGuards","file":"tests/constructor_null_defaults_runtime_test.go","kind":"negative","assertions":["unknown actual values retain count/strlen/array-return guards after optional constructor initialization"]}
+      ],
+      "limitations": ["Only public untyped constructors with trailing null defaults; no ordinary method defaults, non-null expressions, typed/variadic/reference/named/unpacked parameters or inheritance", "Source arity is bounded even where PHP ignores surplus arguments; runtime panics do not claim PHP error equivalence", "Reuses existing NullDefaultArgs and execution dispatch; no new runtime API, request lifecycle or original WordPress parser adoption", "WebMCP excluded: local developer compiler, not a browser/service operation"]
+    },
+    {
       "id": "php.syntax.public-data-class",
       "kind": "syntax",
       "name": "Fixed public data constructors and known-object array snapshots",
       "implementation": "partial",
-      "contract": "Untyped public properties may omit an initializer (null). Fixed untyped public constructors run once on fresh defaults with exact positional arity. Known generated-class (array) casts snapshot all declared public properties in declaration order, retaining null, detaching nested arrays and preserving object identifiers.",
+      "contract": "Untyped public properties may omit an initializer (null). Untyped public constructors run once on fresh defaults with bounded positional minimum/maximum, admitting a trailing null-default suffix. Known generated-class (array) casts snapshot all declared public properties in declaration order, retaining null, detaching nested arrays and preserving object identifiers.",
       "php_targets": ["8.3"],
       "checks": [
         {"case_id":"diff.block_constructor","test":"TestDifferential/block_constructor","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/block_constructor.php","assertions":["stdout","exit","argument/body order and once-only effects, implicit null, fresh instances, copied arrays, declaration-ordered snapshots and shared object identifiers"]},
         {"case_id":"compiler.block_constructor","test":"TestBlockDataConstructorLoweringAndSourceMap","file":"internal/codegen/block_constructor_test.go","kind":"compiler","assertions":["implicit null/new args/constructor dispatch/object_array_cast IR, snapshot layout and statement maps"]},
-        {"case_id":"negative.block_constructor.source","test":"TestBlockDataConstructorBoundaries","file":"internal/codegen/block_constructor_test.go","kind":"negative","assertions":["arity/classes/typed/defaulted/returning constructors, direct re-entry, other magic/inheritance and non-known-object casts reject"]},
+        {"case_id":"negative.block_constructor.source","test":"TestBlockDataConstructorBoundaries","file":"internal/codegen/block_constructor_test.go","kind":"negative","assertions":["arity/classes/typed/non-null-default/returning constructors, direct re-entry, other magic/inheritance and non-known-object casts reject"]},
         {"case_id":"negative.block_constructor.ir","test":"TestBlockDataConstructorMalformedIR","file":"internal/codegen/block_constructor_test.go","kind":"negative","assertions":["malformed new/cast metadata/arity and invalid constructor declarations fail before output"]},
         {"case_id":"unit.runtime.object_array","test":"TestObjectToArrayUsesGeneratedPropertySnapshotOnce","file":"runtime/object_array_test.go","kind":"unit","assertions":["one actual snapshot operation, ordered values/metadata and object identifiers retained"]},
         {"case_id":"negative.runtime.object_array","test":"TestObjectToArrayRejectsOutsideGeneratedPropertyDomain","file":"runtime/object_array_test.go","kind":"negative","assertions":["scalar/array/Closure/nil/unmarked or invalid objects rejected"]},
         {"case_id":"negative.block_constructor.runtime","test":"TestBlockConstructorAndArrayCastRuntimeGuards","file":"tests/block_constructor_runtime_test.go","kind":"negative","assertions":["actual value guards remain after constructor initialization or array snapshot forwarding"]}
       ],
-      "limitations": ["Public fixed-untyped constructor only; no defaults, annotations, explicit returns, direct re-entry, other magic methods, inheritance or private/static/typed properties", "Known generated-class cast only; no general scalar/array/Closure/unknown/foreign casts, dynamic properties or visibility key mangling", "Explicit defaults remain scalar/null literals; no array defaults, references, general object/error equivalence or HTTP request-lifetime semantics", "Gossip adoption requires separate original class/caller pin and typed observations"]
+      "limitations": ["Public untyped constructor only, with optional trailing null defaults; no ordinary method or non-null defaults, annotations, explicit returns, direct re-entry, other magic methods, inheritance or private/static/typed properties", "Known generated-class cast only; no general scalar/array/Closure/unknown/foreign casts, dynamic properties or visibility key mangling", "Explicit defaults remain scalar/null literals; no array defaults, references, general object/error equivalence or HTTP request-lifetime semantics", "Gossip adoption requires separate original class/caller pin and typed observations"]
     },
     {
       "id": "php.syntax.while",
