@@ -92,7 +92,7 @@ have insertion order, numeric-string
 key normalization, last-value replacement without reordering and independent
 nested value-copy semantics on assignments, arguments and returns. The general
 legacy path uses eager copies and functional root-binding replacement for
-one-level writes; the proved straight-line scope below uses owned shared storage
+one-level writes; the proved nullary scope below uses owned shared storage
 internally and detached legacy values at its boundaries. Neither path implements
 PHP references or production copy-on-write optimization. Object identity remains
 pointer identity. Class methods are real generated Go methods; interface assertions
@@ -112,8 +112,9 @@ not PHP-reference support.
 An additive ValueSlot/ValueTemporary runtime facade now wraps canonical storage
 for scalars and canonical flat scalar arrays. Import rejects noncanonical keys,
 nested values and non-reconstructible hidden index state; export is a detached
-legacy value. Codegen now uses it in proved nullary, straight-line flat-array
-scopes, with operation-scoped temporary cleanup and lazy selected-arm acquisition.
+legacy value. Codegen uses it in proved nullary flat-array scopes, including
+conservative if joins and domain-invariant while loops, with operation-scoped
+temporary cleanup and lazy selected-arm acquisition.
 Other array scopes retain the legacy map; no reference API is exposed. See the
 [ownership plan](owned-array-slot-values.md#first-generated-scope-and-expression-ownership).
 Persistent locations, general generated temporary integration and nested shared storage remain

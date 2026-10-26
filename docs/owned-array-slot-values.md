@@ -122,14 +122,15 @@ surface is introduced; the existing local generation exclusion still applies.
 ## First generated scope and expression ownership
 
 After normal semantic validation, codegen selects **nullary global functions
-with a straight-line body** that handles at least one flat array value. A
-separate sequential domain proof tracks each local as scalar, flat array or a
+with proved straight-line or bounded if/while control flow** that handle at least
+one flat array value. A separate domain proof tracks each local as scalar, flat array or a
 scalar/flat union; every statement, including dead tails, must qualify.
 Pure scalar functions keep ScalarFrame. An unproven scope keeps the legacy map,
 not a runtime per-value fallback. No previously rejected PHP or IR is admitted.
 
 - Statements: assignment, one-level array write/append, scalar echo, return,
-  and discarded calls from the admitted pure helper list.
+  discarded calls from the admitted pure helper list, if/else, while and their
+  existing nearest-loop break/continue forms, subject to the proof below.
 - Expressions: exact scalar literals/constants, proved locals, flat array
   literals with scalar elements, one-level index/isset, boolean/isset forms,
   ternary, scalar arithmetic/concatenation, strict comparison and short-circuit
@@ -137,7 +138,7 @@ not a runtime per-value fallback. No previously rejected PHP or IR is admitted.
   roots or scalar array elements. Existing semantic/type/key guards still apply.
 - Calls: the ScalarFrame pure-builtin allowlist with **scalar operands only**,
   plus `count` of an exact-flat value. No interprocedural return assumptions.
-- Parameters, methods, arrows, if/loops/foreach, user/stateful/unlisted calls,
+- Parameters, methods, arrows, foreach, user/stateful/unlisted calls,
   array-producing builtins, nested arrays, coalescing/path operations and
   references remain on the existing path (or are rejected as before).
 
@@ -164,6 +165,38 @@ the operation, rather than accumulating live temporary owners until function
 return. This is a bounded lowering contract, not a universal PHP evaluation-order
 or destructor model. Array literal construction and normal operand exports still
 use legacy values; no performance improvement is claimed.
+
+### Branch joins and loop invariants
+
+Both if arms start from the incoming domain map. Afterward, each preexisting
+local keeps the union of its incoming and both outgoing domains. Branch-only
+names never become definitely assigned outside the branch, even if both arms
+assign them. There is no constant-condition or return-sensitive pruning; a
+scalar/flat union cannot be used as an exact-flat mutation root or scalar element.
+
+While uses a deliberately bounded invariant, not a general fixed-point solver:
+**every assignment to a loop-entry local must remain within its entry domain**.
+An entry scalar may change between scalar types; an entry flat array may be
+replaced by another flat array. Crossing scalar/array domains falls back even if
+a later statement restores the entry kind or the condition is literal false.
+An incoming scalar/flat union may retain either kind; it still cannot be used
+where an exact scalar or flat-array domain is required.
+Nested loops enforce both outer and inner entry bounds. The preserved header
+domains therefore cover zero iterations, all backedges/condition evaluations,
+early break/continue/return, and the post-loop state. New body-only names are not
+promoted out of the loop and must be assigned before their lexical reads each trip.
+
+All branches and dead tails are inspected. After a transfer, a detached proof
+environment validates the dead tail without rewriting the reachable transfer
+state; loop bounds still apply there. This cannot introduce source/IR admission
+or make a previously conditional/undefined local valid.
+
+Every assigned name, including branch/body-only locals, gets one function-owned
+slot before control flow begins. Repeated assignments replace/release its payload;
+no slot-defer is registered per iteration. Statement IIFEs consume/close each
+temporary before the next statement, continue or break. Conditions export detached
+values on every evaluation. Function return/panic closes the slots; no PHP
+destructor ordering or exception equivalence is inferred from Go defer.
 
 `gohp.tooling.generated-owned-values` separates the native/generated fixture,
 selection/lowering/source-map/rejection checks and real external-module ABI
@@ -246,10 +279,10 @@ PHP 8.3.36 native-only observations in #82 are unchanged; they are not new
 generated-reference or PHP 8.4 native-reference evidence.
 
 R1 remains partial: synchronous Slot-rooted writes, internal value temporaries
-and the runtime adapter plus first straight-line generated scope are implemented.
-Control-flow/parameter/general-frame ownership, persistent locations across
-calls, nested ownership and cyclic reclamation remain unfinished. Broader
-generated scopes need explicit domain joins and lifetime proofs before admission;
+and the runtime adapter plus straight-line and bounded if/while generated scopes
+are implemented. Cross-domain loop widening, parameter/general-frame ownership,
+persistent locations across calls, nested ownership and cyclic reclamation remain
+unfinished. Broader generated scopes need explicit entry/lifetime proofs before admission;
 reference syntax needs the separate R2/R3 contracts. There is no performance or
 application-acceptance claim.
 
