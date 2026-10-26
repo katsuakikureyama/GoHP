@@ -10,7 +10,7 @@ import (
 
 // A saved differential run is deliberately independent of the consumer's
 // filesystem: there is no tests/fixture.php or tests/archive_test.go here.
-func savedRun(t *testing.T, target, terminal string) (string, Report) {
+func savedRun(t *testing.T, target, terminal string, schemas ...string) (string, Report) {
 	t.Helper()
 	entry := Entry{ID: "php.example", Kind: "builtin", Name: "example", Implementation: "partial", Contract: "fixture only", PHPTargets: []string{"7.4", "8.3"}, Limitations: []string{"no side effects compared"}, Checks: []Check{{CaseID: "case.example", Test: "TestExample", File: "tests/archive_test.go", Kind: "differential", Fixture: "tests/fixture.php", Assertions: []string{"stdout and successful exits"}}}}
 	c := Catalog{Schema: "gohp.compatibility.catalog/v0.1", Maturity: "experimental", Entries: []Entry{entry}}
@@ -25,6 +25,15 @@ func savedRun(t *testing.T, target, terminal string) (string, Report) {
 	meta := testMetadata()
 	meta.SourceSHA256 = strings.Repeat("a", 64)
 	meta.PHPTarget, meta.PHPVersion = target, target+".30"
+	schema := RunSchemaLegacy
+	if len(schemas) != 0 {
+		schema = schemas[0]
+	}
+	meta.PHPBaseline, meta.PHPBaselineSHA256 = nil, ""
+	if schema == RunSchema {
+		meta.PHPBaseline = testPHPBaseline(meta.PHPVersion)
+		meta.PHPBaselineSHA256 = PHPBaselineHash(meta.PHPBaseline)
+	}
 	fixtureHash := strings.Repeat("b", 64)
 	p := casePayload{CaseID: "case.example", PHPTarget: target, PHPVersion: meta.PHPVersion, FixtureSHA256: fixtureHash, GeneratedSHA256: strings.Repeat("c", 64)}
 	p.Phases.Parse, p.Phases.Codegen, p.Phases.GoBuild, p.Phases.GoExecute, p.Phases.Differential = "pass", "pass", "pass", "pass", "pass"
@@ -45,7 +54,7 @@ func savedRun(t *testing.T, target, terminal string) (string, Report) {
 	if terminal == "fail" {
 		meta.TestExit = 1
 	}
-	r, err := evaluate(c, strings.NewReader(events), meta, func(Case) (string, string) { return fixtureHash, "" })
+	r, err := evaluate(c, strings.NewReader(events), meta, func(Case) (string, string) { return fixtureHash, "" }, schema)
 	if err != nil {
 		t.Fatal(err)
 	}
