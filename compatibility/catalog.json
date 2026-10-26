@@ -3,6 +3,23 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.str_contains",
+      "kind": "builtin",
+      "name": "str_contains(string haystack, string needle): bool",
+      "implementation": "partial",
+      "contract": "Two positional actual strings, each evaluated once. Case-sensitive byte substring membership returns bool, including true for empty needle and binary-safe matching. Both domains checked before empty-needle success.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.str_contains","test":"TestDifferential/str_contains","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/str_contains.php","assertions":["stdout","exit","empty/boundary/case-sensitive substring membership, Unicode and NUL bytes, actual bool, single evaluation, short-circuit and nested coalescing composition"]},
+        {"case_id":"compiler.str_contains","test":"TestStrContainsLoweringAndSourceMap","file":"internal/codegen/str_contains_test.go","kind":"compiler","assertions":["case-insensitive call, typed bool return and statement source map"]},
+        {"case_id":"negative.str_contains.source","test":"TestStrContainsUnsupportedSource","file":"internal/codegen/str_contains_test.go","kind":"negative","assertions":["arity, known nonstrings, undefined reads, invalid dead operands, named/unpacked args, redeclaration, builtin callable lookup and wrong return kind rejected"]},
+        {"case_id":"unit.runtime.str_contains","test":"TestStrContainsBytes","file":"runtime/str_contains_test.go","kind":"unit","assertions":["exact bool for empty/start/middle/end/absent/longer needles, case sensitivity, partial UTF-8, NUL and invalid bytes"]},
+        {"case_id":"negative.str_contains.domain","test":"TestStrContainsRejectsNonStrings","file":"runtime/str_contains_test.go","kind":"negative","assertions":["both actual-string domains required, including empty other operand"]},
+        {"case_id":"negative.str_contains.runtime","test":"TestStrContainsRuntimeGuards","file":"tests/str_contains_runtime_test.go","kind":"negative","assertions":["generated dynamic nonstring arguments rejected without coercion or empty-needle bypass"]}
+      ],
+      "limitations": ["No weak scalar/null/object coercion, named arguments, unpacking or builtin callable lookup", "Byte matching only; no Unicode normalization/case folding, grapheme or token-boundary semantics", "Does not implement remaining WordPress render dependencies or claim unchanged-source consumer adoption; PHP exception/message equivalence excluded"]
+    },
+    {
       "id": "php.syntax.array-path-probes",
       "kind": "syntax",
       "name": "Defined-root nested isset and array-address null coalescing",

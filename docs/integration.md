@@ -21,6 +21,20 @@ the same exact GoHP #64 pin above. This is a measured combined run, not addition
 of old PASS counts. No full WordPress compatibility or adoption of later GoHP
 revisions is inferred. This status sync does not repin or rerun Gossip.
 
+[Gossip PR #38](https://github.com/katsuakikureyama/Gossip/pull/38) subsequently
+merged as `fd113a179888cf4736c734c8640d795f58243201`, using exact GoHP #67 pin
+`a3039414cff22689d214a6c90767f13dccf56ddb`. Its one-binary run passed 334 Go/PHP
+cases across 26 unchanged originals and 48 retained drivers: 294 prior cases
+plus 40 cases of the real `wp_should_add_elements_class_name` caller and its
+`_wp_array_get` dependency. This measures class-necessity decisions, not rendering
+hooks, CSS, HTML generation or full WordPress. Later compiler additions do not
+inherit consumer adoption from that pin.
+
+[`str_contains`](str-contains-boundary.md) supplies a concrete dependency of the
+separate `wp_render_elements_class_name` guard. Owned fixture composition is
+not unchanged-source evidence for that entire render function. It extends only
+WebMCP-excluded `gohp.cli.generate`; no Gossip repin, route/auth/deploy changes.
+
 [`array_slice`](array-slice-boundary.md) adds positional selection with actual
 int/null/bool bounds to WebMCP-excluded `gohp.cli.generate`. No consumer adoption,
 route/auth/deployment change or Gossip pin/source modification is included.
