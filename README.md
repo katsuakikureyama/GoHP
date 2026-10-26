@@ -79,6 +79,9 @@ coercion, Unicode folding or locale collation. See the
 [`str_contains(string, string): bool`](docs/str-contains-boundary.md) checks
 case-sensitive byte substring membership, including an empty needle. Actual
 strings only; no coercion, Unicode folding or token-boundary interpretation.
+[`str_starts_with(string, string): bool`](docs/str-starts-with-boundary.md) checks
+the byte prefix instead: matches only in the middle or at the end are false.
+It has the same actual-string and empty-needle boundaries.
 [`array_key_first(array)`](docs/array-key-first-boundary.md) and
 [`array_key_last(array)`](docs/array-key-last-boundary.md) return the first/last
 insertion-order int/string key, or null for an empty array, without modifying it.
