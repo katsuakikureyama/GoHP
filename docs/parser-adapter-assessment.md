@@ -77,8 +77,14 @@ not a replacement for this artifact contract.
 
 ## Migration gates
 
-1. Freeze an active 8.3 parse corpus: accepted syntax, parse-error locations, and
-   current supported fixtures. Record parser revision and toolchains.
+The candidate observations above remain dated evidence. With both 8.3 and 8.4
+now active, apply these gates independently to each target; the 8.3-only scope of
+the original assessment is not sufficient for adoption. Priorities are tracked
+in the [roadmap](roadmap.md#frontend-and-dynamic-feature-strategy).
+
+1. Freeze a parse corpus for each active target: accepted syntax, target-specific
+   rejections, parse-error locations and current supported fixtures. Record parser
+   revision, target selection and toolchains.
 2. Add the frontend interface, spans and diagnostics while the existing parser
    remains default; run the candidate in shadow mode and compare only the
    supported subset's normalised IR.
@@ -90,5 +96,5 @@ not a replacement for this artifact contract.
    differential behaviour, map, and negative-boundary tests.
 
 No candidate was installed, built, or benchmarked for this assessment; no
-claim is made that any candidate fully parses or behaves like active PHP 8.3 on
+claim is made that any candidate fully parses or behaves like PHP 8.3 or 8.4 on
 the GoHP corpus.

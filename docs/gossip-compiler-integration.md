@@ -32,8 +32,11 @@ for its exact parent revisions, new composition fixture and separate evidence.
   checks exact arity before indexing the validated types, then applies the
   existing actual-string/unknown boundary. Both conditional arms remain
   validated; runtime evaluation remains lazy with one condition evaluation.
-- The parser, runtime implementations, PHP8.3-only admission policy, immutable
-  native image and CI isolation settings are unchanged from their source stacks.
+- The parser, runtime implementations, immutable native image and CI isolation
+  settings are unchanged from their source stacks. The source stacks' original
+  PHP 8.3-only admission record remains historical; the current compiler targets
+  are PHP 8.3 and 8.4 under the [active PHP version policy](compatibility.md#active-php-version-policy).
+  This integration does not add target evidence or alter Gossip's separate pin.
 
 The retained `conditional_array_integration.php` fixture from PR #24 combines guarded
 string processing with array operations, null presence, nested values and

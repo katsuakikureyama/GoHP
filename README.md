@@ -1,38 +1,58 @@
 # GoHP — Go Hypertext Processor
 
-GoHP is an experimental, general-purpose PHP-to-Go **source transpiler**. The
-Phase 0 compiler emits readable Go functions and native structs, builds with Go,
-and runs without PHP. It does not embed an opcode interpreter. It is not ready
-to run WordPress, arbitrary Composer packages, or customer applications.
+GoHP is an experimental **PHP-to-Go source transpiler with version-specific
+PHP 8.x compatibility checks**. It emits readable Go functions and structs,
+builds native binaries, and runs without an embedded PHP interpreter.
+Phase 0 supports a documented closed subset on PHP **8.3 and 8.4**, verified
+independently against pinned native PHP oracles.
+Unsupported constructs fail with diagnostics; compilation alone is not compatibility.
+**WordPress, arbitrary Composer packages and customer applications are not runnable.**
+Gossip is a separate application-integration consumer, not special behavior in the compiler.
 
-The core direction is a **PHP-to-Go transpiler with independently verifiable
-compatibility for each PHP 8.x version**. Each admitted target is compared with
-its own pinned native PHP oracle, with version-specific behavior and evidence.
-The documented closed subset is enabled for PHP 8.3 and PHP 8.4. Each target
-has its own oracle floor, pinned CI image, corpus execution and evidence; a
-result for one target never proves the other. See the
-[version-specific compatibility design](docs/php8-versioned-compatibility.md).
+## What works today
 
-PHP 8.4 additionally supports [bounded `array_any`](docs/array-any-boundary.md)
-and [bounded `array_all`](docs/array-all-boundary.md) with statically named,
-two-value, bool-returning callbacks. Their evidence is 8.4-specific; PHP 8.3
-keeps ordinary user declarations of those names.
+Every entry below is bounded, not full PHP support. Exact restrictions and
+function lists live in the linked tables; actual results are per-run evidence.
+
+| Area | Current generated-code scope |
+|---|---|
+| [Syntax and control flow](docs/compatibility.md#syntax-and-control-flow) | Named functions, braced conditionals, foreach/while, bounded calls and array writes |
+| [Built-in functions](docs/compatibility.md#built-in-functions) | Selected array/string/type helpers; bounded `array_any` / `array_all` are PHP 8.4-only |
+| [Values and types](docs/compatibility.md#values-and-types) | int64, byte strings, bool, null and ordered arrays with detached value copies |
+| [Objects and callables](docs/compatibility.md#objects-and-callables) | Simple public classes and capture-free arrows; no inheritance or captured closures |
+
+PHP reference syntax, include/autoload, PHP-compatible exceptions and extension
+APIs remain unsupported. Internal shared-array/ownership primitives exist, but
+**are not generated-array COW or PHP-reference support**.
+See [implementation stages](docs/reference-value-model.md#delivery-gates-and-status).
+
+## Active PHP targets
+
+| Compiler label | Minimum native oracle in that series | Evidence |
+|---|---|---|
+| `8.3` (default) | 8.3.36 | Separate pinned CI job and archive |
+| `8.4` | 8.4.27 | Separate pinned CI job and archive |
+
+Other series are not active. A target label is not a patch selector; neither a
+version floor nor passing fixtures guarantee security or whole-language support.
+[Version policy](docs/compatibility.md#active-php-version-policy) and
+[CI image pins](.github/workflows/ci.yml) define admission and reproducible runs.
 
 ## Reproduce the proof of concept
 
-Prerequisites: Docker Engine with Docker Compose v2. No credentials, external
-services or PHP packages are required. Images are downloaded during build; test
-execution has network access disabled.
+With Docker Engine and Compose v2, run the default 8.3 suite:
 
 ```sh
 docker compose build test
 docker compose run --rm test
 ```
 
-Or use Go **1.23.12** and native PHP **8.3.36 or newer within the 8.3 series**
-locally (the default target):
+Build downloads images; test execution has networking disabled and requires no
+credentials or external services. Alternatively, with Go **1.23.12** and native
+PHP meeting the selected target's floor:
 
 ```sh
+# Use a fresh output workspace. Defaults to the 8.3 target.
 sh scripts/check.sh
 go run ./cmd/gohp -in tests/fixtures/core.php -out build/example.go \
   -php-version 8.3 -report build/example.report.json
@@ -40,270 +60,43 @@ go build -o build/example build/example.go
 ./build/example
 ```
 
-For the PHP 8.4 target, use an oracle at least **8.4.27** in that series and
-pass `-php-version 8.4`. The result is separate from an 8.3 run.
+For a local 8.4 suite, use native PHP 8.4.27+ and
+`GOHP_PHP_TARGET=8.4 sh scripts/check.sh`; pass `-php-version 8.4` to the compiler.
+CI builds a separate pinned image for each target; the default Compose image is 8.3.
 
-Generated Go imports this module's `runtime` package; build inside this module,
-or add a dependency on a pinned GoHP commit in the consumer's `go.mod`. Never
-ship an unpinned local checkout replacement as a release dependency.
+Generated code imports this module's `runtime`: build inside this module, or
+pin the same GoHP revision in the consumer's `go.mod`. Output/report destinations
+must be fresh; use new paths for repeated generation. Wait for successful exit
+and verify hashes before using artifacts. See the [publication contract](docs/integration.md).
 
-Use fresh `-out` and `-report` paths for each invocation: existing destinations
-are rejected. A report requires a file output. Builders must wait for successful
-exit and verify report hashes before using either artifact; see the
-[artifact publication contract](docs/integration.md).
+## Progress and next milestones
 
-`core.php` exercises a user function, integer sum, mixed ordered array,
-`foreach`, public class property, method call and `count`. Its expected output:
+The harness compares PHP and compiled-Go stdout byte for byte, checks normal
+exits and a bounded quiet-stderr profile. It does not prove general warning,
+exception or side-effect equivalence. Browse [CI runs](https://github.com/katsuakikureyama/GoHP/actions)
+and the [function/feature evidence](docs/compatibility-ledger.md); test counts are
+**not a PHP or WordPress compatibility percentage**.
 
-```text
-total=10
-0:2
-bonus:5
-1:3
-3
-```
-
-The test harness executes native PHP, generates Go, compiles a standalone binary,
-and compares stdout byte for byte, requiring successful exits from both. Other
-fixtures check duplicate/numeric array keys, nested arrays, scalar conversions
-and PHP 8.3 operator precedence. The `legacy_arrays.php` fixture
-also covers `array(...)` syntax, empty returns, mixed nesting with `[]`, trailing
-commas and case-insensitive `array` spelling within the same closed array subset.
-Automatic literal keys now follow PHP 8.3's negative-integer progression, also
-after string-only entries; see the [array index boundary](docs/array-index-boundary.md).
-Negative decimal constants such as `-5` can now be written directly; general
-numeric negation and float-promoting tokens remain outside the [bounded syntax](docs/negative-integer-boundary.md).
-Unsupported syntax must fail
-with a diagnostic; a separate runtime-negative test must fail on a missing key.
-Compilation alone never proves PHP compatibility.
-The next structural milestone is the [reference/value/assignment foundation](docs/reference-value-model.md):
-storage locations, aliases and reference-aware array separation. Its native-PHP
-specification is not generated-Go evidence; references remain unsupported.
-The [first generated-frame integration](docs/generated-scalar-frames.md) now
-uses owned storage for closed scalar functions with no arguments or all exact
-scalar-typed arguments, including an explicit scalar-only builtin subset; other scopes keep
-their existing value semantics.
-An [internal shared scalar array foundation](docs/shared-scalar-array-storage.md)
-now tracks container/reference ownership and copy timing. It is not connected
-to generated array operations yet; PHP references remain unsupported.
-The runtime and these internal containers share a bounded
-[key normalization and automatic-index policy](docs/array-index-boundary.md).
-General internal Slots now [own scalar-array values](docs/owned-array-slot-values.md)
-with explicit read/copy/release; Frame and element bindings stay scalar-only.
-Declared public properties now accept bounded [simple assignment](docs/public-property-write.md)
-through a statically known generated-class variable (including known aliases
-and method `$this`). Arrays detach at write/read boundaries; object identifiers
-retain identity. This adds neither dynamic properties nor unknown receiver writes.
-Simple data classes also support [fixed public constructors and known-object
-array snapshots](docs/block-data-constructor.md), including implicit-null public
-properties and trailing untyped `= null` constructor defaults. No inheritance,
-non-null-default constructors or general array casts; exact scalar constructor
-parameters have a [separate boundary](docs/scalar-constructor-boundary.md).
-The bounded [parser-output prerequisites](docs/parser-output-boundary.md) also
-admit public untyped method null defaults, bare returns, declared array-property
-append, sole-new method factory casts and byte-oriented string/int `substr`.
-Actual-integer [binary subtraction](docs/integer-subtraction.md) is also admitted,
-with overflow rejection and no scalar coercion or general unary negation.
-Bounded [`while (condition) { body }`](docs/while-boundary.md) re-evaluates its
-condition before each iteration. Bare [`continue;`](docs/foreach-continue-boundary.md)
-and [`break;`](docs/foreach-break-boundary.md) target the nearest enclosing
-`foreach` or `while`, including inside braced conditionals. Continue rechecks
-the while condition; break exits without rechecking it. Numeric levels,
-unbraced/alternative syntax and for/do/switch are excluded.
-Supported functions/builtins, bare-variable methods and generated arrows may
-also be used as [standalone calls](docs/call-statement-boundary.md), preserving
-effects and guards while discarding the return value. General expression
-statements and chained call receivers remain excluded.
-The [form-feed escape](docs/form-feed-boundary.md) `"\f"` decodes to byte 0x0C;
-single-quoted `'\f'` stays literal. Other previously unsupported escapes and
-interpolation remain excluded.
-Together with bounded
-[trailing untyped null defaults and defined bare/multiple isset](docs/array-get-prerequisites.md),
-this resolves the syntax blockers measured for Gossip's `_wp_array_get`.
-The subsequent [literal-null identity fix](docs/literal-null-identity.md) and
-Gossip's separately pinned comparison are recorded in the [integration contract](docs/integration.md).
-Builtins currently include `count(array)`, bounded `strlen(string)` (byte
-length only, no implicit non-string coercion), `array_keys(array)` (one argument,
-ordered keys, no value filtering) and `array_values(array)` (ordered values,
-zero-based indexes, no flattening), literal-mask `rtrim`, `is_bool`, `is_string`, `is_int`, `is_null`, `is_array`
-and ASCII `strtolower(string)`. [`is_object(value)`](docs/is-object-boundary.md)
-recognizes generated class instances and generated arrows (PHP Closures), not
-arrays/scalars or arbitrary foreign Go values. String-only `strcasecmp(string, string)` adds
-binary-safe ASCII case-insensitive comparison with an integer result; no
-coercion, Unicode folding or locale collation. See the
-[comparison boundary](docs/strcasecmp-boundary.md).
-[`str_contains(string, string): bool`](docs/str-contains-boundary.md) checks
-case-sensitive byte substring membership, including an empty needle. Actual
-strings only; no coercion, Unicode folding or token-boundary interpretation.
-[`str_starts_with(string, string): bool`](docs/str-starts-with-boundary.md) checks
-the byte prefix instead: matches only in the middle or at the end are false.
-It has the same actual-string and empty-needle boundaries.
-Bounded [`strtok`](docs/strtok-boundary.md) supports string initialization and
-continuation with byte delimiters. Its cursor belongs to an explicit execution,
-shared across nested calls but isolated across separate host entries. Empty
-delimiter sets are allowed; uninitialized continuation and coercion are excluded.
-This does not certify the complete WordPress render/HTML path.
-[`array_key_first(array)`](docs/array-key-first-boundary.md) and
-[`array_key_last(array)`](docs/array-key-last-boundary.md) return the first/last
-insertion-order int/string key, or null for an empty array, without modifying it.
-[`array_reverse(array, bool preserve_keys = false)`](docs/array-reverse-boundary.md)
-reverses outer order without modifying the input, retaining string keys and
-optionally integer keys; the optional flag accepts actual booleans only.
-[`array_merge(array ...arrays)`](docs/array-merge-boundary.md) joins explicitly
-supplied arrays, reindexing integer keys and replacing duplicate string-keyed
-values in place; zero arguments return an empty array. No argument unpacking.
-[`array_slice(array, int offset, ?int length = null, bool preserve_keys = false)`](docs/array-slice-boundary.md)
-selects by position with positive/negative bounds, keeping string keys and
-optionally integer keys. Actual integer/bool arguments only, without coercion.
-`array_key_exists(int|string, array)` checks
-first-level key presence, including null-valued entries, without other key
-coercions. `array_is_list(array)` checks zero-based consecutive integer keys in
-insertion order (empty arrays are lists). See the compatibility contract and the linked
-string/boolean boundaries; these are partial implementations.
-Prefix logical negation `!` (including `!!`) uses the existing scalar/array
-truthiness rules and returns bool; object truthiness and loose `!=` remain excluded.
-Strict `!==` compares only null, bool, int64 and string by both type and value,
-returning the opposite of scalar `===` without coercion. Unparenthesized chains
-mixing `===` and `!==` are rejected. A literal `null` operand additionally lowers
-to a once-only null type probe, including against arrays/objects/callables;
-general array/object comparison remains excluded.
-Logical `||` uses the same truthiness domain and returns bool, skipping its right
-operand when the left is true. It binds below `&&` and above full ternary;
-keyword `or` and bitwise `|` remain unsupported. See the [boolean boundary](docs/boolean-boundary.md).
-Braced `if` accepts `elseif` / `else if` chains and an optional braced `else`,
-including nested/empty bodies and early returns. Reached conditions run once in
-order; the first truthy branch prevents evaluation of later conditions/bodies.
-Each arm is validated independently; variables introduced
-inside branches do not become available after the if, even if both arms assign
-them. Unbraced bodies, alternative syntax and path-sensitive inference remain excluded.
-The integrated string subset also includes `sprintf('%0Ns', string|int64)` for
-canonical widths 0–4096 and `str_replace(string, string, string)` only. General
-formatting, array substitutions, coercions and by-reference count are excluded.
-The callback subset admits `array_map('declared_function', array)` with one
-array and one literal user function whose required arity is one (trailing
-untyped null defaults are allowed), including finite recursion.
-String-only `addslashes` is byte quoting, not SQL/HTML/shell sanitization.
-One-level `$array[$key] = $value` and `$array[] = $value` statements update
-existing array variables with detached value copies. Explicit keys must be
-int/string literals or variables; append uses PHP 8.3 integer-index progression.
-Nested targets, auto-vivification and references remain excluded.
-Bounded `empty($arrayVariable)` tests only a defined actual array's outer entry
-count, without inspecting values; undefined/scalar/index/property operands remain
-excluded. See the [empty boundary](docs/array-empty-boundary.md).
-One-level `isset($array[$key])` retains its strict array/key guard without
-reading a missing element. Defined bare variables and a comma-separated list of
-defined bare/indexed addresses are evaluated left-to-right with short-circuiting.
-The separate bounded nested-path and `??` form accepts only a defined variable
-root plus literal/defined-variable keys, keeps normal reads strict, and does not
-support properties or undefined suppression. See the [array isset boundary](docs/array-isset-boundary.md)
-and [nested array-probe boundary](docs/nested-array-probes.md).
-Named global functions may declare `: array` or `: bool`; explicit returns and fallthrough
-are checked rather than silently dropping the declaration. Bool returns require
-actual bool values, without weak scalar coercion. Fixed positional `array`
-parameters are checked before the body and receive detached value copies. Named
-global functions may additionally use trailing untyped `= null` defaults; typed
-defaults remain excluded (untyped method null defaults have a separate boundary). See the
-[array parameter boundary](docs/array-parameter-boundary.md). Capture-free
-`fn($value, $key) => expression` arrows can be passed through global `callable`
-parameters and invoked through variables; [this bounded contract](docs/arrow-callable-boundary.md)
-does not include string/method callables, captures or typed arrow signatures.
-Named global functions now accept [exact int/string/bool parameters](docs/scalar-function-parameters.md),
-with entry checks and no weak scalar coercion.
-Public constructors additionally accept [exact int/string/bool parameters](docs/scalar-constructor-boundary.md)
-without weak scalar conversion. Other parameter/return types and typed ordinary methods remain excluded. See the
-[array return boundary](docs/array-return-boundary.md) and
-[bool return boundary](docs/bool-return-boundary.md).
-Strict scalar `in_array(needle, haystack, true)` is also available: the needle
-and all array values must be null/bool/int64/string. Loose comparison and
-array/object values are excluded; see the [membership boundary](docs/in-array-strict-boundary.md).
-
-The predefined `true`, `false` and `null` literals accept uppercase and mixed
-case (for example `TRUE`, `FaLsE`, `NuLl`). Variable/property names and string
-contents remain case-sensitive; this does not imply general keyword support.
-
-### Active PHP targets
-
-The active compiler target labels are PHP **8.3** (the default) and **8.4**.
-Native differential runs require an oracle at least **8.3.36** or **8.4.27** in
-the selected series. CI pins an immutable image for each target and records its
-digest and actual oracle version in that target's evidence. The CLI takes a
-language-series label such as `-php-version 8.3` or `-php-version 8.4`, not a
-patch number.
-
-The same bounded corpus is run independently for both targets. A target has no
-passing compatibility result until its own run succeeds; 8.3 evidence is not
-8.4 evidence. PHP 8.4 adds target-profile rejection for declarations of the
-new core array function names and for class `_`, whose native deprecation is not
-modeled by GoHP. Nullable typed defaults, `exit`/`die`, property hooks and
-asymmetric property visibility remain outside the subset. The minimum release
-floor is a maintenance rule, not a security guarantee for the compiler,
-generated binaries or input. See the
-[compatibility version policy](docs/compatibility.md#active-php-version-policy)
-and [PHP 8.4 target contract](docs/php84-target.md).
+The [roadmap](docs/roadmap.md) prioritizes a fixed application corpus and explicit
+denominators, an end-to-end reference milestone, and a small PHP/Go benchmark.
+Application coverage and performance comparisons are **not yet measured**.
+Earlier [Gossip source comparisons](docs/integration.md) retain their original pins;
+they do not certify current main or a complete WordPress application.
 
 ## Scope and documentation
 
-- [Architecture and decisions](docs/architecture.md)
-- [Compatibility and version matrix](docs/compatibility.md)
-- [Legacy array syntax boundary](docs/legacy-array-syntax.md)
-- [Literal-mask rtrim boundary](docs/rtrim-boundary.md)
-- [Bounded `sprintf` zero-padding boundary](docs/sprintf-boundary.md)
-- [Bounded `str_replace` string boundary](docs/str-replace-boundary.md)
-- [Full ternary and string-only `stripslashes` boundary](docs/ternary-stripslashes-boundary.md)
-- [Combined conditional/array compiler boundary](docs/gossip-compiler-integration.md)
-- [Literal callback mapping and string quoting boundary](docs/array-map-boundary.md)
-- [One-level array assignment and lvalue boundary](docs/array-write-boundary.md)
-- [Nested array probes and null coalescing boundary](docs/nested-array-probes.md)
-- [Boolean validation subset](docs/boolean-boundary.md)
-- [String-only ASCII comparison](docs/strcasecmp-boundary.md)
-- [Combined charset and typed-array compiler](docs/charset-array-integration.md)
-- [Function/feature catalog and verification-ledger design](docs/compatibility-registry.md)
-- [Generate and browse function/feature evidence](docs/compatibility-ledger.md)
-- [Read Composer requirements without executing code](docs/compatibility.md#composer-metadata-inventory)
-- [Upstream assessment](docs/upstream.md)
-- [Parser adapter assessment](docs/parser-adapter-assessment.md)
-- [Statement-level source maps](docs/source-maps.md)
-- [Gossip integration contract](docs/integration.md)
-- [Development and roadmap](CONTRIBUTING.md)
-- [Security boundaries](SECURITY.md)
-- [Licensing proposal](docs/licensing.md) — no final project license yet
+- [Architecture](docs/architecture.md) and [PHP 8.x versioned design](docs/php8-versioned-compatibility.md)
+- [Compatibility tables and exclusions](docs/compatibility.md)
+- [Roadmap and completion criteria](docs/roadmap.md)
+- [Development](CONTRIBUTING.md), [security boundaries](SECURITY.md) and [licensing](docs/licensing.md)
+
+No final project license has been selected. Parser adoption and licensing remain
+separate decisions; this repository does not claim an OSS release license.
 
 ## 日本語概要
 
-PHP を読みやすい Go ソースへ変換する初期 PoC です。関数・配列・クラスを
-含む fixture を実際にビルドし、PHP との標準出力の一致を確認します。
-配列は `[]` と `array(...)` を同じ限定処理へ変換し、空配列や入れ子を比較対象にします。
-`rtrim` は文字列入力＋明示的な固定文字一覧（範囲指定なし）の2引数だけを対象にします。
-`sprintf` は `%0Ns`（N は 0〜4096 の正規十進幅）の文字列／整数値だけを、byte 幅の左ゼロ埋めとして対象にします。
-`str_replace` は3つの文字列だけを、byte 単位・case-sensitive・non-overlap の置換として対象にします。
-full ternary `condition ? yes : no` と `stripslashes` の文字列1引数も限定的に対象にします。
-`array_map`は宣言済み1引数関数のliteral名＋単一配列のみ、`addslashes`は実文字列のみです。
-一般callback・自動再帰・SQL/HTML/shell向けサニタイズの対応ではありません。
-波括弧付きの `if` / `elseif` / `else if` / `else`、短絡 `&&` / `||`、論理否定 `!`、scalar の `===` / `!==`、限定型の `(bool)` と型判定・ASCII小文字化も比較対象にします。
-参照、クロージャ、継承、Composer や PHP 拡張、WordPress 全体は未対応です。
-未対応を互換性成功とは扱いません。正式ライセンスは監査と所有者判断待ちです。
-有効な互換性対象は PHP **8.3 系**（既定）と **8.4 系**です。native 比較には、それぞれ
-**8.3.36 以上**、**8.4.27 以上**を使います。CLI の `-php-version 8.3` / `8.4` は
-パッチ番号ではなく言語系列の指定です。同じ限定fixtureでも系列ごとに独立して実行・記録し、
-8.3 の成功を 8.4 の成功として扱いません。PHP 8.4 の新しい配列関数名の再宣言と class `_` は
-限定subset外として拒否します。nullable 型default、`exit` / `die`、property hooks、
-asymmetric visibility も未対応です。
-最低版の指定だけで、コンパイラや生成物のセキュリティを保証するものではありません。
-組込み関数は `count(array)`、限定的な `strlen(string)`・`array_keys(array)`・`array_values(array)`、
-固定maskの `rtrim`、`is_bool`・`is_string`・`is_int`・`is_null`・`is_array`・ASCIIの `strtolower(string)` を対象にします。
-`strlen` はバイト数を返し、数値・nullなどからの暗黙変換は対象外です。
-`array_keys` は1引数で順序を保ったキー一覧を返します。値による絞り込みは未対応です。
-`array_values` は順序を保った値一覧を0始まりに振り直し、入れ子の配列は平坦化しません。
-`array_key_exists` は整数/文字列キーの存在を判定します。値がnullでも存在と判定し、
-入れ子の再帰検索やbool/nullキーの暗黙変換はしません。
-`array_is_list` は外側のキーが0始まりの連続整数かを順序も含めて判定します。
-空配列はtrue、値や入れ子のキーは判定に影響せず、配列を変更しません。
-生成レポートには Go の行から PHP の文開始行への対応を含みます。
-列単位の位置情報やエラー表示の自動変換、本格パーサへの切替は未対応です。
-関数・機能の台帳と実テスト結果から、PHP バージョン別の対応状況を JSON／Markdown
-に自動集計します。CI のサマリーと成果物から確認でき、未実行や途中失敗は成功扱いにしません。
-保存済みの複数実行結果は `gohp-compat-view` で並べて表示し、PHP バージョン・種別・
-結果で絞り込めます。過去の PASS と新しい失敗は別々に保持します。
-現行 revision への適用判断・複数バージョンをまとめた対応認定・プロジェクト全体の互換性判定は未対応です。
-`gohp-inventory` は `composer.json` / `composer.lock` から依存・PHP条件・拡張を
-読み取ります。インストールやフック実行はせず、読取成功でも互換性は未確認のままです。
+PHP 8.x の版別互換性を検証しながら対応範囲を広げる、Goソース生成型の実験的トランスパイラです。
+現在は8.3／8.4の限定範囲を、それぞれ固定したPHPで独立検証します。
+参照・COWは内部基盤を開発中で、PHP参照構文や生成配列への統合は未対応です。
+WordPress全体はまだ動作せず、対応率・性能比較も未測定です。
+[対応表](docs/compatibility.md)と[到達目標](docs/roadmap.md)で実装済み・未完了を区別します。
