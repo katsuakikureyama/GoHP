@@ -335,6 +335,15 @@ grammar or application tests. The companion's byte verification is recorded
 separately below; no lexical, native-behavior or compiled-Go measurement of the
 larger selection is claimed here.
 
+Byte-verification observation: GoHP `ffe29e4050bfb3c6286143ab392ecf367dba5a35`,
+Go 1.23.0 Darwin/arm64, the command above, exit 0 / `source-verified` for all
+seven source files plus notice/provenance. Manifest SHA-256
+`37c72c753aa3a0764e5b0b6b8d6249c1ca67c0b2d2aee8458a5f2e09ee6a1582`;
+exact JSON stdout SHA-256
+`b1cbc2246a6ae78549824575364427d9922b5c6cd4d0be5ec96690c9320c2f31`.
+The local report retains null function/callsite/ratio fields, both targets
+`not-measured`, and `compatibility: unverified`. No PHP process was run.
+
 ### Highest-frequency unmatched names
 
 The frequencies below are the **original one-file v0.2 observations**, identical
