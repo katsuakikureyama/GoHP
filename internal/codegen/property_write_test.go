@@ -128,7 +128,7 @@ func TestPublicPropertyWriteMalformedIR(t *testing.T) {
 		}
 		return ir.Program{
 			Version: ir.Version, PHPVersion: "8.3",
-			Classes: []ir.Class{{Name: "Box", Properties: []ir.Property{{Name: "items", Value: ir.Expr{Kind: "null", Line: 1}}}}},
+			Classes: []ir.Class{{Name: "Box", Properties: []ir.Property{{Name: "items", Value: ir.Expr{Kind: "null", Text: "null", Line: 1}}}}},
 			Body:    body,
 		}
 	}
