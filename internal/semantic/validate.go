@@ -172,7 +172,7 @@ func (v validator) function(f ir.Function, class string) error {
 	return v.stmts(f.Body, scope, f.ReturnType, false)
 }
 
-func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType string, inForeach bool) error {
+func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType string, inLoop bool) error {
 	for _, stmt := range stmts {
 		if stmt.Kind != "if" && stmt.ElseBody != nil {
 			return malformed(stmt.Line, "else body requires an if statement")
@@ -182,8 +182,8 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || stmt.Body != nil || !emptyExpr(stmt.Expr) || !emptyExpr(stmt.Target) {
 				return malformed(stmt.Line, stmt.Kind+" must have no payload")
 			}
-			if !inForeach {
-				return unsupported(stmt.Line, stmt.Kind+" requires an enclosing foreach")
+			if !inLoop {
+				return unsupported(stmt.Line, stmt.Kind+" requires an enclosing foreach or while")
 			}
 			// Still validate dead statements, without letting dead assignments
 			// overwrite the type state at the reachable loop transfer.
@@ -281,6 +281,36 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 			if returnType == "bool" && t.kind != boolKind && t.kind != unknownKind {
 				return unsupported(stmt.Line, "bool return requires a bool value")
 			}
+		case "while":
+			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || !emptyExpr(stmt.Target) {
+				return malformed(stmt.Line, "while requires only a condition and body")
+			}
+			// Reject a known-invalid first condition before widening loop-carried
+			// variables. Later evaluations and the body must not assume entry types.
+			condition, err := v.expr(stmt.Expr, scope)
+			if err != nil {
+				return err
+			}
+			if !isBoolDomain(condition) {
+				return unsupported(stmt.Line, "while condition requires a supported value")
+			}
+			loop := cloneScope(scope)
+			widenWhileWrites(stmt.Body, loop)
+			condition, err = v.expr(stmt.Expr, loop)
+			if err != nil {
+				return err
+			}
+			if !isBoolDomain(condition) {
+				return unsupported(stmt.Line, "while condition requires a supported value")
+			}
+			if err := v.stmts(stmt.Body, cloneScope(loop), returnType, true); err != nil {
+				return err
+			}
+			// Zero iterations, continue and early break are possible. Do not use
+			// the last textual assignment as a definite post-loop type.
+			for name := range scope {
+				scope[name] = loop[name]
+			}
 		case "foreach":
 			if !validName(stmt.Value) || stmt.Key != "" && !validName(stmt.Key) {
 				return malformed(stmt.Line, "invalid foreach binding")
@@ -317,11 +347,11 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 				return unsupported(stmt.Line, "if condition requires a supported value")
 			}
 			inner := cloneScope(scope)
-			if err := v.stmts(stmt.Body, inner, returnType, inForeach); err != nil {
+			if err := v.stmts(stmt.Body, inner, returnType, inLoop); err != nil {
 				return err
 			}
 			other := cloneScope(scope)
-			if err := v.stmts(stmt.ElseBody, other, returnType, inForeach); err != nil {
+			if err := v.stmts(stmt.ElseBody, other, returnType, inLoop); err != nil {
 				return err
 			}
 			// Validate both arms from the pre-if scope. Branch-only bindings do
@@ -337,6 +367,37 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 		}
 	}
 	return nil
+}
+
+// Conservatively widen existing variable roots written anywhere in a while
+// body, including nested loops and dead tails. Property writes do not replace
+// their receiver; mutable property reads already have unknown value type.
+// Check shapes defensively here: normal statement validation follows this scan.
+func widenWhileWrites(stmts []ir.Stmt, scope map[string]valueType) {
+	mark := func(name string) {
+		if _, exists := scope[name]; exists {
+			scope[name] = valueType{kind: unknownKind}
+		}
+	}
+	for _, stmt := range stmts {
+		switch stmt.Kind {
+		case "assign":
+			mark(stmt.Name)
+		case "assign_index":
+			if len(stmt.Target.Args) > 0 && stmt.Target.Args[0].Kind == "var" {
+				mark(stmt.Target.Args[0].Text)
+			}
+		case "assign_append":
+			if stmt.Target.Kind == "var" {
+				mark(stmt.Target.Text)
+			}
+		case "foreach":
+			mark(stmt.Key)
+			mark(stmt.Value)
+		}
+		widenWhileWrites(stmt.Body, scope)
+		widenWhileWrites(stmt.ElseBody, scope)
+	}
 }
 
 func emptyExpr(e ir.Expr) bool {

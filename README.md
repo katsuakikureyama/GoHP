@@ -66,10 +66,12 @@ retain identity. This adds neither dynamic properties nor unknown receiver write
 Simple data classes also support [fixed public constructors and known-object
 array snapshots](docs/block-data-constructor.md), including implicit-null public
 properties. No inheritance, typed/defaulted constructors or general array casts.
-Bare [`continue;`](docs/foreach-continue-boundary.md) now targets the nearest
-enclosing `foreach`, including inside braced conditionals. Numeric levels and
-other loop kinds are excluded. Bare [`break;`](docs/foreach-break-boundary.md)
-exits that nearest foreach entirely; nested outer loops continue normally.
+Bounded [`while (condition) { body }`](docs/while-boundary.md) re-evaluates its
+condition before each iteration. Bare [`continue;`](docs/foreach-continue-boundary.md)
+and [`break;`](docs/foreach-break-boundary.md) target the nearest enclosing
+`foreach` or `while`, including inside braced conditionals. Continue rechecks
+the while condition; break exits without rechecking it. Numeric levels,
+unbraced/alternative syntax and for/do/switch are excluded.
 Together with bounded
 [trailing untyped null defaults and defined bare/multiple isset](docs/array-get-prerequisites.md),
 this resolves the syntax blockers measured for Gossip's `_wp_array_get`.

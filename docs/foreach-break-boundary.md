@@ -1,6 +1,7 @@
 # Bounded foreach break
 
-Bare `break;` (case-insensitive) exits the nearest lexically enclosing `foreach`.
+Bare `break;` (case-insensitive) exits the nearest lexically enclosing `foreach`
+or [bounded while](while-boundary.md).
 It may appear inside braced `if`/`elseif`/`else`, in nested foreach loops, and in
 functions/methods containing their own loop. It preserves effects and assignments
 performed before it, skips the rest of that iteration and all later iterations,
@@ -9,7 +10,7 @@ It differs from `continue`, which proceeds to the next iteration.
 
 IR v0.1 gains a payload-free `break` statement. Semantic validation rejects
 expression/target/name/binding/body payloads, explicit numeric levels (even 1),
-and break outside a function-local foreach, including dead branches. A called
+and break outside a function-local foreach/while, including dead branches. A called
 function cannot inherit its caller's loop context. Codegen emits ordinary Go
 break with statement source mapping; no new runtime control-flow protocol.
 
@@ -20,11 +21,12 @@ branch-only/new loop bindings do not escape; changed existing types retain
 runtime guards. No path-sensitive return/exit inference is added. Existing
 foreach snapshot iteration and array copying are unchanged.
 
-This is the first loop-exit increment, not support for `while`, `for`, `do`,
-`switch`, labels or multi-level break. The owned token-array fixture selects a
+This was the first loop-exit increment; bounded while is now tracked separately.
+It does not add `for`, `do`, `switch`, labels or multi-level break. The owned token-array fixture selects a
 first `wp-elements-` prefix with existing `str_starts_with`; it is not the
 unchanged WordPress render function. That source uses stateful `strtok` and a
-while loop before calling an HTML processor, still separate dependencies.
+while loop before calling an HTML processor. Tokenizer and HTML processing
+remain missing; while support alone does not certify that caller.
 Gossip source/pins/corpora are unchanged, with no consumer adoption implied.
 
 Catalog `php.syntax.foreach_break` remains `partial`, with six differential,
