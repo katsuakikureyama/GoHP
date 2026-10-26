@@ -2,8 +2,9 @@
 
 General `internal/storage.Slot` bindings can now own null/bool/int64/string or
 an open `*ScalarArray`. This extends the **canonical** Slot/cell engine; there is
-no second array-slot reference model. It is bounded R1 infrastructure, not PHP
-reference syntax or a migration of `runtime.Array`/generated array operations.
+no second array-slot reference model. A bounded value-only runtime adapter now
+uses this storage explicitly. This is R1 infrastructure, not PHP reference
+syntax or a migration of generated array operations.
 
 ## Value ownership
 
@@ -67,13 +68,56 @@ observe that releasing such a snapshot before versus after a subsequent copy
 write produces independent versus shared element values. This is internal
 lifetime evidence, not a new PHP evaluation-order or exception contract.
 
-These pointer-only, non-concurrent temporaries are not exposed by the public
-runtime or emitted by codegen. Generated arrays still use eager-copy
-`runtime.Array`; selected `ScalarFrame` functions exclude them. The next
-integration needs a bounded runtime value adapter and expression-level ownership
-planning (evaluation, result transfer, cleanup and lazy branches), before a
-generated scope can actually own/release shared-array temporaries. Adding an
-empty function-level cleanup scope now would not implement that integration.
+These pointer-only, non-concurrent storage types are never directly exposed to
+external consumers. The opt-in runtime facade below wraps them; codegen does not
+emit it yet. Generated arrays still use eager-copy `runtime.Array`, and selected
+`ScalarFrame` functions exclude them. Expression-level ownership planning
+(evaluation, result transfer, cleanup and lazy branches) remains necessary
+before a generated scope can actually own/release shared-array temporaries.
+
+## Opt-in runtime boundary
+
+`runtime.ValueSlot` and `runtime.ValueTemporary` provide an additive, value-only
+adapter for external Go consumers. They accept exact null/bool/int64/string or
+a **canonical flat scalar `runtime.Array`**, not every existing runtime value.
+They expose neither internal handles nor Bind/Reference/element aliases.
+Both are pointer-only, non-concurrent, and require explicit cleanup.
+
+| API | Ownership and result |
+|---|---|
+| `NewValueSlot(value)` / `Write(value)` | Import a detached value before replacing the owned payload; invalid input preserves the destination |
+| `Read()` | Export an independent legacy value; exported Array.Entries never shares a backing slice with storage or another export |
+| `Snapshot()` / `NewValueTemporary(value)` | Retain an independently owned value temporary, not the source binding |
+| `ArrayWrite(key, value)` / `ArrayAppend(value)` | Mutate the current owned array via canonical storage; scalar elements only, existing bounded key/index rules |
+| `ValueTemporary.MoveTo(slot)` | Assign through the destination's current value binding, consume only on success; nil/closed destination leaves the temporary usable |
+| `ValueTemporary.Take()` | Consume and export a detached legacy value; release internal ownership before returning, so the result needs no Close |
+| `Close()` | Release remaining ownership once; safe after consumption; nil receivers reject |
+
+A zero ValueSlot is open but undefined: Read/Snapshot and array mutation reject,
+while Write initializes it. Close is terminal. A zero ValueTemporary is inactive;
+only Close is valid until constructed. Neither wrapper can resurrect after Close
+or consumption. A taken result survives producer `defer Close` and slot teardown.
+
+Array import preflights **all** entries before creating owned storage: exact,
+already-normalized int64/string keys, no duplicates, scalar-only values, and
+private index state equal to replaying the ordered integer keys through the
+shared `arraykey.Index` policy. The last check matters because hosts can edit
+public `Array.Entries` without updating hidden next-index/overflow history.
+Such non-reconstructible arrays are **rejected by this new opt-in boundary**,
+not silently repaired or accepted with changed append behavior. No index setter
+or alternate key policy is introduced. Write/append without deletion/reordering
+preserve the reconstructible invariant, so export through NewArray retains key
+order, the next automatic key and overflow behavior. Host input/output mutations
+do not affect storage; snapshots and MoveTo keep ordinary value-copy isolation.
+
+Nested arrays, objects, callables, foreign host values, noncanonical/duplicate
+keys and stale index metadata remain outside this adapter. Existing Array APIs
+and their nested-value behavior are unchanged; this is not a drop-in replacement
+for every Array or function parameter. Runtime unit checks and a real external
+module test cover this boundary, not generated-code or native PHP equivalence.
+New callers must pin a runtime revision providing these APIs; old generated Go
+and IR 0.1 are unchanged. No new CLI, service operation, authentication or WebMCP
+surface is introduced; the existing local generation exclusion still applies.
 
 ## Synchronous writes through the owning Slot
 
@@ -139,19 +183,21 @@ by this storage. The existing value runtime still handles its earlier subset.
 Internal unit checks cover owned copies, outer aliases, replacement/final
 release, scalar-domain propagation, synchronous mutations/current-root lookup,
 invalid mutations without separation, and temporary capture/transfer/release.
-They
-remain under the **unsupported** reference feature in the catalog. Existing
+They remain under the **unsupported** reference feature in the catalog. The
+opt-in runtime adapter has six separate unit/consumer checks under
+`gohp.tooling.owned-value-adapter`, not a generated PHP feature claim. Existing
 scalar Frame ABI checks and both active target CI corpora must remain green.
 PHP 8.3.36 native-only observations in #82 are unchanged; they are not new
 generated-reference or PHP 8.4 native-reference evidence.
 
-R1 remains partial: synchronous Slot-rooted writes and internal value temporaries
-are implemented, but persistent locations, general generated-frame/temporary
-integration, nested ownership and cyclic reclamation are unfinished. The next
-gate is a bounded runtime adapter and expression-level ownership plan for
+R1 remains partial: synchronous Slot-rooted writes, internal value temporaries
+and the opt-in runtime adapter are implemented, but persistent locations, general
+generated-frame/temporary integration, nested ownership and cyclic reclamation
+are unfinished. The next
+gate is an expression-level ownership plan and a proven closed scope for
 generated array temporaries, plus operation-specific locations across calls,
 before enabling array reference syntax or replacing runtime storage. There is
 no performance or application-acceptance claim.
 
-No compiler/parser/IR/runtime ABI, CLI/capability/auth/WebMCP, target/oracle/CI,
-Gossip pin or deployment change. The local CLI's existing exclusion remains.
+The runtime APIs are additive; no compiler/parser/IR, CLI/capability/auth/WebMCP,
+target/oracle/CI, Gossip pin or deployment change. The local CLI's existing exclusion remains.

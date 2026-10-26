@@ -108,6 +108,10 @@ Internal shared containers separate storage on write and track reference ownersh
 element bindings remain scalar-only, including through aliases. Only selected
 closed scalar functions currently use the generated Frame facade. This is R1
 infrastructure, not a migration of generated arrays or PHP-reference support.
+An additive ValueSlot/ValueTemporary runtime facade now wraps canonical storage
+for scalars and canonical flat scalar arrays. Import rejects noncanonical keys,
+nested values and non-reconstructible hidden index state; export is a detached
+legacy value. It is opt-in, exposes no reference API, and is not emitted by codegen.
 Persistent locations, generated temporary integration and nested shared storage remain
 unfinished; the [reference/value model](reference-value-model.md) owns those gates.
 

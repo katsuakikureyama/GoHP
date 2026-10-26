@@ -13,8 +13,9 @@ evidence. This roadmap does not add catalog statuses or a new CLI operation.
   oracles. No result covers every patch, PHP feature or application.
 - Functions, value arrays, simple classes and capture-free arrows generate Go.
   Internal scalar frames, shared scalar arrays, owned array-valued Slots,
-  synchronous Slot-rooted array mutations and value temporaries are implemented,
-  but PHP references and generated shared-array/temporary integration are not.
+  synchronous Slot-rooted array mutations, value temporaries and an opt-in
+  runtime value adapter are implemented, but PHP references and generated
+  shared-array/temporary integration are not.
 - [Gossip's earlier original-source comparisons](integration.md) are useful
   historical evidence at their recorded compiler/source pins. They are neither
   a current-main application result nor a combined WordPress percentage.
@@ -31,7 +32,7 @@ evidence. This roadmap does not add catalog statuses or a new CLI operation.
 |---|---|---|
 | Documentation | README and compatibility tables reorganized; historical target claims distinguished | Keep the entry point, implementation limits and evidence links aligned in each affected change |
 | Application inventory | Whole-file identity, native-token/name evidence and top-six dependency triage available; grammar/name resolution and dependency closure unresolved, no percentage | Follow the observed hook/global/reference/callable prerequisites and AST/dependency investigation; retain unknown/unparsed content and separate selection identities |
-| Reference/value integration | R1 partial: internal ownership/storage, Slot-rooted mutations and value temporaries exist | Bounded runtime adapter + expression-level ownership/cleanup, then locations across calls; PHP source → Go binary comparison of reference assignment/update/unset (R2), with rejected unsupported forms |
+| Reference/value integration | R1 partial: internal ownership/storage and opt-in runtime value adapter exist | Expression-level ownership/cleanup and closed-scope selection, then locations across calls; PHP source → Go binary comparison of reference assignment/update/unset (R2), with rejected unsupported forms |
 | Performance baseline | Planned; no PHP/Go benchmark | Publish one reproducible, output-checked small workload per target, separating build, startup, execution and memory measurements |
 | Frontend adapter | Assessment only; no candidate installed | Audit/pin a candidate and demonstrate target-aware parsing, diagnostics/spans and supported-IR parity in shadow mode before replacement |
 | Application acceptance | Earlier bounded Gossip runs only | Translate an unchanged complete application unit and its actual dependency closure; compare behavior at exact application/compiler/oracle pins |
@@ -114,9 +115,10 @@ this document changes none of them.
 Use the existing [R0–R5 gates](reference-value-model.md#delivery-gates-and-status),
 not a second storage engine. R1 now has synchronous one-level mutations through
 the owning Slot, without a Read/copy/writeback temporary, and separately owned
-value snapshots with single consumption/release. These temporaries are not emitted
-by codegen: runtime value adaptation and expression-level cleanup/lazy-branch
-planning remain necessary. Persistent locations also need explicit contracts
+value snapshots with single consumption/release. A value-only runtime adapter
+now imports/exports canonical flat values without exposing storage handles. It
+is not emitted by codegen: expression-level cleanup/lazy-branch planning and a
+proven closed-scope selection remain necessary. Persistent locations need explicit contracts
 without changing PHP syntax acceptance. Internal unit results do not count as
 reference support.
 

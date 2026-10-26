@@ -1,6 +1,6 @@
 # Reference, value and assignment foundation
 
-Status: **design + native-oracle specification; scalar frames, shared scalar containers, owned array-valued Slots, synchronous Slot-rooted mutations and internal value temporaries implemented**.
+Status: **design + native-oracle specification; scalar frames, shared scalar containers, owned array-valued Slots, synchronous mutations, value temporaries and an opt-in runtime value adapter implemented**.
 Baseline: main `565e65e6c9d8e211b06779739bfba76b07c4d92d` (#81).
 Target: PHP 8.3, oracle floor 8.3.36. Later series need separate policy and
 evidence; they must not inherit these results. No compiler/runtime/IR changes
@@ -15,8 +15,9 @@ separation/copy timing; runtime arrays and generated array code are not migrated
 [Owned Slot array values](owned-array-slot-values.md) now have explicit retain/read/release
 and synchronous one-level mutations without a Read/copy/writeback temporary;
 Frame and element bindings remain scalar-only, including through aliases.
-Internal value temporaries now capture, transfer and release owned snapshots;
-they are not yet exposed through the runtime ABI or emitted by codegen.
+Internal value temporaries now capture, transfer and release owned snapshots.
+An opt-in runtime ValueSlot/ValueTemporary facade converts canonical flat values
+without exposing storage types; codegen does not emit these APIs yet.
 
 ## Decision
 
@@ -149,14 +150,14 @@ substitute a custom Go hook engine for untested original `WP_Hook` behavior.
 | Stage | Deliverable / exit condition | Status |
 |---|---|---|
 | R0 | Design and executable PHP-only reference contracts; record exact native run separately | This change; GoHP reference support remains unsupported |
-| R1 | Internal slot/value ownership primitives and shared-array separation design implemented behind closed boundaries; existing no-reference behavior preserved | Partial: scalar frames/codegen, shared scalar containers/key-index policy, owned array-valued Slots, synchronous Slot-rooted mutations and internal value temporaries implemented; persistent locations, generated temporary integration, nested ownership and general runtime/frame integration pending |
+| R1 | Internal slot/value ownership primitives and shared-array separation design implemented behind closed boundaries; existing no-reference behavior preserved | Partial: scalar frames/codegen, shared scalar containers/key-index policy, owned Slots, synchronous mutations, value temporaries and opt-in runtime value adapter implemented; persistent locations, generated temporary/frame integration and nested ownership pending |
 | R2 | Bounded variable reference assignment/unset, explicit address IR and binding lifetime; source + malformed-IR negatives and PHP/Go comparisons | Not implemented |
 | R3 | Reference-bearing arrays, element/declared-property locations, copy-timing and lifetime cases; key order/next-index and existing copy isolation retained | Not implemented |
 | R4 | By-reference parameters/returns, reference foreach and closure captures, each with explicit bounded contracts and call-path evidence | Not implemented |
 | R5 | Generic dynamic callable forms and original application acceptance (full block parser, then hooks) | Not implemented; not implied by R0–R4 |
 
-Next bounded implementation: a bounded runtime value adapter and expression-level
-ownership planning for R1's generated temporaries, then operation-specific locations
+Next bounded implementation: expression-level ownership planning and a proven
+closed-scope selection for R1's generated temporaries, then operation-specific locations
 across calls. Build on shared scalar containers, internal value temporaries,
 synchronous Slot-rooted mutations and explicit Frame release. The synchronous
 borrow is not a persistent address or a compiler evaluation-order policy. Keep parser acceptance unchanged;

@@ -80,9 +80,9 @@ builtin external consumer exercises runtime guard failure and recovery, host
 types/arity/nil Execution and preservation of the caller's tokenizer state.
 Scalar temporaries remain ordinary Go values. The separate internal
 [owned value temporary](owned-array-slot-values.md#owned-value-temporaries)
-can capture/transfer/release scalar-array snapshots, but is not exposed by this
-facade or emitted by codegen. This does not implement generated shared-array
-temporary lifetimes or a PHP exception model.
+can capture/transfer/release scalar-array snapshots through a separate opt-in
+ValueSlot/ValueTemporary facade, but not this scalar frame or codegen. This does
+not implement generated shared-array temporary lifetimes or a PHP exception model.
 
 The external consumer checks the generated ABI, nil Execution and arity guards,
 runtime overflow failure, subsequent calls, preserved invocation state and

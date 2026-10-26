@@ -98,9 +98,11 @@ Its self-array exception is outside this scalar-only domain.
 Both active target CI jobs must preserve the existing compiler corpus and record
 these internal checks separately. Existing array/append differential fixtures
 exercise the runtime policy per target; they are not evidence for generated
-reference arrays. R1 remains partial. Explicit Slot array ownership and synchronous
-Slot-rooted mutations are internal; persistent locations and general generated
-temporary ownership are needed before replacing any runtime array storage path.
+reference arrays. R1 remains partial. Explicit Slot array ownership, synchronous
+mutations and value temporaries now have an opt-in value-only runtime adapter
+for canonical flat values (see the owned Slot contract). Persistent locations
+and general generated temporary ownership are still needed before replacing
+existing generated array storage paths.
 No performance, warning/exception, cycle or application acceptance claim is made.
 
 No CLI/route/authentication/capability, target policy, oracle environment, CI
