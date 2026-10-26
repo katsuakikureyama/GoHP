@@ -33,6 +33,7 @@ type classInfo struct {
 	properties       map[string]valueType
 	methods          map[string]int
 	constructorArity int // Zero also describes a class without a constructor.
+	constructorMin   int
 }
 
 type validator struct {
@@ -80,6 +81,7 @@ func Validate(p ir.Program) error {
 			info.methods[strings.ToLower(method.Name)] = len(method.Params)
 			if strings.EqualFold(method.Name, "__construct") {
 				info.constructorArity = len(method.Params)
+				info.constructorMin = len(method.Params) - method.OptionalNullParams
 			}
 		}
 		v.classes[strings.ToLower(c.Name)] = info
@@ -115,7 +117,7 @@ func validateParameterTypes(f ir.Function, method bool) error {
 	if f.OptionalNullParams < 0 || f.OptionalNullParams > len(f.Params) {
 		return malformed(f.Line, "invalid optional-null parameter count")
 	}
-	if method && f.OptionalNullParams != 0 {
+	if method && !strings.EqualFold(f.Name, "__construct") && f.OptionalNullParams != 0 {
 		return unsupported(f.Line, "method parameter defaults are unsupported")
 	}
 	if len(f.ParamTypes) != 0 && len(f.ParamTypes) != len(f.Params) {
@@ -1048,7 +1050,7 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		if _, err := v.exprs(expr.Args, scope); err != nil {
 			return valueType{}, err
 		}
-		if len(expr.Args) != info.constructorArity {
+		if len(expr.Args) < info.constructorMin || len(expr.Args) > info.constructorArity {
 			return valueType{}, unsupported(expr.Line, "unsupported constructor argument count for "+expr.Text)
 		}
 		return valueType{kind: objectKind, class: strings.ToLower(expr.Text)}, nil
