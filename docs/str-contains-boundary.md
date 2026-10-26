@@ -26,7 +26,8 @@ The owned differential fixture covers that guard shape, nested array `??`, and
 scalar/array/null guard inputs. It is not an unchanged-source run of the render
 function. Bounded [`str_starts_with`](str-starts-with-boundary.md) is tracked
 separately, as is [bounded while with bare break/continue](while-boundary.md).
-Remaining dependencies include stateful `strtok` and `WP_HTML_Tag_Processor`.
+[Bounded strtok](strtok-boundary.md) is also separate; `WP_HTML_Tag_Processor`
+remains a missing dependency.
 No stubs or claim of HTML rendering
 support are added. Gossip pins/source/corpora remain unchanged.
 

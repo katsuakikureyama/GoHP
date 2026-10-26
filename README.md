@@ -93,6 +93,11 @@ strings only; no coercion, Unicode folding or token-boundary interpretation.
 [`str_starts_with(string, string): bool`](docs/str-starts-with-boundary.md) checks
 the byte prefix instead: matches only in the middle or at the end are false.
 It has the same actual-string and empty-needle boundaries.
+Bounded [`strtok`](docs/strtok-boundary.md) supports string initialization and
+continuation with byte delimiters. Its cursor belongs to an explicit execution,
+shared across nested calls but isolated across separate host entries. Empty
+delimiter sets are allowed; uninitialized continuation and coercion are excluded.
+This does not certify the complete WordPress render/HTML path.
 [`array_key_first(array)`](docs/array-key-first-boundary.md) and
 [`array_key_last(array)`](docs/array-key-last-boundary.md) return the first/last
 insertion-order int/string key, or null for an empty array, without modifying it.

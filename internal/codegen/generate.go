@@ -21,6 +21,8 @@ type generator struct {
 	serial  int
 	// Dead tails are still traversed for codegen-only validation, not emitted.
 	suppress bool
+	// Emit execution-aware calls only for programs containing stateful builtins.
+	execution bool
 }
 
 func name(s string) string { return strings.ToLower(s) }
@@ -49,6 +51,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	if err := semantic.Validate(p); err != nil {
 		return nil, SourceMap{}, err
 	}
+	g.execution = usesStrtok(p)
 	for _, f := range p.Functions {
 		n := name(f.Name)
 		if n == "array_key_first" || n == "array_key_last" || n == "array_reverse" || n == "array_merge" || n == "array_slice" {
@@ -57,7 +60,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		if n == "empty" || n == "continue" || n == "break" || n == "while" {
 			g.fail(f.Line, "reserved language construct "+n)
 		}
-		if n == "str_contains" || n == "str_starts_with" {
+		if n == "str_contains" || n == "str_starts_with" || n == "strtok" {
 			g.fail(f.Line, "reserved function "+n)
 		}
 		if _, ok := g.funcs[n]; ok || n == "in_array" || n == "isset" || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "array_key_exists" || n == "array_is_list" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "is_null" || n == "is_int" || n == "is_array" || n == "is_object" || n == "strtolower" || n == "strcasecmp" || n == "sprintf" || n == "str_replace" || n == "stripslashes" || n == "array_map" || n == "addslashes" {
@@ -109,7 +112,12 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		for _, v := range c.Properties {
 			g.emit("P_%s any\n", v.Name)
 		}
-		g.emit("}\nfunc New_%s(args ...any) any {", name(c.Name))
+		if g.execution {
+			g.emit("}\nfunc New_%s(args ...any) any { return NewContext_%s(&rt.Execution{},args...) }\n", name(c.Name), name(c.Name))
+			g.emit("func NewContext_%s(execution *rt.Execution,args ...any) any { rt.RequireExecution(execution)\n", name(c.Name))
+		} else {
+			g.emit("}\nfunc New_%s(args ...any) any {", name(c.Name))
+		}
 		if !hasConstructor {
 			g.emit("rt.Args(args,0)\n")
 		}
@@ -119,7 +127,11 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		}
 		g.emit("}\n")
 		if hasConstructor {
-			g.emit("self.M___construct(args...)\n")
+			if g.execution {
+				g.emit("self.MContext___construct(execution,args...)\n")
+			} else {
+				g.emit("self.M___construct(args...)\n")
+			}
 		}
 		g.emit("return self\n}\n")
 		g.emit("func (self *C_%s) Get(k string) any { switch k {", name(c.Name))
@@ -143,6 +155,9 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		}
 	}
 	g.emit("func main(){ v:=map[string]any{}; _=v\n")
+	if g.execution {
+		g.emit("execution := &rt.Execution{}; _=execution\n")
+	}
 	g.stmts(p.Body, map[string]bool{}, false, "")
 	g.emit("}\n")
 	out, err = format.Source([]byte(g.b.String()))
@@ -162,7 +177,13 @@ func (g *generator) emit(s string, a ...any) {
 }
 func (g *generator) fail(line int, msg string) { panic(fmt.Errorf("PHP004 line %d: %s", line, msg)) }
 func (g *generator) function(f ir.Function, c string) {
-	if c == "" {
+	if g.execution && c == "" {
+		g.emit("func F_%s(args ...any) any { return FContext_%s(&rt.Execution{}, args...) }\n", name(f.Name), name(f.Name))
+		g.emit("func FContext_%s(execution *rt.Execution, args ...any) any { rt.RequireExecution(execution)\n", name(f.Name))
+	} else if g.execution {
+		g.emit("func (self *C_%s) M_%s(args ...any) any { return self.MContext_%s(&rt.Execution{}, args...) }\n", name(c), name(f.Name), name(f.Name))
+		g.emit("func (self *C_%s) MContext_%s(execution *rt.Execution, args ...any) any { rt.RequireExecution(execution)\n", name(c), name(f.Name))
+	} else if c == "" {
 		g.emit("func F_%s(args ...any) any {\n", name(f.Name))
 	} else {
 		g.emit("func (self *C_%s) M_%s(args ...any) any {\n", name(c), name(f.Name))
@@ -325,8 +346,14 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		}
 		// This function has a fresh local v, never the enclosing scope's map.
 		// Invoke owns arity, argument copies and the returned-value copy.
+		if g.execution {
+			return fmt.Sprintf("rt.NewCallableWithExecution(%d,func(execution *rt.Execution,args ...any) any {v:=map[string]any{}; _=v; %s return %s})", len(e.Params), bindings.String(), g.expr(e.Args[0], inner))
+		}
 		return fmt.Sprintf("rt.NewCallable(%d,func(args ...any) any {v:=map[string]any{}; _=v; %s return %s})", len(e.Params), bindings.String(), g.expr(e.Args[0], inner))
 	case "invoke":
+		if g.execution {
+			return "rt.InvokeWithExecution(execution," + args(e.Args) + ")"
+		}
 		return "rt.Invoke(" + args(e.Args) + ")"
 	case "int":
 		return "int64(" + e.Text + ")"
@@ -420,6 +447,9 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		return "rt.ArrayEmpty(" + args(e.Args) + ")"
 	case "call":
 		n := name(e.Text)
+		if n == "strtok" {
+			return "execution.Strtok(" + args(e.Args) + ")"
+		}
 		if n == "array_map" {
 			if len(e.Args) != 2 || e.Args[0].Kind != "string" {
 				g.fail(e.Line, "array_map expects a literal named callback and one array")
@@ -427,6 +457,9 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 			callback := name(e.Args[0].Text)
 			if arity, ok := g.funcs[callback]; !ok || arity < 1 || g.minimum[callback] > 1 {
 				g.fail(e.Line, "array_map callback must be a declared one-argument function")
+			}
+			if g.execution {
+				return "rt.ArrayMap(func(value any) any { return FContext_" + callback + "(execution,value) }, " + g.expr(e.Args[1], scope) + ")"
 			}
 			return "rt.ArrayMap(func(value any) any { return F_" + callback + "(value) }, " + g.expr(e.Args[1], scope) + ")"
 		}
@@ -578,10 +611,16 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		if len(e.Args) > arity || len(e.Args) < g.minimum[n] {
 			g.fail(e.Line, "unsupported argument count for "+n)
 		}
+		if g.execution {
+			return "FContext_" + n + "(execution," + args(e.Args) + ")"
+		}
 		return "F_" + n + "(" + args(e.Args) + ")"
 	case "new":
 		if !g.classes[name(e.Text)] {
 			g.fail(e.Line, "unknown class "+e.Text)
+		}
+		if g.execution {
+			return "NewContext_" + name(e.Text) + "(execution," + args(e.Args) + ")"
 		}
 		return "New_" + name(e.Text) + "(" + args(e.Args) + ")"
 	case "object_array_cast":
@@ -592,6 +631,9 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		n := name(e.Text)
 		if !g.methods[n] {
 			g.fail(e.Line, "unknown method "+n)
+		}
+		if g.execution {
+			return "(" + g.expr(e.Args[0], scope) + ").(interface{MContext_" + n + "(*rt.Execution,...any) any}).MContext_" + n + "(execution," + args(e.Args[1:]) + ")"
 		}
 		return "(" + g.expr(e.Args[0], scope) + ").(interface{M_" + n + "(...any) any}).M_" + n + "(" + args(e.Args[1:]) + ")"
 	}

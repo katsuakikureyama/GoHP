@@ -3,9 +3,19 @@
 [Bounded while](while-boundary.md) adds condition re-evaluation and nearest-loop
 break/continue, with conservative guards for loop-carried types. Owned token-array
 selection with str_starts_with is not a replacement for the original render
-caller's stateful strtok and HTML processing. Consumer pins and source
+caller's HTML processing. [Bounded strtok](strtok-boundary.md) now adds an
+explicit execution-owned cursor; original-source acceptance remains separate.
+Consumer pins and source
 certification remain separate; local gohp.cli.generate stays WebMCP-excluded,
 without route/auth/deployment changes.
+
+For a generated program using strtok, legacy F/M/New host wrappers each create
+a fresh execution. A host requiring a start/continue sequence across entries
+must pass the same fresh `*rt.Execution` to FContext/MContext/NewContext entries
+for that logical request only. Arrows use the invoking execution, not a retained
+creator's cursor. Do not copy or concurrently share contexts, reuse them across
+requests or infer a production request lifecycle. Existing pinned Gossip runs
+remain unchanged; this additive ABI needs explicit consumer adoption.
 
 Bounded [foreach continue](foreach-continue-boundary.md),
 [null defaults and isset lists](array-get-prerequisites.md) address the parser

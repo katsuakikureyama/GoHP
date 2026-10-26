@@ -3,6 +3,27 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.strtok",
+      "kind": "builtin",
+      "name": "strtok: execution-owned byte token scanning",
+      "implementation": "partial",
+      "contract": "One or two actual strings: initialize/replace a scan with input and delimiter bytes, or continue with delimiter bytes. Nonempty string tokens (including zero) or false, skipped adjacent separators and changeable/empty delimiter sets. Explicit execution state propagates through direct functions, constructors, methods, named callbacks and arrows; host wrappers start fresh and context-aware entries share deliberately.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.strtok","test":"TestDifferential/strtok","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/strtok.php","assertions":["stdout","exit","delimiter changes/reset, empty/input/separator boundaries, zero token, while and prefix early-break, nested initializer and function/constructor/method/arrow/array_map sharing, input preservation"]},
+        {"case_id":"compiler.strtok","test":"TestStrtokLoweringAndSourceMap","file":"internal/codegen/strtok_test.go","kind":"compiler","assertions":["case-insensitive context-aware lowering, legacy isolated entry and statement source maps"]},
+        {"case_id":"negative.strtok.source","test":"TestStrtokUnsupportedSource","file":"internal/codegen/strtok_test.go","kind":"negative","assertions":["arity, known nonstrings/null, undefined/dead invalid operands, named/unpacked args, redeclaration and builtin callback lookup rejected"]},
+        {"case_id":"negative.strtok.ir","test":"TestStrtokMalformedIR","file":"internal/codegen/strtok_test.go","kind":"negative","assertions":["hidden call metadata and malformed string operands fail before output"]},
+        {"case_id":"unit.runtime.strtok","test":"TestStrtokByteScanning","file":"runtime/execution_test.go","kind":"unit","assertions":["exact string/false results, empty/repeated delimiters, zero, NUL and invalid UTF-8 byte semantics"]},
+        {"case_id":"unit.runtime.strtok.isolation","test":"TestStrtokExecutionIsolationAndReset","file":"runtime/execution_test.go","kind":"unit","assertions":["interleaved independent cursors, reset, changing delimiter sets and exactly one consumed boundary byte"]},
+        {"case_id":"negative.strtok.domain","test":"TestStrtokRejectsInvalidStateAndDomains","file":"runtime/execution_test.go","kind":"negative","assertions":["nil context, uninitialized/cleared continuation, arity and actual-string guards; invalid domains do not mutate cursor"]},
+        {"case_id":"unit.runtime.callable.execution","test":"TestContextualCallableUsesCallerExecution","file":"runtime/execution_test.go","kind":"unit","assertions":["caller rather than creator state, retained identity, legacy callable compatibility and isolated standalone invocation"]},
+        {"case_id":"negative.strtok.runtime","test":"TestStrtokRuntimeGuards","file":"tests/strtok_runtime_test.go","kind":"negative","assertions":["generated uninitialized/cleared continuation and dynamic domain rejection; string/array/bool-return guards on union result"]},
+        {"case_id":"compiler.strtok.execution","test":"TestStrtokGeneratedExecutionIsolation","file":"tests/strtok_runtime_test.go","kind":"compiler","assertions":["built standalone generated entries isolate sequential/concurrent executions; explicit contexts share across functions/constructors/methods and escaped arrows use invoking context; nil context rejected"]}
+      ],
+      "limitations": ["Actual strings only; no weak coercion, null second argument, named/unpacked args, builtin callable lookup or warning/exception/message equivalence", "Uninitialized or cleared-state continuation rejects instead of emitting PHP warnings; input retained until context disposal/replacement", "Execution must be fresh per logical request, not copied/reused across requests or shared concurrently; context-aware generated APIs are experimental and emitted only for stateful programs", "No general PHP global state, HTTP lifecycle, Unicode segmentation or unchanged WordPress render claim; HTML processor and consumer adoption remain separate"]
+    },
+    {
       "id": "php.syntax.public-data-class",
       "kind": "syntax",
       "name": "Fixed public data constructors and known-object array snapshots",
