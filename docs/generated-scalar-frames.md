@@ -47,8 +47,9 @@ contracts, an actual external-module consumer and two runtime-facade contracts.
 `tests/fixtures/scalar_frame.php` observes scalar copies, byte/UTF-8 strings,
 boundary integers, conditional/loop exits, explicit/implicit return values,
 repeated calls and coexistence with legacy array/arrow scopes. The normal
-comparison measures stdout and successful exit, not diagnostics or hidden
-destructor behavior. Internal storage's existing logical-owner release tests
+comparison measures stdout and successful exit plus the existing `quiet-success/v1`
+requirement that both observed stderr streams are empty. This is not arbitrary
+diagnostic equality or hidden destructor behavior. Internal storage's existing logical-owner release tests
 remain separate; the fixture does not claim to observe reference release.
 
 The external consumer checks the generated ABI, nil Execution and arity guards,
