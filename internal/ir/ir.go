@@ -4,6 +4,8 @@ package ir
 const Version = "0.1"
 
 type Expr struct {
+	// version_constant retains the exact predefined name in Text, no Args or
+	// Params; its integer value is resolved against Program.PHPVersion.
 	Kind, Text string
 	Line       int
 	Args       []Expr

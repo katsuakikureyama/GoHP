@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/katsuakikureyama/GoHP/internal/ir"
+	"github.com/katsuakikureyama/GoHP/internal/phpversion"
 	"github.com/katsuakikureyama/GoHP/internal/semantic"
 )
 
@@ -389,6 +390,12 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		return "rt.Invoke(" + args(e.Args) + ")"
 	case "int":
 		return "int64(" + e.Text + ")"
+	case "version_constant":
+		value, err := phpversion.VersionConstant(g.p.PHPVersion, e.Text)
+		if err != nil {
+			g.fail(e.Line, err.Error())
+		}
+		return "int64(" + strconv.FormatInt(value, 10) + ")"
 	case "string":
 		return strconv.Quote(e.Text)
 	case "bool":

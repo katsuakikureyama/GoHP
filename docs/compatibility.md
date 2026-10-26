@@ -13,6 +13,7 @@ This table is the current curated summary, not a blanket support claim.
 | PHP 8.4 | Active closed subset; native oracle is >= 8.4.27 | Independently run the same bounded corpus against the pinned 8.4 oracle; evidence is separate from 8.3 |
 | PHP 7.4, PHP 8.5+, other series | Not active targets | Historical evidence is retained; a separate policy/matrix is required before a series is enabled |
 | Scalar values | int64, strings, bool, null; literal-only negative decimal constants | `arrays.php`, `negative_integers.php`; no float or interpolation; [negative integer boundary](negative-integer-boundary.md) |
+| Target version constants | Exact unqualified `PHP_MAJOR_VERSION` / `PHP_MINOR_VERSION`, resolved as integers from compiler target `8.3` or `8.4` | [Bounded contract](target-version-constants.md); no general constants, declarations, dynamic lookup or qualified names |
 | Form-feed string escape | Double-quoted `"\f"` is byte 0x0C; single-quoted form remains literal | [Bounded escape](form-feed-boundary.md); byte/line tests and per-target PHP comparison, not general PHP escape support |
 | Operators | `+`, `.`, parentheses, full ternary and bounded `??` array addresses | Integral coercion only; float promotion unsupported. Ternary is non-associative; `??` has only defined bare/nested-array address left sides and lazy fallback; no `?:`, `??=`, general expression left side or object truthiness; [contracts](ternary-stripslashes-boundary.md), [nested probes](nested-array-probes.md) |
 | Boolean control | Braced `if` / `elseif` / `else if` / `else`, short-circuit `&&` / `\|\|`, scalar `===` / `!==` plus literal-null type probes, `(bool)`, prefix `!`/`!!` | Scalar/array truthiness only; no unbraced/alternative syntax, branch-local escape, object truthiness, general array/object identity, loose `!=` or keyword logical operators; [contract](boolean-boundary.md) |
@@ -97,6 +98,12 @@ version is an oracle requirement and evidence attribute, not a CLI/compiler
 target. Each live evidence run records the selected target and actual PHP
 version. CI also records its pinned image digest; host-PHP runs have no
 container image identity unless explicitly supplied.
+
+Within the closed subset, `PHP_MAJOR_VERSION` and `PHP_MINOR_VERSION` are
+compiler-target constants: `8.3` produces `8`/`3` and `8.4` produces `8`/`4`.
+They do not inspect host PHP or an oracle patch release. Their deliberately
+narrow syntax and expression boundary is documented in
+[target version constants](target-version-constants.md).
 
 `internal/phpversion/policy.go` is the compiler-side registry of accepted
 series labels and their minimum oracle version. The CI matrix has one explicit

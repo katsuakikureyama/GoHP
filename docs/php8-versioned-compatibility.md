@@ -44,6 +44,13 @@ Two generated targets hosted in one Go process must not change each other's
 semantics. The storage/reference foundation must retain room for these profiles
 without assuming that an 8.3 observation applies to every PHP 8.x target.
 
+The bounded `PHP_MAJOR_VERSION` and `PHP_MINOR_VERSION` expressions demonstrate
+that rule without adding a process-global target: their symbolic `version_constant`
+IR nodes are resolved at code generation from each program's `PHPVersion`.
+For enabled targets, `8.3` yields `8`/`3` and `8.4` yields `8`/`4`, independently
+of the compiler host and native-oracle patch. The [target version constant
+contract](target-version-constants.md) defines its syntax and exclusions.
+
 Preserve the selected target's behavior, including intentional differences
 between targets. Cross-version migration or rewriting behavior is a separate
 future operation and must never happen implicitly during transpilation.
@@ -124,9 +131,10 @@ its own successful differential evidence for a given revision. The same bounded
 corpus is deliberately executed once per target. An 8.3 PASS is never an 8.4
 PASS, and absence of an 8.4 report is `unverified`, not an inherited success.
 
-PHP 8.4 currently has a small explicit profile: the four new core array
-function names are reserved against declarations, and class `_` is rejected
-because its native deprecation is not modeled. This profile does not implement
+PHP 8.4 has explicit target behavior: the target-resolved major/minor constants
+share the documented cross-target boundary, while the four new core array
+function names are reserved against declarations and class `_` is rejected
+because its native deprecation is not modeled. The profile does not implement
 the new functions or reproduce PHP diagnostics. Nullable typed defaults,
 `exit`/`die`, property hooks and asymmetric property visibility remain
 unsupported. See [the PHP 8.4 target contract](php84-target.md).
@@ -147,5 +155,7 @@ still not a claim that every PHP feature or application works on it. Application
 acceptance records additionally pin the application version, dependencies and
 configuration, as Gossip already does for its bounded source selections.
 
-This decision changes documentation only. Existing CLI capabilities and their
-WebMCP exclusions are unchanged; no service operation is introduced.
+The original 2026-10-26 direction was documentation-only. The subsequent bounded
+target-version-constant increment implements the contract described here, while
+leaving existing CLI capabilities and their WebMCP exclusions unchanged and
+adding no service operation.

@@ -493,6 +493,12 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 	case "int", "string", "var":
 		e.Kind = t.kind
 	case "id":
+		// Constants are case-sensitive and have a separate namespace from
+		// functions. Keep the name symbolic until target-aware generation.
+		if (t.text == "PHP_MAJOR_VERSION" || t.text == "PHP_MINOR_VERSION") && p.peek().text != "(" {
+			e.Kind = "version_constant"
+			break
+		}
 		if strings.EqualFold(t.text, "fn") {
 			p.need("(")
 			e = ir.Expr{Kind: "arrow", Line: t.line}

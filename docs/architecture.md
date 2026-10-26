@@ -114,7 +114,16 @@ floors: PHP 8.3.36 or newer for `8.3`, and PHP 8.4.27 or newer for `8.4`.
 This is not a full-language support claim. PHP 7.4 is retained only in
 historical evidence.
 
-The 8.4 semantic profile rejects declarations of `array_find`,
+The exact uppercase unqualified expressions `PHP_MAJOR_VERSION` and
+`PHP_MINOR_VERSION` retain their symbolic names in additive IR `0.1`
+`version_constant` nodes and are resolved during code generation from
+`Program.PHPVersion`. Thus `8.3` generates `8`/`3` and `8.4` generates `8`/`4`
+without consulting host PHP, an oracle patch, or mutable process-global state.
+They remain ordinary scalar expressions, including in a selected scalar frame;
+they do not add general PHP constant lookup or declaration support. See the
+[target version constant boundary](target-version-constants.md).
+
+In addition to those target-resolved constants, the 8.4 semantic profile rejects declarations of `array_find`,
 `array_find_key`, `array_any` and `array_all`, because those names are reserved
 by PHP 8.4 even though GoHP does not implement their calls. It also rejects a
 class named `_`: PHP 8.4 deprecates that class name, and GoHP does not model the
