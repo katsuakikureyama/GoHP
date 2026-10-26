@@ -249,6 +249,41 @@ Exact JSON stdout SHA-256: 8.3
 Original-source reports are caller-retained local evidence, not artifacts of the
 synthetic CI tests. No source files or full reports are vendored here.
 
+### Candidate name observation
+
+Measured independently with GoHP `a3aeb0ed21345bbd05b4dfe43590461afa8174b0`,
+Go 1.23.0 Linux/arm64 binary built on Darwin/arm64, using the same unchanged
+manifest, read-only mounts, network-disabled containers and fixed image digests
+listed above. Both runs retained 305,835 source/grammar-unparsed bytes,
+42,732 tokens, 361 exact candidate spellings and 1,332 candidate occurrences.
+The 64 unclassified opening parentheses remain visible outside this name table.
+
+| Name-only category | PHP 8.3.36 spellings / occurrences | PHP 8.4.27 spellings / occurrences |
+|---|---:|---:|
+| Native internal name only | 152 / 759 | 154 / 761 |
+| Selected declaration marker name only | 83 / 184 | 83 / 184 |
+| Both name sources | 0 / 0 | 0 / 0 |
+| Unmatched name | 126 / 389 | 124 / 387 |
+| Qualified name unresolved | 0 / 0 | 0 / 0 |
+
+`array_all` and `array_find_key` each occurred once: unmatched on 8.3.36,
+native-internal-name on 8.4.27. This is an environment name-set observation,
+**not** a resolved-call or GoHP-support change. The observed internal-name counts
+were 1,077 / 1,093; both had 32 regular extensions and no loaded Zend extensions.
+The unmatched priority list began `apply_filters` (64), `__` (53), `get_option`
+(17), `do_action` (14), `_x` (12), `trailingslashit` (11). These identify where
+to investigate dependencies, not proof of their definition or availability.
+
+Tokenizer SHA-256: `8a617596ad016e7c79b1289c863ef2714268076ddda4e276d0f3311556fcee30`.
+Native-environment SHA-256: 8.3
+`a3b1b180f43b5ba2f6ca11afb5c98d0d8273783983e1978fbe9dd8d68cad15df`;
+8.4 `1b038361870ffe39958ccbde5b7628fc72317c52b3461472d5a56d822598d56b`.
+Exact JSON stdout SHA-256: 8.3
+`1eb3a4dc75f5ef987f78ef94faef18ede160a44f9c3fb30f09e980fb2c7e319f`;
+8.4 `32fc23f459e3584c40a62907f277f2d57dd9c9aeb63c9240011e7fb96f6af942`.
+Reports remain local evidence, not CI artifacts; semantic/resolved counts are
+null and compatibility remains unverified on both targets.
+
 ### Inventory capability
 
 Stable ID: `gohp.corpus.inventory`. Owner/service: local GoHP development tool;
