@@ -35,7 +35,8 @@ PR #62 addressed the third. Subsequent PR #63 added bounded
 PR #64 fixed [literal-null identity](literal-null-identity.md). Compiler tests do
 not certify the original function: Gossip's separate exact-pin comparison is
 recorded in the [integration contract](integration.md). This documentation update
-changes no Gossip pins/corpus or production configuration. `array_slice` remains deferred.
+changes no Gossip pins/corpus or production configuration. Bounded
+[`array_slice`](array-slice-boundary.md) is tracked separately.
 
 This extends local `gohp.cli.generate`, still WebMCP `excluded` (developer-local
 translation, no browser operation/route/auth change or automatic submission).

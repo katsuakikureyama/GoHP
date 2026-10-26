@@ -22,6 +22,24 @@
       "limitations": ["Defined variable roots/keys only; no general PHP undefined-variable suppression", "Reached path intermediates must be arrays or null; no scalar/string-offset/object/property traversal", "Literal/defined variable int|string keys only, no effectful/arithmetic addresses, references or ??=", "Existing one-level ArrayIsset strict domain is unchanged; no control-flow narrowing or warning/exception equivalence", "Gossip real caller adoption requires a separate exact pin and unchanged-source comparison"]
     },
     {
+      "id": "php.builtin.array_slice",
+      "kind": "builtin",
+      "name": "array_slice(array, int offset, ?int length = null, bool preserve_keys = false)",
+      "implementation": "partial",
+      "contract": "Select by insertion-order position with bounded signed offsets and optional signed length. Null length selects the remainder; negative length excludes trailing positions. Integer keys reindex unless preserve_keys is true, string keys always remain. Detached array storage and rebuilt append metadata; all argument domains checked even for empty selections.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.array_slice","test":"TestDifferential/array_slice","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_slice.php","assertions":["stdout","exit","optional arguments, positive/negative/extreme bounds, mixed keys, preservation/reindexing, nested copy, append metadata and single evaluation"]},
+        {"case_id":"compiler.array_slice","test":"TestArraySliceLoweringAndSourceMap","file":"internal/codegen/array_slice_test.go","kind":"compiler","assertions":["case-insensitive two/three/four argument lowering, defaults and statement source mapping"]},
+        {"case_id":"negative.array_slice.source","test":"TestArraySliceUnsupportedSource","file":"internal/codegen/array_slice_test.go","kind":"negative","assertions":["arity, known invalid domains, undefined reads, named/unpacked arguments, reserved redeclaration, scalar echo and builtin callback rejected"]},
+        {"case_id":"unit.runtime.array_slice.bounds","test":"TestArraySliceBounds","file":"runtime/array_slice_test.go","kind":"unit","assertions":["positional limits, signed64 extremes, empty and negative lengths without overflow"]},
+        {"case_id":"unit.runtime.array_slice.copy","test":"TestArraySliceKeysCopyAndAppend","file":"runtime/array_slice_test.go","kind":"unit","assertions":["exact keys/values, detached nested storage, excluded maximum key, negative append metadata and preserved maximum overflow"]},
+        {"case_id":"negative.array_slice.domain","test":"TestArraySliceRejectsInvalidDomains","file":"runtime/array_slice_test.go","kind":"negative","assertions":["actual array/int/int-or-null/bool required even with empty or out-of-range selection"]},
+        {"case_id":"negative.array_slice.runtime","test":"TestArraySliceRuntimeGuards","file":"tests/array_slice_runtime_test.go","kind":"negative","assertions":["generated dynamic-domain guards at every position and preserved-key append overflow"]}
+      ],
+      "limitations": ["Actual array, int64 offset, null/int64 length and bool flag only; no weak coercion, named arguments, unpacking or builtin callable lookup", "Existing value/key domain; no references, general nullable parameter declarations or PHP exception/message equivalence", "Gossip adoption requires its own exact pin and unchanged-source evidence"]
+    },
+    {
       "id": "php.syntax.foreach_continue",
       "kind": "syntax",
       "name": "Bare continue in foreach",
@@ -39,7 +57,7 @@
         {"case_id":"compiler.continue_foreach.composition","test":"TestContinueForeachLowering","file":"internal/codegen/continue_test.go","kind":"compiler","assertions":["continue composes with typed array parameters and array/bool returns; source mapping"]},
         {"case_id":"negative.continue_foreach.composition","test":"TestContinueForeachBoundary","file":"internal/codegen/continue_test.go","kind":"negative","assertions":["out-of-loop, level and malformed payload rejection"]}
       ],
-      "limitations": ["Only bare continue in braced foreach/conditional bodies; no explicit level, break or other loop kinds", "No general path-sensitive narrowing, branch-local escape or PHP warning/exception equivalence", "Gossip adoption still requires its own exact compiler pin and unchanged-source evidence; array_slice deferred"]
+      "limitations": ["Only bare continue in braced foreach/conditional bodies; no explicit level, break or other loop kinds", "No general path-sensitive narrowing, branch-local escape or PHP warning/exception equivalence", "Gossip adoption still requires its own exact compiler pin and unchanged-source evidence"]
     },
     {
       "id": "php.builtin.array_merge",

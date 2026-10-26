@@ -83,6 +83,9 @@ optionally integer keys; the optional flag accepts actual booleans only.
 [`array_merge(array ...arrays)`](docs/array-merge-boundary.md) joins explicitly
 supplied arrays, reindexing integer keys and replacing duplicate string-keyed
 values in place; zero arguments return an empty array. No argument unpacking.
+[`array_slice(array, int offset, ?int length = null, bool preserve_keys = false)`](docs/array-slice-boundary.md)
+selects by position with positive/negative bounds, keeping string keys and
+optionally integer keys. Actual integer/bool arguments only, without coercion.
 `array_key_exists(int|string, array)` checks
 first-level key presence, including null-valued entries, without other key
 coercions. `array_is_list(array)` checks zero-based consecutive integer keys in
