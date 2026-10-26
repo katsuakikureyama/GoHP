@@ -74,7 +74,7 @@ func TestNullDefaultParametersBoundary(t *testing.T) {
 		"non_null":                "function f($value = false) { return $value; } echo f();",
 		"required_after":          "function f($optional = null, $required) { return $required; } echo f(1);",
 		"typed_default":           "function f(array $items = null) { return $items; } $result = f();",
-		"method_default":          "class C { public function f($value = null) { return $value; } } $c = new C(); echo $c->f();",
+		"method_non_null_default": "class C { public function f($value = false) { return $value; } } $c = new C(); echo $c->f();",
 		"array_map_below_minimum": "function f($first, $value, $suffix = null) { return $value; } $result = array_map('f', []);",
 	} {
 		t.Run(name, func(t *testing.T) {

@@ -30,10 +30,10 @@ of PHP's [object identifier semantics](https://www.php.net/manual/en/language.oo
 not PHP `&` references or a claim of general object/reference equivalence.
 
 Dynamic properties/names, nested/chained/effectful receivers, property-array
-index/append writes, compound/assignment expressions, references, general constructors,
+indexed writes, compound/assignment expressions, references, general constructors,
 inheritance, typed/private/static properties and general warning/exception
 behavior remain excluded. Runtime-only direct setter misuse is not a PHP input
-contract. Existing property reads/method calls retain their prior closed scope.
+contract. A later [bounded property append](parser-output-boundary.md) admits only a declared bare-variable receiver and an actual array slot, not general nested writes.
 
 The owned differential fixture checks nested array independence, known object
 aliases, `$this`, case sensitivity, once-only RHS, value type transitions and

@@ -54,7 +54,7 @@ func TestConstructorNullDefaultsBoundaries(t *testing.T) {
 		"above_maximum":           `class C { public function __construct($x = null) {} } $c = new C(1, 2);`,
 		"required_after_optional": `class C { public function __construct($x = null, $y) {} }`,
 		"typed_optional":          `class C { public function __construct(array $x = null) {} }`,
-		"ordinary_method":         `class C { public function read($x = null) {} }`,
+		"nonnull_method":          `class C { public function read($x = false) {} }`,
 		"nonpublic":               `class C { private function __construct($x = null) {} }`,
 		"direct_reentry":          `class C { public function __construct($x = null) {} } $c = new C(); $c->__construct();`,
 	} {

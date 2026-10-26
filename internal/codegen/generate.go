@@ -54,6 +54,9 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	g.execution = usesStrtok(p)
 	for _, f := range p.Functions {
 		n := name(f.Name)
+		if n == "substr" {
+			g.fail(f.Line, "reserved function "+n)
+		}
 		if n == "array_key_first" || n == "array_key_last" || n == "array_reverse" || n == "array_merge" || n == "array_slice" {
 			g.fail(f.Line, "reserved function "+n)
 		}
@@ -251,6 +254,12 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			receiver := g.expr(s.Target.Args[0], scope)
 			value := g.expr(s.Expr, scope)
 			g.emit("(%s).(interface{Set(string,any)}).Set(%q,%s)\n", receiver, s.Target.Text, value)
+		case "assign_property_append":
+			// Resolve the receiver once, evaluate RHS once, then append to the
+			// current property value (RHS may have changed that same slot).
+			receiver := g.expr(s.Target.Args[0], scope)
+			value := g.expr(s.Expr, scope)
+			g.emit("{ target := (%s).(interface{Get(string) any; Set(string,any)}); value := %s; target.Set(%q,rt.ArrayAppend(target.Get(%q),value)) }\n", receiver, value, s.Target.Text, s.Target.Text)
 		case "assign_index":
 			root := s.Target.Args[0].Text // Shape validated before generation.
 			if root == "this" || root == "GLOBALS" || strings.HasPrefix(root, "_") {
@@ -535,6 +544,16 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 				g.fail(e.Line, "strlen expects one argument")
 			}
 			return "rt.Strlen(" + args(e.Args) + ")"
+		}
+		if n == "substr" {
+			if len(e.Args) < 2 || len(e.Args) > 3 {
+				g.fail(e.Line, "substr expects two or three arguments")
+			}
+			values := args(e.Args)
+			if len(e.Args) == 2 {
+				values += ",nil"
+			}
+			return "rt.Substr(" + values + ")"
 		}
 		if n == "array_keys" {
 			if len(e.Args) != 1 {

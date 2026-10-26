@@ -66,7 +66,11 @@ retain identity. This adds neither dynamic properties nor unknown receiver write
 Simple data classes also support [fixed public constructors and known-object
 array snapshots](docs/block-data-constructor.md), including implicit-null public
 properties and trailing untyped `= null` constructor defaults. No inheritance,
-typed/non-null-default constructors, ordinary method defaults or general array casts.
+non-null-default constructors or general array casts; exact scalar constructor
+parameters have a [separate boundary](docs/scalar-constructor-boundary.md).
+The bounded [parser-output prerequisites](docs/parser-output-boundary.md) also
+admit public untyped method null defaults, bare returns, declared array-property
+append, sole-new method factory casts and byte-oriented string/int `substr`.
 Bounded [`while (condition) { body }`](docs/while-boundary.md) re-evaluates its
 condition before each iteration. Bare [`continue;`](docs/foreach-continue-boundary.md)
 and [`break;`](docs/foreach-break-boundary.md) target the nearest enclosing

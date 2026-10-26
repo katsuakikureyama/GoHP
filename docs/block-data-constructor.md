@@ -15,7 +15,8 @@ This closed extension targets simple data classes such as WordPress's unchanged
 - `new Class(args...)` accepts the required minimum through declared maximum.
   Omitted suffix slots become canonical null through existing `NullDefaultArgs`
   before parameter copies. Explicit null/zero values are not replaced. Fixed
-  constructors still require exact arity; ordinary method defaults remain rejected.
+  constructors still require exact arity. [Public untyped method null defaults](parser-output-boundary.md)
+  are now admitted through the same bounded min/max handling.
   Stateful constructors keep the caller's explicit Execution context; filling
   defaults does not create or reset one. Classes without
   a constructor retain the old zero-argument-only boundary; PHP's more permissive
