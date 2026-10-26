@@ -32,7 +32,8 @@ func TestEvaluateRequiresExactDifferentialLifecycleAndPayload(t *testing.T) {
 		t.Fatal(err)
 	}
 	payload := map[string]any{
-		"case_id": "case.core", "php_target": "8.3", "php_version": "8.3.30", "fixture_sha256": hashBytes(fixture), "generated_sha256": strings.Repeat("b", 64),
+		"diagnostics": testQuietEvidence(),
+		"case_id":     "case.core", "php_target": "8.3", "php_version": "8.3.30", "fixture_sha256": hashBytes(fixture), "generated_sha256": strings.Repeat("b", 64),
 		"phases":      map[string]string{"parse": "pass", "codegen": "pass", "go-build": "pass", "go-execute": "pass", "differential": "pass"},
 		"comparisons": map[string]string{"stdout": "pass", "exit": "pass", "stderr": "not-checked", "exceptions": "not-checked", "side_effects": "not-checked"},
 	}
@@ -168,7 +169,7 @@ func TestLoadCatalogRejectsUnsafeAndIncompleteChecks(t *testing.T) {
 
 func TestMarkdownEscapesCellsAndStatesUnmeasuredScope(t *testing.T) {
 	b := string(Markdown(Report{Metadata: Metadata{PHPTarget: "8.3", Dirty: "dirty", Provenance: "unbound-checkout"}, Features: []FeatureRow{{ID: "x|y", Target: "7.4", Implementation: "partial", Status: "not-measured", Contract: "one\ntwo", Limitations: []string{"a|b"}}}}))
-	if !strings.Contains(b, "x\\|y") || strings.Contains(b, "one\ntwo") || !strings.Contains(b, "not measured in this run") || !strings.Contains(b, "Stderr, exception and side-effect comparisons are not measured") {
+	if !strings.Contains(b, "x\\|y") || strings.Contains(b, "one\ntwo") || !strings.Contains(b, "not measured in this run") || !strings.Contains(b, "exception and side-effect comparisons are not measured") {
 		t.Fatalf("markdown is unsafe or omits scope: %q", b)
 	}
 }

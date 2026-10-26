@@ -69,6 +69,7 @@ type Case struct {
 }
 
 type PhaseEvidence struct {
+	QuietStderr  string `json:"quiet_stderr,omitempty"`
 	Parse        string `json:"parse"`
 	Codegen      string `json:"codegen"`
 	GoBuild      string `json:"go_build"`
@@ -82,16 +83,17 @@ type PhaseEvidence struct {
 }
 
 type CaseEvidence struct {
-	ID              string         `json:"id"`
-	Test            string         `json:"test"`
-	Package         string         `json:"package"`
-	Kind            string         `json:"kind"`
-	Fixture         string         `json:"fixture,omitempty"`
-	FixtureSHA256   string         `json:"fixture_sha256,omitempty"`
-	GeneratedSHA256 string         `json:"generated_sha256,omitempty"`
-	Status          string         `json:"status"`
-	Phase           *PhaseEvidence `json:"phase,omitempty"`
-	Detail          string         `json:"detail,omitempty"`
+	Diagnostics     *DiagnosticEvidence `json:"diagnostics,omitempty"`
+	ID              string              `json:"id"`
+	Test            string              `json:"test"`
+	Package         string              `json:"package"`
+	Kind            string              `json:"kind"`
+	Fixture         string              `json:"fixture,omitempty"`
+	FixtureSHA256   string              `json:"fixture_sha256,omitempty"`
+	GeneratedSHA256 string              `json:"generated_sha256,omitempty"`
+	Status          string              `json:"status"`
+	Phase           *PhaseEvidence      `json:"phase,omitempty"`
+	Detail          string              `json:"detail,omitempty"`
 }
 
 type FeatureRow struct {

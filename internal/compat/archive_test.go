@@ -30,7 +30,7 @@ func savedRun(t *testing.T, target, terminal string, schemas ...string) (string,
 		schema = schemas[0]
 	}
 	meta.PHPBaseline, meta.PHPBaselineSHA256 = nil, ""
-	if schema == RunSchema {
+	if schema != RunSchemaLegacy {
 		meta.PHPBaseline = testPHPBaseline(meta.PHPVersion)
 		meta.PHPBaselineSHA256 = PHPBaselineHash(meta.PHPBaseline)
 	}
@@ -39,6 +39,9 @@ func savedRun(t *testing.T, target, terminal string, schemas ...string) (string,
 	p.Phases.Parse, p.Phases.Codegen, p.Phases.GoBuild, p.Phases.GoExecute, p.Phases.Differential = "pass", "pass", "pass", "pass", "pass"
 	p.Comparisons.Stdout, p.Comparisons.Exit = "pass", "pass"
 	p.Comparisons.Stderr, p.Comparisons.Exceptions, p.Comparisons.SideEffects = "not-checked", "not-checked", "not-checked"
+	if schema == RunSchema {
+		p.Diagnostics = testQuietEvidence()
+	}
 	payload, err := json.Marshal(p)
 	if err != nil {
 		t.Fatal(err)

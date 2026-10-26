@@ -23,6 +23,7 @@ type View struct {
 }
 
 type ViewRun struct {
+	RunSchema     string         `json:"run_schema"`
 	Metadata      Metadata       `json:"metadata"`
 	Overall       string         `json:"overall"`
 	CatalogSHA256 string         `json:"catalog_sha256"`
@@ -32,7 +33,7 @@ type ViewRun struct {
 	Cases         []CaseEvidence `json:"cases"`
 }
 
-const viewNotice = "Stored run evidence only; no current-release or combined-target support verdict. Retired PHP targets and below-policy oracle versions are historical records, not current support. Internal consistency is checked, not authenticity, source bytes or CI job success. No tests are executed. Differential results cover listed cases and stdout/successful exits only; stderr, exceptions and side effects are not checked. Input order is preserved; no latest/best result is selected."
+const viewNotice = "Stored run evidence only; no current-release or combined-target support verdict. Retired PHP targets and below-policy oracle versions are historical records, not current support. Internal consistency is checked, not authenticity, source bytes or CI job success. No tests are executed. Differential results cover listed cases and stdout/successful exits. Only run/v0.3 additionally requires empty stderr on both sides under quiet-success/v1. Arbitrary stderr/warning equivalence, exceptions and side effects are not checked. Input order is preserved; no latest/best result is selected."
 
 // Validate rejects unknown filter values before any archive is read.
 func (filter ViewFilter) Validate() error {
@@ -57,9 +58,9 @@ func BuildView(reports []Report, filter ViewFilter) (View, error) {
 	if err := filter.Validate(); err != nil {
 		return View{}, err
 	}
-	view := View{Schema: "gohp.compatibility.view/v0.2", Notice: viewNotice, Filter: filter, Runs: make([]ViewRun, 0, len(reports))}
+	view := View{Schema: "gohp.compatibility.view/v0.3", Notice: viewNotice, Filter: filter, Runs: make([]ViewRun, 0, len(reports))}
 	for _, report := range reports {
-		run := ViewRun{Metadata: report.Metadata, Overall: report.Overall, CatalogSHA256: report.CatalogSHA256, EventSHA256: report.EventSHA256, TotalFeatures: len(report.Features), Features: []FeatureRow{}, Cases: report.Cases}
+		run := ViewRun{RunSchema: report.Schema, Metadata: report.Metadata, Overall: report.Overall, CatalogSHA256: report.CatalogSHA256, EventSHA256: report.EventSHA256, TotalFeatures: len(report.Features), Features: []FeatureRow{}, Cases: report.Cases}
 		for _, row := range report.Features {
 			if (filter.Target == "" || row.Target == filter.Target) && (filter.Kind == "" || row.Kind == filter.Kind) && (filter.Status == "" || row.Status == filter.Status) {
 				run.Features = append(run.Features, row)
@@ -91,6 +92,7 @@ func ViewMarkdown(view View) []byte {
 			fmt.Fprintf(&b, "%s: %s  \n", item[0], viewText(orUnknown(item[1])))
 		}
 		fmt.Fprintf(&b, "Test process exit: %d\n\n", m.TestExit)
+		fmt.Fprintf(&b, "Recorded run schema: %s\n\n", viewText(run.RunSchema))
 		writeBaselineMarkdown(&b, m)
 		if len(run.Features) == 0 {
 			b.WriteString("No matching feature rows. This is not a passing compatibility verdict.\n\n")
@@ -101,9 +103,9 @@ func ViewMarkdown(view View) []byte {
 			}
 			b.WriteString("\n")
 		}
-		b.WriteString("All recorded cases (not filtered):\n\n| Case | Kind | Status | Detail |\n|---|---|---|---|\n")
+		b.WriteString("All recorded cases (not filtered):\n\n| Case | Kind | Status | Quiet stderr | Detail |\n|---|---|---|---|---|\n")
 		for _, c := range run.Cases {
-			fmt.Fprintf(&b, "| %s | %s | %s | %s |\n", viewText(c.ID), viewText(c.Kind), viewText(c.Status), viewText(c.Detail))
+			fmt.Fprintf(&b, "| %s | %s | %s | %s | %s |\n", viewText(c.ID), viewText(c.Kind), viewText(c.Status), viewText(quietStderrStatus(c)), viewText(c.Detail))
 		}
 		b.WriteString("\n")
 	}
