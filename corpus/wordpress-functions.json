@@ -1,0 +1,35 @@
+{
+  "schema": "gohp.corpus.manifest/v0.1",
+  "id": "wordpress-functions-54106f6",
+  "upstream": {
+    "repository": "https://github.com/WordPress/WordPress",
+    "revision": "54106f6c545fc8b881f6b39b7963002bece6c28c",
+    "version": "7.2-beta1-64693"
+  },
+  "selection": {
+    "unit": "whole-file",
+    "exclusions": "Select all bytes of wp-includes/functions.php, including unsupported and unparsed content. Other WordPress files are excluded from executable source scope; license.txt and wp-includes/version.php are notice/provenance only. No extracted functions or owned substitutes are selected.",
+    "dependencies": "unresolved"
+  },
+  "php_targets": ["8.3", "8.4"],
+  "files": [
+    {
+      "path": "wp-includes/functions.php",
+      "role": "source",
+      "bytes": 305835,
+      "sha256": "456ab4cc7a6e6f05b061f2b1905f44233f8906774c461f90c5b80b9841303ccc"
+    },
+    {
+      "path": "license.txt",
+      "role": "notice",
+      "bytes": 19903,
+      "sha256": "49e97f629ce763abb2f8f1f13da74cb5a8a9a72a0e72a7477d1540c98cef5141"
+    },
+    {
+      "path": "wp-includes/version.php",
+      "role": "provenance",
+      "bytes": 1113,
+      "sha256": "6fbc8cf7e4667ba118b92186eea0c9ec35154476790c218d55ead45eb2a1f1d1"
+    }
+  ]
+}
