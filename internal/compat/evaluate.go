@@ -34,11 +34,12 @@ type loggedPayload struct {
 }
 
 type casePayload struct {
-	CaseID          string `json:"case_id"`
-	PHPTarget       string `json:"php_target"`
-	PHPVersion      string `json:"php_version"`
-	FixtureSHA256   string `json:"fixture_sha256"`
-	GeneratedSHA256 string `json:"generated_sha256"`
+	Diagnostics     *DiagnosticEvidence `json:"diagnostics,omitempty"`
+	CaseID          string              `json:"case_id"`
+	PHPTarget       string              `json:"php_target"`
+	PHPVersion      string              `json:"php_version"`
+	FixtureSHA256   string              `json:"fixture_sha256"`
+	GeneratedSHA256 string              `json:"generated_sha256"`
 	Phases          struct {
 		Parse        string `json:"parse"`
 		Codegen      string `json:"codegen"`
@@ -124,7 +125,7 @@ func evaluate(c Catalog, events io.Reader, meta Metadata, fixture fixtureLookup,
 		EventSHA256:   hashBytes(raw),
 	}
 	for _, testCase := range sortedCases(c) {
-		report.Cases = append(report.Cases, evaluateCase(testCase, lifecycles, payloads, meta, fixture))
+		report.Cases = append(report.Cases, evaluateCase(testCase, lifecycles, payloads, meta, fixture, schema))
 	}
 	if overall(nil, lifecycles, meta.TestExit) != "pass" {
 		for i := range report.Cases {
@@ -204,7 +205,7 @@ func (c Catalog) fixtureHash(testCase Case) (string, string) {
 	return hashBytes(b), ""
 }
 
-func evaluateCase(testCase Case, states map[string]*lifecycle, payloads map[string][]loggedPayload, meta Metadata, fixture fixtureLookup) CaseEvidence {
+func evaluateCase(testCase Case, states map[string]*lifecycle, payloads map[string][]loggedPayload, meta Metadata, fixture fixtureLookup, schema string) CaseEvidence {
 	evidence := CaseEvidence{ID: testCase.ID, Test: testCase.Test, Package: testCase.Package, Kind: testCase.Kind, Fixture: testCase.Fixture}
 	if testCase.Fixture != "" {
 		evidence.FixtureSHA256, evidence.Detail = fixture(testCase)
@@ -216,10 +217,14 @@ func evaluateCase(testCase Case, states map[string]*lifecycle, payloads map[stri
 	var payload casePayload
 	payloadDetail := ""
 	if testCase.Kind == "differential" {
-		payload, payloadDetail = identityPayload(testCase, evidence.FixtureSHA256, payloads[testCase.ID], meta)
+		payload, payloadDetail = identityPayload(testCase, evidence.FixtureSHA256, payloads[testCase.ID], meta, schema)
 		if payloadDetail == "" {
 			evidence.GeneratedSHA256 = payload.GeneratedSHA256
 			evidence.Phase = payloadPhase(payload)
+			evidence.Diagnostics = payload.Diagnostics
+			if payload.Diagnostics != nil {
+				evidence.Phase.QuietStderr = payload.Diagnostics.Status
+			}
 		}
 	}
 	status, detail := lifecycleStatus(testCase, states)
@@ -239,7 +244,7 @@ func evaluateCase(testCase Case, states map[string]*lifecycle, payloads map[stri
 		evidence.Status, evidence.Detail = "incomplete", payloadDetail
 		return evidence
 	}
-	if detail := positiveDifferentialDetail(payload); detail != "" {
+	if detail := positiveDifferentialDetail(payload, schema); detail != "" {
 		evidence.Detail = detail
 		if strings.Contains(detail, "failed") {
 			evidence.Status = "failed"
@@ -293,7 +298,7 @@ func payloadFromOutput(output string) (casePayload, bool) {
 	return payload, true
 }
 
-func identityPayload(testCase Case, fixtureHash string, values []loggedPayload, meta Metadata) (casePayload, string) {
+func identityPayload(testCase Case, fixtureHash string, values []loggedPayload, meta Metadata, schema string) (casePayload, string) {
 	if len(values) != 1 {
 		return casePayload{}, "differential evidence must contain exactly one GOHP_CASE payload"
 	}
@@ -305,7 +310,7 @@ func identityPayload(testCase Case, fixtureHash string, values []loggedPayload, 
 	if p.FixtureSHA256 != fixtureHash {
 		return casePayload{}, "differential payload has an invalid fixture hash"
 	}
-	if detail := payloadShape(p); detail != "" {
+	if detail := payloadShape(p, schema); detail != "" {
 		return casePayload{}, detail
 	}
 	return p, ""
@@ -315,7 +320,10 @@ func payloadPhase(p casePayload) *PhaseEvidence {
 	return &PhaseEvidence{Parse: p.Phases.Parse, Codegen: p.Phases.Codegen, GoBuild: p.Phases.GoBuild, GoExecute: p.Phases.GoExecute, Differential: p.Phases.Differential, Stdout: p.Comparisons.Stdout, Exit: p.Comparisons.Exit, Stderr: p.Comparisons.Stderr, Exceptions: p.Comparisons.Exceptions, SideEffects: p.Comparisons.SideEffects}
 }
 
-func payloadShape(p casePayload) string {
+func payloadShape(p casePayload, schema string) string {
+	if detail := diagnosticShape(p.Diagnostics, schema); detail != "" {
+		return detail
+	}
 	if (p.GeneratedSHA256 != "" || p.Phases.Codegen == "pass") && !validSHA256(p.GeneratedSHA256) {
 		return "differential payload has an invalid generated source hash"
 	}
@@ -337,7 +345,15 @@ func payloadShape(p casePayload) string {
 	return ""
 }
 
-func positiveDifferentialDetail(p casePayload) string {
+func positiveDifferentialDetail(p casePayload, schema string) string {
+	if schema == RunSchema {
+		if p.Diagnostics != nil && p.Diagnostics.Status == "fail" {
+			return "quiet stderr requirement failed"
+		}
+		if p.Diagnostics == nil || p.Diagnostics.Status != "pass" {
+			return "differential payload does not prove quiet stderr"
+		}
+	}
 	for _, status := range []string{p.Phases.Parse, p.Phases.Codegen, p.Phases.GoBuild, p.Phases.GoExecute, p.Phases.Differential, p.Comparisons.Stdout, p.Comparisons.Exit} {
 		if status == "fail" {
 			return "differential execution or comparison failed"

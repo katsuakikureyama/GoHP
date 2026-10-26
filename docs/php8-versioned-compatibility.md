@@ -73,7 +73,7 @@ mutation and external side effects where relevant. Encode unmeasured dimensions
 explicitly. Nondeterministic fields may be normalized only by documented,
 case-specific rules that preserve meaningful differences.
 
-The current v0.2 harness measures stdout and normal exits, plus a bounded
+The current v0.3 harness measures stdout and normal exits, plus a bounded
 startup baseline from one separate `php -r` probe before the suite. The probe
 uses the same inherited environment and records only the documented allowlist:
 CLI SAPI, integer size, default timezone, selected INI settings, selected
@@ -82,12 +82,21 @@ closed before tests if it cannot produce the required baseline, and a canonical
 JSON SHA-256 detects accidental metadata mismatch. This is not a full
 environment/`phpinfo`/INI capture, per-fixture effective state, authenticity
 proof, reproducibility guarantee or automatic native-version-versus-compiler
-classification. Fixture-local setup—such as the booleans fixture's
-`LC_CTYPE=C`—remains source-hash-bound rather than inferred from the baseline.
+classification. Positive differential fixtures also record `quiet-success/v1`:
+the fixture's native PHP process is launched with explicit `-d` values that
+expose all error reporting, send display output to stderr and suppress error
+logging; generated Go's stderr is observed separately. A result passes this
+profile only if both streams are empty. The evidence stores only byte counts and
+SHA-256 values, not raw stderr. It is intentionally not warning/error/exception
+text equality, and general stderr, exceptions and side effects remain
+`not-checked`. The PHP override is not applied to the baseline/version probe,
+Go build or generated Go execution. Fixture-local setup—such as the booleans
+fixture's `LC_CTYPE=C`—remains source-hash-bound rather than inferred from the
+baseline, and a fixture can still override or suppress warnings internally.
 The current harness does not yet provide the full diagnostics/state/configuration
-evidence above. Historical v0.1 archives retain their original scope and no
-baseline is invented for them; the v0.2 reader can display them without granting
-new guarantees. PHP's [`ini_get`](https://www.php.net/manual/en/function.ini-get.php),
+evidence above. Historical v0.1/v0.2 archives retain their original scope: no
+baseline or quiet-success record is invented for them, while the v0.3 reader can
+display them without granting new guarantees. PHP's [`ini_get`](https://www.php.net/manual/en/function.ini-get.php),
 [`get_loaded_extensions`](https://www.php.net/manual/en/function.get-loaded-extensions.php),
 [`setlocale`](https://www.php.net/manual/en/function.setlocale.php) and
 [`date_default_timezone_get`](https://www.php.net/manual/en/function.date-default-timezone-get.php)
