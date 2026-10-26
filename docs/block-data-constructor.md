@@ -6,11 +6,17 @@ This closed extension targets simple data classes such as WordPress's unchanged
 - Untyped public `$property;` initializes to canonical null. Explicit defaults
   remain scalar/null literals; no typed/private/static/array defaults.
 - A public `__construct` (case-insensitive) accepts a fixed number of untyped
-  positional arguments and executes once after fresh instance defaults exist.
+  positional arguments (with an optional trailing untyped `= null` suffix) and
+  executes once after fresh instance defaults exist.
   Arguments use the existing value-copy convention; `$this` writes only declared
-  public properties. No parameter defaults, annotations, return statements/type,
+  public properties. No non-null defaults, annotations, return statements/type,
   direct constructor re-entry, other magic methods or inheritance.
-- `new Class(args...)` has the exact declared constructor arity. Classes without
+- `new Class(args...)` accepts the required minimum through declared maximum.
+  Omitted suffix slots become canonical null through existing `NullDefaultArgs`
+  before parameter copies. Explicit null/zero values are not replaced. Fixed
+  constructors still require exact arity; ordinary method defaults remain rejected.
+  Stateful constructors keep the caller's explicit Execution context; filling
+  defaults does not create or reset one. Classes without
   a constructor retain the old zero-argument-only boundary; PHP's more permissive
   ignored-argument behavior is not implemented. Unknown/dynamic classes, named/
   unpacked/reference arguments remain excluded.
@@ -29,7 +35,8 @@ Runtime ObjectToArray accepts only a valid public-property-object marker and
 calls its snapshot once. Source cannot invoke these Go implementation methods.
 
 These boundaries follow the admitted subset of PHP's [constructor contract](https://www.php.net/manual/en/language.oop5.decon.php)
-and [object-to-array conversion](https://www.php.net/manual/en/language.types.array.php).
+and [default arguments](https://www.php.net/manual/en/functions.arguments.php#functions.arguments.default),
+plus [object-to-array conversion](https://www.php.net/manual/en/language.types.array.php).
 They do not add PHP's generic object/reference, error/exception or visibility
 semantics. Arrays use existing Clone conventions; untyped mutable property reads
 retain actual-value runtime guards instead of permanent default-type inference.
@@ -39,6 +46,12 @@ effects, implicit null, fresh instances, nested array copies, snapshot keys/
 independence and shared object identifiers. Native evidence compares stdout and
 normal exits with admitted PHP8.3.36, not stderr/exceptions/other side effects.
 Gossip must separately pin and compare original source before claiming adoption.
+
+`constructor_null_defaults.php` additionally observes omitted/explicit null/zero,
+all-optional zero arguments, case-insensitive names, argument-before-body order,
+fresh objects and caller/constructor/caller strtok continuation. Codegen checks
+cover static min/max, unsupported default forms, malformed suffix counts and
+constructor statement maps. Generated runtime negatives retain actual-value guards.
 
 Capability `gohp.cli.generate` stays WebMCP-excluded: local developer compiler,
 not browser/service operations. Route/auth/deployment/dependencies are unchanged,
