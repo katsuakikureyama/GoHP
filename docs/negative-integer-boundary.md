@@ -23,7 +23,8 @@ concatenation, strict equality and ternary expressions. Short/legacy arrays and
 append retain their existing ordering, normalization and PHP 8.3 index rules.
 
 This is not general unary negation: `-$value`, `-function_call()`, `-(1 + 2)`,
-`-'5'` and repeated signs are excluded. Subtraction, decrement, unary plus,
+`-'5'` and repeated signs are excluded. Binary subtraction has a later
+[separate actual-integer boundary](integer-subtraction.md); decrement, unary plus,
 nondecimal bases, numeric separators, floats and new coercions remain excluded.
 Parentheses around the complete supported constant, as in `(-5)`, remain valid.
 
