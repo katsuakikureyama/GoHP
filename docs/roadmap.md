@@ -29,7 +29,7 @@ evidence. This roadmap does not add catalog statuses or a new CLI operation.
 | Workstream | Current state | Next observable result / completion criterion |
 |---|---|---|
 | Documentation | README and compatibility tables reorganized; historical target claims distinguished | Keep the entry point, implementation limits and evidence links aligned in each affected change |
-| Application inventory | Whole-file identity, native-token counts and candidate name evidence available; grammar/name resolution and dependencies unresolved, no percentage | Use frequency-ranked name evidence to prioritize AST/dependency resolution while retaining unknown/unparsed content; establish semantic denominators and per-target blockers |
+| Application inventory | Whole-file identity, native-token/name evidence and top-six dependency triage available; grammar/name resolution and dependency closure unresolved, no percentage | Follow the observed hook/global/reference/callable prerequisites and AST/dependency investigation; retain unknown/unparsed content and separate selection identities |
 | Reference/value integration | R1 partial: internal ownership/storage exists | Finish bounded writable locations and temporary lifetime; then a PHP source → Go binary comparison of reference assignment/update/unset (R2), with rejected unsupported forms |
 | Performance baseline | Planned; no PHP/Go benchmark | Publish one reproducible, output-checked small workload per target, separating build, startup, execution and memory measurements |
 | Frontend adapter | Assessment only; no candidate installed | Audit/pin a candidate and demonstrate target-aware parsing, diagnostics/spans and supported-IR parity in shadow mode before replacement |
@@ -73,6 +73,15 @@ the selected native tokenizer. Declaration markers and name/parenthesis
 frequencies are prioritization hints only. It records all source bytes as
 grammar-unparsed, keeps unclassified parentheses visible, and does not define a
 semantic function or resolved-call denominator.
+
+The [top-six dependency triage](application-corpus.md#dependency-triage-separate-selection)
+pins a separate seven-file inspection selection, including both classes required
+by `plugin.php`. It locates hook, translation, option and path-helper definitions,
+but does not resolve callbacks, cache/database/translation services or loading.
+Its larger selection must not replace the original one-file denominator.
+Hooks require mutable globals, general callables, reference-aware iteration and
+reentrant mutation behavior; implementing two names as stubs would not satisfy
+that contract. Keep these blockers ahead of unrelated helper-count growth.
 
 Keep these measurements separate:
 

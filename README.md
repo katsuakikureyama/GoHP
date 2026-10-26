@@ -83,6 +83,8 @@ Application coverage and performance comparisons are **not yet measured**.
 The first [WordPress source manifest](docs/application-corpus.md) fixes whole-file
 scope and supports [byte verification, lexical inventory and candidate name evidence](docs/application-corpus.md#lexical-inventory),
 not application compatibility or resolved-call coverage.
+The [dependency triage](docs/application-corpus.md#dependency-triage-separate-selection)
+locates frequent candidates' definitions and records unresolved hook/translation/storage requirements.
 Earlier [Gossip source comparisons](docs/integration.md) retain their original pins;
 they do not certify current main or a complete WordPress application.
 

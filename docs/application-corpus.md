@@ -304,6 +304,117 @@ and no browser/S2S/MCP/webhook authentication is changed. The existing verifier
 capability below remains distinct. Tooling tests live in the existing catalog;
 they are not application differential evidence.
 
+## Dependency triage (separate selection)
+
+The [companion manifest](../corpus/wordpress-dependency-triage.json) freezes
+**seven complete source files / 908,791 source bytes** at the same upstream
+`54106f6c545fc8b881f6b39b7963002bece6c28c` revision. It retains `functions.php`
+and adds `plugin.php`, `class-wp-hook.php`, `class-wp-filter-sentinel.php`,
+`l10n.php`, `option.php` and `formatting.php`, all under `wp-includes/`.
+The two files required directly by `plugin.php` are both included; this does
+**not** complete the dependency closure. The same full notice and version file
+are verified separately. No WordPress source is vendored or modified.
+
+This is a definition/dependency **inspection selection**, not a runnable bundle.
+The original one-file manifest and its measurement series remain unchanged.
+Do not compare counts across the two selections as a coverage improvement, or
+rerun the larger selection and silently replace the original denominator.
+The upstream Git tree/blob identities and local byte equality were inspected
+when pinning; the CLI still only checks the caller's manifest, not authenticity.
+
+```sh
+go run ./cmd/gohp-corpus-verify \
+  -manifest corpus/wordpress-dependency-triage.json /path/to/pinned/WordPress
+```
+
+The existing `gohp.corpus.verify` / `gohp.corpus.inventory` capability contracts
+apply unchanged to this explicitly selected input. No automatic discovery,
+include execution, new hosted operation, save/commit or WebMCP exposure is added.
+Offline metadata checks protect selection boundaries; they are not source,
+grammar or application tests. The companion's byte verification is recorded
+separately below; no lexical, native-behavior or compiled-Go measurement of the
+larger selection is claimed here.
+
+Byte-verification observation: GoHP `ffe29e4050bfb3c6286143ab392ecf367dba5a35`,
+Go 1.23.0 Darwin/arm64, the command above, exit 0 / `source-verified` for all
+seven source files plus notice/provenance. Manifest SHA-256
+`37c72c753aa3a0764e5b0b6b8d6249c1ca67c0b2d2aee8458a5f2e09ee6a1582`;
+exact JSON stdout SHA-256
+`b1cbc2246a6ae78549824575364427d9922b5c6cd4d0be5ec96690c9320c2f31`.
+The local report retains null function/callsite/ratio fields, both targets
+`not-measured`, and `compatibility: unverified`. No PHP process was run.
+
+### Highest-frequency unmatched names
+
+The frequencies below are the **original one-file v0.2 observations**, identical
+for these six spellings on 8.3.36 and 8.4.27. Source inspection located these
+definitions; it did not resolve each candidate occurrence or runtime dispatch.
+All source links below are fixed to the inspected upstream revision.
+
+| Candidate / occurrences | Located definition | Direct dependencies and remaining boundary |
+|---|---|---|
+| `apply_filters` / 64 | [plugin.php:175](https://github.com/WordPress/WordPress/blob/54106f6c545fc8b881f6b39b7963002bece6c28c/wp-includes/plugin.php#L175) | Global registry/counters/current-hook stack, `_wp_call_all_hook`, `WP_Hook::apply_filters`; registered callbacks and their dependencies are unknown |
+| `__` / 53 | [l10n.php:339](https://github.com/WordPress/WordPress/blob/54106f6c545fc8b881f6b39b7963002bece6c28c/wp-includes/l10n.php#L339) | `translate` → translation object lookup/method and static/dynamic gettext filters; not an identity-string helper |
+| `get_option` / 17 | [option.php:78](https://github.com/WordPress/WordPress/blob/54106f6c545fc8b881f6b39b7963002bece6c28c/wp-includes/option.php#L78) | Filters, installation state, options caches, `$wpdb` queries, recursion and `maybe_unserialize`; services and initialization remain unknown |
+| `do_action` / 14 | [plugin.php:499](https://github.com/WordPress/WordPress/blob/54106f6c545fc8b881f6b39b7963002bece6c28c/wp-includes/plugin.php#L499) | Global registry/counters/stack, `all` callbacks and `WP_Hook::do_action`; callback effects must not become no-ops |
+| `_x` / 12 | [l10n.php:461](https://github.com/WordPress/WordPress/blob/54106f6c545fc8b881f6b39b7963002bece6c28c/wp-includes/l10n.php#L461) | `translate_with_gettext_context` → translation object lookup/method and contextual filters; same unresolved loading/state boundary |
+| `trailingslashit` / 11 | [formatting.php:2883](https://github.com/WordPress/WordPress/blob/54106f6c545fc8b881f6b39b7963002bece6c28c/wp-includes/formatting.php#L2883) | `untrailingslashit` → `rtrim` with the original slash/backslash character list; bounded helper evidence does not compile the whole formatting file |
+
+### Hooks: shared runtime semantics, not two builtin stubs
+
+- [plugin.php:24](https://github.com/WordPress/WordPress/blob/54106f6c545fc8b881f6b39b7963002bece6c28c/wp-includes/plugin.php#L24)
+  requires **both** hook and sentinel classes, then initializes four mutable
+  globals. `apply_filters` / `do_action` update counters even on an empty
+  registry, and manage nested current-hook state and the `all` hook.
+- [WP_Hook](https://github.com/WordPress/WordPress/blob/54106f6c545fc8b881f6b39b7963002bece6c28c/wp-includes/class-wp-hook.php#L26)
+  is final and implements `Iterator` / `ArrayAccess`; it has dynamic-property
+  attributes and mutable callback, priority and iteration state. It does not
+  itself use inheritance. The complete class, not a compatible-looking mock,
+  remains outside GoHP's admitted class subset.
+- [Dispatch at line 339](https://github.com/WordPress/WordPress/blob/54106f6c545fc8b881f6b39b7963002bece6c28c/wp-includes/class-wp-hook.php#L339)
+  calls general string/object/method callbacks with `call_user_func` /
+  `call_user_func_array`, truncates arguments using `accepted_args`, and chains
+  filter return values. Actions share this machinery but do not expose those
+  results. Callback identity uses `_wp_filter_build_unique_id`, including
+  object identity, not just a function-name string.
+- [Active-iteration adjustment](https://github.com/WordPress/WordPress/blob/54106f6c545fc8b881f6b39b7963002bece6c28c/wp-includes/class-wp-hook.php#L128)
+  includes by-reference `foreach`, array-pointer operations and priority
+  reordering when callbacks change registration during dispatch.
+  `do_all_hook(&$args)` adds a by-reference parameter. Reentrancy, add/remove
+  timing, order and reference effects are observable contracts, not bookkeeping
+  that can be dropped. The [reference milestones](reference-value-model.md#delivery-gates-and-status)
+  and general callable/global-state work are prerequisites, not already complete.
+- The [sentinel class](https://github.com/WordPress/WordPress/blob/54106f6c545fc8b881f6b39b7963002bece6c28c/wp-includes/class-wp-filter-sentinel.php#L9)
+  is a separate required file at this pin. Its empty final class and strict-types
+  declaration do not justify deleting it; consumers distinguish objects by identity.
+
+The missing closure includes actual registered callbacks, plugin/theme loading,
+their mutable state and possible I/O/errors. No finite graph is inferred from
+this inspection, and no original hook path has been executed or translated here.
+
+### Translation, options and next work
+
+`get_translations_for_domain` ([l10n.php:1582](https://github.com/WordPress/WordPress/blob/54106f6c545fc8b881f6b39b7963002bece6c28c/wp-includes/l10n.php#L1582))
+uses global `$l10n`, just-in-time loading, a static fallback object and a reference
+assignment into the global array. Translation controllers/registry/classes,
+locale/theme paths and translation files are outside this selection. Even the
+fallback path retains state and aliasing; replacing `__` / `_x` with identity
+functions would remove observable hooks and loading behavior.
+
+`get_option` may short-circuit through filters, but otherwise traverses
+alloptions/notoptions/options caches and database queries, mutating caches and
+temporarily adjusting database error state. Its returned value can be
+unserialized and filtered. A default-value-only or in-memory mock is not the
+original function's contract; database/cache backends have not been selected.
+
+Priority from this audit: continue the existing reference/value and general
+callable/global-state prerequisites, and define original-hook cases for order,
+argument counts, nesting, mutation and references before any source admission.
+Keep the roadmap's original block-parser → original hooks acceptance sequence;
+Gossip owns application drivers and consumer pins. Name/AST resolution and the
+unselected dependency closure remain open. No compiler feature, native behavior,
+Go compatibility, application percentage or performance result is added by this audit.
+
 ## Next evidence, not claimed here
 
 Build a bounded syntax/function/callsite inventory that retains unknown and
