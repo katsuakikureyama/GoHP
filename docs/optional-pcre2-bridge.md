@@ -79,7 +79,9 @@ with existing tests. These engine tests are not entries in the PHP compatibility
 catalog. A Linux enabled-backend CI lane needs a separately pinned development
 image, compiler/library identity and measurements before claiming support.
 The first local candidate is darwin/arm64, PCRE2 10.47, linked to an explicit
-static archive; its actual measurements are recorded separately.
+static archive; its [actual measurements](evidence/pcre2-bridge-2026-10-27.md)
+record 24/24 retained raw comparisons and the enabled/disabled checks. This is
+bounded bridge evidence, not a PHP `preg_*` support entry.
 
 ## Distribution and capability boundaries
 
