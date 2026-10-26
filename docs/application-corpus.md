@@ -166,6 +166,38 @@ CI exercises the trusted tokenizer on repository-owned, side-effectful and
 syntactically invalid source-as-data, separately per PHP target. CI does not fetch
 the WordPress selection; original-source measurements are separate observations.
 
+### Initial lexical observation
+
+Measured separately with GoHP `d77fb01922af81aa51722470bcfc516080980004`
+(Go 1.23.0, Linux/arm64 binary built on Darwin/arm64) against the unchanged
+manifest SHA-256 `826e7dfa8c59975119042e39fbcf3c8ae753d47fa2dddd22ea8e484b47e891e2`.
+Read-only, network-disabled containers used the same PHP image digests as CI:
+8.3 `98d555ff97b3865140ad31032508c3ca089fa97a8944b14ca9dc03ea05d788cd`,
+8.4 `debadc2e36b857657846e2e952cbaf52702e55482dd3c2c43806f68d8c534a70`.
+
+| Lexical observation | PHP 8.3.36 | PHP 8.4.27 |
+|---|---:|---:|
+| Source bytes / grammar-unparsed bytes | 305835 / 305835 | 305835 / 305835 |
+| Tokens / token kinds | 42732 / 96 | 42732 / 96 |
+| Named / anonymous / arrow declaration markers | 217 / 1 / 2 | 217 / 1 / 2 |
+| All opening parentheses | 2631 | 2631 |
+| Name-parenthesis candidates | 1332 | 1332 |
+| Member / variable / constructor parentheses | 56 / 8 / 14 | 56 / 8 / 14 |
+| Unclassified parentheses (positions retained) | 64 | 64 |
+
+The leading candidate spellings were `apply_filters` (64), `sprintf` (56),
+`__` (53), `function_exists` (35), `is_array` and `str_replace` (33 each).
+These are prioritization hints, not resolved dependencies, supported calls or
+WordPress execution results. Equal observations do not transfer compatibility
+between versions. Both reports keep semantic/resolved-call counts null.
+
+Tokenizer SHA-256: `8eb49cfb2b2a3b5a647a14c4aa7beb3ebb62de32f94422f564e4e23120bb58c6`.
+Exact JSON stdout SHA-256: 8.3
+`aadebddd3e4823d91c9fd98fc3f437f565b204dce6eaa023411286257455bda7`;
+8.4 `a75fa13e76b828f7e8264bd7dd445a42a28bffd605b515f3df0edfff6ff1b627`.
+Original-source reports are caller-retained local evidence, not artifacts of the
+synthetic CI tests. No source files or full reports are vendored here.
+
 ### Inventory capability
 
 Stable ID: `gohp.corpus.inventory`. Owner/service: local GoHP development tool;
