@@ -8,7 +8,7 @@ import "github.com/katsuakikureyama/GoHP/internal/arraykey"
 // not semantic release. The zero value is an open, empty handle.
 //
 // Keys use the runtime's bounded int64/string normalization and automatic index
-// policy. Elements admit the same values as Slot. This internal
+// policy. Elements admit only scalars, even through reference aliases. This internal
 // foundation is not a runtime.Array replacement or a generated-code API yet.
 type ScalarArray struct {
 	data   *scalarArrayData
@@ -96,7 +96,7 @@ func (array *ScalarArray) separate() {
 	old := array.data
 	next := &scalarArrayData{owners: 1, entries: make([]scalarArrayEntry, 0, len(old.entries)), index: old.index}
 	for _, entry := range old.entries {
-		copy := &Slot{}
+		copy := newScalarSlot()
 		if entry.slot.ref != nil && entry.slot.ref.owners > 1 {
 			copy.Bind(entry.slot)
 		} else {
@@ -115,7 +115,7 @@ func (array *ScalarArray) local(key any) *Slot {
 	if slot := array.find(key); slot != nil {
 		return slot
 	}
-	slot := &Slot{}
+	slot := newScalarSlot()
 	array.data.entries = append(array.data.entries, scalarArrayEntry{key: key, slot: slot})
 	if n, ok := key.(int64); ok {
 		array.data.index.Observe(n)
@@ -155,9 +155,7 @@ func (array *ScalarArray) Append(value any) int64 {
 func (array *ScalarArray) Bind(key any, source *Slot) {
 	array.requireOpen()
 	key = arraykey.Normalize(key)
-	if source == nil {
-		panic("storage reference requires a slot")
-	}
+	scalarSource(source)
 	array.separate()
 	array.local(key).Bind(source)
 }

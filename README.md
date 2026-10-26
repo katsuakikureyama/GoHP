@@ -87,6 +87,8 @@ now tracks container/reference ownership and copy timing. It is not connected
 to generated array operations yet; PHP references remain unsupported.
 The runtime and these internal containers share a bounded
 [key normalization and automatic-index policy](docs/array-index-boundary.md).
+General internal Slots now [own scalar-array values](docs/owned-array-slot-values.md)
+with explicit read/copy/release; Frame and element bindings stay scalar-only.
 Declared public properties now accept bounded [simple assignment](docs/public-property-write.md)
 through a statically known generated-class variable (including known aliases
 and method `$this`). Arrays detach at write/read boundaries; object identifiers

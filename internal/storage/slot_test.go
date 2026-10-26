@@ -28,7 +28,7 @@ func TestSlotZeroValueIsUndefined(t *testing.T) {
 	requireRead(t, &slot, nil, false)
 }
 
-func TestSlotNewAndWriteSupportOnlyScalarValues(t *testing.T) {
+func TestSlotNewAndWriteScalarValues(t *testing.T) {
 	for _, initial := range []any{nil, false, int64(-7), "seed"} {
 		slot := NewSlot(initial)
 		requireRead(t, slot, initial, true)
