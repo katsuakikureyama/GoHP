@@ -24,7 +24,7 @@ Require a successful CI job before using its artifacts as release evidence.
 - `catalog.json`: the exact validated catalog used for this run, hash-bound to the report.
 - `go-test.jsonl`: exact Go test event stream, including failures and phase data.
 - `go-test.stderr`: test process stderr (infrastructure/build failures included).
-- `run.json`: `gohp.compatibility.run/v0.3` metadata, case evidence and feature rows.
+- `run.json`: `gohp.compatibility.run/v0.4` metadata, case evidence and feature rows.
 - `summary.md`: human-readable function/feature table for the selected target,
   with implementation state, bounded result, case IDs and limitations.
 
@@ -76,6 +76,16 @@ process can therefore retain its byte count and hash without publishing its
 diagnostic output; a process that did not run has no observation. The raw event
 stream, including this profile and its arguments, remains SHA-256-bound by
 `event_sha256` and is replay-validated by the archive view.
+
+v0.4 also records an `outputs` observation for each PHP/Go process that was
+actually started: `{stdout_bytes, stdout_sha256, exit_code}`. It records the
+raw stdout byte count and SHA-256, never raw stdout. A process that was not
+observed has no object; it is not represented as an apparently successful zero
+result. `exit_code: -1` means that no portable numeric exit status was available
+(for example, the process ended by signal). These observations are collected in
+the existing differential execution, are bound by the raw event stream and are
+replayed with the stdout/exit verdicts when an archive is read. They do not add
+stderr, warning, exception, side-effect or effective-configuration equivalence.
 
 The recorded `php_args` contains only these fixed options; the harness appends
 the catalog fixture path or the source-fingerprint-bound booleans wrapper to the
@@ -169,10 +179,10 @@ executes trusted repository tests and writes local artifacts. No browser/server
 route, MCP protocol, session forwarding, auto-submit or new authentication path
 is introduced. CI artifact upload is an explicit workflow step using existing
 GitHub Actions authorization, not a hidden action of the CLI.
-The v0.2 PHP baseline and its hash, and the v0.3 per-case quiet-success audit
-metadata, are runner-produced rather than caller-supplied capability inputs or
-configuration APIs; this change does not add an inspect/search/state/link
-operation or alter the exclusion.
+The v0.2 PHP baseline and its hash, the v0.3 per-case quiet-success audit
+metadata, and v0.4's hash-only stdout/exit observations are runner-produced
+rather than caller-supplied capability inputs or configuration APIs; this change
+does not add an inspect/search/state/link operation or alter the exclusion.
 
 ## Browse saved runs without rerunning tests
 
@@ -186,7 +196,7 @@ go run ./cmd/gohp-compat-view -target 8.4 -format json build/php84-run
 ```
 
 The CLI does not fetch artifacts, invoke tests/PHP/Git, change evidence or write
-output files; it prints Markdown (default) or `gohp.compatibility.view/v0.3` JSON
+output files; it prints Markdown (default) or `gohp.compatibility.view/v0.4` JSON
 to stdout. `go run` itself compiles the trusted Go tool and may populate the Go
 build cache; a prebuilt binary needs neither Go nor the source checkout.
 
@@ -207,7 +217,10 @@ rehash-checked here. v0.2 archives additionally bind a bounded pre-suite PHP
 CLI baseline, but that still is not an effective per-fixture configuration or a
 complete environment capture. v0.3 archives additionally replay the hash-bound
 quiet-success observation, which is an empty-stream check rather than diagnostic
-equivalence. A malicious producer can fabricate a consistent bundle.
+equivalence. v0.4 archives additionally replay hash-only stdout/exit
+observations and their relation to the recorded stdout/exit verdicts; this does
+not disclose or re-execute stdout. A malicious producer can fabricate a
+consistent bundle.
 Metadata, environment identities and exit codes are producer assertions, not
 signed attestations. CI job status and subsequent smoke checks are not proven
 by the archived test report. Consult the trusted CI job before release use.
@@ -259,19 +272,78 @@ source run/attempt/URL and hashes for audit, but is not a new evidence authority
 WebMCP: **excluded**, local development evidence reader with no browser surface,
 MCP route, credentials, auto-submit, publication or remote authentication.
 Its catalog checks are Go tooling tests, never proof of PHP semantics.
-The v0.3 view always emits its own schema while strictly accepting historical
-v0.1/v0.2 and current v0.3 runs. It does not synthesize a baseline for v0.1 or
-a quiet-success observation for v0.1/v0.2 evidence. Reading the additional
-metadata adds no callable operation or authority and remains within this
-capability's exclusion.
+The v0.4 view always emits its own schema while strictly accepting historical
+v0.1/v0.2/v0.3 and current v0.4 runs. It retains each original run schema and
+does not synthesize a baseline for v0.1, a quiet-success observation for
+v0.1/v0.2, or process-output observations for v0.1/v0.2/v0.3 evidence. Reading
+the additional metadata adds no callable operation or authority and remains
+within this capability's exclusion.
+
+## Compare two saved output observations
+
+Use this separate read-only tool when two v0.4 archives should be compared as
+the same candidate and corpus under two native oracle environments:
+
+```sh
+go run ./cmd/gohp-compat-compare build/php83-run build/php84-run
+go run ./cmd/gohp-compat-compare -format json build/php83-run build/php84-run
+```
+
+The command loads exactly two archives and prints Markdown (default) or
+`gohp.compatibility.output-comparison/v0.1` JSON to stdout. It does not run
+tests, PHP or Git, fetch the network, mutate either archive or write an output
+file. Its exit status reports rendering/usage/archive errors only: exit 0 is
+not a support gate, a native-version conclusion or a promotion decision.
+
+Before any cross-run native classification, both archives must be complete,
+clean v0.4 records with the same commit, tree, source fingerprint, catalog hash,
+Go toolchain/platform/image, build flags and recorded test command. The compared case
+must have the same case/test/package/kind/fixture identity and fixture hash.
+Legacy or output-missing records, dirty or changed-input candidates,
+unrelated failed/incomplete runs and unrelated cases are `not-comparable`; their data is
+not silently matched. An actually observed target-local stdout mismatch remains
+reportable as `transpiler-stdout-mismatch` even though it failed its run; this
+does not permit cross-run native classification or promote that run to success.
+The output retains both run metadata, schema and overall
+result, plus the observed environment differences (PHP version, image identity
+and PHP-baseline hash) so the inputs to any comparison remain visible.
+
+For each eligible case, PHP-versus-Go stdout is first evaluated separately in
+each run. The only classifications are `matching-stdout-both-runs`,
+`native-stdout-difference`, `transpiler-stdout-mismatch` and `not-comparable`.
+Native and Go output comparisons require an observed zero exit and the existing
+quiet-stderr success condition. `native-stdout-difference` says only that the
+two native oracle observations differ under the displayed environments; it does
+not prove PHP version caused the difference or that it is an intended PHP
+specification change. `transpiler-stdout-mismatch` is an observed local
+PHP-versus-generated-Go mismatch, not a native difference. Exceptions, nonzero
+exit behavior, diagnostics and side effects are not compared by this command.
+
+### Local output-comparison capability
+
+Stable ID: `gohp.compat.compare`; owner/resource: local GoHP development tool /
+two caller-readable archived evidence directories. Input schema:
+
+```json
+{"type":"object","properties":{"left_archive":{"type":"string","minLength":1},"right_archive":{"type":"string","minLength":1},"format":{"enum":["markdown","json"]}},"required":["left_archive","right_archive"],"additionalProperties":false}
+```
+
+`inspect`: read and validate the two archives and their compatibility for a
+cross-run comparison. `prepare`: derive the report in memory. `save` / `commit`:
+none. The audit output includes the two input archive identities and stdout
+observations, but it creates no new evidence authority. Local filesystem read
+permission is the only authorization. WebMCP: **excluded** — this is a local
+developer read-only tool with no browser or server surface, MCP protocol,
+credentials, publication, auto-submit or authentication route.
 
 ## Remaining work
 
 Historical applicability decisions, combined-target support verdicts, remote
 query APIs, PHP callsite inventory and stronger semantic comparisons remain
-unimplemented. A bounded [Composer metadata reader](compatibility.md#composer-metadata-inventory)
-and read-only per-run views/filtering are implemented; dependency resolution and
-project compatibility decisions are not. The catalog
+unimplemented. A bounded [Composer metadata reader](compatibility.md#composer-metadata-inventory),
+read-only per-run views/filtering and narrowly comparable hash-only stdout
+observations are implemented; dependency resolution and project compatibility
+decisions are not. The catalog
 is deliberately incomplete and the ledger's per-case verdict is not a blanket
 `supported` state. Add contracts, cases and negative boundaries together when
 extending a function or feature; do not mark untested modes green.

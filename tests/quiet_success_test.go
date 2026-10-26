@@ -48,10 +48,11 @@ func TestCaptureCommandStderrObservations(t *testing.T) {
 		wantStderr string
 		wantExit   bool
 		observed   bool
+		wantCode   int
 	}{
-		{name: "success", command: quietHelperCommand("success"), wantStdout: "stdout", observed: true},
-		{name: "noisy success", command: quietHelperCommand("noisy-success"), wantStdout: "stdout", wantStderr: "noise", observed: true},
-		{name: "nonzero", command: quietHelperCommand("nonzero"), wantStdout: "stdout", wantStderr: "failure", wantExit: true, observed: true},
+		{name: "success", command: quietHelperCommand("success"), wantStdout: "stdout", observed: true, wantCode: 0},
+		{name: "noisy success", command: quietHelperCommand("noisy-success"), wantStdout: "stdout", wantStderr: "noise", observed: true, wantCode: 0},
+		{name: "nonzero", command: quietHelperCommand("nonzero"), wantStdout: "stdout", wantStderr: "failure", wantExit: true, observed: true, wantCode: 7},
 		{name: "launch failure", command: exec.Command("/definitely/not/a/gohp-command"), wantExit: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -77,10 +78,19 @@ func TestCaptureCommandStderrObservations(t *testing.T) {
 				t.Fatalf("observation present = %t, want %t", result.observation != nil, tt.observed)
 			}
 			if !tt.observed {
+				if result.output != nil {
+					t.Fatalf("output present = true, want false: %#v", result.output)
+				}
 				return
 			}
 			if result.observation.Bytes != len(tt.wantStderr) || result.observation.SHA256 != sha256Hex([]byte(tt.wantStderr)) {
 				t.Fatalf("stderr observation = %#v", result.observation)
+			}
+			if result.output == nil {
+				t.Fatal("output observation missing")
+			}
+			if result.output.StdoutBytes != len(tt.wantStdout) || result.output.StdoutSHA256 != sha256Hex([]byte(tt.wantStdout)) || result.output.ExitCode != tt.wantCode {
+				t.Fatalf("output observation = %#v", result.output)
 			}
 		})
 	}

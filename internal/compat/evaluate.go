@@ -34,6 +34,7 @@ type loggedPayload struct {
 }
 
 type casePayload struct {
+	Outputs         *ExecutionOutputs   `json:"outputs,omitempty"`
 	Diagnostics     *DiagnosticEvidence `json:"diagnostics,omitempty"`
 	CaseID          string              `json:"case_id"`
 	PHPTarget       string              `json:"php_target"`
@@ -222,6 +223,7 @@ func evaluateCase(testCase Case, states map[string]*lifecycle, payloads map[stri
 			evidence.GeneratedSHA256 = payload.GeneratedSHA256
 			evidence.Phase = payloadPhase(payload)
 			evidence.Diagnostics = payload.Diagnostics
+			evidence.Outputs = payload.Outputs
 			if payload.Diagnostics != nil {
 				evidence.Phase.QuietStderr = payload.Diagnostics.Status
 			}
@@ -324,6 +326,9 @@ func payloadShape(p casePayload, schema string) string {
 	if detail := diagnosticShape(p.Diagnostics, schema); detail != "" {
 		return detail
 	}
+	if detail := outputShape(p, schema); detail != "" {
+		return detail
+	}
 	if (p.GeneratedSHA256 != "" || p.Phases.Codegen == "pass") && !validSHA256(p.GeneratedSHA256) {
 		return "differential payload has an invalid generated source hash"
 	}
@@ -346,7 +351,7 @@ func payloadShape(p casePayload, schema string) string {
 }
 
 func positiveDifferentialDetail(p casePayload, schema string) string {
-	if schema == RunSchema {
+	if schema == RunSchema || schema == RunSchemaQuiet {
 		if p.Diagnostics != nil && p.Diagnostics.Status == "fail" {
 			return "quiet stderr requirement failed"
 		}

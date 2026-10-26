@@ -1,4 +1,4 @@
-# Compatibility registry and verification ledger (design v0.3)
+# Compatibility registry and verification ledger (design v0.4)
 
 ## Decision and delivery status
 
@@ -17,8 +17,11 @@ an experimental executable implementation: validated catalog, stable case IDs,
 single-run test evidence, per-target JSON/Markdown and CI artifacts. See the
 [ledger operation contract](compatibility-ledger.md). The remaining sections
 preserve the design direction; read-only multi-run views and target/kind/status
-filters are implemented in `gohp-compat-view`. Historical applicability, combined
-support verdicts, PHP callsite inventory and service APIs are still follow-ups.
+filters are implemented in `gohp-compat-view`. The separate
+`gohp-compat-compare` reads two compatible archives to diagnose bounded
+hash-only stdout observations; it is not a combined support verdict. Historical
+applicability, combined support verdicts, PHP callsite inventory and service APIs
+are still follow-ups.
 A read-only [Composer metadata inventory](compatibility.md#composer-metadata-inventory)
 exists without resolving requirements or certifying packages. No dashboard, automatic
 compatibility promotion or deployment is added.
@@ -49,7 +52,7 @@ Appearing in a fixture does not prove every aspect of a feature.
 
 ## Run ledger: what was checked and passed?
 
-CI publishes a distinct `gohp.compatibility.run/v0.3` JSON artifact for each
+CI publishes a distinct `gohp.compatibility.run/v0.4` JSON artifact for each
 active target job: PHP 8.3 and PHP 8.4. The same bounded corpus is executed
 independently for each target. A later series receives its own policy/matrix
 entry and artifact only after it is explicitly enabled.
@@ -72,7 +75,9 @@ report would require a different commit. Record:
 - Separate `parse`, `codegen`, `go-build`, `go-execute`, `differential` phases,
   each `not-run`, `pass`, `fail`, `skip` or `error`. Unit/compiler/negative checks
   retain their own kind; they must not be relabeled differential.
-- Measured comparisons: stdout bytes and successful exits, plus a bounded
+- Measured comparisons: each observed PHP/Go process has hash-only
+  `{stdout_bytes, stdout_sha256, exit_code}` data (no raw stdout), alongside
+  stdout/exit verdicts and a bounded
   per-positive-case empty-stderr observation. The `quiet-success/v1` profile
   starts the native fixture process with
   `-d error_reporting=-1 -d display_errors=stderr -d display_startup_errors=1
@@ -108,9 +113,23 @@ claim diagnostic equivalence. The selected values use PHP's documented
 [`get_loaded_extensions`](https://www.php.net/manual/en/function.get-loaded-extensions.php),
 [`setlocale`](https://www.php.net/manual/en/function.setlocale.php) and
 [`date_default_timezone_get`](https://www.php.net/manual/en/function.date-default-timezone-get.php)
-interfaces. Readers strictly retain v0.1/v0.2 evidence as its historical scope:
-they invent neither a missing baseline nor a quiet-success observation. Their
-generated view is v0.3.
+interfaces. Readers strictly retain v0.1/v0.2/v0.3 evidence as its historical
+scope: they invent neither a missing baseline, quiet-success observation nor
+process-output observation. Their generated view is v0.4.
+
+The separate read-only two-archive output comparison is a derived diagnostic,
+not a support matrix or a target-admission rule. It requires the same clean
+candidate/corpus identity (commit, tree, source/catalog hashes,
+toolchain/platform/image, flags, command and case/fixture identity), and reports PHP
+version/image/baseline differences. It labels only matching stdout in both runs,
+an observed native stdout difference, an observed local transpiler stdout
+mismatch, or `not-comparable`. The native label does not establish why native
+output differs and never proves an intended PHP version or specification change.
+Unrelated failed/incomplete, legacy/output-missing, dirty or changed-input records are not
+comparable for native cross-run classification. A measured target-local mismatch
+can still be reported in its failed run without granting it success.
+It does not compare nonzero exits, exceptions, diagnostics or side
+effects.
 
 ### Derived per-target view
 
@@ -135,7 +154,7 @@ decision with provenance. Missing evidence never becomes green. Do not average
 mixed targets into a universal compatibility percentage. Tooling entries show
 `compiler-check-pass`, never differential PASS from Go-only unit tests.
 
-There is no blanket `supported`/Done state in v0.3. Future support claims need
+There is no blanket `supported`/Done state in v0.4. Future support claims need
 an owner-reviewed bounded contract, all required cases for every claimed target,
 explicit negative boundaries and all claimed observable dimensions. Arbitrary
 WordPress/Composer application compatibility cannot be derived by counting green
@@ -164,7 +183,8 @@ workspace handoff, not retroactively added to this historical baseline.
    PHP oracle remains a failure, never a skip or PASS.
 3. Generate Markdown/JSON function-and-feature views from catalog + run artifacts,
    including historical/current evidence and filters for target/status/kind.
-   Derived views must not become an independently edited authority.
+   Derived views and two-archive stdout diagnostics must not become an
+   independently edited authority or a combined support verdict.
 4. Add read-only project inventory from parser callsites and Composer metadata
    as data. Dynamic calls, unresolved names and absent extension contracts are
    unknown. Never execute Composer hooks or applications to inventory them.

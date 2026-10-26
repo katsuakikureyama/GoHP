@@ -39,8 +39,11 @@ func savedRun(t *testing.T, target, terminal string, schemas ...string) (string,
 	p.Phases.Parse, p.Phases.Codegen, p.Phases.GoBuild, p.Phases.GoExecute, p.Phases.Differential = "pass", "pass", "pass", "pass", "pass"
 	p.Comparisons.Stdout, p.Comparisons.Exit = "pass", "pass"
 	p.Comparisons.Stderr, p.Comparisons.Exceptions, p.Comparisons.SideEffects = "not-checked", "not-checked", "not-checked"
-	if schema == RunSchema {
+	if schema == RunSchema || schema == RunSchemaQuiet {
 		p.Diagnostics = testQuietEvidence()
+	}
+	if schema == RunSchema {
+		p.Outputs = testExecutionOutputs("same", "same")
 	}
 	payload, err := json.Marshal(p)
 	if err != nil {

@@ -33,6 +33,7 @@ func TestEvaluateRequiresExactDifferentialLifecycleAndPayload(t *testing.T) {
 	}
 	payload := map[string]any{
 		"diagnostics": testQuietEvidence(),
+		"outputs":     testExecutionOutputs("same", "same"),
 		"case_id":     "case.core", "php_target": "8.3", "php_version": "8.3.30", "fixture_sha256": hashBytes(fixture), "generated_sha256": strings.Repeat("b", 64),
 		"phases":      map[string]string{"parse": "pass", "codegen": "pass", "go-build": "pass", "go-execute": "pass", "differential": "pass"},
 		"comparisons": map[string]string{"stdout": "pass", "exit": "pass", "stderr": "not-checked", "exceptions": "not-checked", "side_effects": "not-checked"},

@@ -36,6 +36,7 @@ type differentialEvidence struct {
 	Phases          map[string]string          `json:"phases"`
 	Comparisons     map[string]string          `json:"comparisons"`
 	Diagnostics     *compat.DiagnosticEvidence `json:"diagnostics,omitempty"`
+	Outputs         *compat.ExecutionOutputs   `json:"outputs,omitempty"`
 }
 
 type capturedCommand struct {
@@ -43,6 +44,7 @@ type capturedCommand struct {
 	stderr      []byte
 	err         error
 	observation *compat.StderrObservation
+	output      *compat.ProcessOutput
 }
 
 // captureCommand retains separate streams without logging their contents.
@@ -59,6 +61,11 @@ func captureCommand(cmd *exec.Cmd) capturedCommand {
 		result.observation = &compat.StderrObservation{
 			Bytes:  len(result.stderr),
 			SHA256: sha256Hex(result.stderr),
+		}
+		result.output = &compat.ProcessOutput{
+			StdoutBytes:  len(result.stdout),
+			StdoutSHA256: sha256Hex(result.stdout),
+			ExitCode:     cmd.ProcessState.ExitCode(),
 		}
 	}
 	return result
@@ -124,6 +131,7 @@ func TestDifferential(t *testing.T) {
 					"stdout": comparisonNotChecked, "exit": comparisonNotChecked, "stderr": comparisonNotChecked, "exceptions": comparisonNotChecked, "side_effects": comparisonNotChecked,
 				},
 				Diagnostics: &compat.DiagnosticEvidence{Profile: compat.QuietSuccessProfile, PHPArgs: compat.QuietPHPArgs(), Status: comparisonNotChecked},
+				Outputs:     &compat.ExecutionOutputs{},
 			}
 			defer func() {
 				encoded, err := json.Marshal(evidence)
@@ -165,6 +173,7 @@ func TestDifferential(t *testing.T) {
 			evidence.Phases["go-build"] = phasePass
 			phpRun := captureCommand(exec.Command(php, phpArgs...))
 			evidence.Diagnostics.PHP = phpRun.observation
+			evidence.Outputs.PHP = phpRun.output
 			native := exec.Command(binary)
 			if fixture == "booleans" && phpRun.err == nil {
 				// This per-fixture precondition is distinct from quiet stderr.
@@ -173,6 +182,7 @@ func TestDifferential(t *testing.T) {
 			native.Env = []string{"PATH="} // The emitted binary must run without discovering PHP.
 			goRun := captureCommand(native)
 			evidence.Diagnostics.Go = goRun.observation
+			evidence.Outputs.Go = goRun.output
 			evidence.Diagnostics.Status = diagnosticStatus(phpRun.observation, goRun.observation)
 			if goRun.err != nil {
 				evidence.Phases["go-execute"] = phaseFail

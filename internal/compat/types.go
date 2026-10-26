@@ -83,6 +83,7 @@ type PhaseEvidence struct {
 }
 
 type CaseEvidence struct {
+	Outputs         *ExecutionOutputs   `json:"outputs,omitempty"`
 	Diagnostics     *DiagnosticEvidence `json:"diagnostics,omitempty"`
 	ID              string              `json:"id"`
 	Test            string              `json:"test"`
