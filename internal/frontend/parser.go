@@ -290,7 +290,13 @@ func (p *parser) class() ir.Class {
 		if p.accept("function") {
 			c.Methods = append(c.Methods, p.function())
 		} else {
+			propertyLine := p.peek().line
 			n := p.name("var")
+			if p.accept(";") {
+				// An untyped public property without an initializer is null.
+				c.Properties = append(c.Properties, ir.Property{Name: n, Value: ir.Expr{Kind: "null", Text: "null", Line: propertyLine}})
+				continue
+			}
 			p.need("=")
 			e := p.expr(0)
 			if e.Kind != "int" && e.Kind != "string" && e.Kind != "bool" && e.Kind != "null" {
@@ -543,7 +549,7 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 			e.Kind = "new"
 			e.Text = p.name("id")
 			p.need("(")
-			p.need(")")
+			e.Args = p.args(")")
 		default:
 			e.Kind = "call"
 			p.need("(")
@@ -558,10 +564,14 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 		case "(":
 			// The supported cast spelling is deliberately narrow. Looking ahead
 			// keeps ordinary parenthesized expressions intact.
-			if p.peek().kind == "id" && strings.EqualFold(p.peek().text, "bool") && p.pos+1 < len(p.ts) && p.ts[p.pos+1].text == ")" {
+			if p.peek().kind == "id" && (strings.EqualFold(p.peek().text, "bool") || strings.EqualFold(p.peek().text, "array")) && p.pos+1 < len(p.ts) && p.ts[p.pos+1].text == ")" {
+				kind := "bool_cast"
+				if strings.EqualFold(p.peek().text, "array") {
+					kind = "object_array_cast"
+				}
 				p.pop()
 				p.need(")")
-				e = ir.Expr{Kind: "bool_cast", Args: []ir.Expr{p.expr(7)}, Line: t.line}
+				e = ir.Expr{Kind: kind, Args: []ir.Expr{p.expr(7)}, Line: t.line}
 			} else {
 				e = p.expr(0)
 				p.need(")")

@@ -75,14 +75,16 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		seen := map[string]bool{}
 		for _, f := range c.Methods {
 			m := name(f.Name)
-			if strings.HasPrefix(m, "__") {
+			if strings.HasPrefix(m, "__") && m != "__construct" {
 				g.fail(f.Line, "magic methods unsupported")
 			}
 			if seen[m] {
 				g.fail(f.Line, "duplicate method")
 			}
 			seen[m] = true
-			g.methods[m] = true
+			if m != "__construct" {
+				g.methods[m] = true
+			}
 		}
 		props := map[string]bool{}
 		for _, v := range c.Properties {
@@ -97,15 +99,29 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		g.function(f, "")
 	}
 	for _, c := range p.Classes {
+		hasConstructor := false
+		for _, method := range c.Methods {
+			if strings.EqualFold(method.Name, "__construct") {
+				hasConstructor = true
+			}
+		}
 		g.emit("type C_%s struct {\n", name(c.Name))
 		for _, v := range c.Properties {
 			g.emit("P_%s any\n", v.Name)
 		}
-		g.emit("}\nfunc New_%s() any { return &C_%s{", name(c.Name), name(c.Name))
+		g.emit("}\nfunc New_%s(args ...any) any {", name(c.Name))
+		if !hasConstructor {
+			g.emit("rt.Args(args,0)\n")
+		}
+		g.emit("self := &C_%s{", name(c.Name))
 		for _, v := range c.Properties {
 			g.emit("P_%s: %s,", v.Name, g.expr(v.Value, map[string]bool{}))
 		}
-		g.emit("} }\n")
+		g.emit("}\n")
+		if hasConstructor {
+			g.emit("self.M___construct(args...)\n")
+		}
+		g.emit("return self\n}\n")
 		g.emit("func (self *C_%s) Get(k string) any { switch k {", name(c.Name))
 		for _, v := range c.Properties {
 			g.emit("case %q: return rt.Clone(self.P_%s)\n", v.Name, v.Name)
@@ -117,6 +133,11 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		}
 		g.emit("}; panic(\"undefined property assignment\") }\n")
 		g.emit("func (self *C_%s) PHPObject() bool { return self != nil }\n", name(c.Name))
+		g.emit("func (self *C_%s) PHPProperties() rt.Array { return rt.NewArray(", name(c.Name))
+		for _, property := range c.Properties {
+			g.emit("rt.Entry{Key:%q,Value:self.P_%s},", property.Name, property.Name)
+		}
+		g.emit(") }\n")
 		for _, f := range c.Methods {
 			g.function(f, c.Name)
 		}
@@ -562,7 +583,9 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		if !g.classes[name(e.Text)] {
 			g.fail(e.Line, "unknown class "+e.Text)
 		}
-		return "New_" + name(e.Text) + "()"
+		return "New_" + name(e.Text) + "(" + args(e.Args) + ")"
+	case "object_array_cast":
+		return "rt.ObjectToArray(" + args(e.Args) + ")"
 	case "property":
 		return "(" + g.expr(e.Args[0], scope) + ").(interface{Get(string) any}).Get(" + strconv.Quote(e.Text) + ")"
 	case "method":
