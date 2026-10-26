@@ -9,14 +9,14 @@ No original source, Gossip pin/corpus or consumer adapter is modified.
 |---|---|---|
 | 280 | Nested array address and null coalescing | Bounded defined-root form implemented |
 | 282 | is_string / str_contains / short circuit | Existing actual-value contracts implemented |
-| 288 | Double-quoted whitespace delimiter containing `\f` | Still rejected by lexer; separate byte-escape increment needed |
+| 288 | Double-quoted whitespace delimiter containing `\f` | [Form-feed escape](form-feed-boundary.md) implemented; owned byte/tokenizer comparison, not original caller execution |
 | 289–296 | strtok, while, strict false comparison, prefix test, break | Bounded implementations exist; no consumer adoption inferred |
 | 301 | Construct original WP_HTML_Tag_Processor | Class not compiled/admitted; constructors alone do not supply it |
 | 302 / 306 | next_tag condition / get_updated_html return calls | Method-expression syntax exists, but actual class behavior is absent |
 | 303 | Discarded-result add_class call | Generic [standalone call statement](call-statement-boundary.md) added; no HTML implementation |
 
-The first source-level blocker remains the `\f` escape. Even after that is
-implemented, construction requires the real class and its dependencies. The
+The form-feed lexical blocker is resolved within the bounded string subset.
+Construction still requires the real class and its dependencies. The
 original [tag processor](https://github.com/katsuakikureyama/Gossip/blob/804c6390be43488dddab8935ccbfa920a436b66c/wp-includes/html-api/class-wp-html-tag-processor.php#L411)
 is an HTML state machine, not a small record class: it includes constants,
 protected/private mutable state (421–840), defaulted/typed method interfaces

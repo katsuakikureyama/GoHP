@@ -77,6 +77,9 @@ Supported functions/builtins, bare-variable methods and generated arrows may
 also be used as [standalone calls](docs/call-statement-boundary.md), preserving
 effects and guards while discarding the return value. General expression
 statements and chained call receivers remain excluded.
+The [form-feed escape](docs/form-feed-boundary.md) `"\f"` decodes to byte 0x0C;
+single-quoted `'\f'` stays literal. Other previously unsupported escapes and
+interpolation remain excluded.
 Together with bounded
 [trailing untyped null defaults and defined bare/multiple isset](docs/array-get-prerequisites.md),
 this resolves the syntax blockers measured for Gossip's `_wp_array_get`.

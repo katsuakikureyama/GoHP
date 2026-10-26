@@ -89,12 +89,12 @@ func lex(s string) ([]token, error) {
 						} else {
 							b.WriteString("\\\"")
 						}
-					case 'n', 't', 'r':
+					case 'n', 't', 'r', 'f':
 						if quote == '\'' {
 							b.WriteByte('\\')
 							b.WriteByte(s[i])
 						} else {
-							b.WriteByte(map[byte]byte{'n': '\n', 't': '\t', 'r': '\r'}[s[i]])
+							b.WriteByte(map[byte]byte{'n': '\n', 't': '\t', 'r': '\r', 'f': '\f'}[s[i]])
 						}
 					default:
 						return nil, fmt.Errorf("PHP002 line %d: unsupported escape", ln)
