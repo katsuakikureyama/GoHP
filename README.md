@@ -5,6 +5,12 @@ Phase 0 compiler emits readable Go functions and native structs, builds with Go,
 and runs without PHP. It does not embed an opcode interpreter. It is not ready
 to run WordPress, arbitrary Composer packages, or customer applications.
 
+The core direction is a **PHP-to-Go transpiler with independently verifiable
+compatibility for each PHP 8.x version**. Each admitted target is compared with
+its own pinned native PHP oracle, with version-specific behavior and evidence.
+Currently only the documented subset of PHP 8.3 is enabled; other 8.x targets
+are planned. See the [version-specific compatibility design](docs/php8-versioned-compatibility.md).
+
 ## Reproduce the proof of concept
 
 Prerequisites: Docker Engine with Docker Compose v2. No credentials, external

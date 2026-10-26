@@ -100,6 +100,11 @@ source map yet; compile-time diagnostics include original PHP line numbers.
 
 ## Version model
 
+The governing direction is [PHP 8.x version-specific compatibility](php8-versioned-compatibility.md):
+independent semantic targets and native comparisons, with exact patch/configuration
+evidence. Preserve target identity through IR/code generation and any version-sensitive
+runtime operation; shared code does not imply shared compatibility evidence.
+
 Only the `8.3` target label is accepted by the active compiler. It denotes the
 PHP 8.3 language series, while native differential execution enforces the
 separate PHP 8.3.36-or-newer oracle floor. This is not a full-language support

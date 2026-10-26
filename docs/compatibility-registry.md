@@ -2,6 +2,11 @@
 
 ## Decision and delivery status
 
+The [PHP 8.x direction](php8-versioned-compatibility.md) governs this registry:
+feature/case-by-target evidence must distinguish deliberate native version
+differences from transpiler mismatches. Current schemas implement only the
+documented subset of that design; planned targets do not inherit 8.3 results.
+
 Maintain a **function/feature catalog** separately from an **immutable test-run
 ledger**. A catalog describes supported contracts and limits; a successful run
 proves specific cases at a revision and environment, not all PHP behaviour.
