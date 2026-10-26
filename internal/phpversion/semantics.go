@@ -5,6 +5,13 @@ import "strings"
 // ReservedFunction identifies new core functions that cannot be redeclared in
 // the selected target. Existing supported builtins are guarded by codegen.
 func ReservedFunction(target, name string) bool {
+	switch strings.ToLower(name) {
+	case "preg_match", "preg_last_error":
+		// Both are core PHP functions in every enabled target. Compiler
+		// admission remains profile-gated elsewhere; this only prevents a
+		// user declaration from impersonating the builtin.
+		return true
+	}
 	if target != "8.4" {
 		return false
 	}

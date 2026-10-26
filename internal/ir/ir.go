@@ -3,6 +3,11 @@ package ir
 
 const Version = "0.1"
 
+// Preg83Profile identifies the deliberately narrow experimental PCRE2 source
+// profile. It is a program-level admission choice, not an engine-selection
+// fallback or a claim that arbitrary PHP PCRE calls are supported.
+const Preg83Profile = "pcre2-php83-v1"
+
 type Expr struct {
 	// version_constant retains the exact predefined name in Text, no Args or
 	// Params; its integer value is resolved against Program.PHPVersion.
@@ -15,6 +20,9 @@ type Stmt struct {
 	// continue and break target the nearest foreach/while and have no payload.
 	// while uses Expr (condition) and Body only.
 	// call_stmt uses Expr only: direct call or bare-variable method/invoke.
+	// preg_match_local: Name is the return local, Target the bare output local,
+	// Expr a canonical preg_match call with pattern/subject/offset only. This
+	// statement encodes fixed PREG_OFFSET_CAPTURE; it is not a reference API.
 	Kind, Name string
 	Line       int
 	Expr       Expr
@@ -43,7 +51,10 @@ type Class struct {
 }
 type Program struct {
 	Version, PHPVersion string
-	Functions           []Function
-	Classes             []Class
-	Body                []Stmt
+	// RegexProfile is empty unless the frontend was explicitly asked to admit
+	// the experimental PHP 8.3 local-output preg_match form.
+	RegexProfile string
+	Functions    []Function
+	Classes      []Class
+	Body         []Stmt
 }

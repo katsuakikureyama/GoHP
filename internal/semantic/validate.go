@@ -25,8 +25,9 @@ const (
 )
 
 type valueType struct {
-	kind  kind
-	class string
+	kind       kind
+	class      string
+	directNull bool // A preceding standalone `$local = null`, not merely a null-typed expression.
 }
 
 type classInfo struct {
@@ -40,12 +41,13 @@ type classInfo struct {
 }
 
 type validator struct {
-	target     string
-	classes    map[string]classInfo
-	functions  map[string]int
-	minimum    map[string]int
-	parameters map[string][]string
-	returns    map[string]string
+	target       string
+	regexProfile string
+	classes      map[string]classInfo
+	functions    map[string]int
+	minimum      map[string]int
+	parameters   map[string][]string
+	returns      map[string]string
 }
 
 // Validate rejects malformed IR and operations that are statically outside the
@@ -54,7 +56,16 @@ func Validate(p ir.Program) error {
 	if err := phpversion.ValidateTarget(p.PHPVersion); err != nil {
 		return fmt.Errorf("PHP003: %w", err)
 	}
-	v := validator{target: p.PHPVersion, classes: make(map[string]classInfo, len(p.Classes)), functions: make(map[string]int, len(p.Functions)), minimum: map[string]int{}, parameters: make(map[string][]string, len(p.Functions)), returns: map[string]string{}}
+	if p.RegexProfile != "" && p.RegexProfile != ir.Preg83Profile {
+		return malformed(1, "unknown regex profile")
+	}
+	if p.RegexProfile != "" && p.PHPVersion != "8.3" {
+		return unsupported(1, "regex profile is only admitted for PHP 8.3")
+	}
+	v := validator{target: p.PHPVersion, regexProfile: p.RegexProfile, classes: make(map[string]classInfo, len(p.Classes)), functions: make(map[string]int, len(p.Functions)), minimum: map[string]int{}, parameters: make(map[string][]string, len(p.Functions)), returns: map[string]string{}}
+	if err := v.preg83Placement(p); err != nil {
+		return err
+	}
 	// Collect before validating bodies so literal callbacks can refer forward
 	// or back to their own declaration without dynamic callable resolution.
 	for _, f := range p.Functions {
@@ -128,6 +139,43 @@ func Validate(p ir.Program) error {
 		}
 	}
 	return v.stmts(p.Body, map[string]valueType{}, "", false)
+}
+
+// preg_match_local deliberately has no control-flow join contract. It may live
+// in a top-level function/method body, but not in a nested statement body.
+// Scan before ordinary validation so malformed nested raw IR also fails closed.
+func (v validator) preg83Placement(p ir.Program) error {
+	var scan func([]ir.Stmt, bool) error
+	scan = func(stmts []ir.Stmt, nested bool) error {
+		for _, stmt := range stmts {
+			if stmt.Kind == "preg_match_local" && nested {
+				return unsupported(stmt.Line, "preg_match local output requires a straight-line scope")
+			}
+			if err := scan(stmt.Body, true); err != nil {
+				return err
+			}
+			if err := scan(stmt.ElseBody, true); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	if err := scan(p.Body, false); err != nil {
+		return err
+	}
+	for _, f := range p.Functions {
+		if err := scan(f.Body, false); err != nil {
+			return err
+		}
+	}
+	for _, c := range p.Classes {
+		for _, f := range c.Methods {
+			if err := scan(f.Body, false); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func validateParameterTypes(f ir.Function, method bool) error {
@@ -243,7 +291,14 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 			if err != nil {
 				return err
 			}
+			// The preg83 output boundary distinguishes an explicit local null
+			// initialization from a merely null-typed derived expression.
+			t.directNull = stmt.Expr.Kind == "null"
 			scope[stmt.Name] = t
+		case "preg_match_local":
+			if err := v.pregMatchLocal(stmt, scope); err != nil {
+				return err
+			}
 		case "assign_property", "assign_property_append":
 			target := stmt.Target
 			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || stmt.Body != nil ||
@@ -430,6 +485,11 @@ func widenWhileWrites(stmts []ir.Stmt, scope map[string]valueType) {
 		switch stmt.Kind {
 		case "assign":
 			mark(stmt.Name)
+		case "preg_match_local":
+			mark(stmt.Name)
+			if stmt.Target.Kind == "var" {
+				mark(stmt.Target.Text)
+			}
 		case "assign_index":
 			if len(stmt.Target.Args) > 0 && stmt.Target.Args[0].Kind == "var" {
 				mark(stmt.Target.Args[0].Text)
@@ -444,6 +504,89 @@ func widenWhileWrites(stmts []ir.Stmt, scope map[string]valueType) {
 		}
 		widenWhileWrites(stmt.Body, scope)
 		widenWhileWrites(stmt.ElseBody, scope)
+	}
+}
+
+// pregMatchLocal validates the fixed experimental statement representation.
+// It is intentionally stricter than the B2 Go API: source inputs are literal
+// or known typed bare locals, the writable output is a pre-existing null local,
+// and no expression can alias either destination during evaluation.
+func (v validator) pregMatchLocal(stmt ir.Stmt, scope map[string]valueType) error {
+	if v.target != "8.3" || v.regexProfile != ir.Preg83Profile {
+		return unsupported(stmt.Line, "preg_match local output requires the PHP 8.3 experimental PCRE2 profile")
+	}
+	target := stmt.Target
+	if !preg83LocalName(stmt.Name) || stmt.Key != "" || stmt.Value != "" || stmt.Body != nil ||
+		target.Kind != "var" || !preg83LocalName(target.Text) || target.Args != nil || target.Params != nil {
+		return malformed(stmt.Line, "preg_match local output requires distinct bare local variables")
+	}
+	if stmt.Name == target.Text {
+		return unsupported(stmt.Line, "preg_match result and output locals must be distinct")
+	}
+	if stmt.Expr.Kind != "call" || stmt.Expr.Text != "preg_match" || stmt.Expr.Params != nil || len(stmt.Expr.Args) != 3 {
+		return malformed(stmt.Line, "preg_match local output requires fixed call metadata")
+	}
+	pattern, subject, offset := stmt.Expr.Args[0], stmt.Expr.Args[1], stmt.Expr.Args[2]
+	for _, input := range []ir.Expr{pattern, subject, offset} {
+		if input.Args != nil || input.Params != nil {
+			return malformed(stmt.Line, "preg_match inputs cannot carry hidden operands or parameters")
+		}
+	}
+	if !preg83LiteralPattern(pattern) {
+		return unsupported(stmt.Line, "preg_match requires a literal /.../s pattern")
+	}
+	if !preg83InputForm(subject, "string") || !preg83InputForm(offset, "int") {
+		return unsupported(stmt.Line, "preg_match requires bare string subject and integer offset values")
+	}
+	for _, input := range []ir.Expr{subject, offset} {
+		if input.Kind == "var" && (input.Text == stmt.Name || input.Text == target.Text) {
+			return unsupported(stmt.Line, "preg_match inputs must not alias result or output locals")
+		}
+	}
+	if _, exists := scope[target.Text]; !exists || scope[target.Text].kind != nullKind || !scope[target.Text].directNull {
+		return unsupported(stmt.Line, "preg_match output requires a directly initialized null local")
+	}
+	subjectType, err := v.expr(subject, scope)
+	if err != nil {
+		return err
+	}
+	if subjectType.kind != stringKind {
+		return unsupported(stmt.Line, "preg_match subject requires a statically string local or literal")
+	}
+	offsetType, err := v.expr(offset, scope)
+	if err != nil {
+		return err
+	}
+	if offsetType.kind != intKind {
+		return unsupported(stmt.Line, "preg_match offset requires a statically integer local or literal")
+	}
+	// The engine's return is int(0|1)|false. The existing type model has no
+	// union representation, so preserve downstream runtime guards.
+	scope[target.Text] = valueType{kind: arrayKind}
+	scope[stmt.Name] = valueType{kind: unknownKind}
+	return nil
+}
+
+func preg83LocalName(name string) bool {
+	return validName(name) && name != "this" && name != "GLOBALS" && !strings.HasPrefix(name, "_")
+}
+
+func preg83LiteralPattern(expr ir.Expr) bool {
+	return expr.Kind == "string" && expr.Args == nil && expr.Params == nil && len(expr.Text) >= 3 &&
+		expr.Text[0] == '/' && strings.HasSuffix(expr.Text, "/s")
+}
+
+func preg83InputForm(expr ir.Expr, kind string) bool {
+	if expr.Args != nil || expr.Params != nil {
+		return false
+	}
+	switch kind {
+	case "string":
+		return expr.Kind == "string" || expr.Kind == "var"
+	case "int":
+		return expr.Kind == "int" || expr.Kind == "var"
+	default:
+		return false
 	}
 }
 
@@ -797,6 +940,18 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		args, err := v.exprs(expr.Args, scope)
 		if err != nil {
 			return valueType{}, err
+		}
+		if strings.EqualFold(expr.Text, "preg_match") {
+			return valueType{}, unsupported(expr.Line, "preg_match is only admitted as experimental local-output syntax")
+		}
+		if strings.EqualFold(expr.Text, "preg_last_error") {
+			if v.target != "8.3" || v.regexProfile != ir.Preg83Profile {
+				return valueType{}, unsupported(expr.Line, "preg_last_error requires the PHP 8.3 experimental PCRE2 profile")
+			}
+			if len(args) != 0 {
+				return valueType{}, unsupported(expr.Line, "preg_last_error expects no arguments")
+			}
+			return valueType{kind: intKind}, nil
 		}
 		if strings.EqualFold(expr.Text, "strtok") {
 			if len(args) != 1 && len(args) != 2 {

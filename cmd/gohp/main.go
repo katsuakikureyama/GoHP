@@ -18,6 +18,7 @@ func main() {
 	in := flag.String("in", "", "PHP input file")
 	out := flag.String("out", "", "Go output file (stdout if omitted)")
 	version := flag.String("php-version", phpversion.DefaultTarget, "PHP language target: "+phpversion.TargetHelp())
+	experimentalPCRE2 := flag.Bool("experimental-pcre2", false, "admit the experimental PHP 8.3 preg_match local-output syntax (does not enable a PCRE2 backend)")
 	report := flag.String("report", "", "optional provenance JSON path")
 	flag.Parse()
 	if *in == "" {
@@ -29,7 +30,7 @@ func main() {
 	}
 	src, e := os.ReadFile(*in)
 	check(e)
-	p, e := frontend.Parse(string(src), *version)
+	p, e := frontend.ParseWithOptions(string(src), *version, frontend.Options{ExperimentalPCRE2: *experimentalPCRE2})
 	check(e)
 	goSrc, sourceMap, e := codegen.GenerateWithMap(p)
 	check(e)
@@ -42,7 +43,7 @@ func main() {
 	if *report != "" {
 		b, e := json.MarshalIndent(map[string]any{
 			"schema": "gohp.build/v0.1", "ir_version": ir.Version, "compiler_version": "0.1.0-dev",
-			"php_target": *version, "source_sha256": fmt.Sprintf("%x", sha256.Sum256(src)),
+			"php_target": *version, "regex_profile": p.RegexProfile, "source_sha256": fmt.Sprintf("%x", sha256.Sum256(src)),
 			"generated_sha256": fmt.Sprintf("%x", sha256.Sum256(goSrc)), "input": *in,
 			"output": *out, "source_map": sourceMap, "status": "generated",
 			"compatibility": "not established by compilation",

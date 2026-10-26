@@ -4,8 +4,9 @@ The runtime now has `(*Execution).PregMatch83` and `PregLastError83`, an
 experimental **Go value API**, not compiler-admitted PHP builtins. It builds
 on the optional [B1 engine bridge](optional-pcre2-bridge.md). No PHP source is
 transpiled by this API, and no caller variable is written by reference.
-Generated `preg_match` / `preg_last_error`, effect propagation through generated
-calls, and validated output-local publication remain B3 work.
+The separate [B3 local-output compiler experiment](preg83-local-output.md) now
+connects a profile-gated source subset to this API. B2 itself still does not
+resolve PHP output locations or provide general reference semantics.
 
 ## Closed API and outcomes
 
