@@ -36,6 +36,7 @@ This table is the current curated summary, not a blanket support claim.
 | Foreach continue | Bare `continue;` in the nearest enclosing foreach/while | [Bounded control flow](foreach-continue-boundary.md); braced conditional/nested loop composition, validated dead tails, no levels/for/do/switch |
 | Foreach break | Bare `break;` exits the nearest foreach/while | [Bounded loop exit](foreach-break-boundary.md); validated dead tails and preserved pre-break type state, no levels/for/do/switch |
 | While | Braced body; condition re-evaluated before each iteration | [Bounded while](while-boundary.md); nearest break/continue, conservative loop-carried type guards, no alternative syntax or new binding escape |
+| Call statements | Direct function/builtin or bare-variable method/arrow call followed by semicolon | [Discard result only](call-statement-boundary.md); effects, guards and execution context retained; no general expression statements |
 | include/require/autoload/namespaces | Unsupported | Negative include test |
 | Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
 | mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |

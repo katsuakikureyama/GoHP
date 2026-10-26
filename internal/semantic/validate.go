@@ -180,6 +180,25 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 			return malformed(stmt.Line, "else body requires an if statement")
 		}
 		switch stmt.Kind {
+		case "call_stmt":
+			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || stmt.Body != nil || !emptyExpr(stmt.Target) {
+				return malformed(stmt.Line, "call statement requires only a call expression")
+			}
+			switch stmt.Expr.Kind {
+			case "call":
+			case "method", "invoke":
+				if len(stmt.Expr.Args) == 0 {
+					return malformed(stmt.Line, "standalone method/callable requires a bare variable receiver")
+				}
+				if stmt.Expr.Args[0].Kind != "var" {
+					return unsupported(stmt.Line, "standalone method/callable requires a bare variable receiver")
+				}
+			default:
+				return unsupported(stmt.Line, "standalone expression must be a supported call")
+			}
+			if _, err := v.expr(stmt.Expr, scope); err != nil {
+				return err
+			}
 		case "continue", "break":
 			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || stmt.Body != nil || !emptyExpr(stmt.Expr) || !emptyExpr(stmt.Target) {
 				return malformed(stmt.Line, stmt.Kind+" must have no payload")

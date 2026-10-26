@@ -12,6 +12,7 @@ type Expr struct {
 type Stmt struct {
 	// continue and break target the nearest foreach/while and have no payload.
 	// while uses Expr (condition) and Body only.
+	// call_stmt uses Expr only: direct call or bare-variable method/invoke.
 	Kind, Name string
 	Line       int
 	Expr       Expr

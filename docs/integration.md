@@ -1,5 +1,13 @@
 # Gossip builder contract v0.1 (proposal)
 
+[Standalone call statements](call-statement-boundary.md) now express the
+render caller's discarded-result method call without a dummy assignment.
+The [source dependency audit](render-dependencies.md) records remaining `\f`
+lexing and original HTML tag-processor dependencies. No unchanged render PASS,
+HTML substitute, host binding or Gossip repin is introduced. Gossip #41's
+separate 16-case data-class evidence is recorded there without summing prior
+24/334 configurations or inferring adoption of later compiler increments.
+
 [Bounded while](while-boundary.md) adds condition re-evaluation and nearest-loop
 break/continue, with conservative guards for loop-carried types. Owned token-array
 selection with str_starts_with is not a replacement for the original render

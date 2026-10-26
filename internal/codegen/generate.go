@@ -230,6 +230,10 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 	for _, s := range ss {
 		g.emit("// gohp:begin %d\n", s.Line)
 		switch s.Kind {
+		case "call_stmt":
+			// Evaluate once, retain callee/argument guards and discard only the
+			// result. No echo, clone, assignment binding or truthiness conversion.
+			g.emit("_ = %s\n", g.expr(s.Expr, scope))
 		case "continue", "break":
 			g.emit("%s\n", s.Kind) // Enclosing loop and payload checked by semantic.
 		case "assign":
