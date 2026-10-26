@@ -54,7 +54,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		if n == "array_key_first" || n == "array_key_last" || n == "array_reverse" || n == "array_merge" || n == "array_slice" {
 			g.fail(f.Line, "reserved function "+n)
 		}
-		if n == "empty" || n == "continue" {
+		if n == "empty" || n == "continue" || n == "break" {
 			g.fail(f.Line, "reserved language construct "+n)
 		}
 		if n == "str_contains" || n == "str_starts_with" {
@@ -188,8 +188,8 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 	for _, s := range ss {
 		g.emit("// gohp:begin %d\n", s.Line)
 		switch s.Kind {
-		case "continue":
-			g.emit("continue\n") // Enclosing foreach and payload checked by semantic.
+		case "continue", "break":
+			g.emit("%s\n", s.Kind) // Enclosing foreach and payload checked by semantic.
 		case "assign":
 			if s.Name == "this" || s.Name == "GLOBALS" || strings.HasPrefix(s.Name, "_") {
 				g.fail(s.Line, "reserved/global variable unsupported")
@@ -273,7 +273,7 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			g.fail(s.Line, "unsupported IR statement "+s.Kind)
 		}
 		g.emit("// gohp:end\n")
-		if s.Kind == "continue" {
+		if s.Kind == "continue" || s.Kind == "break" {
 			g.suppress = true
 		}
 	}

@@ -171,15 +171,15 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 			return malformed(stmt.Line, "else body requires an if statement")
 		}
 		switch stmt.Kind {
-		case "continue":
+		case "continue", "break":
 			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || stmt.Body != nil || !emptyExpr(stmt.Expr) || !emptyExpr(stmt.Target) {
-				return malformed(stmt.Line, "continue must have no payload")
+				return malformed(stmt.Line, stmt.Kind+" must have no payload")
 			}
 			if !inForeach {
-				return unsupported(stmt.Line, "continue requires an enclosing foreach")
+				return unsupported(stmt.Line, stmt.Kind+" requires an enclosing foreach")
 			}
 			// Still validate dead statements, without letting dead assignments
-			// overwrite the type state that reaches the next loop iteration.
+			// overwrite the type state at the reachable loop transfer.
 			scope = cloneScope(scope)
 		case "assign":
 			if !validName(stmt.Name) {

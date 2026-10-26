@@ -25,8 +25,9 @@ text or contains a whitespace-delimited class token.
 The owned differential fixture covers that guard shape, nested array `??`, and
 scalar/array/null guard inputs. It is not an unchanged-source run of the render
 function. Bounded [`str_starts_with`](str-starts-with-boundary.md) is tracked
-separately. Remaining dependencies include stateful `strtok`, `while`/`break`
-and `WP_HTML_Tag_Processor`; no stubs or claim of HTML rendering
+separately. Remaining dependencies include stateful `strtok`, `while`
+and `WP_HTML_Tag_Processor`; [bare break](foreach-break-boundary.md) currently
+supports foreach only. No stubs or claim of HTML rendering
 support are added. Gossip pins/source/corpora remain unchanged.
 
 Catalog `php.builtin.str_contains` remains `partial`, with six native-differential,

@@ -21,7 +21,8 @@ still do not escape, and all supported/unsupported dead statements are checked.
 Existing foreach snapshot iteration and array-copy behavior remain unchanged.
 
 Explicit numeric levels (including `continue 1`), expressions, unbraced bodies,
-break, while/for/do loops and switch are not added. No warning/exception
+while/for/do loops and switch are not added. Bare
+[foreach break](foreach-break-boundary.md) is tracked separately. No warning/exception
 equivalence or PHP 8.4 support is claimed. Tests link through catalog entry
 `php.syntax.foreach_continue`, status `partial`; native comparison uses the
 PHP 8.3 target with oracle >= 8.3.36.

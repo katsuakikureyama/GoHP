@@ -3,6 +3,23 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.foreach_break",
+      "kind": "syntax",
+      "name": "Bare break in foreach",
+      "implementation": "partial",
+      "contract": "Case-insensitive bare break exits the nearest lexical foreach, including inside braced conditionals. Payload-free IR, function-local loop context, validated non-emitted dead tails and preserved type state at loop exit. Existing snapshot iteration and outer-loop execution remain intact.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.foreach_break","test":"TestDifferential/foreach_break","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/foreach_break.php","assertions":["stdout","exit","first/middle/absent/empty matches, break versus continue, nested nearest-loop exit, effects and snapshots, conditional/function/method/callback composition"]},
+        {"case_id":"compiler.foreach_break","test":"TestForeachBreakLoweringAndSourceMap","file":"internal/codegen/foreach_break_test.go","kind":"compiler","assertions":["mixed-case payload-free IR, Go break statement source mapping, dead tail suppressed and output after loop restored"]},
+        {"case_id":"compiler.foreach_break.type_state","test":"TestForeachBreakDeadTailTypeState","file":"internal/codegen/foreach_break_test.go","kind":"compiler","assertions":["unreachable assignments cannot overwrite the reachable type state at break"]},
+        {"case_id":"negative.foreach_break.source","test":"TestForeachBreakUnsupportedSource","file":"internal/codegen/foreach_break_test.go","kind":"negative","assertions":["outside/called-function scope, levels, expressions, other loop kinds, redeclaration and invalid/undefined dead tails rejected"]},
+        {"case_id":"negative.foreach_break.ir","test":"TestForeachBreakMalformedIR","file":"internal/codegen/foreach_break_test.go","kind":"negative","assertions":["hidden payloads and out-of-loop raw IR rejected before output"]},
+        {"case_id":"negative.foreach_break.runtime","test":"TestForeachBreakRuntimeGuards","file":"tests/foreach_break_runtime_test.go","kind":"negative","assertions":["reachable pre-break type changes, conditional exits and typed-return fallthrough retain runtime guards"]}
+      ],
+      "limitations": ["Bare break in braced foreach only; no explicit levels (including 1), while/for/do/switch or labels", "No general path-sensitive inference, post-loop escape of new bindings or PHP exception/message equivalence", "Owned token-array composition is not unchanged WordPress render execution; strtok/while/HTML dependencies and consumer pin evidence remain separate"]
+    },
+    {
       "id": "php.syntax.declared-property-write",
       "kind": "syntax",
       "name": "Simple assignment to a declared public property",
@@ -112,7 +129,7 @@
       "contract": "Case-insensitive bare continue skips the remaining iteration of the nearest lexical foreach, including inside braced conditionals. Payload-free IR, function-local loop context, validated non-emitted dead tails and preserved pre-continue type state.",
       "php_targets": ["8.3"],
       "checks": [
-        {"case_id":"diff.foreach_continue","test":"TestDifferential/foreach_continue","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/foreach_continue.php","assertions":["stdout","exit","skip versus break, nested nearest-loop behavior, effects and array snapshots, empty inputs, conditional/function/callback composition and input preservation"]},
+        {"case_id":"diff.foreach_continue","test":"TestDifferential/foreach_continue","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/foreach_continue.php","assertions":["stdout","exit","iteration skip without loop exit, nested nearest-loop behavior, effects and array snapshots, empty inputs, conditional/function/callback composition and input preservation"]},
         {"case_id":"compiler.foreach_continue","test":"TestForeachContinueLoweringAndSourceMap","file":"internal/codegen/foreach_continue_test.go","kind":"compiler","assertions":["case-insensitive payload-free IR, ordinary Go continue source mapping, dead tail not emitted, enclosing block output restored"]},
         {"case_id":"compiler.foreach_continue.type_state","test":"TestForeachContinueDeadTailTypeState","file":"internal/codegen/foreach_continue_test.go","kind":"compiler","assertions":["unreachable assignments cannot hide reachable type changes at loop exit"]},
         {"case_id":"negative.foreach_continue.source","test":"TestForeachContinueUnsupportedSource","file":"internal/codegen/foreach_continue_test.go","kind":"negative","assertions":["outside/called-function scope, levels, expressions, other loop kinds, redeclaration and invalid/undefined dead tails rejected"]},
@@ -122,7 +139,7 @@
         {"case_id":"compiler.continue_foreach.composition","test":"TestContinueForeachLowering","file":"internal/codegen/continue_test.go","kind":"compiler","assertions":["continue composes with typed array parameters and array/bool returns; source mapping"]},
         {"case_id":"negative.continue_foreach.composition","test":"TestContinueForeachBoundary","file":"internal/codegen/continue_test.go","kind":"negative","assertions":["out-of-loop, level and malformed payload rejection"]}
       ],
-      "limitations": ["Only bare continue in braced foreach/conditional bodies; no explicit level, break or other loop kinds", "No general path-sensitive narrowing, branch-local escape or PHP warning/exception equivalence", "Gossip adoption still requires its own exact compiler pin and unchanged-source evidence"]
+      "limitations": ["Only bare continue in braced foreach/conditional bodies; no explicit level or other loop kinds; bare foreach break is tracked separately", "No general path-sensitive narrowing, branch-local escape or PHP warning/exception equivalence", "Gossip adoption still requires its own exact compiler pin and unchanged-source evidence"]
     },
     {
       "id": "php.builtin.array_merge",

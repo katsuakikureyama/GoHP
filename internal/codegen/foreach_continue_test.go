@@ -49,7 +49,7 @@ func TestForeachContinueUnsupportedSource(t *testing.T) {
 		"outer_level":             "foreach ([1] as $v) { foreach ([2] as $w) { continue 2; } }",
 		"dynamic_level":           "foreach ([1] as $v) { continue $v; }",
 		"parenthesized_level":     "foreach ([1] as $v) { continue(1); }",
-		"break":                   "foreach ([1] as $v) { break; }",
+		"break_level":             "foreach ([1] as $v) { break 1; }",
 		"while":                   "while (true) { continue; }",
 		"redeclare":               "function CoNtInUe() { return 1; }",
 		"dead_semantic":           "foreach ([1] as $v) { continue; echo count(false); }",
