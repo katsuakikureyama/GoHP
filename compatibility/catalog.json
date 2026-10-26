@@ -3,6 +3,22 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.call-statement",
+      "kind": "syntax",
+      "name": "Standalone supported calls with discarded results",
+      "implementation": "partial",
+      "contract": "Direct function/builtin calls and bare-variable method/generated-arrow invocations may be statements. Evaluate once, preserve effects and all existing argument/callee/return guards, discard only the result without output or new binding. Existing execution context and dead-tail validation are retained.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.call_statements","test":"TestDifferential/call_statements","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/call_statements.php","assertions":["stdout","exit","function/method/arrow effects and discarded results, constructor/callback/branch/loop composition, dead tails and shared tokenizer context"]},
+        {"case_id":"compiler.call_statement","test":"TestCallStatementLoweringAndSourceMap","file":"internal/codegen/call_statement_test.go","kind":"compiler","assertions":["call_stmt IR, once-only discard lowering and statement maps for direct/method/arrow/builtin calls; break tail suppression and restored following output"]},
+        {"case_id":"negative.call_statement.source","test":"TestCallStatementUnsupportedSource","file":"internal/codegen/call_statement_test.go","kind":"negative","assertions":["unsupported roots/receivers, unresolved targets, arity/domain/undefined values, constructor re-entry, dead invalid calls and absent binding rejected"]},
+        {"case_id":"negative.call_statement.ir","test":"TestCallStatementMalformedIR","file":"internal/codegen/call_statement_test.go","kind":"negative","assertions":["hidden statement fields, missing/invalid expressions/receivers and malformed call payloads reject before output without panic"]},
+        {"case_id":"negative.call_statement.runtime","test":"TestCallStatementRuntimeGuards","file":"tests/call_statement_runtime_test.go","kind":"negative","assertions":["discarded results do not bypass builtin/method domains, typed returns, callable arity/domain or tokenizer-state guards"]}
+      ],
+      "limitations": ["Supported calls only; no general expression statements, bare construction, parenthesized/chained receivers, nullsafe/static/dynamic method calls", "Existing function/class/arrow/value boundaries remain; no foreign-object binding, string callable lookup, destructor or warning/exception equivalence", "Original render caller still requires form-feed escape and actual HTML processor; owned fixture is not unchanged WordPress acceptance or Gossip adoption"]
+    },
+    {
       "id": "php.builtin.strtok",
       "kind": "builtin",
       "name": "strtok: execution-owned byte token scanning",

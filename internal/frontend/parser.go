@@ -354,6 +354,10 @@ func (p *parser) stmt() ir.Stmt {
 		s.Body = p.block()
 	case p.accept("if"):
 		s = p.ifStmt(s.Line)
+	case p.startsCallStatement():
+		s.Kind = "call_stmt"
+		s.Expr = p.expr(0)
+		p.need(";")
 	default:
 		if p.peek().kind != "var" {
 			p.fail("unsupported statement")
@@ -395,6 +399,21 @@ func (p *parser) stmt() ir.Stmt {
 		p.need(";")
 	}
 	return s
+}
+
+// Keep assignment parsing (including [] append targets) unchanged. Standalone
+// calls begin with a direct name, callable variable, or bare-variable method.
+// Semantic validation rejects non-call roots and chained receivers.
+func (p *parser) startsCallStatement() bool {
+	t := p.peek()
+	if t.kind != "id" && t.kind != "var" {
+		return false
+	}
+	if p.pos+1 < len(p.ts) && p.ts[p.pos+1].kind == "sym" && p.ts[p.pos+1].text == "(" {
+		return true
+	}
+	return t.kind == "var" && p.pos+3 < len(p.ts) &&
+		p.ts[p.pos+1].text == "->" && p.ts[p.pos+2].kind == "id" && p.ts[p.pos+3].text == "("
 }
 
 // The leading if/elseif token has already been consumed. Normalize chains to
