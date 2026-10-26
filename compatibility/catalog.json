@@ -21,6 +21,23 @@
       "limitations": ["No scalar coercion, Unicode character slicing, autovivification, references or PHP error equivalence", "Known bare-variable declared public property append only; no nested/indexed/chained/compound writes", "Factory knowledge is restricted to one unconditional return-new body on a known class; no arbitrary return inference or general casts", "No typed/non-null method defaults, named/unpacked/variadic args, constructor bare returns or typed void semantics", "Local CLI WebMCP excluded; unchanged original parser adoption requires separate pinned consumer evidence"]
     },
     {
+      "id": "php.classes.scalar-constructor-parameters",
+      "kind": "syntax",
+      "name": "Exact scalar public constructor parameters",
+      "implementation": "partial",
+      "contract": "Public constructor parameters may declare int/string/bool with exact actual values only. Static mismatches reject; unknown/host values are guarded before body entry. Local reassignment and untyped properties stay mutable, existing untyped null suffix and Execution dispatch remain intact.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.scalar_constructor","test":"TestDifferential/scalar_constructor","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/scalar_constructor.php","assertions":["stdout","exit","exact scalars, defaults/order, local reassignment, properties/snapshots and Execution composition"]},
+        {"case_id":"compiler.scalar_constructor","test":"TestScalarConstructorLowering","file":"internal/codegen/scalar_constructor_test.go","kind":"compiler","assertions":["canonical IR types, all entry guards before body, untyped suffix and constructor source maps"]},
+        {"case_id":"negative.scalar_constructor.source","test":"TestScalarConstructorBoundaries","file":"internal/codegen/scalar_constructor_test.go","kind":"negative","assertions":["static mismatches/coercion/arity, unsupported annotations/defaults/scope/re-entry rejected"]},
+        {"case_id":"negative.scalar_constructor.ir","test":"TestScalarConstructorMalformedIR","file":"internal/codegen/scalar_constructor_test.go","kind":"negative","assertions":["malformed type metadata/alignment and unsupported typed suffix/method reject"]},
+        {"case_id":"unit.scalar_parameter.domain","test":"TestScalarParameterExactDomain","file":"runtime/scalar_parameter_test.go","kind":"unit","assertions":["exact int64/string/bool preservation, foreign values and all other domains reject without coercion"]},
+        {"case_id":"negative.scalar_constructor.runtime","test":"TestScalarConstructorRuntimeGuards","file":"tests/scalar_constructor_runtime_test.go","kind":"negative","assertions":["dynamic mismatches fail before body, contextual entry retains guard, reassignment preserves downstream guards"]}
+      ],
+      "limitations": ["No PHP weak scalar conversions, strict_types syntax or TypeError equivalence", "Public constructor only; no scalar-typed global/ordinary method/arrow parameters, typed/nonnull defaults or nullable/union/class/float/array/callable constructor types", "Original HTML support classes and processor/render adoption require separate evidence; owned fixture does not certify them"]
+    },
+    {
       "id": "php.syntax.form-feed-escape",
       "kind": "syntax",
       "name": "Bounded form-feed string escape",
@@ -81,29 +98,29 @@
       "checks": [
         {"case_id":"diff.constructor_null_defaults","test":"TestDifferential/constructor_null_defaults","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/constructor_null_defaults.php","assertions":["stdout","exit","omitted/null/zero, zero-argument all-optional, case-insensitive names, argument/body ordering, fresh instances and shared strtok execution"]},
         {"case_id":"compiler.constructor_null_defaults","test":"TestConstructorNullDefaults","file":"internal/codegen/constructor_null_defaults_test.go","kind":"compiler","assertions":["optional suffix IR, runtime min/max guard and constructor statement maps"]},
-        {"case_id":"negative.constructor_null_defaults.source","test":"TestConstructorNullDefaultsBoundaries","file":"internal/codegen/constructor_null_defaults_test.go","kind":"negative","assertions":["below/above arity, required-after-optional, typed/nonpublic constructors, non-null method defaults and direct re-entry reject"]},
+        {"case_id":"negative.constructor_null_defaults.source","test":"TestConstructorNullDefaultsBoundaries","file":"internal/codegen/constructor_null_defaults_test.go","kind":"negative","assertions":["below/above arity, required-after-optional, typed-default/nonpublic constructors, non-null method defaults and direct re-entry reject"]},
         {"case_id":"negative.constructor_null_defaults.ir","test":"TestConstructorNullDefaultsMalformedIR","file":"internal/codegen/constructor_null_defaults_test.go","kind":"negative","assertions":["negative/excessive optional suffix counts reject before generation"]},
         {"case_id":"negative.constructor_null_defaults.runtime","test":"TestConstructorNullDefaultsRuntimeGuards","file":"tests/constructor_null_defaults_runtime_test.go","kind":"negative","assertions":["unknown actual values retain count/strlen/array-return guards after optional constructor initialization"]}
       ],
-      "limitations": ["Constructor entry only; ordinary public method null defaults are covered by parser-output prerequisites; no non-null expressions, typed/variadic/reference/named/unpacked parameters or inheritance", "Source arity is bounded even where PHP ignores surplus arguments; runtime panics do not claim PHP error equivalence", "Reuses existing NullDefaultArgs and execution dispatch; no new runtime API, request lifecycle or original WordPress parser adoption", "WebMCP excluded: local developer compiler, not a browser/service operation"]
+      "limitations": ["Only untyped trailing null defaults on public constructors; separate exact scalar required parameters are supported. Method null defaults covered separately; no non-null expressions, typed defaults, variadic/reference/named/unpacked parameters or inheritance", "Source arity is bounded even where PHP ignores surplus arguments; runtime panics do not claim PHP error equivalence", "Reuses existing NullDefaultArgs and execution dispatch; no new runtime API, request lifecycle or original WordPress parser adoption", "WebMCP excluded: local developer compiler, not a browser/service operation"]
     },
     {
       "id": "php.syntax.public-data-class",
       "kind": "syntax",
       "name": "Fixed public data constructors and known-object array snapshots",
       "implementation": "partial",
-      "contract": "Untyped public properties may omit an initializer (null). Untyped public constructors run once on fresh defaults with bounded positional minimum/maximum, admitting a trailing null-default suffix. Known generated-class (array) casts snapshot all declared public properties in declaration order, retaining null, detaching nested arrays and preserving object identifiers.",
+      "contract": "Untyped public properties may omit an initializer (null). Public constructors run once on fresh defaults with bounded positional minimum/maximum, admitting a trailing null-default suffix. Known generated-class (array) casts snapshot all declared public properties in declaration order, retaining null, detaching nested arrays and preserving object identifiers.",
       "php_targets": ["8.3"],
       "checks": [
         {"case_id":"diff.block_constructor","test":"TestDifferential/block_constructor","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/block_constructor.php","assertions":["stdout","exit","argument/body order and once-only effects, implicit null, fresh instances, copied arrays, declaration-ordered snapshots and shared object identifiers"]},
         {"case_id":"compiler.block_constructor","test":"TestBlockDataConstructorLoweringAndSourceMap","file":"internal/codegen/block_constructor_test.go","kind":"compiler","assertions":["implicit null/new args/constructor dispatch/object_array_cast IR, snapshot layout and statement maps"]},
-        {"case_id":"negative.block_constructor.source","test":"TestBlockDataConstructorBoundaries","file":"internal/codegen/block_constructor_test.go","kind":"negative","assertions":["arity/classes/typed/non-null-default/returning constructors, direct re-entry, other magic/inheritance and non-known-object casts reject"]},
+        {"case_id":"negative.block_constructor.source","test":"TestBlockDataConstructorBoundaries","file":"internal/codegen/block_constructor_test.go","kind":"negative","assertions":["arity/classes/array-typed/non-null-default/returning constructors, direct re-entry, other magic/inheritance and non-known-object casts reject"]},
         {"case_id":"negative.block_constructor.ir","test":"TestBlockDataConstructorMalformedIR","file":"internal/codegen/block_constructor_test.go","kind":"negative","assertions":["malformed new/cast metadata/arity and invalid constructor declarations fail before output"]},
         {"case_id":"unit.runtime.object_array","test":"TestObjectToArrayUsesGeneratedPropertySnapshotOnce","file":"runtime/object_array_test.go","kind":"unit","assertions":["one actual snapshot operation, ordered values/metadata and object identifiers retained"]},
         {"case_id":"negative.runtime.object_array","test":"TestObjectToArrayRejectsOutsideGeneratedPropertyDomain","file":"runtime/object_array_test.go","kind":"negative","assertions":["scalar/array/Closure/nil/unmarked or invalid objects rejected"]},
         {"case_id":"negative.block_constructor.runtime","test":"TestBlockConstructorAndArrayCastRuntimeGuards","file":"tests/block_constructor_runtime_test.go","kind":"negative","assertions":["actual value guards remain after constructor initialization or array snapshot forwarding"]}
       ],
-      "limitations": ["Public untyped constructor only, with optional trailing null defaults; ordinary methods covered separately; no non-null defaults, annotations, explicit returns, direct re-entry, other magic methods, inheritance or private/static/typed properties", "Known generated-class cast only; no general scalar/array/Closure/unknown/foreign casts, dynamic properties or visibility key mangling", "Explicit defaults remain scalar/null literals; no array defaults, references, general object/error equivalence or HTTP request-lifetime semantics", "Gossip adoption requires separate original class/caller pin and typed observations"]
+      "limitations": ["Public constructor only, with optional untyped trailing null defaults; separate entry covers exact scalar required parameters. Ordinary method null defaults covered separately; no non-null/typed defaults, explicit returns, direct re-entry, other magic methods, inheritance or private/static/typed properties", "Known generated-class cast only; no general scalar/array/Closure/unknown/foreign casts, dynamic properties or visibility key mangling", "Explicit defaults remain scalar/null literals; no array defaults, references, general object/error equivalence or HTTP request-lifetime semantics", "Gossip adoption requires separate original class/caller pin and typed observations"]
     },
     {
       "id": "php.syntax.while",

@@ -9,7 +9,8 @@ This closed extension targets simple data classes such as WordPress's unchanged
   positional arguments (with an optional trailing untyped `= null` suffix) and
   executes once after fresh instance defaults exist.
   Arguments use the existing value-copy convention; `$this` writes only declared
-  public properties. No non-null defaults, annotations, return statements/type,
+  public properties. [Exact scalar annotations](scalar-constructor-boundary.md)
+  are a separate bounded extension. No non-null defaults, return statements/type,
   direct constructor re-entry, other magic methods or inheritance.
 - `new Class(args...)` accepts the required minimum through declared maximum.
   Omitted suffix slots become canonical null through existing `NullDefaultArgs`

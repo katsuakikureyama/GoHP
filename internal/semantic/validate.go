@@ -36,6 +36,7 @@ type classInfo struct {
 	methodNewReturn  map[string]string // Only a sole "return new DeclaredClass(...)" body.
 	constructorArity int               // Zero also describes a class without a constructor.
 	constructorMin   int
+	constructorTypes []string
 }
 
 type validator struct {
@@ -88,6 +89,7 @@ func Validate(p ir.Program) error {
 			if strings.EqualFold(method.Name, "__construct") {
 				info.constructorArity = len(method.Params)
 				info.constructorMin = len(method.Params) - method.OptionalNullParams
+				info.constructorTypes = method.ParamTypes
 			}
 		}
 		v.classes[strings.ToLower(c.Name)] = info
@@ -126,12 +128,14 @@ func validateParameterTypes(f ir.Function, method bool) error {
 	if len(f.ParamTypes) != 0 && len(f.ParamTypes) != len(f.Params) {
 		return malformed(f.Line, "parameter types must align with parameter names")
 	}
+	constructor := method && strings.EqualFold(f.Name, "__construct")
 	for _, annotation := range f.ParamTypes {
-		if annotation != "" && annotation != "array" && annotation != "callable" {
+		scalar := annotation == "int" || annotation == "string" || annotation == "bool"
+		if (annotation != "" && annotation != "array" && annotation != "callable" && !scalar) || (scalar && !method) {
 			return malformed(f.Line, "unsupported IR parameter type")
 		}
-		if method && annotation != "" {
-			return unsupported(f.Line, "typed method parameters are unsupported")
+		if annotation != "" && method && !(constructor && scalar) {
+			return unsupported(f.Line, "scalar parameter types require a public constructor; other typed methods are unsupported")
 		}
 	}
 	for i := len(f.Params) - f.OptionalNullParams; i < len(f.Params); i++ {
@@ -172,6 +176,16 @@ func (v validator) function(f ir.Function, class string) error {
 		}
 		if len(f.ParamTypes) != 0 && f.ParamTypes[i] == "callable" {
 			scope[param] = valueType{kind: callableKind}
+		}
+		if len(f.ParamTypes) != 0 {
+			switch f.ParamTypes[i] {
+			case "int":
+				scope[param] = valueType{kind: intKind}
+			case "string":
+				scope[param] = valueType{kind: stringKind}
+			case "bool":
+				scope[param] = valueType{kind: boolKind}
+			}
 		}
 	}
 	return v.stmts(f.Body, scope, f.ReturnType, false)
@@ -1065,11 +1079,21 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		if !exists {
 			return valueType{}, unsupported(expr.Line, "unknown class "+expr.Text)
 		}
-		if _, err := v.exprs(expr.Args, scope); err != nil {
+		args, err := v.exprs(expr.Args, scope)
+		if err != nil {
 			return valueType{}, err
 		}
 		if len(expr.Args) < info.constructorMin || len(expr.Args) > info.constructorArity {
 			return valueType{}, unsupported(expr.Line, "unsupported constructor argument count for "+expr.Text)
+		}
+		for i, annotation := range info.constructorTypes {
+			if i >= len(args) {
+				break
+			}
+			want := map[string]kind{"int": intKind, "string": stringKind, "bool": boolKind}[annotation]
+			if annotation != "" && args[i].kind != unknownKind && args[i].kind != want {
+				return valueType{}, unsupported(expr.Line, annotation+" constructor parameter requires exact matching argument type")
+			}
 		}
 		return valueType{kind: objectKind, class: strings.ToLower(expr.Text)}, nil
 	case "object_array_cast":

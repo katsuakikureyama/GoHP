@@ -22,6 +22,9 @@ is an HTML state machine, not a small record class: it includes constants,
 protected/private mutable state (421–840), defaulted/typed method interfaces
 such as next_tag (900), add_class (4828), and get_updated_html (4926). Its full
 transitive requirements and output equivalence have not been validated.
+The [HTML dependency map](html-processor-dependencies.md) breaks out selected
+core paths and support classes. Exact scalar constructor parameters are now
+available, but that alone does not implement the processor or rendering.
 
 Do not replace it with a regex/owned mock, treat unknown methods as no-ops,
 silently bind a host HTML parser, or certify the caller after checking only its
