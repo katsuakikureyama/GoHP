@@ -303,6 +303,10 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		}
 		// A closure keeps the condition single-evaluation and both arms lazy.
 		return "(func() any { if rt.Bool(" + g.expr(e.Args[0], scope) + ") { return " + g.expr(e.Args[1], scope) + " }; return " + g.expr(e.Args[2], scope) + " }())"
+	case "coalesce":
+		root, keys, _ := ir.ArrayAddressParts(e.Args[0]) // Semantic validates the exact address shape.
+		probe := append([]ir.Expr{root}, keys...)
+		return "(func() any { value, present := rt.ArrayPathProbe(" + args(probe) + "); if present { return value }; return " + g.expr(e.Args[1], scope) + " }())"
 	case "binary":
 		if e.Text == "===" || e.Text == "!==" {
 			other := -1
@@ -358,6 +362,8 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		return "rt.Get(" + args(e.Args) + ")"
 	case "isset_index":
 		return "rt.ArrayIsset(" + args(e.Args) + ")"
+	case "isset_path":
+		return "rt.ArrayPathIsset(" + args(e.Args) + ")"
 	case "isset_var":
 		return "rt.IssetValue(" + args(e.Args) + ")"
 	case "isset_multi":

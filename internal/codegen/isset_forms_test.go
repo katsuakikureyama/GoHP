@@ -79,7 +79,6 @@ func TestIssetFormsBoundary(t *testing.T) {
 		{"no_operands", "<?php echo isset();"},
 		{"literal_operand", "<?php echo isset(null);"},
 		{"call_operand", "<?php function source() { return null; } echo isset(source());"},
-		{"nested_index", "<?php $items = [[]]; echo isset($items[0]['child']);"},
 		{"property", "<?php class Item { public $value = null; } $item = new Item(); echo isset($item->value);"},
 		{"parenthesized_operand", "<?php $value = 1; echo isset(($value));"},
 		{"parenthesized_key", "<?php $items = []; $key = 'key'; echo isset($items[($key)]);"},

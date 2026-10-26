@@ -27,9 +27,20 @@ an earlier address is null/missing. A bare-variable address is represented as
 `isset_var`; two-or-more addresses are represented as `isset_multi`. This does
 not change the indexed-address key or root rules above.
 
+## Nested path extension
+
+The separately bounded nested form is `isset($root[$first][$second]...)`, with
+a defined variable root and two-or-more literal integer/string or defined
+variable keys. It uses `isset_path` rather than chaining ordinary array reads:
+missing/null intermediates return false, while a non-array intermediate fails
+the explicit runtime path guard. Final false/zero/empty-string/empty-array
+values remain set. The existing one-level `isset_index` / `ArrayIsset` behavior
+above is unchanged. See the complete [nested probe and coalescing contract](nested-array-probes.md).
+
 ## Deliberate exclusions
 
-This is not general PHP isset: undefined addresses, nested indexes, object
+This is not general PHP isset: undefined addresses, nested indexes outside the
+documented `isset_path` form, object
 properties, string offsets, effectful root/key expressions, parenthesized
 operands/keys, references or bool/null/float key coercions remain excluded.
 Indexed roots still must be actual arrays; bare probes do not make undefined

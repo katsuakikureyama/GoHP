@@ -3,6 +3,25 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.array-path-probes",
+      "kind": "syntax",
+      "name": "Defined-root nested isset and array-address null coalescing",
+      "implementation": "partial",
+      "contract": "Nested isset and ?? probe a defined variable with literal/defined int|string keys through array/null intermediates. Missing/null is absent; final non-null falsy values remain present. Coalescing clones a present value and evaluates its fallback lazily once; ?? is right-associative below || and above ternary.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.nested_array_probes","test":"TestDifferential/nested_array_probes","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/nested_array_probes.php","assertions":["stdout","exit","nested/multi isset, array/null paths, null versus falsy defaults, lazy fallback and right association/precedence"]},
+        {"case_id":"compiler.nested_array_probes","test":"TestNestedArrayProbesLoweringAndSourceMap","file":"internal/codegen/nested_array_probes_test.go","kind":"compiler","assertions":["flat isset_path IR, array-address coalesce, one probe and lazy fallback, old one-level isset/read guards and statement maps"]},
+        {"case_id":"negative.nested_array_probes","test":"TestNestedArrayProbesBoundaries","file":"internal/codegen/nested_array_probes_test.go","kind":"negative","assertions":["undefined root/key, expression/property/effectful addresses, known wrong domains and malformed IR reject before output"]},
+        {"case_id":"unit.runtime.array_path_probe.copy","test":"TestArrayPathProbeValuesAndCopy","file":"runtime/array_path_probe_test.go","kind":"unit","assertions":["present falsy/nested values detach storage and preserve metadata/input; missing/null is absent"]},
+        {"case_id":"unit.runtime.array_path_probe.boundaries","test":"TestArrayPathProbeBoundaries","file":"runtime/array_path_probe_test.go","kind":"unit","assertions":["bare probe and array/null traversal, missing/null skip later invalid key, non-array intermediate guards"]},
+        {"case_id":"unit.runtime.array_path_probe.keys","test":"TestArrayPathProbeRejectsReachedInvalidKeys","file":"runtime/array_path_probe_test.go","kind":"unit","assertions":["reached non-int/string keys fail explicitly"]},
+        {"case_id":"unit.runtime.array_path_isset","test":"TestArrayPathIssetUsesPathPresence","file":"runtime/array_path_probe_test.go","kind":"unit","assertions":["nested isset distinguishes null/missing from false/zero/empty/array"]},
+        {"case_id":"negative.runtime.array_path_probe","test":"TestNestedArrayProbeRuntimeGuards","file":"tests/nested_array_probes_runtime_test.go","kind":"negative","assertions":["generated coalesce/isset retain non-array intermediate and dynamic key guards rather than silently using fallback"]}
+      ],
+      "limitations": ["Defined variable roots/keys only; no general PHP undefined-variable suppression", "Reached path intermediates must be arrays or null; no scalar/string-offset/object/property traversal", "Literal/defined variable int|string keys only, no effectful/arithmetic addresses, references or ??=", "Existing one-level ArrayIsset strict domain is unchanged; no control-flow narrowing or warning/exception equivalence", "Gossip real caller adoption requires a separate exact pin and unchanged-source comparison"]
+    },
+    {
       "id": "php.syntax.foreach_continue",
       "kind": "syntax",
       "name": "Bare continue in foreach",
@@ -826,7 +845,7 @@
         {"case_id": "negative.ir.ternary_arity", "test": "TestTernaryMalformedIRArityFailsBeforeGeneration", "file": "internal/codegen/ternary_stripslashes_test.go", "kind": "negative", "assertions": ["malformed ternary operand counts fail safely before code generation"]},
         {"case_id": "unit.codegen.ternary_mixed_arms", "test": "TestTernaryMixedArmsRemainConservative", "file": "internal/codegen/ternary_stripslashes_test.go", "kind": "unit", "assertions": ["mixed branch types do not acquire an optimistic static type"]}
       ],
-      "limitations": ["No short ?: or ??", "Unparenthesized ternary chains are rejected", "No object truthiness", "Both arms are statically validated", "Mixed branch types remain unknown"]
+      "limitations": ["No short ?:; null coalescing has a separate defined-address contract", "Unparenthesized ternary chains are rejected", "No object truthiness", "Both arms are statically validated", "Mixed branch types remain unknown"]
     },
     {
       "id": "php.operator.logical-and",
@@ -1742,7 +1761,7 @@
         {"case_id": "negative.array_isset.runtime", "test": "TestArrayIssetRuntimeGuards", "file": "tests/array_isset_runtime_test.go", "kind": "negative", "assertions": ["compiled unknown arguments reject null/string roots and bool/null keys"]}
       ],
       "limitations": [
-        "This indexed-address entry does not cover the separate bounded bare-variable/multi-address entry; undefined/null/scalar roots, nested indexes and object/string offsets are excluded",
+        "This one-level entry excludes undefined/null/scalar roots and object/string offsets; nested array/null probes have the separate php.syntax.array-path-probes contract",
         "Negative key literals use one minus and magnitude 0..9223372036854775807; no general negation or arithmetic key expressions",
         "No effectful or parenthesized root/key expressions, references or bool/null/float key coercions",
         "Runtime guards are not PHP warning/exception equivalence; native comparison covers stdout and normal exits only",
@@ -1754,15 +1773,15 @@
       "kind": "syntax",
       "name": "Defined bare-variable and multi-address isset",
       "implementation": "partial",
-      "contract": "A defined bare variable may be probed by isset($value); two or more defined bare or existing one-level indexed addresses may be probed left to right. Bare null and missing/null indexed addresses return false; later addresses are not evaluated after false.",
+      "contract": "A defined bare variable may be probed by isset($value); multiple admitted bare, one-level or separately bounded nested addresses probe left to right. Bare null and missing/null indexed addresses return false; later addresses are not evaluated after false.",
       "php_targets": ["8.3"],
       "checks": [
         {"case_id":"diff.isset_forms","test":"TestDifferential/isset_forms","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/isset_forms.php","assertions":["stdout","exit","defined bare/null/falsy values, multiple bare/indexed addresses, contexts and short-circuit guard ordering"]},
         {"case_id":"compiler.isset_forms","test":"TestIssetFormsLowering","file":"internal/codegen/isset_forms_test.go","kind":"compiler","assertions":["canonical isset_var/isset_multi IR, left-to-right Go && lowering, no eager indexed read and source map"]},
-        {"case_id":"negative.isset_forms","test":"TestIssetFormsBoundary","file":"internal/codegen/isset_forms_test.go","kind":"negative","assertions":["empty/literal/call/nested/property/parenthesized/undefined and malformed IR forms fail closed"]},
+        {"case_id":"negative.isset_forms","test":"TestIssetFormsBoundary","file":"internal/codegen/isset_forms_test.go","kind":"negative","assertions":["empty/literal/call/property/parenthesized/undefined and malformed IR forms fail closed"]},
         {"case_id":"unit.runtime.isset_value","test":"TestIssetValueDomain","file":"runtime/isset_value_test.go","kind":"unit","assertions":["canonical null is false and supported non-null values are true without coercion"]}
       ],
-      "limitations": ["Addresses must already be defined; no PHP undefined-variable suppression", "No nested indexes, properties, string offsets, arbitrary/parenthesized/effectful addresses or references", "Indexed addresses retain the separate strict array root and int|string key contract", "No warning/exception equivalence; Gossip adoption needs a separate pinned original-source comparison"]
+      "limitations": ["Addresses must already be defined; no PHP undefined-variable suppression", "No properties, string offsets, arbitrary/parenthesized/effectful isset addresses or references", "One-level indexed addresses retain strict array roots; nested paths use the separate array/null intermediate contract", "No warning/exception equivalence; Gossip adoption needs a separate pinned original-source comparison"]
     },
     {
       "id": "php.syntax.array-write-and-reference",
