@@ -26,8 +26,8 @@ func TestMatchReportsUnavailableWithoutEnabledBackend(t *testing.T) {
 	if !errors.Is(err, ErrUnavailable) {
 		t.Fatalf("Match() error = %v, want errors.Is(_, ErrUnavailable)", err)
 	}
-	var unavailable BackendUnavailableError
+	var unavailable *BackendUnavailableError
 	if !errors.As(err, &unavailable) {
-		t.Fatalf("Match() error = %T, want BackendUnavailableError", err)
+		t.Fatalf("Match() error = %T, want *BackendUnavailableError", err)
 	}
 }
