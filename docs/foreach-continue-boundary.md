@@ -30,10 +30,12 @@ PHP 8.3 target with oracle >= 8.3.36.
 
 Gossip PR #35 identified three independent blockers in the original WordPress
 `_wp_array_get`: default parameters, bare/multiple isset and foreach continue.
-This change addresses only the third. The original function is not certified:
-defaults and isset remain unsupported, and adoption requires a new Gossip-owned
-compiler pin and unchanged-source differential evidence. No Gossip pins/corpus
-or production configuration are changed here. `array_slice` remains deferred.
+PR #62 addressed the third. Subsequent PR #63 added bounded
+[trailing untyped null defaults and defined bare/multiple isset](array-get-prerequisites.md);
+PR #64 fixed [literal-null identity](literal-null-identity.md). Compiler tests do
+not certify the original function: Gossip's separate exact-pin comparison is
+recorded in the [integration contract](integration.md). This documentation update
+changes no Gossip pins/corpus or production configuration. `array_slice` remains deferred.
 
 This extends local `gohp.cli.generate`, still WebMCP `excluded` (developer-local
 translation, no browser operation/route/auth change or automatic submission).
