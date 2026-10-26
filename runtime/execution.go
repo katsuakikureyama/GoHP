@@ -7,6 +7,7 @@ type Execution struct {
 	strtokText  string
 	strtokPos   int
 	strtokReady bool
+	preg83Error int64
 }
 
 func RequireExecution(execution *Execution) {

@@ -1,0 +1,70 @@
+=== RUN   TestPreg83BuildsOffsetCaptureMatchesInPHPOrder
+--- PASS: TestPreg83BuildsOffsetCaptureMatchesInPHPOrder (0.00s)
+=== RUN   TestPreg83ShapesUnmatchedAndTrailingCaptures
+--- PASS: TestPreg83ShapesUnmatchedAndTrailingCaptures (0.00s)
+=== RUN   TestPreg83ReturnsFreshNestedArrays
+--- PASS: TestPreg83ReturnsFreshNestedArrays (0.00s)
+=== RUN   TestPreg83ResetsPerExecutionErrorState
+--- PASS: TestPreg83ResetsPerExecutionErrorState (0.00s)
+=== RUN   TestPreg83ExecutionIsolationAndNestedGoHelper
+--- PASS: TestPreg83ExecutionIsolationAndNestedGoHelper (0.00s)
+=== RUN   TestPreg83PreservesStateForUnsupportedCalls
+--- PASS: TestPreg83PreservesStateForUnsupportedCalls (0.00s)
+=== RUN   TestPreg83RejectsInvalidDomainsAndRequiresExecution
+--- PASS: TestPreg83RejectsInvalidDomainsAndRequiresExecution (0.00s)
+=== RUN   TestPreg83NativeExecutionState
+    preg83_native_test.go:40: native fixture sha256=22108799755515d3c49202ebef5b54adc8c6892dfe253f405b1650ba410770ff; image=php:8.3.36-cli@sha256:98d555ff97b3865140ad31032508c3ca089fa97a8944b14ca9dc03ea05d788cd
+    preg83_native_test.go:79: native-a sha256=d2a87fc759101de7e53848477bcd785e7df2d16cebaf0393ce835d9e157565ee json={"schema":"gohp.preg83-state-reference\/v1","php_version":"8.3.36","pcre_version":"10.42 2022-12-12","jit":"0","depth":"10000","locale":"C","scenario":"a","initial":0,"final":2,"steps":[{"label":"failure","before":0,"after":2,"return":{"type":"bool","value":false},"matches":{"type":"array","entries":[]}},{"label":"nested_success","before":2,"after":0,"return":{"type":"int","value":1},"matches":{"type":"array","entries":[{"key":{"type":"int","value":0},"value":{"type":"array","entries":[{"key":{"type":"int","value":0},"value":{"type":"string","base64":"YQ=="}},{"key":{"type":"int","value":1},"value":{"type":"int","value":0}}]}},{"key":{"type":"string","base64":"bGV0dGVy"},"value":{"type":"array","entries":[{"key":{"type":"int","value":0},"value":{"type":"string","base64":"YQ=="}},{"key":{"type":"int","value":1},"value":{"type":"int","value":0}}]}},{"key":{"type":"int","value":1},"value":{"type":"array","entries":[{"key":{"type":"int","value":0},"value":{"type":"string","base64":"YQ=="}},{"key":{"type":"int","value":1},"value":{"type":"int","value":0}}]}}]}},{"label":"failure_again","before":0,"after":2,"return":{"type":"bool","value":false},"matches":{"type":"array","entries":[]}},{"label":"no_match_reset","before":2,"after":0,"return":{"type":"int","value":0},"matches":{"type":"array","entries":[]}},{"label":"nested_failure","before":0,"after":2,"return":{"type":"bool","value":false},"matches":{"type":"array","entries":[]}}]}
+    preg83_native_test.go:79: native-b sha256=1cba42b1febad4d5469a057cf3ae25146adffd683005d62dd6807aa5116f36d4 json={"schema":"gohp.preg83-state-reference\/v1","php_version":"8.3.36","pcre_version":"10.42 2022-12-12","jit":"0","depth":"10000","locale":"C","scenario":"b","initial":0,"final":0,"steps":[{"label":"empty_capture","before":0,"after":0,"return":{"type":"int","value":1},"matches":{"type":"array","entries":[{"key":{"type":"int","value":0},"value":{"type":"array","entries":[{"key":{"type":"int","value":0},"value":{"type":"string","base64":""}},{"key":{"type":"int","value":1},"value":{"type":"int","value":0}}]}},{"key":{"type":"int","value":1},"value":{"type":"array","entries":[{"key":{"type":"int","value":0},"value":{"type":"string","base64":""}},{"key":{"type":"int","value":1},"value":{"type":"int","value":0}}]}}]}},{"label":"no_match","before":0,"after":0,"return":{"type":"int","value":0},"matches":{"type":"array","entries":[]}}]}
+--- PASS: TestPreg83NativeExecutionState (1.15s)
+=== RUN   TestPregMatch83RetainedReference
+=== RUN   TestPregMatch83RetainedReference/empty_document
+=== RUN   TestPregMatch83RetainedReference/plain_text
+=== RUN   TestPregMatch83RetainedReference/core_opener
+=== RUN   TestPregMatch83RetainedReference/core_closer
+=== RUN   TestPregMatch83RetainedReference/core_void
+=== RUN   TestPregMatch83RetainedReference/namespaced_opener
+=== RUN   TestPregMatch83RetainedReference/nonempty_json_attributes
+=== RUN   TestPregMatch83RetainedReference/empty_json_attributes
+=== RUN   TestPregMatch83RetainedReference/nested_unicode_attributes
+=== RUN   TestPregMatch83RetainedReference/invalid_json_attributes
+=== RUN   TestPregMatch83RetainedReference/brace_inside_json_string
+=== RUN   TestPregMatch83RetainedReference/multiline_comment
+=== RUN   TestPregMatch83RetainedReference/missing_space_after_comment_open
+=== RUN   TestPregMatch83RetainedReference/unterminated_comment
+=== RUN   TestPregMatch83RetainedReference/invalid_utf8_attributes
+=== RUN   TestPregMatch83RetainedReference/adjacent_comments_second_offset
+=== RUN   TestPregMatch83RetainedReference/multibyte_prefix
+=== RUN   TestPregMatch83RetainedReference/nul_prefix
+=== RUN   TestPregMatch83RetainedReference/invalid_utf8_prefix
+=== RUN   TestPregMatch83RetainedReference/at_end_offset
+=== RUN   TestPregMatch83RetainedReference/negative_document_start_offset
+=== RUN   TestPregMatch83RetainedReference/offset_inside_utf8_prefix
+=== RUN   TestPregMatch83RetainedReference/long_unterminated_json_attribute
+=== RUN   TestPregMatch83RetainedReference/backtrack_limit_one
+--- PASS: TestPregMatch83RetainedReference (0.02s)
+    --- PASS: TestPregMatch83RetainedReference/empty_document (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/plain_text (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/core_opener (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/core_closer (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/core_void (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/namespaced_opener (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/nonempty_json_attributes (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/empty_json_attributes (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/nested_unicode_attributes (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/invalid_json_attributes (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/brace_inside_json_string (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/multiline_comment (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/missing_space_after_comment_open (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/unterminated_comment (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/invalid_utf8_attributes (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/adjacent_comments_second_offset (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/multibyte_prefix (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/nul_prefix (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/invalid_utf8_prefix (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/at_end_offset (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/negative_document_start_offset (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/offset_inside_utf8_prefix (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/long_unterminated_json_attribute (0.00s)
+    --- PASS: TestPregMatch83RetainedReference/backtrack_limit_one (0.00s)
+PASS

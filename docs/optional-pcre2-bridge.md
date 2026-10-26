@@ -6,9 +6,10 @@ compiler admission or PHP-version compatibility. The default build still uses
 `CGO_ENABLED=0`. There is no automatic fallback or dependency installation.
 
 This implements B1 of the consumer's [staged contract](https://github.com/katsuakikureyama/Gossip/blob/f6236ac365fbc09e8491e351c46ba013720a6de4/docs/pcre2-bridge-contract.md).
-B2 (PHP values and per-Execution error state) and B3 (validated writable local
-output IR/storage) remain separate, unfinished work. No storage/Frame APIs,
-generated runtime imports, compiler behavior or Gossip pins change here.
+B2 now has a separate experimental [PHP8.3 value adapter](preg83-value-wrapper.md),
+not compiler builtin admission. B3 (validated writable local output IR/storage)
+remains unfinished. No storage/Frame APIs, generated runtime imports, compiler
+behavior or Gossip pins change through the engine bridge.
 
 ## Engine contract
 
