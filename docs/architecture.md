@@ -102,12 +102,13 @@ array snapshots. It does not include inheritance or dynamic properties; see the
 [class inventory](compatibility.md#objects-and-callables).
 
 The canonical internal Slot/cell engine now owns scalar values and bounded
-scalar-element array handles, with explicit copy/read/release. Internal shared
-containers separate storage on write and track reference ownership; Frame and
+scalar-element array handles, with explicit copy/read/release, synchronous
+Slot-rooted mutations and internal value snapshots with single consumption/release.
+Internal shared containers separate storage on write and track reference ownership; Frame and
 element bindings remain scalar-only, including through aliases. Only selected
 closed scalar functions currently use the generated Frame facade. This is R1
 infrastructure, not a migration of generated arrays or PHP-reference support.
-Writable locations, general temporary lifetimes and nested shared storage remain
+Persistent locations, generated temporary integration and nested shared storage remain
 unfinished; the [reference/value model](reference-value-model.md) owns those gates.
 
 Runtime arithmetic is restricted to integral coercions. Overflow, missing keys,
