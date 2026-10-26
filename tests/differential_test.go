@@ -179,7 +179,7 @@ func TestUnsupported(t *testing.T) {
 		{name: "negative_integer_string", src: "<?php echo -'5';"},
 		{name: "negative_integer_repeated_sign", src: "<?php echo - -5;"},
 		{name: "negative_integer_decrement", src: "<?php $a = 5; echo --$a;"},
-		{name: "negative_integer_subtraction", src: "<?php echo 1 - 2;"},
+		{name: "negative_integer_subtraction", src: "<?php echo '1' - 2;"},
 		{name: "negative_integer_minimum_token", src: "<?php echo -9223372036854775808;"},
 		{name: "negative_integer_float", src: "<?php echo -1.5;"},
 		{name: "negative_integer_nondecimal", src: "<?php echo -012;"},
