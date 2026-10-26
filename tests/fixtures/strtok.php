@@ -27,6 +27,13 @@ function mapped_token($ignored) {
     return strtok(',;');
 }
 
+class ConstructorStep {
+    public $token;
+    public function __construct() {
+        $this->token = strtok(',');
+    }
+}
+
 class TokenStepper {
     public function next($delimiters) {
         return strtok($delimiters);
@@ -90,6 +97,9 @@ $arrow_second = $arrow_next('ignored');
 $arrow_third = strtok('/');
 echo 'shared=' . $method_first . ':' . $method_second . ':' . $method_third
     . ':' . $arrow_first . ':' . $arrow_second . ':' . $arrow_third . "\n";
+$constructor_first = strtok('before,constructor,after', ',');
+$constructor = new ConstructorStep();
+echo 'constructor=' . $constructor_first . ':' . $constructor->token . ':' . strtok(',') . "\n";
 
 // Literal named array_map callbacks use that same state; the exhausted third
 // callback value is false and is retained as false in the result array.

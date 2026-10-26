@@ -29,12 +29,13 @@ creating a function-local token stream.
 
 Only programs containing a direct strtok call emit execution-aware lowering:
 
-- `main` creates a fresh context. All generated direct functions, methods,
+- `main` creates a fresh context. All generated direct functions, constructors, methods,
   named array_map adapters and arrow invocations propagate it.
-- Existing `F_name(args...)` / `M_name(args...)` signatures remain callable;
+- Existing `F_name(args...)` / `M_name(args...)` / `New_name(args...)` signatures remain callable;
   each host invocation begins a fresh logical execution. Two separate wrapper
   invocations must not be used as a shared start/continue pair.
-- New `FContext_name(*rt.Execution, args...)` / `MContext_name(...)` entries
+- New `FContext_name(*rt.Execution, args...)` / `MContext_name(...)` /
+  `NewContext_name(...)` entries
   allow a host to share state deliberately across same-request entry calls.
   Nil context is rejected. These entries are emitted only for stateful programs;
   consumers must pin compiler/generated artifacts, not assume universal presence.
@@ -53,7 +54,7 @@ not broadened. No termination limits or implicit source replay are added.
 Catalog `php.builtin.strtok` is partial. Tests cover native PHP 8.3 comparison,
 byte scanning (NUL/invalid UTF-8 included at runtime), cursor/reset semantics,
 argument/state rejection, source maps, malformed IR, generated guards, nested
-function/method/callback sharing and same-process independent host entries.
+function/constructor/method/callback sharing and same-process independent host entries.
 The generated host test also interleaves explicit contexts, passes an escaped
 arrow to another context and runs independent wrapper calls concurrently.
 This is not a benchmark or a concurrency guarantee for a shared context.

@@ -23,8 +23,8 @@ an already-tokenized class name. `str_contains` on the complete attribute is
 only an earlier guard; the two operations are not interchangeable.
 
 Our fixture uses owned strings/token arrays and guard composition. It does not
-execute or certify the unchanged full render function. Stateful `strtok` and
-`WP_HTML_Tag_Processor` remain missing dependencies. [Bounded while](while-boundary.md)
+execute or certify the unchanged full render function. [Bounded strtok](strtok-boundary.md)
+is tracked separately; `WP_HTML_Tag_Processor` remains a missing dependency. [Bounded while](while-boundary.md)
 now supports bare nearest-loop break/continue, but does not certify that caller.
 No Gossip source, pins, corpora or consumer adoption are changed.
 

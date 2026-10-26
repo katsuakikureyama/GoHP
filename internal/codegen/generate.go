@@ -112,7 +112,12 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		for _, v := range c.Properties {
 			g.emit("P_%s any\n", v.Name)
 		}
-		g.emit("}\nfunc New_%s(args ...any) any {", name(c.Name))
+		if g.execution {
+			g.emit("}\nfunc New_%s(args ...any) any { return NewContext_%s(&rt.Execution{},args...) }\n", name(c.Name), name(c.Name))
+			g.emit("func NewContext_%s(execution *rt.Execution,args ...any) any { rt.RequireExecution(execution)\n", name(c.Name))
+		} else {
+			g.emit("}\nfunc New_%s(args ...any) any {", name(c.Name))
+		}
 		if !hasConstructor {
 			g.emit("rt.Args(args,0)\n")
 		}
@@ -122,7 +127,11 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		}
 		g.emit("}\n")
 		if hasConstructor {
-			g.emit("self.M___construct(args...)\n")
+			if g.execution {
+				g.emit("self.MContext___construct(execution,args...)\n")
+			} else {
+				g.emit("self.M___construct(args...)\n")
+			}
 		}
 		g.emit("return self\n}\n")
 		g.emit("func (self *C_%s) Get(k string) any { switch k {", name(c.Name))
@@ -609,6 +618,9 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 	case "new":
 		if !g.classes[name(e.Text)] {
 			g.fail(e.Line, "unknown class "+e.Text)
+		}
+		if g.execution {
+			return "NewContext_" + name(e.Text) + "(execution," + args(e.Args) + ")"
 		}
 		return "New_" + name(e.Text) + "(" + args(e.Args) + ")"
 	case "object_array_cast":

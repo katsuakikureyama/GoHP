@@ -43,8 +43,9 @@ Catalog `php.syntax.while` is `partial`, with six checks: native differential,
 lowering/source map, conservative type state, source rejection, malformed IR,
 and generated runtime guards. Target PHP 8.3 uses oracle >= 8.3.36. Owned token
 array selection composes `str_starts_with` with while/break but does not execute
-the unchanged WordPress render caller. Stateful `strtok`, HTML processing and
-exact-pin consumer adoption remain separate work. No Gossip pin/corpus changes.
+the unchanged WordPress render caller. [Execution-owned strtok](strtok-boundary.md)
+is tracked separately; HTML processing and exact-pin consumer adoption remain
+separate work. No Gossip pin/corpus changes.
 
 Capability: existing developer-local `gohp.cli.generate`, WebMCP `excluded`.
 No browser/server/MCP operation, route, authentication, deployment or auto-submit.

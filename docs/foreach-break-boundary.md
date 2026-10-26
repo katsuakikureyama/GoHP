@@ -25,8 +25,8 @@ This was the first loop-exit increment; bounded while is now tracked separately.
 It does not add `for`, `do`, `switch`, labels or multi-level break. The owned token-array fixture selects a
 first `wp-elements-` prefix with existing `str_starts_with`; it is not the
 unchanged WordPress render function. That source uses stateful `strtok` and a
-while loop before calling an HTML processor. Tokenizer and HTML processing
-remain missing; while support alone does not certify that caller.
+while loop before calling an HTML processor. [Bounded strtok](strtok-boundary.md)
+is now separate; HTML processing remains missing. These increments alone do not certify that caller.
 Gossip source/pins/corpora are unchanged, with no consumer adoption implied.
 
 Catalog `php.syntax.foreach_break` remains `partial`, with six differential,

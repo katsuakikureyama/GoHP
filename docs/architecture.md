@@ -21,6 +21,13 @@ name/arity/scope checks and lowers IR into direct Go calls, loops and structs.
 The CLI is the initial versioned adapter boundary, not a public Go API promise.
 No WordPress hooks or special compiler behavior exist in the core.
 
+Programs using [strtok](strtok-boundary.md) explicitly thread `rt.Execution`
+through generated functions, constructors, methods and callback calls. Existing
+host entry wrappers create fresh contexts; additive context-aware entries allow
+deliberate same-execution sharing. Contextual arrows use the invoking context,
+not captured mutable execution state. No process-global tokenizer or implicit
+request manager is introduced. Stateless programs retain existing lowering.
+
 The optional `Function.ReturnType` admits canonical empty/untyped, `array` or
 `bool` on named global functions. Validation propagates that context through
 all conditional and foreach bodies; code generation guards explicit returns

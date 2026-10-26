@@ -32,6 +32,7 @@ function make_arrow() { return fn() => strtok(','); }
 function invoke_arrow(callable $f) { return $f(); }
 function pair($text) { $first = start($text); return $first . ':' . next_token(); }
 class Scanner { public function next_token() { return strtok(','); } }
+class Initializer { public $head; public function __construct($text) { $this->head = strtok($text, ','); } }
 `, phpTarget(t))
 	if err != nil {
 		t.Fatal(err)
@@ -67,6 +68,12 @@ func init() {
  rejected(func(){ object.M_next_token() },"initialized state")
  rejected(func(){ FContext_next_token(nil) },"execution context")
  rejected(func(){ F_invoke_arrow(arrow) },"initialized state")
+ initialized:=New_initializer("standalone,hidden").(*C_initializer)
+ check(initialized.Get("head"),"standalone")
+ rejected(func(){ F_next_token() },"initialized state")
+ initialized=NewContext_initializer(a,"ctor,shared").(*C_initializer)
+ check(initialized.Get("head"),"ctor")
+ check(FContext_next_token(a),"shared")
  results:=make(chan any,8)
  for i:=0;i<8;i++ { go func(){ results<-F_pair("first,last") }() }
  for i:=0;i<8;i++ { check(<-results,"first:last") }
