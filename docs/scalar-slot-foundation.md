@@ -39,7 +39,7 @@ exclusion remains applicable. No Gossip compiler pin changes are required.
 At commit `01a28db` (Go 1.23.0, darwin/arm64), with
 `GOCACHE=/tmp/gohp-go-cache GOPROXY=off GOTOOLCHAIN=go1.23.0`:
 
-- `go test -count=1 ./internal/storage`: PASS (7 tests, 0.194s).
+- `go test -count=1 ./internal/storage`: PASS (8 tests, 0.194s).
 - `go vet ./internal/storage`: PASS.
 
 The PHP-only specification from #82 is reused as the behavioral reference; no
