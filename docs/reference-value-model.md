@@ -1,6 +1,6 @@
 # Reference, value and assignment foundation
 
-Status: **design + native-oracle specification; scalar slots, explicit Frame release and bounded shared scalar containers implemented**.
+Status: **design + native-oracle specification; scalar frames, shared scalar containers and bounded owned array-valued Slots implemented**.
 Baseline: main `565e65e6c9d8e211b06779739bfba76b07c4d92d` (#81).
 Target: PHP 8.3, oracle floor 8.3.36. Later series need separate policy and
 evidence; they must not inherit these results. No compiler/runtime/IR changes
@@ -12,6 +12,8 @@ functions; PHP reference syntax remains unsupported. The native specification be
 still PHP 8.3-only even though the compiler now has an independent PHP 8.4 target.
 [Shared scalar containers](shared-scalar-array-storage.md) now exercise internal
 separation/copy timing; runtime arrays and generated array code are not migrated.
+[Owned Slot array values](owned-array-slot-values.md) now have explicit retain/read/release;
+Frame and element bindings remain scalar-only, including through aliases.
 
 ## Decision
 
@@ -144,14 +146,14 @@ substitute a custom Go hook engine for untested original `WP_Hook` behavior.
 | Stage | Deliverable / exit condition | Status |
 |---|---|---|
 | R0 | Design and executable PHP-only reference contracts; record exact native run separately | This change; GoHP reference support remains unsupported |
-| R1 | Internal slot/value ownership primitives and shared-array separation design implemented behind closed boundaries; existing no-reference behavior preserved | Partial: scalar slots, explicit Frame release, bounded scalar codegen and internal shared scalar containers with common bounded key/index policy implemented; array-valued slots, nested/temporary ownership and general runtime/frame integration pending |
+| R1 | Internal slot/value ownership primitives and shared-array separation design implemented behind closed boundaries; existing no-reference behavior preserved | Partial: scalar frames/codegen, shared scalar containers/key-index policy and owned array-valued Slots implemented; writable locations, nested/generated temporary ownership and general runtime/frame integration pending |
 | R2 | Bounded variable reference assignment/unset, explicit address IR and binding lifetime; source + malformed-IR negatives and PHP/Go comparisons | Not implemented |
 | R3 | Reference-bearing arrays, element/declared-property locations, copy-timing and lifetime cases; key order/next-index and existing copy isolation retained | Not implemented |
 | R4 | By-reference parameters/returns, reference foreach and closure captures, each with explicit bounded contracts and call-path evidence | Not implemented |
 | R5 | Generic dynamic callable forms and original application acceptance (full block parser, then hooks) | Not implemented; not implied by R0–R4 |
 
-Next bounded implementation: R1's array-value/temporary ownership integration,
-building on shared scalar containers, common key/index policy and explicit Frame release. Keep parser acceptance unchanged;
+Next bounded implementation: R1's owned writable array locations and generated temporary lifetime,
+building on shared scalar containers, owned array-valued Slots and explicit Frame release. Keep parser acceptance unchanged;
 exercise real alias/copy/lifetime contracts, then integrate the storage model
 across codegen/runtime boundaries in reviewed increments. If a narrower scalar
 R2 subset precedes array migration, reject arrays/objects/unsupported locations

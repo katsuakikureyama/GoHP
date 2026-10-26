@@ -7,6 +7,11 @@ a runtime facade; general `map[string]any` frames remain in place. It does not
 admit PHP reference syntax or implement PHP exceptions.
 Only exact null, bool, int64 and string values are admitted; the boundary is the
 same for the independently tested PHP 8.3 and 8.4 targets.
+Although [general Slots can own arrays](owned-array-slot-values.md), Frame
+bindings are scalar-only. Bind rejects array-valued sources before allocation;
+all aliases reject array writes while a frame/element scalar-only owner survives.
+Closing/unsetting the last constrained binding releases that restriction for
+independently owned, unrestricted aliases; no frame binding is resurrected.
 
 ## Ownership contract
 

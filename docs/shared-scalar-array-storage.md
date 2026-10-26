@@ -45,9 +45,11 @@ the sharing relationship, not just a snapshot of current values.
 
 ## Deliberately bounded domain
 
-Elements are exact null/bool/int64/string, including byte strings. Slot and
-Frame still reject array handles as values. Nested arrays, objects, callables,
-host pointers and cyclic values cannot enter this storage.
+Elements are exact null/bool/int64/string, including byte strings. General
+[Slots now own array values](owned-array-slot-values.md), but Frame/element
+bindings stay scalar-only. Their live constraints follow the canonical cell,
+so external aliases cannot introduce nested arrays by writing later.
+Nested arrays, objects, callables, host pointers and cycles remain excluded.
 
 Keys are exact int64 or string, normalized by `internal/arraykey`, the same
 dependency-leaf policy used by `runtime.Array`. Canonical in-range decimal
@@ -68,8 +70,8 @@ The policy preserves the existing runtime behavior for the active 8.3/8.4
 targets. It does not admit new targets or imply identical behavior across all
 PHP 8.x versions. Neither runtime nor storage imports the other for this policy.
 
-No pointer into a slice of entries is exposed. Temporary/host ownership,
-nested-value retain/release, array-valued slots, address IR and operation-specific
+No pointer into a slice of entries is exposed. General generated/host temporary
+ownership, nested-value retain/release, address IR and operation-specific
 evaluation order still need explicit integration contracts. Do not silently
 wrap a runtime.Array or eager Clone and treat it as reference-capable storage.
 
@@ -95,8 +97,9 @@ Its self-array exception is outside this scalar-only domain.
 Both active target CI jobs must preserve the existing compiler corpus and record
 these internal checks separately. Existing array/append differential fixtures
 exercise the runtime policy per target; they are not evidence for generated
-reference arrays. R1 remains partial. The next gate is explicit array-value and
-temporary ownership before replacing any runtime array storage path.
+reference arrays. R1 remains partial. Explicit Slot array ownership is internal;
+writable array locations and general generated temporary ownership are needed
+before replacing any runtime array storage path.
 No performance, warning/exception, cycle or application acceptance claim is made.
 
 No CLI/route/authentication/capability, target policy, oracle environment, CI

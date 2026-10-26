@@ -30,7 +30,7 @@ func (frame *Frame) local(name string) *Slot {
 	if frame.slots == nil {
 		frame.slots = make(map[string]*Slot)
 	}
-	slot := &Slot{}
+	slot := newScalarSlot()
 	frame.slots[name] = slot
 	return slot
 }
@@ -56,9 +56,7 @@ func (frame *Frame) Write(name string, value any) {
 // not rebind source or its other aliases. An undefined source becomes null.
 func (frame *Frame) Bind(name string, source *Slot) {
 	frame.requireOpen()
-	if source == nil {
-		panic("storage reference requires a slot")
-	}
+	scalarSource(source)
 	frame.local(name).Bind(source)
 }
 
