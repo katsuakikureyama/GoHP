@@ -24,7 +24,7 @@ func Markdown(r Report) []byte {
 		b.WriteString("This evidence is run-scoped and must not be treated as a current-release pass.\n\n")
 	}
 	writeBaselineMarkdown(&b, r.Metadata)
-	if r.Schema == RunSchema || r.Schema == RunSchemaQuiet {
+	if r.Schema == RunSchema || r.Schema == RunSchemaOutputs || r.Schema == RunSchemaQuiet {
 		b.WriteString("run/v0.3 and later positive fixtures require empty PHP and Go stderr under quiet-success/v1; this is not arbitrary diagnostic equivalence.\n\n")
 	}
 	b.WriteString("`differential-pass (case-limited)` covers only its listed fixture cases. Arbitrary stderr/warning equivalence, exception and side-effect comparisons are not measured.\n\n")

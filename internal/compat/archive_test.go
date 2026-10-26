@@ -12,7 +12,7 @@ import (
 // filesystem: there is no tests/fixture.php or tests/archive_test.go here.
 func savedRun(t *testing.T, target, terminal string, schemas ...string) (string, Report) {
 	t.Helper()
-	entry := Entry{ID: "php.example", Kind: "builtin", Name: "example", Implementation: "partial", Contract: "fixture only", PHPTargets: []string{"7.4", "8.3"}, Limitations: []string{"no side effects compared"}, Checks: []Check{{CaseID: "case.example", Test: "TestExample", File: "tests/archive_test.go", Kind: "differential", Fixture: "tests/fixture.php", Assertions: []string{"stdout and successful exits"}}}}
+	entry := Entry{ID: "php.example", Kind: "builtin", Name: "example", Implementation: "partial", Contract: "fixture only", PHPTargets: []string{"7.4", "8.3", "8.4"}, Limitations: []string{"no side effects compared"}, Checks: []Check{{CaseID: "case.example", Test: "TestExample", File: "tests/archive_test.go", Kind: "differential", Fixture: "tests/fixture.php", Assertions: []string{"stdout and successful exits"}}}}
 	c := Catalog{Schema: "gohp.compatibility.catalog/v0.1", Maturity: "experimental", Entries: []Entry{entry}}
 	if err := c.validateCatalog(false); err != nil {
 		t.Fatal(err)
@@ -39,10 +39,10 @@ func savedRun(t *testing.T, target, terminal string, schemas ...string) (string,
 	p.Phases.Parse, p.Phases.Codegen, p.Phases.GoBuild, p.Phases.GoExecute, p.Phases.Differential = "pass", "pass", "pass", "pass", "pass"
 	p.Comparisons.Stdout, p.Comparisons.Exit = "pass", "pass"
 	p.Comparisons.Stderr, p.Comparisons.Exceptions, p.Comparisons.SideEffects = "not-checked", "not-checked", "not-checked"
-	if schema == RunSchema || schema == RunSchemaQuiet {
+	if schema == RunSchema || schema == RunSchemaOutputs || schema == RunSchemaQuiet {
 		p.Diagnostics = testQuietEvidence()
 	}
-	if schema == RunSchema {
+	if schema == RunSchema || schema == RunSchemaOutputs {
 		p.Outputs = testExecutionOutputs("same", "same")
 	}
 	payload, err := json.Marshal(p)

@@ -94,13 +94,13 @@ func TestQuietEvidenceCannotPromoteUnobservedOrNoisyRuns(t *testing.T) {
 
 func TestQuietArchivePreservesHistoricalScope(t *testing.T) {
 	var reports []Report
-	for _, schema := range []string{RunSchemaLegacy, RunSchemaBaseline, RunSchemaQuiet, RunSchema} {
+	for _, schema := range []string{RunSchemaLegacy, RunSchemaBaseline, RunSchemaQuiet, RunSchemaOutputs, RunSchema} {
 		dir, expected := savedRun(t, "8.3", "pass", schema)
 		r, err := LoadArchive(dir)
 		if err != nil || !reflect.DeepEqual(r, expected) {
 			t.Fatalf("load %s: %v", schema, err)
 		}
-		if (r.Cases[0].Diagnostics != nil) != (schema == RunSchema || schema == RunSchemaQuiet) {
+		if (r.Cases[0].Diagnostics != nil) != (schema == RunSchema || schema == RunSchemaOutputs || schema == RunSchemaQuiet) {
 			t.Fatal("legacy diagnostic evidence synthesized")
 		}
 		reports = append(reports, r)

@@ -80,7 +80,7 @@ mutation and external side effects where relevant. Encode unmeasured dimensions
 explicitly. Nondeterministic fields may be normalized only by documented,
 case-specific rules that preserve meaningful differences.
 
-The current v0.4 harness measures stdout and normal exits, plus a bounded
+The current v0.5 harness measures stdout and normal exits, plus a bounded
 startup baseline from one separate `php -r` probe before the suite. The probe
 uses the same inherited environment and records only the documented allowlist:
 CLI SAPI, integer size, default timezone, selected INI settings, selected
@@ -127,8 +127,8 @@ Targets **8.3** and **8.4** are enabled for the documented language subset.
 Their native oracle admission floors are **8.3.36** and **8.4.27** respectively.
 The default remains 8.3. The target labels, floors, CI image identities and
 target-specific profile rules are source configuration; each target still needs
-its own successful differential evidence for a given revision. The same bounded
-corpus is deliberately executed once per target. An 8.3 PASS is never an 8.4
+its own successful differential evidence for a given revision. The catalog's
+applicable bounded cases are executed once per target. An 8.3 PASS is never an 8.4
 PASS, and absence of an 8.4 report is `unverified`, not an inherited success.
 
 PHP 8.4 has explicit target behavior: the target-resolved major/minor constants
@@ -138,6 +138,15 @@ because its native deprecation is not modeled. The profile does not implement
 the new functions or reproduce PHP diagnostics. Nullable typed defaults,
 `exit`/`die`, property hooks and asymmetric property visibility remain
 unsupported. See [the PHP 8.4 target contract](php84-target.md).
+
+Catalog v0.2 now permits check-level `php_targets`, inherited from its feature
+when omitted. Run/view v0.5 records excluded cases as `not-measured`, without
+inventing process observations. Active missing/skipped cases remain incomplete.
+The PHP 8.3-only user `array_any` declaration is a concrete scoped fixture;
+PHP 8.4 rejects that reserved declaration under a separate native/compiler
+boundary check. This does not implement the PHP 8.4 builtin. Historical runs
+retain their original schema and applicability semantics. Output comparison
+classifies a case measured on only one target as `not-comparable`.
 
 Implement the direction in bounded increments:
 

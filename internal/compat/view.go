@@ -33,7 +33,7 @@ type ViewRun struct {
 	Cases         []CaseEvidence `json:"cases"`
 }
 
-const viewNotice = "Stored run evidence only; no current-release or combined-target support verdict. Retired PHP targets and below-policy oracle versions are historical records, not current support. Internal consistency is checked, not authenticity, source bytes or CI job success. No tests are executed. Differential results cover listed cases and stdout/successful exits. Run/v0.3 and later additionally require empty stderr on both sides under quiet-success/v1; v0.4 records stdout hashes and exit codes. Arbitrary stderr/warning equivalence, exceptions and side effects are not checked. Input order is preserved; no latest/best result is selected."
+const viewNotice = "Stored run evidence only; no current-release or combined-target support verdict. Retired PHP targets and below-policy oracle versions are historical records, not current support. Internal consistency is checked, not authenticity, source bytes or CI job success. No tests are executed. Differential results cover listed cases and stdout/successful exits. Run/v0.3 and later additionally require empty stderr on both sides under quiet-success/v1; run/v0.4 and later record stdout hashes and exit codes. Arbitrary stderr/warning equivalence, exceptions and side effects are not checked. Input order is preserved; no latest/best result is selected."
 
 // Validate rejects unknown filter values before any archive is read.
 func (filter ViewFilter) Validate() error {
@@ -58,7 +58,7 @@ func BuildView(reports []Report, filter ViewFilter) (View, error) {
 	if err := filter.Validate(); err != nil {
 		return View{}, err
 	}
-	view := View{Schema: "gohp.compatibility.view/v0.4", Notice: viewNotice, Filter: filter, Runs: make([]ViewRun, 0, len(reports))}
+	view := View{Schema: "gohp.compatibility.view/v0.5", Notice: viewNotice, Filter: filter, Runs: make([]ViewRun, 0, len(reports))}
 	for _, report := range reports {
 		run := ViewRun{RunSchema: report.Schema, Metadata: report.Metadata, Overall: report.Overall, CatalogSHA256: report.CatalogSHA256, EventSHA256: report.EventSHA256, TotalFeatures: len(report.Features), Features: []FeatureRow{}, Cases: report.Cases}
 		for _, row := range report.Features {

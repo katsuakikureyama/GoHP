@@ -22,18 +22,19 @@ func testPHPBaseline(version string) *PHPBaseline {
 func TestPHPBaselineArchiveSchemas(t *testing.T) {
 	legacyDir, legacy := savedRun(t, "8.3", "pass")
 	currentDir, current := savedRun(t, "8.3", "pass", RunSchema)
+	outputsDir, outputs := savedRun(t, "8.3", "pass", RunSchemaOutputs)
 	baselineDir, baseline := savedRun(t, "8.3", "pass", RunSchemaBaseline)
 	for _, tt := range []struct {
 		dir      string
 		expected Report
-	}{{legacyDir, legacy}, {baselineDir, baseline}, {currentDir, current}} {
+	}{{legacyDir, legacy}, {baselineDir, baseline}, {outputsDir, outputs}, {currentDir, current}} {
 		actual, err := LoadArchive(tt.dir)
 		if err != nil || !reflect.DeepEqual(actual, tt.expected) {
 			t.Fatalf("archive %s: %v", tt.expected.Schema, err)
 		}
 	}
 	view, err := BuildView([]Report{legacy, current}, ViewFilter{Kind: "builtin"})
-	if err != nil || view.Schema != "gohp.compatibility.view/v0.4" || view.Runs[0].Metadata.PHPBaseline != nil || view.Runs[1].Metadata.PHPBaseline == nil {
+	if err != nil || view.Schema != "gohp.compatibility.view/v0.5" || view.Runs[0].Metadata.PHPBaseline != nil || view.Runs[1].Metadata.PHPBaseline == nil {
 		t.Fatalf("mixed archive view lost baseline distinction: %+v, %v", view, err)
 	}
 	text := string(ViewMarkdown(view))
