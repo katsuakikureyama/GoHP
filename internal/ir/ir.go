@@ -24,7 +24,7 @@ type Stmt struct {
 type Function struct {
 	Name               string
 	Params             []string
-	ParamTypes         []string // Empty means all untyped; otherwise aligned with Params: "", "array", "callable".
+	ParamTypes         []string // Aligned with Params: global array/callable; constructor int/string/bool; "" untyped.
 	OptionalNullParams int      // Number of trailing, untyped parameters defaulting to null.
 	Body               []Stmt
 	Line               int

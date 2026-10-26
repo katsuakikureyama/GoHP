@@ -227,7 +227,7 @@ func Parse(src, version string) (out ir.Program, err error) {
 	for p.peek().kind != "eof" {
 		switch {
 		case p.accept("function"):
-			out.Functions = append(out.Functions, p.function())
+			out.Functions = append(out.Functions, p.function(false))
 		case p.accept("class"):
 			out.Classes = append(out.Classes, p.class())
 		default:
@@ -236,7 +236,7 @@ func Parse(src, version string) (out ir.Program, err error) {
 	}
 	return out, nil
 }
-func (p *parser) function() ir.Function {
+func (p *parser) function(method bool) ir.Function {
 	f := ir.Function{Name: p.name("id"), Line: p.peek().line}
 	p.need("(")
 	var paramTypes []string
@@ -246,8 +246,14 @@ func (p *parser) function() ir.Function {
 			paramType := ""
 			if p.peek().kind == "id" {
 				annotation := p.pop()
-				if !strings.EqualFold(annotation.text, "array") && !strings.EqualFold(annotation.text, "callable") {
-					p.fail("only array/callable parameter declarations are supported")
+				switch strings.ToLower(annotation.text) {
+				case "array", "callable":
+				case "int", "string", "bool":
+					if !method || !strings.EqualFold(f.Name, "__construct") {
+						p.fail("scalar parameter declarations require a public constructor")
+					}
+				default:
+					p.fail("unsupported parameter declaration")
 				}
 				paramType, typed = strings.ToLower(annotation.text), true
 			}
@@ -288,7 +294,7 @@ func (p *parser) class() ir.Class {
 	for !p.accept("}") {
 		p.need("public")
 		if p.accept("function") {
-			c.Methods = append(c.Methods, p.function())
+			c.Methods = append(c.Methods, p.function(true))
 		} else {
 			propertyLine := p.peek().line
 			n := p.name("var")

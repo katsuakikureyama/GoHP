@@ -208,6 +208,8 @@ func (g *generator) function(f ir.Function, c string) {
 			g.emit("v[%q]=rt.ArrayParameter(args[%d])\n", n, i)
 		} else if len(f.ParamTypes) != 0 && f.ParamTypes[i] == "callable" {
 			g.emit("v[%q]=rt.CallableParameter(args[%d])\n", n, i)
+		} else if len(f.ParamTypes) != 0 && f.ParamTypes[i] != "" {
+			g.emit("v[%q]=rt.ScalarParameter(args[%d],%q)\n", n, i, f.ParamTypes[i])
 		} else {
 			g.emit("v[%q]=rt.Clone(args[%d])\n", n, i)
 		}
