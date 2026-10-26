@@ -422,6 +422,8 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		op := "Add"
 		if e.Text == "." {
 			op = "Concat"
+		} else if e.Text == "-" {
+			op = "Subtract"
 		} else if e.Text != "+" {
 			g.fail(e.Line, "unsupported operator")
 		}
