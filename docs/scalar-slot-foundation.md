@@ -30,8 +30,9 @@ General Slots retain only open [shared scalar containers](shared-scalar-array-st
 not eager runtime Clone results. Array Read results require caller Close;
 Write retains before release. Frame/element scalar-only constraints follow the
 canonical cell's live constrained bindings, preventing alias writes from
-introducing nested arrays or cycles. General generated temporary ownership,
-writable locations and nested/cyclic values remain unfinished R1/R3 work.
+introducing nested arrays or cycles. Synchronous one-level Slot-rooted mutations
+now borrow the owned handle without a read temporary. General generated temporary
+ownership, persistent locations and nested/cyclic values remain unfinished R1/R3 work.
 
 Tests exercise alias writes, ordinary scalar copies, rebinding, unset/recreation,
 missing versus null, self-binding, and the local-binding behavior of a simulated
