@@ -19,7 +19,7 @@ semantic validation; it does not admit previously rejected source or IR.
   defined-variable `isset` (including multiple such operands).
 - Calls: only the explicit pure-builtin list `strlen`, `strtolower`, `strcasecmp`,
   `rtrim`, `substr`, `str_contains`, `str_starts_with`, `is_array`, `is_bool`,
-  `is_int`, `is_null`, `is_string`, `is_object`. Names are case-insensitive and
+  `is_int`, `is_null`, `is_string`, `is_object`, and [bounded `gettype`](gettype-boundary.md). Names are case-insensitive and
   **every operand recursively needs the same scalar proof**. A scalar result
   alone is insufficient: `is_array([])` and `strlen(user_function())` stay on
   the map path. No new accepted source, arity or type coercion is introduced.
