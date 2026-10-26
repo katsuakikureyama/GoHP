@@ -57,7 +57,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	g.execution = usesStrtok(p)
 	for _, f := range p.Functions {
 		n := name(f.Name)
-		if n == "substr" {
+		if n == "substr" || n == "gettype" {
 			g.fail(f.Line, "reserved function "+n)
 		}
 		if n == "array_key_first" || n == "array_key_last" || n == "array_reverse" || n == "array_merge" || n == "array_slice" {
@@ -512,6 +512,12 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 				g.fail(e.Line, "in_array expects three arguments with literal true strictness")
 			}
 			return "rt.InArrayStrict(" + args(e.Args[:2]) + ")"
+		}
+		if n == "gettype" {
+			if len(e.Args) != 1 {
+				g.fail(e.Line, "gettype expects one argument")
+			}
+			return "rt.GetType(" + args(e.Args) + ")"
 		}
 		if n == "addslashes" {
 			if len(e.Args) != 1 {

@@ -3,6 +3,22 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.gettype",
+      "kind": "builtin",
+      "name": "gettype (existing value subset)",
+      "implementation": "partial",
+      "contract": "One case-insensitive direct argument, evaluated once, returns the PHP string label for existing null/bool/int64/string/Array/generated-object values. No coercion, getter or callback execution; unknown host values fail closed.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.gettype","test":"TestDifferential/gettype","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/gettype.php","assertions":["stdout","exit","PHP type labels distinguish equal-looking scalar values, arrays, generated classes and arrows; composition and one-time argument evaluation"]},
+        {"case_id":"compiler.gettype","test":"TestGetTypeLowering","file":"internal/codegen/gettype_test.go","kind":"compiler","assertions":["case-insensitive lowering, string result propagation, source mapping and scalar-only frame selection"]},
+        {"case_id":"negative.gettype.source","test":"TestGetTypeBoundaries","file":"internal/codegen/gettype_test.go","kind":"negative","assertions":["arity, redeclaration, unsupported invocation, undefined reads and known result-type misuse fail before output"]},
+        {"case_id":"unit.gettype","test":"TestGetTypeSupportedValues","file":"runtime/gettype_test.go","kind":"unit","assertions":["exact PHP labels for supported runtime values without invoking callables"]},
+        {"case_id":"negative.gettype.host","test":"TestGetTypeRejectsForeignValues","file":"runtime/gettype_test.go","kind":"negative","assertions":["foreign Go values, typed nil/invalid markers and unsupported representations reject without getter invocation"]}
+      ],
+      "limitations": ["No float/resource/closed-resource type admission, general reflection, get_debug_type, get_class or settype", "Generated object markers remain the explicit existing host ABI; arbitrary host classes are not PHP source types", "No dynamic builtin lookup, suppressed missing reads or PHP error/exception equivalence", "Explicit fixture type labels are not automatic typed-value evidence for all differential cases"]
+    },
+    {
       "id": "php.constants.target-version",
       "kind": "syntax",
       "name": "Target-series version constants",

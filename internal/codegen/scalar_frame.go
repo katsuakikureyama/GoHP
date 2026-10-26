@@ -63,7 +63,7 @@ func scalarFrameExpr(expr ir.Expr) bool {
 		switch name(expr.Text) {
 		case "strlen", "strtolower", "strcasecmp", "rtrim", "substr",
 			"str_contains", "str_starts_with", "is_array", "is_bool",
-			"is_int", "is_null", "is_string", "is_object":
+			"is_int", "is_null", "is_string", "is_object", "gettype":
 		default:
 			return false
 		}

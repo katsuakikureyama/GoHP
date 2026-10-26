@@ -843,6 +843,14 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 			return valueType{kind: arrayKind}, nil
 		}
+		if strings.EqualFold(expr.Text, "gettype") {
+			if len(args) != 1 {
+				return valueType{}, unsupported(expr.Line, "gettype expects one argument")
+			}
+			// All admitted PHP values have a type label. Unknown host values
+			// remain subject to the runtime's closed-domain guard.
+			return valueType{kind: stringKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "addslashes") {
 			if len(args) != 1 {
 				return valueType{}, unsupported(expr.Line, "addslashes expects one argument")
