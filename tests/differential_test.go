@@ -201,7 +201,7 @@ func TestUnsupported(t *testing.T) {
 		{name: "array_append_nested", src: "<?php $a = [[]]; $a[0][] = 2;"},
 		{name: "array_append_outer_nested", src: "<?php $a = []; $a[][0] = 2;"},
 		{name: "array_append_reference", src: "<?php $a = []; $v = 2; $a[] = &$v;"},
-		{name: "array_append_property", src: "<?php class X { public $value = null; } $a = new X(); $a->value[] = 2;"},
+		{name: "array_append_property", src: "<?php class X { public $value = null; } $a = new X(); $a->value[0][] = 2;"},
 		{name: "array_append_compound", src: "<?php $a = []; $a[] += 2;"},
 		{name: "array_append_read", src: "<?php $a = []; echo $a[];"},
 		{name: "array_append_expression", src: "<?php $a = []; $b = ($a[] = 2);"},
