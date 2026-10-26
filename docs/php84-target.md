@@ -2,7 +2,7 @@
 
 PHP 8.4 is an active GoHP target for the existing documented closed subset. It
 uses the compiler label `8.4`; the native oracle admission floor is PHP
-**8.4.27**. CI runs the same bounded corpus independently under the pinned image
+**8.4.27**. CI runs the applicable bounded cases independently under the pinned image
 `php:8.4.27-cli@sha256:debadc2e36b857657846e2e952cbaf52702e55482dd3c2c43806f68d8c534a70`.
 The resulting report is an 8.4-only record. It does not reuse an 8.3 result,
 and no target receives a differential-pass verdict until its own CI execution
@@ -18,11 +18,12 @@ equivalence.
 ## PHP 8.4-specific profile
 
 PHP 8.4 adds `array_find`, `array_find_key`, `array_any` and `array_all` to core.
-GoHP implements only a [bounded array_any](array-any-boundary.md) subset.
+GoHP implements [bounded array_any](array-any-boundary.md) and
+[bounded array_all](array-all-boundary.md) subsets.
 For target `8.4`, all four names are
 reserved against user declarations, case-insensitively. A declaration therefore
 fails during semantic validation instead of compiling a conflicting function.
-Calls to the other three remain unsupported. `array_any` requires a literal
+Calls to array_find and array_find_key remain unsupported. Both predicates require a literal
 declared callback with two untyped value parameters and an explicit bool return.
 The profile does not reproduce native PHP diagnostics.
 

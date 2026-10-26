@@ -3,6 +3,27 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.array_all",
+      "kind": "builtin",
+      "name": "PHP 8.4 array_all with a literal bool callback",
+      "implementation": "partial",
+      "contract": "PHP8.4 only: actual array plus literal declared global callback with two required untyped value parameters and explicit bool return; visits value/key in insertion order, stops at the first actual false, and returns true for empty or all-true input.",
+      "php_targets": ["8.4"],
+      "checks": [
+        {"case_id":"diff.php84_array_all","test":"TestDifferential/php84_array_all","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/php84_array_all.php","assertions":["stdout","exit","empty/alltrue and early false visits, key types/order, forward literal callbacks, value copy, strtok context and array_any composition"]},
+        {"case_id":"compiler.array_all.targets","test":"TestPHP84ArrayAllLoweringAndTargetBoundaries","file":"internal/codegen/array_all_test.go","kind":"compiler","assertions":["8.4 lowering and bool result; 8.3 user declaration preserved and absent builtin rejected"]},
+        {"case_id":"compiler.array_all.context","test":"TestPHP84ArrayAllStatefulCallbackUsesContextAdapter","file":"internal/codegen/array_all_test.go","kind":"compiler","assertions":["request-local execution is passed to callback"]},
+        {"case_id":"negative.array_all.source","test":"TestPHP84ArrayAllUnsupportedSourceFailsBeforeGeneration","file":"internal/codegen/array_all_test.go","kind":"negative","assertions":["callback/arity/type/return misuse fails before output including dead branches"]},
+        {"case_id":"negative.array_all.ir","test":"TestPHP84ArrayAllWrongCallbackIRIsRejectedBeforeGeneration","file":"internal/codegen/array_all_test.go","kind":"negative","assertions":["malformed callback operands reject safely before output"]},
+        {"case_id":"unit.array_all.empty","test":"TestArrayAllEmptyDoesNotCallCallback","file":"runtime/array_all_test.go","kind":"unit","assertions":["empty input returns true without invoking callback"]},
+        {"case_id":"unit.array_all.order","test":"TestArrayAllVisitsInsertionOrderWithNormalizedKeys","file":"runtime/array_all_test.go","kind":"unit","assertions":["alltrue visits value/key in insertion order with normalized key types"]},
+        {"case_id":"unit.array_all.short_circuit","test":"TestArrayAllShortCircuitsAtFirstFalseResult","file":"runtime/array_all_test.go","kind":"unit","assertions":["first and middle false stop before later callbacks"]},
+        {"case_id":"unit.array_all.copy","test":"TestArrayAllClonesNestedValuesForCallback","file":"runtime/array_all_test.go","kind":"unit","assertions":["nested array callback mutation cannot alias input storage"]},
+        {"case_id":"negative.array_all.runtime","test":"TestArrayAllRejectsUnsupportedArgumentsAndResults","file":"runtime/array_all_test.go","kind":"negative","assertions":["nonarray, nil callback and nonbool results reject without coercion"]}
+      ],
+      "limitations": ["No general/dynamic/arrow/builtin/method callbacks, optional/typed/reference callback parameters or truthiness coercion", "PHP8.3 supports only ordinary user declarations of the name, not this builtin", "No arbitrary diagnostic/exception/side-effect equivalence; array_find/array_find_key remain unsupported"]
+    },
+    {
       "id": "php.builtin.array_any",
       "kind": "builtin",
       "name": "PHP 8.4 array_any with a literal bool callback",
@@ -19,7 +40,7 @@
         {"case_id":"unit.array_any.copy","test":"TestArrayAnyClonesNestedValuesForCallback","file":"runtime/array_any_test.go","kind":"unit","assertions":["nested array callback values cannot mutate the input storage"]},
         {"case_id":"negative.array_any.runtime","test":"TestArrayAnyRejectsUnsupportedArgumentsAndResults","file":"runtime/array_any_test.go","kind":"negative","assertions":["nonarray, nil callback and nonbool results reject without coercion"]}
       ],
-      "limitations": ["No dynamic/builtin/method/arrow callbacks, optional or typed callback parameters, references or truthiness coercion", "Explicit bool returns remain actual-bool-only, not PHP weak return conversion", "PHP8.3 has no builtin support; same-named user functions remain ordinary calls", "No general diagnostic/exception/side-effect equivalence or other PHP8.4 array-search builtins"]
+      "limitations": ["No dynamic/builtin/method/arrow callbacks, optional or typed callback parameters, references or truthiness coercion", "Explicit bool returns remain actual-bool-only, not PHP weak return conversion", "PHP8.3 has no builtin support; same-named user functions remain ordinary calls", "No general diagnostic/exception/side-effect equivalence; array_all has its own bounded entry and array_find/array_find_key remain unsupported"]
     },
     {
       "id": "php.builtin.gettype",
@@ -975,6 +996,7 @@
       "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.php83_array_any_declaration","test":"TestDifferential/php83_array_any_declaration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/php83_array_any_declaration.php","php_targets":["8.3"],"assertions":["PHP 8.3 user array_any declaration and mixed-case calls match generated stdout; not the PHP 8.4 builtin"]},
+        {"case_id":"diff.php83_array_all_declaration","test":"TestDifferential/php83_array_all_declaration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/php83_array_all_declaration.php","php_targets":["8.3"],"assertions":["PHP8.3 user array_all declaration retains its own arity and result; not the PHP8.4 builtin"]},
         {"case_id": "diff.core", "test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["native PHP stdout equals generated Go stdout"]}
       ],
       "limitations": ["No optional, scalar typed, variadic or by-reference parameters", "Only capture-free generated arrows; no general callable resolution"]

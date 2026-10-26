@@ -833,23 +833,24 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 			return valueType{kind: boolKind}, nil
 		}
-		// In 8.3 this name remains an ordinary user function. Do not reserve
-		// or lower it globally merely because the 8.4 builtin is implemented.
-		if v.target == "8.4" && strings.EqualFold(expr.Text, "array_any") {
+		// In 8.3 these names remain ordinary user functions. Both 8.4
+		// predicates share the same closed callback admission contract.
+		if v.target == "8.4" && (strings.EqualFold(expr.Text, "array_any") || strings.EqualFold(expr.Text, "array_all")) {
+			builtin := strings.ToLower(expr.Text)
 			if len(expr.Args) != 2 || expr.Args[1].Kind != "string" || !validName(expr.Args[1].Text) {
-				return valueType{}, unsupported(expr.Line, "array_any expects one array and a literal named callback")
+				return valueType{}, unsupported(expr.Line, builtin+" expects one array and a literal named callback")
 			}
 			callback := strings.ToLower(expr.Args[1].Text)
 			if v.functions[callback] != 2 || v.minimum[callback] != 2 || v.returns[callback] != "bool" {
-				return valueType{}, unsupported(expr.Line, "array_any callback requires two untyped value parameters and a bool return declaration")
+				return valueType{}, unsupported(expr.Line, builtin+" callback requires two untyped value parameters and a bool return declaration")
 			}
 			for _, annotation := range v.parameters[callback] {
 				if annotation != "" {
-					return valueType{}, unsupported(expr.Line, "array_any callback parameters must be untyped")
+					return valueType{}, unsupported(expr.Line, builtin+" callback parameters must be untyped")
 				}
 			}
 			if args[0].kind != arrayKind && args[0].kind != unknownKind {
-				return valueType{}, unsupported(expr.Line, "array_any requires an array")
+				return valueType{}, unsupported(expr.Line, builtin+" requires an array")
 			}
 			return valueType{kind: boolKind}, nil
 		}
