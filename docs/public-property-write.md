@@ -18,7 +18,9 @@ All generated public properties are untyped mutable slots: a null/scalar default
 is not a permanent inferred type. Reads retain declaration checks but become
 unknown so existing operation guards check the actual value after writes,
 alias changes and method calls. No optimistic branch/alias-sensitive narrowing.
-Classes still have only scalar/null literal defaults and no-argument creation.
+Classes have scalar/null literal or implicit-null defaults. The later
+[constructor boundary](block-data-constructor.md) permits fixed untyped public
+constructors; this does not broaden unknown-receiver property assignment.
 
 Arrays use the existing recursive value-copy convention at both setter and
 getter boundaries; writing the original or a read-back array does not change
@@ -28,7 +30,7 @@ of PHP's [object identifier semantics](https://www.php.net/manual/en/language.oo
 not PHP `&` references or a claim of general object/reference equivalence.
 
 Dynamic properties/names, nested/chained/effectful receivers, property-array
-index/append writes, compound/assignment expressions, references, constructors,
+index/append writes, compound/assignment expressions, references, general constructors,
 inheritance, typed/private/static properties and general warning/exception
 behavior remain excluded. Runtime-only direct setter misuse is not a PHP input
 contract. Existing property reads/method calls retain their prior closed scope.

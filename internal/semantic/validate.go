@@ -30,8 +30,9 @@ type valueType struct {
 }
 
 type classInfo struct {
-	properties map[string]valueType
-	methods    map[string]int
+	properties       map[string]valueType
+	methods          map[string]int
+	constructorArity int // Zero also describes a class without a constructor.
 }
 
 type validator struct {
@@ -77,6 +78,9 @@ func Validate(p ir.Program) error {
 				return malformed(method.Line, "invalid method name")
 			}
 			info.methods[strings.ToLower(method.Name)] = len(method.Params)
+			if strings.EqualFold(method.Name, "__construct") {
+				info.constructorArity = len(method.Params)
+			}
 		}
 		v.classes[strings.ToLower(c.Name)] = info
 	}
@@ -134,6 +138,9 @@ func validateParameterTypes(f ir.Function, method bool) error {
 }
 
 func (v validator) function(f ir.Function, class string) error {
+	if class != "" && strings.EqualFold(f.Name, "__construct") && constructorHasReturn(f.Body) {
+		return unsupported(f.Line, "constructor return statements are unsupported")
+	}
 	if strings.EqualFold(f.Name, "fn") {
 		return unsupported(f.Line, "fn is reserved for arrow expressions")
 	}
@@ -395,6 +402,15 @@ func widenWhileWrites(stmts []ir.Stmt, scope map[string]valueType) {
 
 func emptyExpr(e ir.Expr) bool {
 	return e.Kind == "" && e.Text == "" && e.Line == 0 && e.Args == nil && e.Params == nil
+}
+
+func constructorHasReturn(body []ir.Stmt) bool {
+	for _, stmt := range body {
+		if stmt.Kind == "return" || constructorHasReturn(stmt.Body) || constructorHasReturn(stmt.ElseBody) {
+			return true
+		}
+	}
+	return false
 }
 
 func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, error) {
@@ -1003,13 +1019,35 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		}
 		return valueType{kind: unknownKind}, nil
 	case "new":
-		if err := require(0); err != nil {
-			return valueType{}, err
-		}
 		if !validName(expr.Text) {
 			return valueType{}, malformed(expr.Line, "invalid class name")
 		}
+		info, exists := v.classes[strings.ToLower(expr.Text)]
+		if !exists {
+			return valueType{}, unsupported(expr.Line, "unknown class "+expr.Text)
+		}
+		if _, err := v.exprs(expr.Args, scope); err != nil {
+			return valueType{}, err
+		}
+		if len(expr.Args) != info.constructorArity {
+			return valueType{}, unsupported(expr.Line, "unsupported constructor argument count for "+expr.Text)
+		}
 		return valueType{kind: objectKind, class: strings.ToLower(expr.Text)}, nil
+	case "object_array_cast":
+		if err := require(1); err != nil {
+			return valueType{}, err
+		}
+		if expr.Text != "" {
+			return valueType{}, malformed(expr.Line, "object array cast has unexpected metadata")
+		}
+		receiver, err := v.expr(expr.Args[0], scope)
+		if err != nil {
+			return valueType{}, err
+		}
+		if _, exists := v.classes[receiver.class]; receiver.kind != objectKind || !exists {
+			return valueType{}, unsupported(expr.Line, "array cast requires a known generated class")
+		}
+		return valueType{kind: arrayKind}, nil
 	case "property":
 		if err := require(1); err != nil {
 			return valueType{}, err
@@ -1037,6 +1075,9 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		}
 		return valueType{kind: unknownKind}, nil
 	case "method":
+		if strings.EqualFold(expr.Text, "__construct") {
+			return valueType{}, unsupported(expr.Line, "direct constructor calls are unsupported")
+		}
 		if len(expr.Args) == 0 {
 			return valueType{}, malformed(expr.Line, "method expression requires a receiver")
 		}
