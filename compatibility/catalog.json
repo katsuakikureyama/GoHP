@@ -3,6 +3,25 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.array_any",
+      "kind": "builtin",
+      "name": "PHP 8.4 array_any with a literal bool callback",
+      "implementation": "partial",
+      "contract": "PHP8.4 only: actual array plus literal declared global callback with two required untyped value parameters and explicit bool return; visits value/key in insertion order and stops at the first actual true result.",
+      "php_targets": ["8.4"],
+      "checks": [
+        {"case_id":"diff.php84_array_any","test":"TestDifferential/php84_array_any","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/php84_array_any.php","assertions":["stdout","exit","empty/no-match/short-circuit visit markers, key types, forward mixed-case callbacks, nested value isolation and request-local strtok state"]},
+        {"case_id":"compiler.array_any.targets","test":"TestPHP84ArrayAnyLoweringAndTargetBoundaries","file":"internal/codegen/array_any_test.go","kind":"compiler","assertions":["8.4 direct adapter and bool result; 8.3 absent builtin rejection and user declaration preserved"]},
+        {"case_id":"compiler.array_any.context","test":"TestPHP84ArrayAnyStatefulCallbackUsesContextAdapter","file":"internal/codegen/array_any_test.go","kind":"compiler","assertions":["callback uses the same request-local execution context"]},
+        {"case_id":"negative.array_any.source","test":"TestPHP84ArrayAnyUnsupportedSourceFailsBeforeGeneration","file":"internal/codegen/array_any_test.go","kind":"negative","assertions":["unsupported callback/arity/type/target forms fail before output, including dead branches"]},
+        {"case_id":"unit.array_any.order","test":"TestArrayAnyVisitsInsertionOrderAndShortCircuits","file":"runtime/array_any_test.go","kind":"unit","assertions":["value then key, normalized key types, first true stops traversal"]},
+        {"case_id":"unit.array_any.empty","test":"TestArrayAnyFalseForEmptyAndNoMatch","file":"runtime/array_any_test.go","kind":"unit","assertions":["empty does not invoke callback; all false visits each entry"]},
+        {"case_id":"unit.array_any.copy","test":"TestArrayAnyClonesNestedValuesForCallback","file":"runtime/array_any_test.go","kind":"unit","assertions":["nested array callback values cannot mutate the input storage"]},
+        {"case_id":"negative.array_any.runtime","test":"TestArrayAnyRejectsUnsupportedArgumentsAndResults","file":"runtime/array_any_test.go","kind":"negative","assertions":["nonarray, nil callback and nonbool results reject without coercion"]}
+      ],
+      "limitations": ["No dynamic/builtin/method/arrow callbacks, optional or typed callback parameters, references or truthiness coercion", "Explicit bool returns remain actual-bool-only, not PHP weak return conversion", "PHP8.3 has no builtin support; same-named user functions remain ordinary calls", "No general diagnostic/exception/side-effect equivalence or other PHP8.4 array-search builtins"]
+    },
+    {
       "id": "php.builtin.gettype",
       "kind": "builtin",
       "name": "gettype (existing value subset)",
