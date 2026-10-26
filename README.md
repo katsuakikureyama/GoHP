@@ -59,6 +59,10 @@ numeric negation and float-promoting tokens remain outside the [bounded syntax](
 Unsupported syntax must fail
 with a diagnostic; a separate runtime-negative test must fail on a missing key.
 Compilation alone never proves PHP compatibility.
+Declared public properties now accept bounded [simple assignment](docs/public-property-write.md)
+through a statically known generated-class variable (including known aliases
+and method `$this`). Arrays detach at write/read boundaries; object identifiers
+retain identity. This adds neither dynamic properties nor unknown receiver writes.
 Bare [`continue;`](docs/foreach-continue-boundary.md) now targets the nearest
 enclosing `foreach`, including inside braced conditionals. Numeric levels and
 other loop kinds are excluded. Together with bounded
