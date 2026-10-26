@@ -18,7 +18,7 @@ class Record {
   echo $n;
  }
 }
-$r = new Record(1, 'x', false);`, "8.3")
+$r = new Record(1, 'x', false);`, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func TestScalarConstructorBoundaries(t *testing.T) {
 		`class X { public function __construct(int $x) {} } $x = new X(1); $x->__construct(2);`,
 		`class X { public function __construct(int $x) { echo strlen($x); } }`,
 	} {
-		p, err := frontend.Parse("<?php "+source, "8.3")
+		p, err := frontend.Parse("<?php "+source, testTarget(t))
 		var out []byte
 		if err == nil {
 			out, err = Generate(p)
@@ -88,7 +88,7 @@ func TestScalarConstructorMalformedIR(t *testing.T) {
 		{Name: "__construct", Params: []string{"x"}, ParamTypes: []string{"bool"}, OptionalNullParams: 1},
 		{Name: "f", Params: []string{"x"}, ParamTypes: []string{"int"}},
 	} {
-		p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Classes: []ir.Class{{Name: "X", Methods: []ir.Function{f}}}}
+		p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Classes: []ir.Class{{Name: "X", Methods: []ir.Function{f}}}}
 		if out, err := Generate(p); err == nil || len(out) != 0 {
 			t.Fatalf("accepted malformed %#v: %v", f, err)
 		}

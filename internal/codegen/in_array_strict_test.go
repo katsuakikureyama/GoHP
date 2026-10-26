@@ -8,7 +8,7 @@ import (
 )
 
 func TestInArrayStrictLoweringAndSourceMap(t *testing.T) {
-	p, err := frontend.Parse("<?php\n$result = In_ArRaY('x', ['x'], true);\n", "8.3")
+	p, err := frontend.Parse("<?php\n$result = In_ArRaY('x', ['x'], true);\n", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func TestMembershipControlFlowRejectsInvalidDeadArms(t *testing.T) {
 		"else_return_type": "if (true) { return []; } else { return in_array('x', ['x'], true); }",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php function result(): array { "+body+" }", "8.3")
+			p, err := frontend.Parse("<?php function result(): array { "+body+" }", testTarget(t))
 			if err != nil {
 				t.Fatal(err)
 			}

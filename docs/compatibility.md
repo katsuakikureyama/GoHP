@@ -9,10 +9,11 @@ This table is the current curated summary, not a blanket support claim.
 
 | Area | Current status | Evidence / gap |
 |---|---|---|
-| PHP 8.3 | Active closed subset; native oracle is >= 8.3.36 | Differential fixtures run against the approved 8.3 oracle |
-| PHP 7.4, PHP 8.4+, other series | Not active targets | Historical evidence is retained; a separate policy/matrix is required before a series is enabled |
+| PHP 8.3 | Active closed subset; native oracle is >= 8.3.36 | Independently run differential fixtures against the approved 8.3 oracle |
+| PHP 8.4 | Active closed subset; native oracle is >= 8.4.27 | Independently run the same bounded corpus against the pinned 8.4 oracle; evidence is separate from 8.3 |
+| PHP 7.4, PHP 8.5+, other series | Not active targets | Historical evidence is retained; a separate policy/matrix is required before a series is enabled |
 | Scalar values | int64, strings, bool, null; literal-only negative decimal constants | `arrays.php`, `negative_integers.php`; no float or interpolation; [negative integer boundary](negative-integer-boundary.md) |
-| Form-feed string escape | Double-quoted `"\f"` is byte 0x0C; single-quoted form remains literal | [Bounded escape](form-feed-boundary.md); byte/line tests and PHP8.3.36 comparison, not general PHP escape support |
+| Form-feed string escape | Double-quoted `"\f"` is byte 0x0C; single-quoted form remains literal | [Bounded escape](form-feed-boundary.md); byte/line tests and per-target PHP comparison, not general PHP escape support |
 | Operators | `+`, `.`, parentheses, full ternary and bounded `??` array addresses | Integral coercion only; float promotion unsupported. Ternary is non-associative; `??` has only defined bare/nested-array address left sides and lazy fallback; no `?:`, `??=`, general expression left side or object truthiness; [contracts](ternary-stripslashes-boundary.md), [nested probes](nested-array-probes.md) |
 | Boolean control | Braced `if` / `elseif` / `else if` / `else`, short-circuit `&&` / `\|\|`, scalar `===` / `!==` plus literal-null type probes, `(bool)`, prefix `!`/`!!` | Scalar/array truthiness only; no unbraced/alternative syntax, branch-local escape, object truthiness, general array/object identity, loose `!=` or keyword logical operators; [contract](boolean-boundary.md) |
 | Functions | Named functions, fixed value arguments, bounded `array`/generated-arrow `callable` parameters and global `: array` / actual-bool `: bool` returns | `core.php`, `array_parameter.php`, `arrow_callable.php`, `array_return.php`, `bool_return.php`; [parameters](array-parameter-boundary.md) / [arrows](arrow-callable-boundary.md) / [array](array-return-boundary.md) / [bool](bool-return-boundary.md); no weak bool-return coercion, non-null-default/scalar-typed/by-reference/variadic args or typed methods |
@@ -51,8 +52,9 @@ This table is the current curated summary, not a blanket support claim.
 
 `feature_integration.php` composes both feature branches on one compiler/runtime:
 legacy arrays, array keys/values, nested reads, count, guarded string helpers,
-type predicates, conditional assignment and PHP 8.3 operator precedence.
-The native oracle must admit the shared 8.3.36 floor before any fixture runs.
+type predicates, conditional assignment and the shared target-profile operator
+precedence. The native oracle must admit the selected target's floor before any
+fixture runs.
 The catalog links this cross-feature check to `php.builtin.array_values`;
 individual feature checks and unsupported-boundary checks remain separate.
 This is stdout/normal-exit evidence, not typed native return observation or
@@ -62,7 +64,12 @@ do not constitute a combined revision PASS.
 `string_array_integration.php` additionally composes the bounded sprintf and
 str_replace implementations with the array helpers (including key existence and
 list checks), guarded string conversion and byte-length observation. Its single
-generated binary is compared with the admitted native PHP 8.3 oracle. Both new
+string entries link the same integration check; it is one measured case, not
+two independent proofs. This does not update or validate Gossip's source pins.
+generated binary is compared with the admitted native oracle for its selected
+target. Both new string entries link the same integration check; it is one
+measured case, not two independent proofs. This does not update or validate
+Gossip's source pins.
 string entries link the same integration check; it is one measured case, not
 two independent proofs. This does not update or validate Gossip's source pins.
 
@@ -82,31 +89,34 @@ Gossip adoption claim.
 
 ## Active PHP version policy
 
-The sole active compatibility target is the PHP **8.3** language series. Native
-differential tests must run against PHP **8.3.36 or newer** in that series. The
-compiler target remains the series label `8.3`; a PHP patch version is an oracle
-requirement and evidence attribute, not a CLI/compiler target. Each live evidence
-run records the actual PHP version. CI also records its pinned image digest;
-host-PHP runs have no container image identity unless explicitly supplied.
+The active compatibility targets are PHP **8.3** and **8.4**. Native
+differential tests must run against PHP **8.3.36 or newer** for `8.3`, or PHP
+**8.4.27 or newer** for `8.4`. A compiler target is a series label; the patch
+version is an oracle requirement and evidence attribute, not a CLI/compiler
+target. Each live evidence run records the selected target and actual PHP
+version. CI also records its pinned image digest; host-PHP runs have no
+container image identity unless explicitly supplied.
 
 `internal/phpversion/policy.go` is the compiler-side registry of accepted
-series labels and their minimum oracle version. `.github/workflows/ci.yml`,
-`Dockerfile`, and `compose.yaml` select the fixed PHP 8.3.36 oracle image; its
-resolved digest is asserted by the execution configuration and recorded in run
-evidence. Documentation intentionally does not copy or invent that digest: the
-resolved configuration and resulting run evidence are authoritative. The
-[PHP 8.3.36 release](https://www.php.net/releases/8_3_36.php) and PHP's
+series labels and their minimum oracle version. The CI matrix has one explicit
+job per target. Its fixed PHP 8.4 oracle is
+`php:8.4.27-cli@sha256:debadc2e36b857657846e2e952cbaf52702e55482dd3c2c43806f68d8c534a70`;
+the 8.3 image identity remains in the execution configuration. A target PASS
+exists only after that target's job produces evidence. The same source corpus
+does not permit an 8.3 PASS to satisfy the 8.4 target. The
+[PHP 8.3.36 release](https://www.php.net/releases/8_3_36.php),
+[PHP 8.4.27 release](https://www.php.net/releases/8_4_27.php), and PHP's
 [supported-version policy](https://www.php.net/supported-versions.php) are
 review inputs for approved image-digest updates and EOL decisions.
 
 PHP 7.4 and older 8.3 evidence remain readable historical records only; they
-are not an active test gate or current support claim. PHP 8.4 and later are
-currently disabled. To add a later series, introduce a separate explicit
-policy/matrix entry with a series name, minimum security floor, resolved
-immutable oracle digest, target-specific semantic table/corpus, native
-differential job, and reviewed evidence. It must remain unclaimed until those
-requirements pass. A version floor alone is not a security guarantee for
-GoHP, generated binaries, input, dependencies, or deployment.
+are not active test gates or current support claims. To add a later series,
+introduce a separate policy/matrix entry with a series name, minimum release
+floor, resolved immutable oracle digest, target-specific semantic table/corpus,
+native differential job, and reviewed evidence. It must remain unclaimed until
+those requirements pass. A version floor alone is not a security guarantee for
+GoHP, generated binaries, input, dependencies, or deployment. The
+8.4-specific boundaries are in [its target contract](php84-target.md).
 
 Before Go source generation, a semantic pass validates IR operand shape and
 rejects statically known mismatches such as `count(1)`, scalar `foreach`/indexing,
@@ -134,7 +144,7 @@ a non-string value fails explicitly, not as a PHP-compatible warning/exception.
 
 `strlen.php` compares empty, ASCII, whitespace, UTF-8 multibyte/emoji and supported
 escaped strings, concatenation, dynamic string values and integer arithmetic
-against the active approved PHP 8.3 oracle. Binary/NUL/invalid UTF-8 cases are runtime unit
+against the selected active target's approved PHP oracle. Binary/NUL/invalid UTF-8 cases are runtime unit
 tests only, not end-to-end PHP evidence. The frontend's string syntax is unchanged:
 no interpolation or hex/octal escape support is implied. Scalar/null/object
 coercions, named arguments, multibyte overload settings, warnings and exceptions
@@ -184,7 +194,7 @@ outside the validated contract.
 
 `array_values.php` compares empty arrays, mixed/sparse keys, duplicate-key
 replacement, scalar/nested values, dynamic inputs/results and composition against
-the pinned PHP 8.3.36 oracle. The native comparison observes stdout and successful
+the selected target's pinned oracle. The native comparison observes stdout and successful
 exits, not a typed serialization. Runtime tests additionally assert exact value
 types and outer/nested storage independence. The catalog stays partial and only
 reports a case-limited result when every linked check passes.
@@ -204,7 +214,7 @@ canonical decimal strings such as `'2'` address integer keys, while `'02'` and
 Both array syntaxes and dynamic function parameters/returns are supported within
 this domain. The builtin is case-insensitive and reserved against redeclaration.
 
-Unlike native PHP 8.3, this bounded implementation rejects bool/null/float/resource
+Unlike native PHP in the active target series, this bounded implementation rejects bool/null/float/resource
 keys instead of coercing them. Known invalid types/arity are rejected before
 generation; unknown values have explicit runtime guards for both arguments.
 Object inputs, the `key_exists` alias, named arguments, references and warning/

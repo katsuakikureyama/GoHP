@@ -13,7 +13,7 @@ func TestArraySliceLoweringAndSourceMap(t *testing.T) {
 		{"$a, 1, null", `v["a"], int64(1), nil, false`},
 		{"$a, 1, 2, true", `v["a"], int64(1), int64(2), true`},
 	} {
-		p, err := frontend.Parse("<?php\nfunction sliced(array $a): array { return ArRaY_SlIcE("+tc.args+"); }\necho count(sliced([]));", "8.3")
+		p, err := frontend.Parse("<?php\nfunction sliced(array $a): array { return ArRaY_SlIcE("+tc.args+"); }\necho count(sliced([]));", testTarget(t))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -49,7 +49,7 @@ func TestArraySliceUnsupportedSource(t *testing.T) {
 		"dead_invalid": "echo true || array_slice([], false);", "builtin_callback": "$a = array_map('array_slice', [[]]);",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			var out []byte
 			if err == nil {
 				out, err = Generate(p)

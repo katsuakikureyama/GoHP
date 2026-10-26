@@ -8,7 +8,7 @@ import (
 )
 
 func TestArrayKeyFirstLoweringAndSourceMap(t *testing.T) {
-	p, err := frontend.Parse("<?php\nfunction first_key(array $a) { return ArRaY_KeY_FiRsT($a); }\necho first_key([7 => null]);", "8.3")
+	p, err := frontend.Parse("<?php\nfunction first_key(array $a) { return ArRaY_KeY_FiRsT($a); }\necho first_key([7 => null]);", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestArrayKeyFirstUnsupportedSource(t *testing.T) {
 		"dead_invalid": "echo true || array_key_first(null);",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			var out []byte
 			if err == nil {
 				out, err = Generate(p)

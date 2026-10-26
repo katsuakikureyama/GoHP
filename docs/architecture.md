@@ -105,13 +105,22 @@ independent semantic targets and native comparisons, with exact patch/configurat
 evidence. Preserve target identity through IR/code generation and any version-sensitive
 runtime operation; shared code does not imply shared compatibility evidence.
 
-Only the `8.3` target label is accepted by the active compiler. It denotes the
-PHP 8.3 language series, while native differential execution enforces the
-separate PHP 8.3.36-or-newer oracle floor. This is not a full-language support
-claim. PHP 7.4 is retained only in historical evidence. PHP 8.4 and later need
-their own policy entry, semantic table, native reference runner and corpus
-before a target label may be accepted; they must not silently inherit 8.3
-results.
+The active compiler accepts the `8.3` and `8.4` target labels. They denote PHP
+language series, while native differential execution enforces separate oracle
+floors: PHP 8.3.36 or newer for `8.3`, and PHP 8.4.27 or newer for `8.4`.
+This is not a full-language support claim. PHP 7.4 is retained only in
+historical evidence.
+
+The 8.4 semantic profile rejects declarations of `array_find`,
+`array_find_key`, `array_any` and `array_all`, because those names are reserved
+by PHP 8.4 even though GoHP does not implement their calls. It also rejects a
+class named `_`: PHP 8.4 deprecates that class name, and GoHP does not model the
+native deprecation diagnostic. These are target-specific, fail-closed
+boundaries, not a claim of diagnostic equivalence. Nullable typed defaults,
+`exit`/`die`, property hooks and asymmetric property visibility remain outside
+both target subsets. Every target executes the bounded corpus with its own
+pinned oracle and receives its own evidence; shared lowering never carries an
+8.3 result into the 8.4 row. See the [PHP 8.4 target contract](php84-target.md).
 
 ## Next decisions
 

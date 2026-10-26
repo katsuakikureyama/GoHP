@@ -8,7 +8,7 @@ import (
 )
 
 func TestSprintfZeroPadLowersToRuntimeBoundary(t *testing.T) {
-	p, err := frontend.Parse("<?php function zeroise($number, $threshold) { return sprintf('%0' . $threshold . 's', $number); } echo zeroise(42, 5);", "8.3")
+	p, err := frontend.Parse("<?php function zeroise($number, $threshold) { return sprintf('%0' . $threshold . 's', $number); } echo zeroise(42, 5);", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func TestSprintfZeroPadKnownUnsupportedFormsFailBeforeGeneration(t *testing.T) {
 		{name: "redeclare", src: "<?php function SpRiNtF() { return 'x'; }"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			p, err := frontend.Parse(tt.src, "8.3")
+			p, err := frontend.Parse(tt.src, testTarget(t))
 			if err == nil {
 				_, err = Generate(p)
 			}

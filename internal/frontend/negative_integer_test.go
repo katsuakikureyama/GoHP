@@ -14,7 +14,7 @@ func TestNegativeIntegerLiteralIR(t *testing.T) {
 		{"<?php\n$value = - /* gap\n */ 5;", "-5", 2},
 	} {
 		t.Run(tt.source, func(t *testing.T) {
-			p, err := Parse(tt.source, "8.3")
+			p, err := Parse(tt.source, testTarget(t))
 			if err != nil {
 				t.Fatal(err)
 			}

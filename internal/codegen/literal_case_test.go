@@ -10,7 +10,7 @@ import (
 func TestLiteralCaseCanonicalIRAndSourceMap(t *testing.T) {
 	for _, spelling := range []string{"true", "TRUE", "TrUe", "false", "FALSE", "FaLsE", "null", "NULL", "NuLl"} {
 		t.Run(spelling, func(t *testing.T) {
-			p, err := frontend.Parse("<?php\n$value = "+spelling+";", "8.3")
+			p, err := frontend.Parse("<?php\n$value = "+spelling+";", testTarget(t))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -55,7 +55,7 @@ func TestLiteralCaseDoesNotBypassDomains(t *testing.T) {
 		"<?php $TRUE = 1; echo $true;",
 	} {
 		t.Run(source, func(t *testing.T) {
-			p, err := frontend.Parse(source, "8.3")
+			p, err := frontend.Parse(source, testTarget(t))
 			if err == nil {
 				var output []byte
 				output, err = Generate(p)

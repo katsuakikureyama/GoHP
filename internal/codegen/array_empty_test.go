@@ -9,7 +9,7 @@ import (
 )
 
 func TestArrayEmptyLoweringAndSourceMap(t *testing.T) {
-	p, err := frontend.Parse("<?php\nfunction probe(array $a): bool { return EmPtY($a); }\necho probe([]);", "8.3")
+	p, err := frontend.Parse("<?php\nfunction probe(array $a): bool { return EmPtY($a); }\necho probe([]);", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +54,7 @@ func TestArrayEmptyUnsupportedSource(t *testing.T) {
 		"dead_invalid":  "$a = null; echo true || empty($a);",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			var out []byte
 			if err == nil {
 				out, err = Generate(p)
@@ -78,7 +78,7 @@ func TestArrayEmptyMalformedIR(t *testing.T) {
 		"var_operands": {Kind: "empty_array", Args: []ir.Expr{{Kind: "var", Text: "a", Args: []ir.Expr{variable}}}},
 	} {
 		t.Run(name, func(t *testing.T) {
-			p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: []ir.Stmt{
+			p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: []ir.Stmt{
 				{Kind: "assign", Name: "a", Line: 1, Expr: ir.Expr{Kind: "array"}},
 				{Kind: "echo", Line: 2, Expr: expr},
 			}}

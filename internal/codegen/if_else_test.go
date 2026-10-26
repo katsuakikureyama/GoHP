@@ -10,7 +10,7 @@ import (
 
 func TestIfElseSourceMapAndEmptyBranch(t *testing.T) {
 	const php = "<?php\nif (false) {\n echo 'then';\n} else {\n if (true) {\n  echo 'nested';\n } else {}\n echo 'otherwise';\n}\n"
-	p, err := frontend.Parse(php, "8.3")
+	p, err := frontend.Parse(php, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func TestIfElseSourceMapAndEmptyBranch(t *testing.T) {
 
 func TestElseBodyRequiresIfIR(t *testing.T) {
 	for _, otherwise := range [][]ir.Stmt{{}, {{Kind: "echo", Expr: ir.Expr{Kind: "null"}}}} {
-		p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: []ir.Stmt{
+		p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: []ir.Stmt{
 			{Kind: "echo", Expr: ir.Expr{Kind: "null"}, ElseBody: otherwise},
 		}}
 		if _, err := Generate(p); err == nil || !strings.Contains(err.Error(), "IR002") {

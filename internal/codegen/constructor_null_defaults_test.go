@@ -22,7 +22,7 @@ $one = new Frame(2, 3);
 $two = new Frame(2, 3, null);
 $three = new Frame(2, 3, 0, 0);
 `
-	p, err := frontend.Parse(source, "8.3")
+	p, err := frontend.Parse(source, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +59,7 @@ func TestConstructorNullDefaultsBoundaries(t *testing.T) {
 		"direct_reentry":          `class C { public function __construct($x = null) {} } $c = new C(); $c->__construct();`,
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			var out []byte
 			if err == nil {
 				out, err = Generate(p)
@@ -74,7 +74,7 @@ func TestConstructorNullDefaultsBoundaries(t *testing.T) {
 func TestConstructorNullDefaultsMalformedIR(t *testing.T) {
 	for name, count := range map[string]int{"negative": -1, "excessive": 2} {
 		t.Run(name, func(t *testing.T) {
-			p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Classes: []ir.Class{{Name: "C", Methods: []ir.Function{{Name: "__construct", Params: []string{"x"}, OptionalNullParams: count, Line: 1}}}}}
+			p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Classes: []ir.Class{{Name: "C", Methods: []ir.Function{{Name: "__construct", Params: []string{"x"}, OptionalNullParams: count, Line: 1}}}}}
 			out, err := Generate(p)
 			if err == nil || len(out) != 0 || !strings.Contains(err.Error(), "IR002") {
 				t.Fatalf("invalid default count generated output %s: %v", out, err)

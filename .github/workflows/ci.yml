@@ -13,6 +13,8 @@ jobs:
         include:
           - php_target: "8.3"
             php_image: php:8.3.36-cli@sha256:98d555ff97b3865140ad31032508c3ca089fa97a8944b14ca9dc03ea05d788cd
+          - php_target: "8.4"
+            php_image: php:8.4.27-cli@sha256:debadc2e36b857657846e2e952cbaf52702e55482dd3c2c43806f68d8c534a70
     env:
       GOHP_PHP_TARGET: ${{ matrix.php_target }}
       GOHP_PHP_IMAGE: ${{ matrix.php_image }}

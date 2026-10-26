@@ -26,7 +26,7 @@ $once = null === marker('once', $known);
 $short_and = false && (null === marker('and', $known));
 $short_or = true || (marker('or', $known) !== null);
 `
-	p, err := frontend.Parse(source, "8.3")
+	p, err := frontend.Parse(source, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +63,7 @@ $short_or = true || (marker('or', $known) !== null);
 }
 
 func TestLiteralNullIdentityBoundary(t *testing.T) {
-	p, err := frontend.Parse("<?php function same($left, $right) { return $left === $right; }", "8.3")
+	p, err := frontend.Parse("<?php function same($left, $right) { return $left === $right; }", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +76,7 @@ func TestLiteralNullIdentityBoundary(t *testing.T) {
 		"array_literal": "echo [] === [];",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			if err == nil {
 				_, err = Generate(p)
 			}

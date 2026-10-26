@@ -9,7 +9,7 @@ import (
 
 func TestArrayReverseLoweringAndSourceMap(t *testing.T) {
 	for _, flag := range []string{"", ", true", ", false"} {
-		p, err := frontend.Parse("<?php\nfunction reversed(array $a): array { return ArRaY_ReVeRsE($a"+flag+"); }\necho count(reversed([]));", "8.3")
+		p, err := frontend.Parse("<?php\nfunction reversed(array $a): array { return ArRaY_ReVeRsE($a"+flag+"); }\necho count(reversed([]));", testTarget(t))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -50,7 +50,7 @@ func TestArrayReverseUnsupportedSource(t *testing.T) {
 		"dead_invalid": "echo true || array_reverse([], 0);",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			var out []byte
 			if err == nil {
 				out, err = Generate(p)

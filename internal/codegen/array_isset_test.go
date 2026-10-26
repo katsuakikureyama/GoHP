@@ -18,7 +18,7 @@ if (isset($items[$key])) { echo 'if:'; }
 $guard = false && isset($items[$key]);
 echo probe($items, $key);
 `
-	p, err := frontend.Parse(source, "8.3")
+	p, err := frontend.Parse(source, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +73,7 @@ func TestArrayIssetStrictSourceFormsFailClosed(t *testing.T) {
 		{"known_non_key", "<?php $items = []; $key = true; echo isset($items[$key]);"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			p, err := frontend.Parse(tt.src, "8.3")
+			p, err := frontend.Parse(tt.src, testTarget(t))
 			if err == nil {
 				_, err = Generate(p)
 			}
@@ -102,7 +102,7 @@ func TestArrayIssetMalformedIRAndRedeclarationFailBeforeGeneration(t *testing.T)
 		{"unexpected_text", ir.Expr{Kind: "isset_index", Text: "isset", Line: 2, Args: []ir.Expr{items, key}}, "IR002"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: []ir.Stmt{
+			p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: []ir.Stmt{
 				{Kind: "assign", Name: "items", Line: 1, Expr: array},
 				{Kind: "echo", Line: 2, Expr: tt.expr},
 			}}
@@ -112,7 +112,7 @@ func TestArrayIssetMalformedIRAndRedeclarationFailBeforeGeneration(t *testing.T)
 		})
 	}
 
-	p, err := frontend.Parse("<?php function IsSeT($value) { return $value; }", "8.3")
+	p, err := frontend.Parse("<?php function IsSeT($value) { return $value; }", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}

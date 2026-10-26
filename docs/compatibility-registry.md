@@ -49,9 +49,10 @@ Appearing in a fixture does not prove every aspect of a feature.
 
 ## Run ledger: what was checked and passed?
 
-CI should publish a `gohp.compatibility.run/v0.1` JSON artifact for the active
-PHP 8.3 job. A later PHP series receives a distinct policy/matrix entry and
-artifact only after it is explicitly enabled.
+CI publishes a distinct `gohp.compatibility.run/v0.1` JSON artifact for each
+active target job: PHP 8.3 and PHP 8.4. The same bounded corpus is executed
+independently for each target. A later series receives its own policy/matrix
+entry and artifact only after it is explicitly enabled.
 Keep it outside the source commit: embedding the commit's own SHA in a tracked
 report would require a different commit. Record:
 
@@ -90,10 +91,10 @@ latest applicable result, verified contract, limitations and evidence.
 | `incomplete` | A required case skipped, errored or did not run |
 
 Keep historical PHP 7.4.33 and PHP 8.3.30 evidence separate from active PHP
-8.3.36-or-newer evidence. A failed/incomplete current run
-must not be hidden by an older PASS. Historical PASS stays visible with its
+8.3.36-or-newer and PHP 8.4.27-or-newer evidence. A failed/incomplete current
+run must not be hidden by an older PASS. Historical PASS stays visible with its
 revision but does not automatically apply now. Reuse only exact matching
-revision/configuration results, or an explicitly reviewed unaffected-scope
+target/revision/configuration results, or an explicitly reviewed unaffected-scope
 decision with provenance. Missing evidence never becomes green. Do not average
 mixed targets into a universal compatibility percentage. Tooling entries show
 `compiler-check-pass`, never differential PASS from Go-only unit tests.
@@ -144,6 +145,7 @@ Green tests are evidence to record, not a reason for another verification cycle.
 For a new PHP series, update the version-policy registry's series label and
 minimum oracle version, the matrix's immutable image digest, and the catalog's
 status and required corpus together. Do not infer a support verdict from an
-existing 8.3 run or from a shared fixture. The current active policy is 8.3 with
-a minimum native oracle of 8.3.36; 8.4+ entries are absent/disabled until their
-own requirements are reviewed.
+existing target run or from a shared fixture. The current active policy is 8.3
+with a minimum native oracle of 8.3.36 and 8.4 with a minimum native oracle of
+8.4.27. They retain separate target rows and evidence; a later series remains
+disabled until its own requirements are reviewed.

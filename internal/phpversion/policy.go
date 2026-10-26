@@ -18,7 +18,10 @@ type Policy struct {
 // Add another series only together with its frontend behavior, pinned CI oracle
 // and differential evidence. The minimum is an admission floor, not a promise
 // that every later patch or an untested minor is compatible or vulnerability-free.
-var policies = [...]Policy{{Target: "8.3", Minimum: "8.3.36"}}
+var policies = [...]Policy{
+	{Target: "8.3", Minimum: "8.3.36"},
+	{Target: "8.4", Minimum: "8.4.27"},
+}
 
 func TargetHelp() string {
 	var enabled []string

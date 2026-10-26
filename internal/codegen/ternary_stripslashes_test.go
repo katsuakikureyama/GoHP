@@ -10,7 +10,7 @@ import (
 )
 
 func TestTernaryAndStripSlashesLowerToRuntimeBoundaries(t *testing.T) {
-	p, err := frontend.Parse("<?php echo true ? StRiPsLaShEs('a\\\\qb') : 'unused';", "8.3")
+	p, err := frontend.Parse("<?php echo true ? StRiPsLaShEs('a\\\\qb') : 'unused';", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +45,7 @@ func TestTernaryAndStripSlashesKnownUnsupportedFormsFailBeforeGeneration(t *test
 		{name: "stripslashes_redeclare", src: "<?php function StRiPsLaShEs($value) { return $value; }"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			p, err := frontend.Parse(tt.src, "8.3")
+			p, err := frontend.Parse(tt.src, testTarget(t))
 			if err == nil {
 				_, err = Generate(p)
 			}
@@ -59,7 +59,7 @@ func TestTernaryAndStripSlashesKnownUnsupportedFormsFailBeforeGeneration(t *test
 func TestTernaryMalformedIRArityFailsBeforeGeneration(t *testing.T) {
 	for _, operands := range []int{0, 2, 4} {
 		t.Run("arity_"+strconv.Itoa(operands), func(t *testing.T) {
-			p, err := frontend.Parse("<?php echo true ? 'yes' : 'no';", "8.3")
+			p, err := frontend.Parse("<?php echo true ? 'yes' : 'no';", testTarget(t))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -78,7 +78,7 @@ func TestTernaryMalformedIRArityFailsBeforeGeneration(t *testing.T) {
 }
 
 func TestTernaryMixedArmsRemainConservative(t *testing.T) {
-	p, err := frontend.Parse("<?php $value = true ? 'string' : []; foreach ($value as $item) { echo $item; }", "8.3")
+	p, err := frontend.Parse("<?php $value = true ? 'string' : []; foreach ($value as $item) { echo $item; }", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}

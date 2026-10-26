@@ -403,7 +403,7 @@ func TestUnsupported(t *testing.T) {
 }
 
 func TestMalformedIRFailsWithoutPanic(t *testing.T) {
-	p, e := frontend.Parse("<?php echo 1 + 2;", "8.3")
+	p, e := frontend.Parse("<?php echo 1 + 2;", phpTarget(t))
 	if e != nil {
 		t.Fatal(e)
 	}

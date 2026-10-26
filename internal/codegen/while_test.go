@@ -9,7 +9,7 @@ import (
 )
 
 func TestWhileLoweringAndSourceMap(t *testing.T) {
-	p, err := frontend.Parse("<?php $i = 0;\nWhIlE ($i !== 2) {\n $i = $i + 1;\n if ($i === 1) { continue; echo 'dead-continue'; }\n break;\n echo 'dead-break';\n}\necho 'after';", "8.3")
+	p, err := frontend.Parse("<?php $i = 0;\nWhIlE ($i !== 2) {\n $i = $i + 1;\n if ($i === 1) { continue; echo 'dead-continue'; }\n break;\n echo 'dead-break';\n}\necho 'after';", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +46,7 @@ func TestWhileTypeState(t *testing.T) {
 		"$a = []; while (false) { if (false) { $a = false; continue; } $a = []; } echo $a;",
 		"class X { public $v = null; } $o = new X(); $i = 0; while ($i !== 1) { $o->v = $i; $i = $i + 1; } echo $o->v;",
 	} {
-		p, err := frontend.Parse("<?php "+source, "8.3")
+		p, err := frontend.Parse("<?php "+source, testTarget(t))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -76,7 +76,7 @@ func TestWhileUnsupportedSource(t *testing.T) {
 		"loop_carried_class":        "class X { public $v = null; } $o = new X(); while (false) { $o->v = 1; $o = false; }",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			var out []byte
 			if err == nil {
 				out, err = Generate(p)
@@ -98,7 +98,7 @@ func TestWhileMalformedIR(t *testing.T) {
 		"bad_nested_write":  {Kind: "while", Expr: ir.Expr{Kind: "bool", Text: "false"}, Body: []ir.Stmt{{Kind: "assign_index", Target: ir.Expr{Kind: "index"}}}},
 	} {
 		t.Run(name, func(t *testing.T) {
-			p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: []ir.Stmt{stmt}}
+			p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: []ir.Stmt{stmt}}
 			out, err := Generate(p)
 			if err == nil || len(out) != 0 || !strings.Contains(err.Error(), "IR002") {
 				t.Fatalf("malformed output %s: %v", out, err)

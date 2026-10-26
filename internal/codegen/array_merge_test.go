@@ -13,7 +13,7 @@ func TestArrayMergeLoweringAndSourceMap(t *testing.T) {
 		{"$a, $b", `v["a"], v["b"]`},
 		{"$a, $b, $a", `v["a"], v["b"], v["a"]`},
 	} {
-		p, err := frontend.Parse("<?php\nfunction merged(array $a, array $b): array { return ArRaY_MeRgE("+tc.source+"); }\necho count(merged([], []));", "8.3")
+		p, err := frontend.Parse("<?php\nfunction merged(array $a, array $b): array { return ArRaY_MeRgE("+tc.source+"); }\necho count(merged([], []));", testTarget(t))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -48,7 +48,7 @@ func TestArrayMergeUnsupportedSource(t *testing.T) {
 		"builtin_callback": "$a = array_map('array_merge', [[]]);",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			var out []byte
 			if err == nil {
 				out, err = Generate(p)

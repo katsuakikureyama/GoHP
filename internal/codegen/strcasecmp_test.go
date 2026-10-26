@@ -9,7 +9,7 @@ import (
 )
 
 func TestStrCaseCmpLoweringAndSourceMap(t *testing.T) {
-	p, err := frontend.Parse("<?php\n$result = StRcAsEcMp('UTF-8', 'utf-8');\n", "8.3")
+	p, err := frontend.Parse("<?php\n$result = StRcAsEcMp('UTF-8', 'utf-8');\n", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func TestStrCaseCmpMalformedArity(t *testing.T) {
 		for i := range args {
 			args[i] = ir.Expr{Kind: "string", Text: "x", Line: 1}
 		}
-		p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: []ir.Stmt{
+		p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: []ir.Stmt{
 			{Kind: "echo", Line: 1, Expr: ir.Expr{Kind: "call", Text: "strcasecmp", Args: args, Line: 1}},
 		}}
 		if _, err := Generate(p); err == nil || !strings.Contains(err.Error(), "strcasecmp expects two arguments") {

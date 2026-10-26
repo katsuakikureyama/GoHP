@@ -9,7 +9,7 @@ import (
 )
 
 func TestLogicalNotLoweringAndSourceMap(t *testing.T) {
-	p, err := frontend.Parse("<?php\n$value = '0';\n$negated = !$value;\n", "8.3")
+	p, err := frontend.Parse("<?php\n$value = '0';\n$negated = !$value;\n", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func TestLogicalNotMalformedArity(t *testing.T) {
 		for i := range args {
 			args[i] = ir.Expr{Kind: "null", Line: 1}
 		}
-		p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: []ir.Stmt{
+		p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: []ir.Stmt{
 			{Kind: "echo", Line: 1, Expr: ir.Expr{Kind: "not", Args: args, Line: 1}},
 		}}
 		if _, err := Generate(p); err == nil || !strings.Contains(err.Error(), "IR002") {

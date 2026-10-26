@@ -16,7 +16,7 @@ function predicate($v): bool {
     elseif (false) { return FALSE; }
     else { foreach ([$v] as $item) { return is_bool($item); } }
 }
-`, "8.3")
+`, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +75,7 @@ func TestBoolReturnUnsupportedSource(t *testing.T) {
 		"<?php class X { public function result(): bool { return true; } }",
 	} {
 		t.Run(source, func(t *testing.T) {
-			p, err := frontend.Parse(source, "8.3")
+			p, err := frontend.Parse(source, testTarget(t))
 			if err == nil {
 				var output []byte
 				output, err = Generate(p)
@@ -92,7 +92,7 @@ func TestBoolReturnUnsupportedSource(t *testing.T) {
 
 func TestBoolReturnRejectsNoncanonicalIR(t *testing.T) {
 	for _, returnType := range []string{"BOOL", "boolean", "?bool", "bool|int", "true"} {
-		p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Functions: []ir.Function{{
+		p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Functions: []ir.Function{{
 			Name: "result", ReturnType: returnType, Line: 1,
 			Body: []ir.Stmt{{Kind: "return", Line: 1, Expr: ir.Expr{Kind: "bool", Text: "true", Line: 1}}},
 		}}}

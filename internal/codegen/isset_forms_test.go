@@ -20,7 +20,7 @@ $logical = false && isset($key, $items[$key]);
 $ternary = isset($key, $items[$key]) ? 'yes' : 'no';
 echo probe($key, $items, $third);
 `
-	p, err := frontend.Parse(source, "8.3")
+	p, err := frontend.Parse(source, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestIssetFormsBoundary(t *testing.T) {
 		{"known_scalar_key", "<?php $items = []; $key = false; echo isset($items[$key]);"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			p, err := frontend.Parse(tt.src, "8.3")
+			p, err := frontend.Parse(tt.src, testTarget(t))
 			if err == nil {
 				_, err = Generate(p)
 			}
@@ -100,7 +100,7 @@ func TestIssetFormsBoundary(t *testing.T) {
 	}
 
 	unknown := "<?php function probe($key, $items) { return isset($key, $items[$key]); } echo probe(null, 'scalar');"
-	p, err := frontend.Parse(unknown, "8.3")
+	p, err := frontend.Parse(unknown, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,7 +125,7 @@ func TestIssetFormsBoundary(t *testing.T) {
 		{"isset_multi_undefined_operand", ir.Expr{Kind: "isset_multi", Line: 2, Args: []ir.Expr{{Kind: "isset_var", Line: 2, Args: []ir.Expr{value}}, {Kind: "isset_index", Line: 2, Args: []ir.Expr{items, key}}}}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: []ir.Stmt{
+			p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: []ir.Stmt{
 				{Kind: "assign", Name: "value", Line: 1, Expr: ir.Expr{Kind: "int", Text: "1", Line: 1}},
 				{Kind: "echo", Line: 2, Expr: tt.expr},
 			}}

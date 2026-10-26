@@ -8,7 +8,7 @@
       "name": "Actual-int64 binary subtraction",
       "implementation": "partial",
       "contract": "Left-associative binary minus at addition precedence above concatenation, actual int64 operands only, safe extreme bounds with overflow-to-float rejection. Existing literal-only unary minus remains separate.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.integer_subtraction","test":"TestDifferential/integer_subtraction","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/integer_subtraction.php","assertions":["stdout","exit","left association, addition/concat precedence, negative operands, unknown forwarding, lazy coalesce strlen-offset and property reads"]},
         {"case_id":"compiler.integer_subtraction","test":"TestIntegerSubtractionLowering","file":"internal/codegen/subtract_test.go","kind":"compiler","assertions":["binary IR association/precedence, guarded lowering and statement map"]},
@@ -24,7 +24,7 @@
       "name": "Bounded method defaults, property append, factory snapshots and byte substr",
       "implementation": "partial",
       "contract": "Public untyped methods admit trailing null defaults and bare null returns where untyped returns were valid; known bare-variable declared array properties admit []=RHS once against the current post-RHS slot; sole-return-new methods of known classes retain that object class for existing guarded snapshots; substr accepts actual string/int offset/int-or-null length with byte clamps.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.parser_output","test":"TestDifferential/parser_output","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/parser_output.php","assertions":["stdout","exit","method null defaults/bare and fallthrough null, factory snapshot, seed copies, same-slot RHS reset append ordering, caller execution and byte substr"]},
         {"case_id":"compiler.parser_output","test":"TestParserOutputLowering","file":"internal/codegen/parser_output_test.go","kind":"compiler","assertions":["canonical bare-null return, method min/max suffix, named declared append IR, guarded factory cast, substr nil padding and statement maps"]},
@@ -42,7 +42,7 @@
       "name": "Exact scalar public constructor parameters",
       "implementation": "partial",
       "contract": "Public constructor parameters may declare int/string/bool with exact actual values only. Static mismatches reject; unknown/host values are guarded before body entry. Local reassignment and untyped properties stay mutable, existing untyped null suffix and Execution dispatch remain intact.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.scalar_constructor","test":"TestDifferential/scalar_constructor","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/scalar_constructor.php","assertions":["stdout","exit","exact scalars, defaults/order, local reassignment, properties/snapshots and Execution composition"]},
         {"case_id":"compiler.scalar_constructor","test":"TestScalarConstructorLowering","file":"internal/codegen/scalar_constructor_test.go","kind":"compiler","assertions":["canonical IR types, all entry guards before body, untyped suffix and constructor source maps"]},
@@ -59,7 +59,7 @@
       "name": "Bounded form-feed string escape",
       "implementation": "partial",
       "contract": "Double-quoted backslash-f decodes to byte 0x0C; single-quoted and escaped-backslash forms retain literal bytes. Embedded/repeated escapes preserve string values and physical source-line accounting. Other escape/interpolation boundaries remain closed.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.form_feed","test":"TestDifferential/form_feed","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/form_feed.php","assertions":["stdout","exit","decoded/literal lengths and identity, keys and argument/return preservation, whitespace tokenizer composition"]},
         {"case_id":"unit.frontend.form_feed","test":"TestFormFeedLiteralIR","file":"internal/frontend/form_feed_test.go","kind":"unit","assertions":["exact byte12 vs literal backslash-f, repeated/mixed escapes, physical vs decoded source-line tracking"]},
@@ -73,7 +73,7 @@
       "name": "Standalone supported calls with discarded results",
       "implementation": "partial",
       "contract": "Direct function/builtin calls and bare-variable method/generated-arrow invocations may be statements. Evaluate once, preserve effects and all existing argument/callee/return guards, discard only the result without output or new binding. Existing execution context and dead-tail validation are retained.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.call_statements","test":"TestDifferential/call_statements","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/call_statements.php","assertions":["stdout","exit","function/method/arrow effects and discarded results, constructor/callback/branch/loop composition, dead tails and shared tokenizer context"]},
         {"case_id":"compiler.call_statement","test":"TestCallStatementLoweringAndSourceMap","file":"internal/codegen/call_statement_test.go","kind":"compiler","assertions":["call_stmt IR, once-only discard lowering and statement maps for direct/method/arrow/builtin calls; break tail suppression and restored following output"]},
@@ -89,7 +89,7 @@
       "name": "strtok: execution-owned byte token scanning",
       "implementation": "partial",
       "contract": "One or two actual strings: initialize/replace a scan with input and delimiter bytes, or continue with delimiter bytes. Nonempty string tokens (including zero) or false, skipped adjacent separators and changeable/empty delimiter sets. Explicit execution state propagates through direct functions, constructors, methods, named callbacks and arrows; host wrappers start fresh and context-aware entries share deliberately.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.strtok","test":"TestDifferential/strtok","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/strtok.php","assertions":["stdout","exit","delimiter changes/reset, empty/input/separator boundaries, zero token, while and prefix early-break, nested initializer and function/constructor/method/arrow/array_map sharing, input preservation"]},
         {"case_id":"compiler.strtok","test":"TestStrtokLoweringAndSourceMap","file":"internal/codegen/strtok_test.go","kind":"compiler","assertions":["case-insensitive context-aware lowering, legacy isolated entry and statement source maps"]},
@@ -110,7 +110,7 @@
       "name": "Trailing untyped null defaults on public constructors",
       "implementation": "partial",
       "contract": "Public untyped __construct may declare a trailing case-insensitive null-default suffix. New accepts required minimum through declared maximum, fills omitted slots with canonical null before ordinary copies, and preserves caller Execution when present.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.constructor_null_defaults","test":"TestDifferential/constructor_null_defaults","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/constructor_null_defaults.php","assertions":["stdout","exit","omitted/null/zero, zero-argument all-optional, case-insensitive names, argument/body ordering, fresh instances and shared strtok execution"]},
         {"case_id":"compiler.constructor_null_defaults","test":"TestConstructorNullDefaults","file":"internal/codegen/constructor_null_defaults_test.go","kind":"compiler","assertions":["optional suffix IR, runtime min/max guard and constructor statement maps"]},
@@ -126,7 +126,7 @@
       "name": "Fixed public data constructors and known-object array snapshots",
       "implementation": "partial",
       "contract": "Untyped public properties may omit an initializer (null). Public constructors run once on fresh defaults with bounded positional minimum/maximum, admitting a trailing null-default suffix. Known generated-class (array) casts snapshot all declared public properties in declaration order, retaining null, detaching nested arrays and preserving object identifiers.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.block_constructor","test":"TestDifferential/block_constructor","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/block_constructor.php","assertions":["stdout","exit","argument/body order and once-only effects, implicit null, fresh instances, copied arrays, declaration-ordered snapshots and shared object identifiers"]},
         {"case_id":"compiler.block_constructor","test":"TestBlockDataConstructorLoweringAndSourceMap","file":"internal/codegen/block_constructor_test.go","kind":"compiler","assertions":["implicit null/new args/constructor dispatch/object_array_cast IR, snapshot layout and statement maps"]},
@@ -144,7 +144,7 @@
       "name": "Braced while with nearest-loop break/continue",
       "implementation": "partial",
       "contract": "Case-insensitive while re-evaluates its supported scalar/null/array condition before every iteration, including after continue. Bare break exits without rechecking. Mixed foreach/while transfers target the nearest lexical function-local loop. Existing roots written in the body are conservatively widened for repeated condition/body/post-loop checks; new bindings do not escape.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.while_loop","test":"TestDifferential/while_loop","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/while_loop.php","assertions":["stdout","exit","zero/one/multiple iterations, condition effects and short-circuit, continue recheck versus break, mixed nesting, typed functions/method/callback and owned prefix selection with unchanged input"]},
         {"case_id":"compiler.while","test":"TestWhileLoweringAndSourceMap","file":"internal/codegen/while_test.go","kind":"compiler","assertions":["mixed-case while IR, ordinary Go loop and transfer source maps, suppressed dead tails and restored following output"]},
@@ -161,7 +161,7 @@
       "name": "Bare break in foreach",
       "implementation": "partial",
       "contract": "Case-insensitive bare break exits the nearest lexical foreach or bounded while, including inside braced conditionals. Payload-free IR, function-local loop context, validated non-emitted dead tails and preserved type state at loop exit. Existing snapshot iteration and outer-loop execution remain intact.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.foreach_break","test":"TestDifferential/foreach_break","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/foreach_break.php","assertions":["stdout","exit","first/middle/absent/empty matches, break versus continue, nested nearest-loop exit, effects and snapshots, conditional/function/method/callback composition"]},
         {"case_id":"compiler.foreach_break","test":"TestForeachBreakLoweringAndSourceMap","file":"internal/codegen/foreach_break_test.go","kind":"compiler","assertions":["mixed-case payload-free IR, Go break statement source mapping, dead tail suppressed and output after loop restored"]},
@@ -178,7 +178,7 @@
       "name": "Simple assignment to a declared public property",
       "implementation": "partial",
       "contract": "A defined bare variable known to hold a generated class may assign an existing literal public untyped property with a supported value. Setter clones arrays, getters retain detached reads, object identifiers stay shared. Mutable property reads retain existence validation but use unknown value type and existing runtime guards rather than assuming the default remains permanent.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.property_write","test":"TestDifferential/property_write","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/property_write.php","assertions":["stdout","exit","source object construction and data assignment, nested array independence, known aliases, method this, case-sensitive names, once-only RHS, type transitions and object/arrow identity"]},
         {"case_id":"compiler.property_write","test":"TestPublicPropertyWriteLoweringAndSourceMap","file":"internal/codegen/property_write_test.go","kind":"compiler","assertions":["assign_property IR and declared setter, clone boundary, once-only RHS, mutable property reads and statement maps"]},
@@ -194,7 +194,7 @@
       "name": "str_starts_with(string haystack, string needle): bool",
       "implementation": "partial",
       "contract": "Two positional actual strings, each evaluated once. Case-sensitive byte prefix comparison returns bool, including true for empty needle. Both domains checked before empty-needle success; middle/suffix matches alone are false.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.str_starts_with","test":"TestDifferential/str_starts_with","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/str_starts_with.php","assertions":["stdout","exit","empty/exact/prefix versus middle/suffix, case-sensitive Unicode and NUL bytes, actual bool, single evaluation, short-circuit and nested coalescing composition"]},
         {"case_id":"compiler.str_starts_with","test":"TestStrStartsWithLoweringAndSourceMap","file":"internal/codegen/str_starts_with_test.go","kind":"compiler","assertions":["case-insensitive call, typed bool return and statement source map"]},
@@ -211,7 +211,7 @@
       "name": "is_object(value)",
       "implementation": "partial",
       "contract": "One evaluated supported value, actual bool result. Generated class instances (including empty classes) and generated arrows (PHP Closures) explicitly mark object identity. Scalar/null/array values and unmarked foreign Go values return false, without property access, coercion or mutation.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.is_object","test":"TestDifferential/is_object","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/is_object.php","assertions":["stdout","exit","generated classes/Closure arrows versus nonobjects, dynamic forwarding, typed bool/array returns, callbacks, once-only argument and short-circuit property reads"]},
         {"case_id":"compiler.is_object","test":"TestIsObjectLoweringAndSourceMap","file":"internal/codegen/is_object_test.go","kind":"compiler","assertions":["case-insensitive direct builtin, class/empty-class object markers and guarded bool-return source map"]},
@@ -226,7 +226,7 @@
       "name": "str_contains(string haystack, string needle): bool",
       "implementation": "partial",
       "contract": "Two positional actual strings, each evaluated once. Case-sensitive byte substring membership returns bool, including true for empty needle and binary-safe matching. Both domains checked before empty-needle success.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.str_contains","test":"TestDifferential/str_contains","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/str_contains.php","assertions":["stdout","exit","empty/boundary/case-sensitive substring membership, Unicode and NUL bytes, actual bool, single evaluation, short-circuit and nested coalescing composition"]},
         {"case_id":"compiler.str_contains","test":"TestStrContainsLoweringAndSourceMap","file":"internal/codegen/str_contains_test.go","kind":"compiler","assertions":["case-insensitive call, typed bool return and statement source map"]},
@@ -243,7 +243,7 @@
       "name": "Defined-root nested isset and array-address null coalescing",
       "implementation": "partial",
       "contract": "Nested isset and ?? probe a defined variable with literal/defined int|string keys through array/null intermediates. Missing/null is absent; final non-null falsy values remain present. Coalescing clones a present value and evaluates its fallback lazily once; ?? is right-associative below || and above ternary.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.nested_array_probes","test":"TestDifferential/nested_array_probes","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/nested_array_probes.php","assertions":["stdout","exit","nested/multi isset, array/null paths, null versus falsy defaults, lazy fallback and right association/precedence"]},
         {"case_id":"compiler.nested_array_probes","test":"TestNestedArrayProbesLoweringAndSourceMap","file":"internal/codegen/nested_array_probes_test.go","kind":"compiler","assertions":["flat isset_path IR, array-address coalesce, one probe and lazy fallback, old one-level isset/read guards and statement maps"]},
@@ -262,7 +262,7 @@
       "name": "array_slice(array, int offset, ?int length = null, bool preserve_keys = false)",
       "implementation": "partial",
       "contract": "Select by insertion-order position with bounded signed offsets and optional signed length. Null length selects the remainder; negative length excludes trailing positions. Integer keys reindex unless preserve_keys is true, string keys always remain. Detached array storage and rebuilt append metadata; all argument domains checked even for empty selections.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.array_slice","test":"TestDifferential/array_slice","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_slice.php","assertions":["stdout","exit","optional arguments, positive/negative/extreme bounds, mixed keys, preservation/reindexing, nested copy, append metadata and single evaluation"]},
         {"case_id":"compiler.array_slice","test":"TestArraySliceLoweringAndSourceMap","file":"internal/codegen/array_slice_test.go","kind":"compiler","assertions":["case-insensitive two/three/four argument lowering, defaults and statement source mapping"]},
@@ -280,7 +280,7 @@
       "name": "Bare continue in foreach",
       "implementation": "partial",
       "contract": "Case-insensitive bare continue skips the remaining iteration of the nearest lexical foreach or bounded while, including inside braced conditionals. While rechecks its condition. Payload-free IR, function-local loop context, validated non-emitted dead tails and preserved pre-continue type state.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.foreach_continue","test":"TestDifferential/foreach_continue","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/foreach_continue.php","assertions":["stdout","exit","iteration skip without loop exit, nested nearest-loop behavior, effects and array snapshots, empty inputs, conditional/function/callback composition and input preservation"]},
         {"case_id":"compiler.foreach_continue","test":"TestForeachContinueLoweringAndSourceMap","file":"internal/codegen/foreach_continue_test.go","kind":"compiler","assertions":["case-insensitive payload-free IR, ordinary Go continue source mapping, dead tail not emitted, enclosing block output restored"]},
@@ -300,7 +300,7 @@
       "name": "array_merge(array ...arrays)",
       "implementation": "partial",
       "contract": "Zero or more positional actual arrays, each evaluated once. Integer-keyed values append with consecutive keys from zero; later duplicate string keys replace values at their original position. Returns a detached nonrecursive array with rebuilt append metadata.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.array_merge","test":"TestDifferential/array_merge","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_merge.php","assertions":["stdout","exit","zero/one/multiple arrays, integer reindex versus string replacement order, normalized keys, nested nonrecursive replacement, input preservation, append and single evaluation"]},
         {"case_id":"compiler.array_merge","test":"TestArrayMergeLoweringAndSourceMap","file":"internal/codegen/array_merge_test.go","kind":"compiler","assertions":["case-insensitive zero/one/two/three argument lowering with statement source map"]},
@@ -318,7 +318,7 @@
       "name": "array_reverse(array, bool preserve_keys = false)",
       "implementation": "partial",
       "contract": "Reverse outer insertion order into a detached array. Default/false reindexes integer keys from zero; true preserves integer keys. String keys and nested values are always retained. Rebuild result append metadata without mutating the input.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.array_reverse","test":"TestDifferential/array_reverse","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_reverse.php","assertions":["stdout","exit","default/false/true, mixed/negative/normalized keys, nested copy, append metadata, input preservation, single evaluation and callbacks"]},
         {"case_id":"compiler.array_reverse","test":"TestArrayReverseLoweringAndSourceMap","file":"internal/codegen/array_reverse_test.go","kind":"compiler","assertions":["case-insensitive direct call, optional false default and explicit flags lower with source map"]},
@@ -336,7 +336,7 @@
       "name": "array_key_first(array)",
       "implementation": "partial",
       "contract": "One evaluated actual array argument; returns its first insertion-order stored int/string key or null for an empty array. Does not sort, inspect values or modify input/index metadata.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.array_key_first","test":"TestDifferential/array_key_first","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_key_first.php","assertions":["stdout","exit","typed first keys/null, unsorted order, normalization/replacement/append, first versus last, guarded first-value reads, single evaluation and callbacks"]},
         {"case_id":"compiler.array_key_first","test":"TestArrayKeyFirstLoweringAndSourceMap","file":"internal/codegen/array_key_first_test.go","kind":"compiler","assertions":["case-insensitive direct call lowers with statement source map"]},
@@ -353,7 +353,7 @@
       "name": "array_key_last(array)",
       "implementation": "partial",
       "contract": "One evaluated actual array argument; returns its last insertion-order stored int/string key or null for an empty array, without inspecting values or modifying input/index metadata.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.array_key_last","test":"TestDifferential/array_key_last","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_key_last.php","assertions":["stdout","exit","typed keys/null, insertion order, normalized keys, replacement/append, guarded last-element reads, single evaluation and callback composition"]},
         {"case_id":"compiler.array_key_last","test":"TestArrayKeyLastLoweringAndSourceMap","file":"internal/codegen/array_key_last_test.go","kind":"compiler","assertions":["case-insensitive direct call lowers with statement source map"]},
@@ -370,7 +370,7 @@
       "name": "empty on a defined array variable",
       "implementation": "partial",
       "contract": "Case-insensitive variable-only language construct; defined actual arrays return bool true iff the outer array has zero entries. Unknown values are guarded, not coerced; contents and input are unchanged.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.array_empty","test":"TestDifferential/array_empty","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_empty.php","assertions":["stdout","exit","empty versus nonempty falsy/nested values, typed and dynamic calls, bool result, callbacks, lazy guards and caller preservation"]},
         {"case_id":"compiler.array_empty","test":"TestArrayEmptyLoweringAndSourceMap","file":"internal/codegen/array_empty_test.go","kind":"compiler","assertions":["dedicated variable-only IR, guarded bool return and source map"]},
@@ -388,7 +388,7 @@
       "name": "is_null(value)",
       "implementation": "partial",
       "contract": "Exactly one evaluated value, case-insensitive direct calls, actual null only; bool result without false-like conversion or undefined-address probing.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.is_null","test":"TestDifferential/is_null","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/is_null.php","assertions":["stdout","exit","null versus false-like/non-null values, single evaluation, lazy guards, present-null versus missing keys and callback composition"]},
         {"case_id":"unit.runtime.is_null_domain","test":"TestIsNullValueDomain","file":"runtime/is_null_test.go","kind":"unit","assertions":["canonical nil accepted, false-like values/arrays/objects/callables and Go typed nil values return false without conversion"]},
@@ -407,7 +407,7 @@
       "name": "is_int(value)",
       "implementation": "partial",
       "contract": "Exactly one argument, case-insensitive direct calls, actual canonical int64 values only; bool result without numeric-string coercion, traversal or mutation.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.is_int","test":"TestDifferential/is_int","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/is_int.php","assertions":["stdout","exit","actual bool/type distinction for integers and nonintegers, numeric strings, single evaluation, guarded arithmetic, integer/string keys and generated callback composition"]},
         {"case_id":"unit.runtime.is_int_domain","test":"TestIsIntValueDomain","file":"runtime/is_int_test.go","kind":"unit","assertions":["signed int64 endpoints accepted; null/bool/string/array/object/callable and noncanonical Go numeric types rejected without conversion"]},
@@ -425,7 +425,7 @@
       "name": "Array parameters on named global functions",
       "implementation": "partial",
       "contract": "Fixed positional array parameters retain aligned canonical IR metadata; known non-arrays fail statically and unknown values are guarded and copied before the body. Annotation constrains entry, not later local assignments.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.arrow_typed_composition","test":"TestDifferential/arrow_typed_composition","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/arrow_typed_composition.php","assertions":["stdout","exit","array/callable parameters and actual-bool returns across conditional/foreach paths, explicit casts, skipped calls and caller isolation"]},
         {"case_id":"negative.arrow_typed_composition.runtime","test":"TestArrowTypedCompositionRuntimeGuards","file":"tests/arrow_typed_composition_runtime_test.go","kind":"negative","assertions":["unknown arrow results cannot bypass enclosing bool-return or downstream array-parameter guards"]},
@@ -447,7 +447,7 @@
       "name": "Trailing untyped null defaults on named global functions",
       "implementation": "partial",
       "contract": "A trailing suffix of untyped named-global parameters may use case-insensitive = null. Calls accept only the resulting fixed positional minimum through maximum; omitted slots are canonical null before ordinary parameter copy/guard handling.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.null_defaults","test":"TestDifferential/null_defaults","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/null_defaults.php","assertions":["stdout","exit","omitted versus explicit null/value arguments, forwarding, literal array_map callback arity and caller-array isolation"]},
         {"case_id":"compiler.null_defaults","test":"TestNullDefaultParametersLowering","file":"internal/codegen/null_defaults_test.go","kind":"compiler","assertions":["OptionalNullParams IR suffix, min/max lowering, parameter guard ordering, forwarding, literal callback adapter and source map"]},
@@ -462,7 +462,7 @@
       "name": "Actual-bool returns on named global functions",
       "implementation": "partial",
       "contract": "Canonical : bool declaration with actual boolean returns only; every explicit return and fallthrough guarded, known mismatches rejected statically, unknown values guarded at runtime. No weak scalar coercion.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.arrow_typed_composition","test":"TestDifferential/arrow_typed_composition","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/arrow_typed_composition.php","assertions":["stdout","exit","array/callable parameters and actual-bool returns across conditional/foreach paths, explicit casts, skipped calls and caller isolation"]},
         {"case_id":"negative.arrow_typed_composition.runtime","test":"TestArrowTypedCompositionRuntimeGuards","file":"tests/arrow_typed_composition_runtime_test.go","kind":"negative","assertions":["unknown arrow results cannot bypass enclosing bool-return or downstream array-parameter guards"]},
@@ -484,9 +484,7 @@
       "name": "Strict scalar array membership",
       "implementation": "partial",
       "contract": "Exactly three arguments with literal true strictness; null/bool/int64/string needle and all array values; type-and-value equality, keys ignored, bool result. Entire domain validated before search.",
-      "php_targets": [
-        "8.3"
-      ],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.literal_case","test":"TestDifferential/literal_case","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/literal_case.php","assertions":["stdout","exit","mixed-case bool/null literals in expressions, returns, property defaults, strict membership and isset; variable and quoted-string case preserved"]},
         {"case_id":"diff.membership_control_flow","test":"TestDifferential/membership_control_flow","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/membership_control_flow.php","assertions":["stdout","exit","strict membership in conditional typed returns and callbacks, isset selection, short-circuiting, single operand evaluation and negative-key copy isolation"]},
@@ -715,9 +713,7 @@
       "name": "String-only ASCII case-insensitive comparison",
       "implementation": "partial",
       "contract": "Two actual strings; ASCII-only case folding, first unequal folded-byte delta or prefix-length ordering as integer for selected PHP 8.3 implementation. Static and dynamic string guards.",
-      "php_targets": [
-        "8.3"
-      ],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.control_flow_array_integration","test":"TestDifferential/control_flow_array_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/control_flow_array_integration.php","assertions":["stdout","exit","typed returns across conditional arms and foreach, isset/strcasecmp, typed callbacks, negative-key append and caller/copy isolation"]},
         {"case_id":"diff.charset_array_integration","test":"TestDifferential/charset_array_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/charset_array_integration.php","assertions":["stdout","exit","typed-return/isset/logical/string composition, ordered mixed keys, shallow callback classification, caller preservation and copy isolation"]},
@@ -888,13 +884,16 @@
       "kind": "tooling",
       "name": "PHP target and native oracle admission",
       "implementation": "implemented",
-      "contract": "New compilation targets PHP 8.3; live comparison requires a stable PHP 8.3 release at or above 8.3.36. Newer series require explicit enablement and their own validation.",
-      "php_targets": ["8.3"],
+      "contract": "Compilation targets PHP 8.3 or 8.4; independent native comparison requires stable PHP >=8.3.36 or >=8.4.27 within the selected series. PHP 8.4 declaration profile rejects its four new array builtin names and the deprecated underscore class name.",
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"unit.policy.oracle_floor","test":"TestOracleSecurityFloor","file":"internal/phpversion/policy_test.go","kind":"unit","assertions":["numeric patch floor, stable release syntax and selected-series identity enforced"]},
         {"case_id":"unit.policy.enabled_targets","test":"TestTargetsRequireExplicitEnablement","file":"internal/phpversion/policy_test.go","kind":"unit","assertions":["retired and unverified series cannot auto-enable"]},
         {"case_id":"compiler.policy.disabled_targets","test":"TestDisabledTargetsFailBeforeGeneration","file":"internal/codegen/version_test.go","kind":"compiler","assertions":["frontend and direct IR reject retired and unverified targets without output"]},
-        {"case_id":"compiler.policy.oracle_admission","test":"TestMetadataOracleAdmission","file":"cmd/gohp-compat/main_test.go","kind":"compiler","assertions":["live metadata gate rejects old/mismatched/missing oracles and records admitted identity before tests"]}
+        {"case_id":"compiler.policy.oracle_admission","test":"TestMetadataOracleAdmission","file":"cmd/gohp-compat/main_test.go","kind":"compiler","assertions":["live metadata gate rejects old/mismatched/missing oracles and records admitted identity before tests"]},
+        {"case_id":"compiler.policy.php84_ir","test":"TestDirectIRPreservesEnabledPHP84Target","file":"internal/codegen/version_test.go","kind":"compiler","assertions":["direct IR retains explicit PHP8.4 target"]},
+        {"case_id":"compiler.policy.php84_profile","test":"TestPHP84DeclarationProfile","file":"internal/codegen/php84_profile_test.go","kind":"compiler","assertions":["target-specific builtin redeclaration and deprecated class boundary"]},
+        {"case_id":"compiler.policy.native_declarations","test":"TestNativeTargetDeclarationBoundary","file":"tests/php84_profile_test.go","kind":"compiler","assertions":["native selected-version declaration outcome and compiler admission; not diagnostic equivalence or generated execution"]}
       ],
       "limitations": ["Admission is not a compatibility or vulnerability-free guarantee for later patches","Only pinned and measured oracle versions have differential evidence","Historical snapshots remain readable with retired targets and older patch versions; no current support inferred"]
     },
@@ -904,7 +903,7 @@
       "name": "Named functions with fixed value parameters and return",
       "implementation": "partial",
       "contract": "Lowers declared named functions, fixed value arguments and explicit returns in the closed subset.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.core", "test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["native PHP stdout equals generated Go stdout"]}
       ],
@@ -916,7 +915,7 @@
       "name": "Array return declarations on named global functions",
       "implementation": "partial",
       "contract": "Retains : array and guards each explicit return and fallthrough; actual arrays are copied, known non-array returns fail before generation, unknown values fail at runtime.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.membership_control_flow","test":"TestDifferential/membership_control_flow","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/membership_control_flow.php","assertions":["stdout","exit","strict membership in conditional typed returns and callbacks, isset selection, short-circuiting, single operand evaluation and negative-key copy isolation"]},
         {"case_id":"diff.control_flow_array_integration","test":"TestDifferential/control_flow_array_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/control_flow_array_integration.php","assertions":["stdout","exit","typed returns across conditional arms and foreach, isset/strcasecmp, typed callbacks, negative-key append and caller/copy isolation"]},
@@ -940,7 +939,7 @@
       "name": "foreach over supported arrays",
       "implementation": "partial",
       "contract": "Iterates ordered GoHP arrays and binds value or key/value variables.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.core", "test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["key and value iteration output matches native PHP"]},
         {"case_id": "negative.foreach_scalar", "test": "TestUnsupported/foreach_scalar", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["scalar foreach is rejected with a diagnostic code"]}
@@ -953,7 +952,7 @@
       "name": "Short and legacy array literals",
       "implementation": "partial",
       "contract": "Lowers ordered [] and case-insensitive array(...) literals with supported integer and string keys and values.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.arrays", "test": "TestDifferential/arrays", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/arrays.php", "assertions": ["mixed keys, nested reads and count output match"]},
         {"case_id": "diff.legacy_arrays", "test": "TestDifferential/legacy_arrays", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/legacy_arrays.php", "assertions": ["empty legacy arrays, mixed-case array spelling, literal keys, nested reads, trailing commas, function returns and foreach output match"]},
@@ -977,7 +976,7 @@
       "name": "Array index reads",
       "implementation": "partial",
       "contract": "Reads supported array values by supported keys.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.arrays", "test": "TestDifferential/arrays", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/arrays.php", "assertions": ["nested and keyed reads match fixture output"]},
         {"case_id": "negative.runtime_failure", "test": "TestRuntimeFailureIsNotPass", "file": "tests/differential_test.go", "kind": "negative", "fixture": "tests/fixtures/runtime_failure.php", "assertions": ["missing key runtime failure is not reported as a pass"]}
@@ -990,7 +989,7 @@
       "name": "Classes, no-argument construction and methods",
       "implementation": "partial",
       "contract": "Lowers classes with public scalar defaults, no-argument construction, property reads and methods in the closed subset.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.core", "test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["method dispatch and public property read output match"]},
         {"case_id": "negative.missing_property", "test": "TestUnsupported/missing_property", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["missing property is rejected"]},
@@ -1004,7 +1003,7 @@
       "name": "Binary +",
       "implementation": "partial",
       "contract": "Performs supported integral addition and rejects statically known invalid operands.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.core", "test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["integer accumulation output matches"]},
         {"case_id": "unit.runtime.overflow", "test": "TestOverflowFailsExplicitly", "file": "runtime/runtime_test.go", "kind": "unit", "assertions": ["int64 overflow fails explicitly"]}
@@ -1017,7 +1016,7 @@
       "name": "Binary .",
       "implementation": "partial",
       "contract": "Concatenates supported values using GoHP runtime conversion.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.precedence", "test": "TestDifferential/precedence", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/precedence.php", "assertions": ["target-version precedence output matches"]}
       ],
@@ -1029,7 +1028,7 @@
       "name": "Parentheses and target-specific +/. precedence",
       "implementation": "partial",
       "contract": "Parses the closed expression grammar with PHP 8.3 precedence for addition and concatenation.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.precedence", "test": "TestDifferential/precedence", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/precedence.php", "assertions": ["generated output equals the selected native PHP target"]},
         {"case_id": "diff.arrays", "test": "TestDifferential/arrays", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/arrays.php", "assertions": ["parenthesized integral addition output matches"]}
@@ -1042,7 +1041,7 @@
       "name": "Braced if/elseif/else chains",
       "implementation": "partial",
       "contract": "Evaluate scalar/array conditions in order until one is true, executing only that braced body or the final else; elseif and else if share existing nested-if lowering and preserve writes to pre-existing variables.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.membership_control_flow","test":"TestDifferential/membership_control_flow","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/membership_control_flow.php","assertions":["stdout","exit","strict membership in conditional typed returns and callbacks, isset selection, short-circuiting, single operand evaluation and negative-key copy isolation"]},
         {"case_id":"diff.control_flow_array_integration","test":"TestDifferential/control_flow_array_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/control_flow_array_integration.php","assertions":["stdout","exit","typed returns across conditional arms and foreach, isset/strcasecmp, typed callbacks, negative-key append and caller/copy isolation"]},
@@ -1088,7 +1087,7 @@
       "name": "Full ternary conditional",
       "implementation": "partial",
       "contract": "Lowers condition ? yes : no with one condition evaluation and lazy branch evaluation over the existing supported truthiness domain.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.predicate_conditional_integration","test":"TestDifferential/predicate_conditional_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/predicate_conditional_integration.php","assertions":["is_array selects lazy array/string/fallback branches with one condition evaluation, strict boolean observations and original-value preservation"]},
         {"case_id":"diff.conditional_array_integration","test":"TestDifferential/conditional_array_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/conditional_array_integration.php","assertions":["lazy conditional string processing and non-string array passthrough compose with array keys/values/existence/list operations on one compiler/runtime"]},
@@ -1106,7 +1105,7 @@
       "name": "Logical &&",
       "implementation": "partial",
       "contract": "Evaluates supported truthiness values left-to-right and short-circuits the right operand.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["a marker-producing right operand is skipped for false and evaluated once for true", "guarded strtolower does not receive non-string dynamic values"]}
       ],
@@ -1118,9 +1117,7 @@
       "name": "Logical ||",
       "implementation": "partial",
       "contract": "Return bool from existing scalar/array truthiness, evaluating the left operand once and the right only when the left is false; bind below && and above full ternary.",
-      "php_targets": [
-        "8.3"
-      ],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {
           "case_id": "diff.logical_or",
@@ -1282,7 +1279,7 @@
       "name": "Strict scalar equality and literal-null probes ===",
       "implementation": "partial",
       "contract": "Compares null, bool, int64 and string by type/value; when either syntactic operand is literal null, evaluates the other supported expression once as a canonical-null predicate, including arrays/objects/callables.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["integer and string values with the same spelling remain distinct", "strict comparison participates in target-specific precedence"]},
         {"case_id":"diff.literal_null_identity","test":"TestDifferential/literal_null_identity","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/literal_null_identity.php","assertions":["stdout","exit","both literal-null operand orders and both strict operators; non-scalar null probes, single evaluation and surrounding short circuit"]},
@@ -1300,7 +1297,7 @@
       "name": "Strict scalar inequality and literal-null probes !==",
       "implementation": "partial",
       "contract": "Compare canonical scalars without coercion, returning negated identity; with a syntactic literal-null operand, evaluates the other supported expression once as a negated canonical-null predicate.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.strict_not_equal","test":"TestDifferential/strict_not_equal","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/strict_not_equal.php","assertions":["scalar type/value distinctions, bool results, precedence, parenthesized comparisons, once-only operands and lazy surrounding branches match native stdout and normal exit"]},
         {"case_id":"diff.literal_null_identity","test":"TestDifferential/literal_null_identity","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/literal_null_identity.php","assertions":["stdout","exit","both literal-null operand orders and both strict operators; non-scalar null probes, single evaluation and surrounding short circuit"]},
@@ -1329,7 +1326,7 @@
       "name": "Loose equality ==",
       "implementation": "unsupported",
       "contract": "No PHP coercive equality lowering is provided.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "negative.loose_equal", "test": "TestUnsupported/loose_equal", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["loose equality is rejected"]}
       ],
@@ -1341,7 +1338,7 @@
       "name": "Prefix logical not",
       "implementation": "partial",
       "contract": "Evaluate one operand once and negate its existing PHP 8.3 scalar/array truthiness; always return bool, including repeated !!.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.logical_not","test":"TestDifferential/logical_not","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/logical_not.php","assertions":["logical negation returns bool across the scalar/array domain, respects precedence, evaluates operands once and composes with lazy branches"]},
         {"case_id":"compiler.logical_not_lowering","test":"TestLogicalNotLoweringAndSourceMap","file":"internal/codegen/logical_not_test.go","kind":"compiler","assertions":["one-operand not IR lowers through the existing Bool guard and retains statement source mapping"]},
@@ -1364,7 +1361,7 @@
       "name": "(bool) cast",
       "implementation": "partial",
       "contract": "Casts supported null, bool, int64, string and array values using the documented GoHP truthiness subset.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["false, null, zero, string zero and empty string are false", "nonempty strings and a nonempty array are true"]},
         {"case_id": "unit.runtime.bool_rejects_unsupported", "test": "TestBoolRejectsUnsupportedValue", "file": "runtime/runtime_test.go", "kind": "unit", "assertions": ["unsupported truthiness types fail explicitly"]},
@@ -1378,7 +1375,7 @@
       "name": "is_bool",
       "implementation": "partial",
       "contract": "Returns whether a supported dynamic value is bool.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["boolean, string and array predicate results match native PHP"]},
         {"case_id": "negative.is_bool_missing_argument", "test": "TestUnsupported/is_bool_missing_argument", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["missing argument is rejected"]},
@@ -1393,7 +1390,7 @@
       "name": "is_array(value)",
       "implementation": "partial",
       "contract": "One value argument returns bool: true for existing GoHP array values (including empty and associative), false for supported scalars, null and generated class instances. No conversion, traversal or mutation.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.predicate_conditional_integration","test":"TestDifferential/predicate_conditional_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/predicate_conditional_integration.php","assertions":["is_array selects lazy array/string/fallback branches with one condition evaluation, strict boolean observations and original-value preservation"]},
         {"case_id": "diff.is_array", "test": "TestDifferential/is_array", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/is_array.php", "assertions": ["empty/list/associative/nested arrays and non-array values match native PHP via strict bool observation", "dynamic arguments, single evaluation, short-circuit array guards and original preservation match"]},
@@ -1412,7 +1409,7 @@
       "name": "is_string",
       "implementation": "partial",
       "contract": "Returns whether a supported dynamic value is string.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["boolean, string and array predicate results match native PHP"]},
         {"case_id": "negative.is_string_missing_argument", "test": "TestUnsupported/is_string_missing_argument", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["missing argument is rejected"]},
@@ -1427,7 +1424,7 @@
       "name": "strtolower(string)",
       "implementation": "partial",
       "contract": "Lowers PHP 8.3 ASCII byte case conversion for one string argument.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.booleans", "test": "TestDifferential/booleans", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/booleans.php", "assertions": ["ASCII uppercase strings lower correctly", "is_string guard short-circuits non-string inputs before the runtime string guard"]},
         {"case_id": "unit.runtime.strtolower_rejects_unsupported", "test": "TestStrToLowerRejectsUnsupportedValue", "file": "runtime/runtime_test.go", "kind": "unit", "assertions": ["runtime rejects non-string input"]},
@@ -1447,7 +1444,7 @@
       "name": "Literal-only decimal integer negation",
       "implementation": "partial",
       "contract": "Fold one minus followed by an admitted decimal integer token to signed int64 IR; whitespace/comments are allowed and -0 is integer zero.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.isset_negative_keys","test":"TestDifferential/isset_negative_keys","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/isset_negative_keys.php","assertions":["stdout","exit","negative literal presence/null/falsy boundaries, canonical zero, integer bounds, short-circuiting and unchanged array metadata"]},
         {"case_id":"diff.negative_integers","test":"TestDifferential/negative_integers","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/negative_integers.php","assertions":["negative decimal constants, scalar contexts, array keys/write/append, zero and integer bounds match native output"]},
@@ -1472,7 +1469,7 @@
       "name": "int64, string, bool and null literals",
       "implementation": "partial",
       "contract": "Represents the listed scalar literals in the closed subset; true/false/null accept ASCII letter-case variants and canonicalize to existing bool/null IR.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.literal_case","test":"TestDifferential/literal_case","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/literal_case.php","assertions":["stdout","exit","mixed-case bool/null literals in expressions, returns, property defaults, strict membership and isset; variable and quoted-string case preserved"]},
         {"case_id":"compiler.literal_case","test":"TestLiteralCaseCanonicalIRAndSourceMap","file":"internal/codegen/literal_case_test.go","kind":"compiler","assertions":["case variants normalize to canonical bool/null IR and retain source mapping"]},
@@ -1487,7 +1484,7 @@
       "name": "count(array)",
       "implementation": "partial",
       "contract": "Supports one-argument, nonrecursive count for GoHP arrays only.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.core", "test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["array count output matches"]},
         {"case_id": "negative.count_scalar", "test": "TestUnsupported/count_scalar", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["count on a scalar is rejected"]}
@@ -1500,7 +1497,7 @@
       "name": "rtrim(string, literal-mask)",
       "implementation": "partial",
       "contract": "Supports exactly two arguments: a string or dynamic value guarded at runtime, and a string literal byte mask without character ranges.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.rtrim", "test": "TestDifferential/rtrim", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/rtrim.php", "assertions": ["empty, unchanged, repeated slash/backslash, literal and empty masks, nested calls, case-insensitive calls, UTF-8 and byte-split output match native PHP"]},
         {"case_id":"negative.rtrim_missing_argument","test":"TestUnsupported/rtrim_missing_argument","file":"tests/differential_test.go","kind":"negative","assertions":["omitted default mask is rejected"]},
@@ -1523,7 +1520,7 @@
       "name": "strlen(string)",
       "implementation": "partial",
       "contract": "One positional string argument returns its byte length as an integer; dynamic inputs are checked at runtime, without implicit coercion.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.strlen", "test": "TestDifferential/strlen", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/strlen.php", "assertions": ["empty/ASCII/UTF-8/escaped strings, dynamic string arguments and arithmetic results match native PHP stdout and successful exits"]},
         {"case_id": "unit.runtime.strlen_bytes", "test": "TestStrlenByteLengthAndIntegerResult", "file": "runtime/strlen_test.go", "kind": "unit", "assertions": ["returns int64 byte length, including combining characters and binary bytes; binary case is runtime-only"]},
@@ -1547,7 +1544,7 @@
       "name": "array_keys(array)",
       "implementation": "partial",
       "contract": "One positional array argument returns its existing keys in insertion order as values of a fresh zero-based array, preserving integer/string key types.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.array_keys","test":"TestDifferential/array_keys","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_keys.php","assertions":["ordered keys, numeric-string normalization, empty/nested arrays and dynamic array results match native PHP stdout and successful exits"]},
         {"case_id":"unit.runtime.array_keys_values","test":"TestArrayKeysOrderTypesAndIsolation","file":"runtime/array_keys_test.go","kind":"unit","assertions":["dense int64 output indexes, original key types and order, empty arrays and independent storage; binary keys are runtime-only"]},
@@ -1572,7 +1569,7 @@
       "name": "array_values(array)",
       "implementation": "partial",
       "contract": "One positional array argument returns its values in insertion order in a fresh zero-based array, preserving supported value types and nested arrays without flattening.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.array_values","test":"TestDifferential/array_values","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_values.php","assertions":["empty, sparse/mixed-key and nested arrays reindex in insertion order; dynamic calls, reads and input preservation match native PHP stdout and successful exits"]},
         {"case_id":"diff.feature_integration","test":"TestDifferential/feature_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/feature_integration.php","assertions":["legacy arrays compose with array_values/array_keys, count, guarded strlen/rtrim/strtolower, type predicates and control flow; PHP 8.3 operator precedence and nested keys are preserved"]},
@@ -1597,7 +1594,7 @@
       "name": "array_key_exists(int|string, array)",
       "implementation": "partial",
       "contract": "Exactly two positional arguments return a boolean for first-dimension key presence, including null-valued entries; only integer/string keys with existing array normalization are supported.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.array_key_exists","test":"TestDifferential/array_key_exists","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_key_exists.php","assertions":["present-null versus missing, integer/string normalized keys, first-dimension lookup, dynamic calls, bool result observations and guarded reads match native PHP stdout and normal exits"]},
         {"case_id":"unit.runtime.array_key_exists_presence","test":"TestArrayKeyExistsPresenceAndNormalization","file":"runtime/array_key_exists_test.go","kind":"unit","assertions":["null/false/zero/empty values count as present, numeric keys normalize, nested keys are not recursively searched, input is not mutated; extreme/binary keys are runtime-unit-only"]},
@@ -1626,7 +1623,7 @@
       "name": "array_is_list(array)",
       "implementation": "partial",
       "contract": "One positional array argument returns true exactly when its outer keys, in insertion order, are consecutive integers starting at zero; the empty array is a list. Values are ignored and input is unchanged.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.array_is_list","test":"TestDifferential/array_is_list","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_is_list.php","assertions":["empty/contiguous keys are lists, gaps/order/string keys are not; normalized and replacement keys, nested values, dynamic calls and composition with array_keys/array_values match native stdout with strict boolean observations"]},
         {"case_id":"unit.runtime.array_is_list_order","test":"TestArrayIsListOrderAndValues","file":"runtime/array_is_list_test.go","kind":"unit","assertions":["outer integer key order alone decides list status without input mutation; negative/extreme/binary keys additionally checked in runtime units"]},
@@ -1650,7 +1647,7 @@
       "name": "sprintf(%0Ns, string|int64)",
       "implementation": "partial",
       "contract": "Supports exactly two arguments and exactly the canonical %0Ns string/integer zero-padding subset, with N from 0 through 4096 and byte-width semantics.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.string_array_integration","test":"TestDifferential/string_array_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/string_array_integration.php","assertions":["bounded formatting/replacement compose with array keys/values/existence/list checks, guarded null input, byte widths and original preservation on one compiler/runtime"]},
         {"case_id": "diff.sprintf", "test": "TestDifferential/sprintf", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/sprintf.php", "assertions": ["original zeroise-style dynamic format and accepted values match native PHP stdout byte-for-byte"]},
@@ -1667,7 +1664,7 @@
       "name": "str_replace(string, string, string)",
       "implementation": "partial",
       "contract": "Supports exactly three string arguments with byte-wise, case-sensitive, non-overlapping replace-all; empty search returns the subject unchanged.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.string_array_integration","test":"TestDifferential/string_array_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/string_array_integration.php","assertions":["bounded formatting/replacement compose with array keys/values/existence/list checks, guarded null input, byte widths and original preservation on one compiler/runtime"]},
         {"case_id": "diff.str_replace", "test": "TestDifferential/str_replace", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/str_replace.php", "assertions": ["supported replace-all forms, including empty search/replacement, overlap, non-rescanning insertion, call spelling and multibyte strings match native PHP stdout byte-for-byte"]},
@@ -1684,7 +1681,7 @@
       "name": "stripslashes(string)",
       "implementation": "partial",
       "contract": "Supports exactly one actual string argument, removing one backslash before each following byte, mapping escaped ASCII zero to NUL and dropping a trailing backslash.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.conditional_array_integration","test":"TestDifferential/conditional_array_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/conditional_array_integration.php","assertions":["guarded string-only unescaping composes with bounded formatting/replacement while non-string arrays retain their values"]},
         {"case_id": "diff.ternary_stripslashes", "test": "TestDifferential/ternary_stripslashes", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/ternary_stripslashes.php", "assertions": ["case-insensitive calls, quote/backslash/arbitrary-byte/ASCII-zero/trailing-backslash handling and string-only guard output match native PHP"]},
@@ -1700,7 +1697,7 @@
       "name": "array_map(literal user callback, array)",
       "implementation": "partial",
       "contract": "Exactly one array and one literal declared global callback with one required value argument and optional trailing untyped null defaults; preserves keys/order, clones callback values and resolves forward/recursive calls statically.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.callback_composition_integration","test":"TestDifferential/callback_composition_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/callback_composition_integration.php","assertions":["finite literal-callback recursion composes with type predicates, ternary and string quoting/unquoting while retaining nested keys, order, scalar types and caller input; empty maps invoke no callback"]},
         {"case_id":"diff.array_map","test":"TestDifferential/array_map","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_map.php","assertions":["literal callbacks, ordered keys, empty mapping, finite recursive lists and value preservation match native PHP stdout and normal exit"]},
@@ -1718,7 +1715,7 @@
       "name": "addslashes(string)",
       "implementation": "partial",
       "contract": "Exactly one actual string, byte-wise single-pass escaping of quotes/backslash and NUL to backslash-zero.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.callback_composition_integration","test":"TestDifferential/callback_composition_integration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/callback_composition_integration.php","assertions":["finite literal-callback recursion composes with type predicates, ternary and string quoting/unquoting while retaining nested keys, order, scalar types and caller input; empty maps invoke no callback"]},
         {"case_id":"diff.array_map","test":"TestDifferential/array_map","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_map.php","assertions":["string quoting composes with finite recursive literal callbacks and non-string passthrough"]},
@@ -1735,7 +1732,7 @@
       "name": "json_encode",
       "implementation": "unsupported",
       "contract": "No lowering is provided.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [],
       "limitations": ["Go JSON behavior must not be assumed PHP-equivalent"]
     },
@@ -1745,7 +1742,7 @@
       "name": "Capture-free arrows and generated callable invocation",
       "implementation": "partial",
       "contract": "Fixed untyped capture-free arrow expressions, generated-arrow-only global callable parameters and variable invocation; guarded exact arity and copied array arguments/results. Anonymous function syntax and general callable representations remain excluded.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.arrow_typed_composition","test":"TestDifferential/arrow_typed_composition","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/arrow_typed_composition.php","assertions":["stdout","exit","array/callable parameters and actual-bool returns across conditional/foreach paths, explicit casts, skipped calls and caller isolation"]},
         {"case_id":"negative.arrow_typed_composition.runtime","test":"TestArrowTypedCompositionRuntimeGuards","file":"tests/arrow_typed_composition_runtime_test.go","kind":"negative","assertions":["unknown arrow results cannot bypass enclosing bool-return or downstream array-parameter guards"]},
@@ -1769,7 +1766,7 @@
       "name": "One-level existing array element assignment",
       "implementation": "partial",
       "contract": "Assign to one literal-or-variable int/string key of an existing array variable using a detached root/value copy; replace without reordering, insert at the end.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.array_write","test":"TestDifferential/array_write","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_write.php","assertions":["one-level replacement/insertion, key normalization/order, value copies, RHS snapshots and foreach snapshot behavior match native PHP"]},
         {"case_id":"unit.runtime.array_set_copy","test":"TestArraySetCopyAndOrder","file":"runtime/array_set_test.go","kind":"unit","assertions":["root and inserted nested storage are isolated; normalized key order and index metadata are preserved"]},
@@ -1797,9 +1794,7 @@
       "name": "One-level append to existing array variables",
       "implementation": "partial",
       "contract": "Append a detached value to an existing array variable using its PHP 8.3 next integer key; no auto-vivification.",
-      "php_targets": [
-        "8.3"
-      ],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {
           "case_id": "diff.array_append",
@@ -1996,7 +1991,7 @@
       "name": "Single array-element isset",
       "implementation": "partial",
       "contract": "isset($array[$key]) probes a defined real array with one integer/string literal or variable key; missing/null entries are false and other stored values are true, without eagerly reading or mutating the element.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.isset_negative_keys","test":"TestDifferential/isset_negative_keys","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/isset_negative_keys.php","assertions":["stdout","exit","negative literal presence/null/falsy boundaries, canonical zero, integer bounds, short-circuiting and unchanged array metadata"]},
         {"case_id":"compiler.isset_negative_literal","test":"TestIssetNegativeLiteralLowering","file":"internal/codegen/isset_negative_test.go","kind":"compiler","assertions":["signed int IR, canonical zero and minus source line lower through ArrayIsset with statement source mapping"]},
@@ -2027,7 +2022,7 @@
       "name": "Defined bare-variable and multi-address isset",
       "implementation": "partial",
       "contract": "A defined bare variable may be probed by isset($value); multiple admitted bare, one-level or separately bounded nested addresses probe left to right. Bare null and missing/null indexed addresses return false; later addresses are not evaluated after false.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.isset_forms","test":"TestDifferential/isset_forms","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/isset_forms.php","assertions":["stdout","exit","defined bare/null/falsy values, multiple bare/indexed addresses, contexts and short-circuit guard ordering"]},
         {"case_id":"compiler.isset_forms","test":"TestIssetFormsLowering","file":"internal/codegen/isset_forms_test.go","kind":"compiler","assertions":["canonical isset_var/isset_multi IR, left-to-right Go && lowering, no eager indexed read and source map"]},
@@ -2042,7 +2037,7 @@
       "name": "Nested array writes and references",
       "implementation": "unsupported",
       "contract": "Nested array targets and reference assignment fail closed; one-level value assignment has a separate partial contract.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "negative.array_nested_write", "test": "TestUnsupported/array_nested_write", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["nested array assignment is rejected"]},
         {"case_id": "negative.reference", "test": "TestUnsupported/reference", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["reference assignment is rejected"]}
@@ -2055,7 +2050,7 @@
       "name": "include and require",
       "implementation": "unsupported",
       "contract": "Include syntax fails closed.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "negative.include", "test": "TestUnsupported/include", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["include source is rejected with a diagnostic code"]}
       ],
@@ -2067,7 +2062,7 @@
       "name": "Floating-point literals and values",
       "implementation": "unsupported",
       "contract": "Float literals fail closed.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "negative.float", "test": "TestUnsupported/float", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["float literal source is rejected with a diagnostic code"]}
       ],
@@ -2079,7 +2074,7 @@
       "name": "mysqli, PDO and SQLite extensions",
       "implementation": "unsupported",
       "contract": "No extension bindings or database operations are provided.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [],
       "limitations": ["No credentials, DB writes or extension equivalence claim"]
     },
@@ -2089,7 +2084,7 @@
       "name": "gohp CLI generation and artifact publication",
       "implementation": "implemented",
       "contract": "Writes fresh generated Go and optional report artifacts without replacing existing or aliased destinations.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "compiler.cli_write_fresh", "test": "TestCLIWritesFreshOutputAndReport", "file": "cmd/gohp/main_test.go", "kind": "compiler", "assertions": ["fresh output and report are written with consistent hashes"]},
         {"case_id": "compiler.cli_reject_alias", "test": "TestCLIRejectsExistingOrAliasedArtifactsWithoutClobbering", "file": "cmd/gohp/main_test.go", "kind": "compiler", "assertions": ["existing and aliased destinations are preserved"]},
@@ -2103,7 +2098,7 @@
       "name": "Statement-level PHP-to-Go source maps",
       "implementation": "partial",
       "contract": "Publishes final formatted Go line ranges mapped to PHP statement start lines.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "unit.sourcemap.statement", "test": "TestStatementSourceMap", "file": "internal/codegen/sourcemap_test.go", "kind": "unit", "assertions": ["nested statements, methods and formatted output map to expected PHP lines"]},
         {"case_id": "unit.sourcemap.unknown", "test": "TestSourceMapUnknownPositionsAndFailure", "file": "internal/codegen/sourcemap_test.go", "kind": "unit", "assertions": ["unknown positions are omitted and failed generation leaks no map"]},
@@ -2117,7 +2112,7 @@
       "name": "Read-only archived compatibility views",
       "implementation": "implemented",
       "contract": "Reads hash-bound catalog/event archives, replays stored verdicts and filters feature rows without merging runs or hiding overall failures.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "unit.compat.archive", "test": "TestLoadArchiveReplaysWithoutSourceAndRejectsChangedEvidence", "file": "internal/compat/archive_test.go", "kind": "unit", "assertions": ["pass/fail/skip archives replay without source files", "changed hashes, verdicts, phases, duplicates and escaping symlinks are rejected"]},
         {"case_id": "unit.compat.view", "test": "TestViewKeepsRunsAndFailureVisibleThroughFilters", "file": "internal/compat/archive_test.go", "kind": "unit", "assertions": ["target and status filters retain each run, its overall failure, configuration and all cases", "archive text cannot insert raw HTML or Markdown links"]}
@@ -2130,7 +2125,7 @@
       "name": "Read-only Composer metadata inventory",
       "implementation": "partial",
       "contract": "Lists manifest and lock declarations without execution or resolution; keeps every dependency's compatibility unverified.",
-      "php_targets": ["8.3"],
+      "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "unit.inventory.declarations", "test": "TestReadKeepsDeclarationsSeparateWithoutExecuting", "file": "internal/inventory/read_test.go", "kind": "unit", "assertions": ["root, lock, dev and package-link declarations retain their source and relation", "references and false overrides survive; command bodies and URLs are omitted; inputs unchanged"]},
         {"case_id": "unit.inventory.missing_lock", "test": "TestReadMissingLockIsNotCompatibilityEvidence", "file": "internal/inventory/read_test.go", "kind": "unit", "assertions": ["missing lock is explicit and dependencies remain unverified"]},

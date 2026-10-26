@@ -24,7 +24,7 @@ $unknown_value = $unknown['first'][$key] ?? false;
 $chain = $root['first']['missing'] ?? $root['first'][$key] ?? false;
 $ordinary = $root['first']['second'];
 `
-	p, err := frontend.Parse(source, "8.3")
+	p, err := frontend.Parse(source, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +101,7 @@ func TestNestedArrayProbesBoundaries(t *testing.T) {
 		"nested_isset_effectful_key":  "function key() { return 'a'; } $root = ['a' => []]; echo isset($root[key()]['b']);",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			if err == nil {
 				_, err = Generate(p)
 			}
@@ -123,7 +123,7 @@ func TestNestedArrayProbesBoundaries(t *testing.T) {
 		"coalesce_text":          {Kind: "coalesce", Text: "??", Line: 1, Args: []ir.Expr{index, ir.Expr{Kind: "bool", Text: "false", Line: 1}}},
 	} {
 		t.Run(name, func(t *testing.T) {
-			p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: []ir.Stmt{
+			p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: []ir.Stmt{
 				{Kind: "assign", Name: "root", Line: 1, Expr: ir.Expr{Kind: "array", Line: 1}},
 				{Kind: "echo", Line: 2, Expr: expr},
 			}}

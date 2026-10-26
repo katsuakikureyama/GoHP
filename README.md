@@ -8,8 +8,10 @@ to run WordPress, arbitrary Composer packages, or customer applications.
 The core direction is a **PHP-to-Go transpiler with independently verifiable
 compatibility for each PHP 8.x version**. Each admitted target is compared with
 its own pinned native PHP oracle, with version-specific behavior and evidence.
-Currently only the documented subset of PHP 8.3 is enabled; other 8.x targets
-are planned. See the [version-specific compatibility design](docs/php8-versioned-compatibility.md).
+The documented closed subset is enabled for PHP 8.3 and PHP 8.4. Each target
+has its own oracle floor, pinned CI image, corpus execution and evidence; a
+result for one target never proves the other. See the
+[version-specific compatibility design](docs/php8-versioned-compatibility.md).
 
 ## Reproduce the proof of concept
 
@@ -22,7 +24,8 @@ docker compose build test
 docker compose run --rm test
 ```
 
-Or use Go **1.23.12** and native PHP **8.3.36 or newer within the 8.3 series** locally:
+Or use Go **1.23.12** and native PHP **8.3.36 or newer within the 8.3 series**
+locally (the default target):
 
 ```sh
 sh scripts/check.sh
@@ -31,6 +34,9 @@ go run ./cmd/gohp -in tests/fixtures/core.php -out build/example.go \
 go build -o build/example build/example.go
 ./build/example
 ```
+
+For the PHP 8.4 target, use an oracle at least **8.4.27** in that series and
+pass `-php-version 8.4`. The result is separate from an 8.3 run.
 
 Generated Go imports this module's `runtime` package; build inside this module,
 or add a dependency on a pinned GoHP commit in the consumer's `go.mod`. Never
@@ -197,20 +203,25 @@ The predefined `true`, `false` and `null` literals accept uppercase and mixed
 case (for example `TRUE`, `FaLsE`, `NuLl`). Variable/property names and string
 contents remain case-sensitive; this does not imply general keyword support.
 
-### Active PHP target
+### Active PHP targets
 
-GoHP's initial compatibility target is the PHP **8.3** language series only.
-Native differential runs require PHP **8.3.36 or newer within 8.3**; the actual
-oracle version is recorded in run evidence, along with the pinned image digest
-in CI (host-PHP runs need no container). The CLI deliberately takes the language-series
-label `-php-version 8.3`, rather than a patch number.
+The active compiler target labels are PHP **8.3** (the default) and **8.4**.
+Native differential runs require an oracle at least **8.3.36** or **8.4.27** in
+the selected series. CI pins an immutable image for each target and records its
+digest and actual oracle version in that target's evidence. The CLI takes a
+language-series label such as `-php-version 8.3` or `-php-version 8.4`, not a
+patch number.
 
-PHP 8.4 and later are not enabled or claimed. Adding a series requires a
-separate policy/matrix entry with its own minimum release, pinned oracle image
-digest, target-specific corpus and passing evidence; it is not a consequence
-of accepting the same CLI flag. The minimum release floor is a maintenance
-rule, not a security guarantee for the compiler, generated binaries or input.
-See the [compatibility version policy](docs/compatibility.md#active-php-version-policy).
+The same bounded corpus is run independently for both targets. A target has no
+passing compatibility result until its own run succeeds; 8.3 evidence is not
+8.4 evidence. PHP 8.4 adds target-profile rejection for declarations of the
+new core array function names and for class `_`, whose native deprecation is not
+modeled by GoHP. Nullable typed defaults, `exit`/`die`, property hooks and
+asymmetric property visibility remain outside the subset. The minimum release
+floor is a maintenance rule, not a security guarantee for the compiler,
+generated binaries or input. See the
+[compatibility version policy](docs/compatibility.md#active-php-version-policy)
+and [PHP 8.4 target contract](docs/php84-target.md).
 
 ## Scope and documentation
 
@@ -253,9 +264,12 @@ full ternary `condition ? yes : no` と `stripslashes` の文字列1引数も限
 波括弧付きの `if` / `elseif` / `else if` / `else`、短絡 `&&` / `||`、論理否定 `!`、scalar の `===` / `!==`、限定型の `(bool)` と型判定・ASCII小文字化も比較対象にします。
 参照、クロージャ、継承、Composer や PHP 拡張、WordPress 全体は未対応です。
 未対応を互換性成功とは扱いません。正式ライセンスは監査と所有者判断待ちです。
-初期の互換性対象は PHP **8.3 系のみ**で、native 比較には **8.3 系の 8.3.36 以上**を使います。
-CLI の `-php-version 8.3` はパッチ番号ではなく言語系列の指定です。8.4 以降は未対応で、
-追加時には系列ごとの最低版・固定oracleイメージdigest・専用fixture・検証証拠を別途そろえます。
+有効な互換性対象は PHP **8.3 系**（既定）と **8.4 系**です。native 比較には、それぞれ
+**8.3.36 以上**、**8.4.27 以上**を使います。CLI の `-php-version 8.3` / `8.4` は
+パッチ番号ではなく言語系列の指定です。同じ限定fixtureでも系列ごとに独立して実行・記録し、
+8.3 の成功を 8.4 の成功として扱いません。PHP 8.4 の新しい配列関数名の再宣言と class `_` は
+限定subset外として拒否します。nullable 型default、`exit` / `die`、property hooks、
+asymmetric visibility も未対応です。
 最低版の指定だけで、コンパイラや生成物のセキュリティを保証するものではありません。
 組込み関数は `count(array)`、限定的な `strlen(string)`・`array_keys(array)`・`array_values(array)`、
 固定maskの `rtrim`、`is_bool`・`is_string`・`is_int`・`is_null`・`is_array`・ASCIIの `strtolower(string)` を対象にします。

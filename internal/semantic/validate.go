@@ -56,6 +56,9 @@ func Validate(p ir.Program) error {
 	// Collect before validating bodies so literal callbacks can refer forward
 	// or back to their own declaration without dynamic callable resolution.
 	for _, f := range p.Functions {
+		if phpversion.ReservedFunction(p.PHPVersion, f.Name) {
+			return unsupported(f.Line, "function name reserved in PHP "+p.PHPVersion+": "+f.Name)
+		}
 		if err := validateParameterTypes(f, false); err != nil {
 			return err
 		}
@@ -64,6 +67,9 @@ func Validate(p ir.Program) error {
 		v.parameters[strings.ToLower(f.Name)] = f.ParamTypes
 	}
 	for _, c := range p.Classes {
+		if phpversion.DeprecatedClassName(p.PHPVersion, c.Name) {
+			return unsupported(1, "deprecated class name outside PHP "+p.PHPVersion+" subset: "+c.Name)
+		}
 		if !validName(c.Name) {
 			return malformed(1, "invalid class name")
 		}

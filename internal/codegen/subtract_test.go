@@ -7,7 +7,7 @@ import (
 )
 
 func TestIntegerSubtractionLowering(t *testing.T) {
-	p, err := frontend.Parse("<?php\n$result = 8 - 3 - 2;\n$other = 8 + 3 - 2;", "8.3")
+	p, err := frontend.Parse("<?php\n$result = 8 - 3 - 2;\n$other = 8 + 3 - 2;", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func TestIntegerSubtractionLowering(t *testing.T) {
 
 func TestIntegerSubtractionBoundary(t *testing.T) {
 	for _, source := range []string{"$r='1'-0;", "$r=1-null;", "$r=[]-1;", "$r=true-1;", "$a=3;$r=$a--;", "$r=3--1;", "$a=1;$r=-$a;"} {
-		p, err := frontend.Parse("<?php "+source, "8.3")
+		p, err := frontend.Parse("<?php "+source, testTarget(t))
 		var out []byte
 		if err == nil {
 			out, err = Generate(p)

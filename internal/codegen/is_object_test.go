@@ -17,7 +17,7 @@ $empty = new EmptyBox();
 $arrow = fn($value) => $value;
 echo check($box) ? 'yes' : 'no';
 `
-	p, err := frontend.Parse(source, "8.3")
+	p, err := frontend.Parse(source, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +57,7 @@ func TestIsObjectBoundaries(t *testing.T) {
 		"bool_as_array":      "echo count(is_object(null));",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			if err == nil {
 				out, generatedErr := Generate(p)
 				err = generatedErr

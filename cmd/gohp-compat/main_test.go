@@ -23,9 +23,13 @@ func TestMetadataOracleAdmission(t *testing.T) {
 		{"next_patch", "8.3", "8.3.37", true},
 		{"old_patch", "8.3", "8.3.35", false},
 		{"retired", "7.4", "7.4.33", false},
-		{"unverified_series", "8.4", "8.4.20", false},
+		{"php84_floor", "8.4", "8.4.27", true},
+		{"php84_next_patch", "8.4", "8.4.28", true},
+		{"php84_old_patch", "8.4", "8.4.26", false},
+		{"unverified_series", "8.5", "8.5.0", false},
 		{"no_auto_enable", "", "8.4.20", false},
 		{"mismatch", "8.3", "8.4.20", false},
+		{"cross_series_mismatch", "8.4", "8.3.36", false},
 		{"missing", "8.3", "", false},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -43,7 +47,11 @@ func TestMetadataOracleAdmission(t *testing.T) {
 			if (err == nil) != tt.accepted {
 				t.Fatalf("admission of target=%q oracle=%q: %v", tt.target, tt.version, err)
 			}
-			if tt.accepted && (meta.PHPTarget != "8.3" || meta.PHPVersion != tt.version) {
+			expectedTarget := tt.target
+			if expectedTarget == "" {
+				expectedTarget = "8.3"
+			}
+			if tt.accepted && (meta.PHPTarget != expectedTarget || meta.PHPVersion != tt.version) {
 				t.Fatalf("actual oracle identity lost: %+v", meta)
 			}
 		})
