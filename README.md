@@ -63,6 +63,9 @@ Declared public properties now accept bounded [simple assignment](docs/public-pr
 through a statically known generated-class variable (including known aliases
 and method `$this`). Arrays detach at write/read boundaries; object identifiers
 retain identity. This adds neither dynamic properties nor unknown receiver writes.
+Simple data classes also support [fixed public constructors and known-object
+array snapshots](docs/block-data-constructor.md), including implicit-null public
+properties. No inheritance, typed/defaulted constructors or general array casts.
 Bare [`continue;`](docs/foreach-continue-boundary.md) now targets the nearest
 enclosing `foreach`, including inside braced conditionals. Numeric levels and
 other loop kinds are excluded. Bare [`break;`](docs/foreach-break-boundary.md)

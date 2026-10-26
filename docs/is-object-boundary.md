@@ -23,6 +23,8 @@ resources or incomplete classes are added. Missing reads still fail normally.
 Later [declared-property assignment](public-property-write.md) is a separate
 known-receiver syntax contract; the predicate does not narrow unknown receivers
 or admit foreign host objects.
+Later [fixed constructors and public-property snapshots](block-data-constructor.md)
+remain a separate known-class contract, not generic object admission.
 
 The owned differential fixture composes classes/arrows, typed bool/array returns,
 ordered arrays, callbacks, short-circuit property access and a visible once-only

@@ -61,7 +61,7 @@ func TestDifferential(t *testing.T) {
 	if err := phpversion.ValidateOracle(target, actualPHPVersion); err != nil {
 		t.Fatal(err)
 	}
-	for _, fixture := range []string{"foreach_break", "property_write", "str_starts_with", "is_object", "str_contains", "nested_array_probes", "array_slice", "literal_null_identity", "null_defaults", "continue_foreach", "isset_forms", "in_array_strict", "membership_control_flow", "isset_negative_keys", "literal_case", "arrow_callable", "arrow_typed_composition", "array_parameter", "array_parameter_bool_composition", "bool_return", "bool_return_composition", "core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "strict_not_equal", "if_else", "elseif", "precedence", "strlen", "strcasecmp", "foreach_continue", "array_merge", "array_reverse", "array_key_first", "array_key_last", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "is_int", "is_null", "array_map", "array_write", "array_append", "array_empty", "array_isset", "array_return", "charset_array_integration", "control_flow_array_integration", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
+	for _, fixture := range []string{"block_constructor", "foreach_break", "property_write", "str_starts_with", "is_object", "str_contains", "nested_array_probes", "array_slice", "literal_null_identity", "null_defaults", "continue_foreach", "isset_forms", "in_array_strict", "membership_control_flow", "isset_negative_keys", "literal_case", "arrow_callable", "arrow_typed_composition", "array_parameter", "array_parameter_bool_composition", "bool_return", "bool_return_composition", "core", "arrays", "legacy_arrays", "max_array_key", "negative_array_keys", "negative_integers", "logical_not", "logical_or", "strict_not_equal", "if_else", "elseif", "precedence", "strlen", "strcasecmp", "foreach_continue", "array_merge", "array_reverse", "array_key_first", "array_key_last", "array_keys", "array_values", "array_key_exists", "array_is_list", "is_array", "is_int", "is_null", "array_map", "array_write", "array_append", "array_empty", "array_isset", "array_return", "charset_array_integration", "control_flow_array_integration", "rtrim", "sprintf", "str_replace", "ternary_stripslashes", "booleans", "feature_integration", "string_array_integration", "conditional_array_integration", "predicate_conditional_integration", "callback_composition_integration"} {
 		t.Run(fixture, func(t *testing.T) {
 			evidence := differentialEvidence{
 				CaseID:     "diff." + fixture,
@@ -171,7 +171,7 @@ func TestUnsupported(t *testing.T) {
 		{name: "legacy_array_mismatched_delimiter", src: "<?php $a = array(1];"},
 		{name: "legacy_array_nested_mismatched_delimiter", src: "<?php $a = array(array(1]);"},
 		{name: "legacy_array_bareword", src: "<?php $a = array;"},
-		{name: "magic_constructor", src: "<?php class X { public function __construct() {} }"},
+		{name: "magic_destructor", src: "<?php class X { public function __destruct() {} }"},
 		{name: "nondecimal_integer", src: "<?php $a = 012;"},
 		{name: "negative_integer_variable", src: "<?php $a = 1; echo -$a;"},
 		{name: "negative_integer_expression", src: "<?php echo -(1 + 2);"},
