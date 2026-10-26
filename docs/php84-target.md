@@ -30,6 +30,12 @@ target `8.4`, rather than emitting a generated program which silently omits or
 changes the native deprecation. The rejection is deliberately not equivalent to
 the PHP warning/deprecation behavior and must not be reported as such.
 
+For this target, the bounded predefined expressions `PHP_MAJOR_VERSION` and
+`PHP_MINOR_VERSION` resolve to integer `8` and `4` from `Program.PHPVersion`.
+They are not derived from the host executable or from the `8.4.27` oracle floor.
+The same cross-target contract yields `8` and `3` for target `8.3`; it is not an
+8.4-only reservation rule. See [target version constants](target-version-constants.md).
+
 These decisions follow the PHP 8.4 migration references for
 [new features](https://www.php.net/manual/en/migration84.new-features.php),
 [incompatible changes](https://www.php.net/manual/en/migration84.incompatible.php),

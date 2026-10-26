@@ -40,6 +40,7 @@ type classInfo struct {
 }
 
 type validator struct {
+	target     string
 	classes    map[string]classInfo
 	functions  map[string]int
 	minimum    map[string]int
@@ -52,7 +53,7 @@ func Validate(p ir.Program) error {
 	if err := phpversion.ValidateTarget(p.PHPVersion); err != nil {
 		return fmt.Errorf("PHP003: %w", err)
 	}
-	v := validator{classes: make(map[string]classInfo, len(p.Classes)), functions: make(map[string]int, len(p.Functions)), minimum: map[string]int{}, parameters: make(map[string][]string, len(p.Functions))}
+	v := validator{target: p.PHPVersion, classes: make(map[string]classInfo, len(p.Classes)), functions: make(map[string]int, len(p.Functions)), minimum: map[string]int{}, parameters: make(map[string][]string, len(p.Functions))}
 	// Collect before validating bodies so literal callbacks can refer forward
 	// or back to their own declaration without dynamic callable resolution.
 	for _, f := range p.Functions {
@@ -503,6 +504,14 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			return valueType{}, unsupported(expr.Line, "invocation requires a generated arrow callable")
 		}
 		return valueType{kind: unknownKind}, nil
+	case "version_constant":
+		if err := require(0); err != nil {
+			return valueType{}, err
+		}
+		if _, err := phpversion.VersionConstant(v.target, expr.Text); err != nil {
+			return valueType{}, malformed(expr.Line, err.Error())
+		}
+		return valueType{kind: intKind}, nil
 	case "int":
 		if err := require(0); err != nil {
 			return valueType{}, err
