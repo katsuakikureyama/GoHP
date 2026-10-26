@@ -728,6 +728,24 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			// Preserve downstream runtime guards instead of promising an int key.
 			return valueType{kind: unknownKind}, nil
 		}
+		if strings.EqualFold(expr.Text, "array_slice") {
+			if len(args) < 2 || len(args) > 4 {
+				return valueType{}, unsupported(expr.Line, "array_slice expects two to four arguments")
+			}
+			if args[0].kind != arrayKind && args[0].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "array_slice requires an array")
+			}
+			if args[1].kind != intKind && args[1].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "array_slice offset requires int")
+			}
+			if len(args) >= 3 && args[2].kind != intKind && args[2].kind != nullKind && args[2].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "array_slice length requires int or null")
+			}
+			if len(args) == 4 && args[3].kind != boolKind && args[3].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "array_slice preserve_keys requires bool")
+			}
+			return valueType{kind: arrayKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "array_merge") {
 			for _, arg := range args {
 				if arg.kind != arrayKind && arg.kind != unknownKind {

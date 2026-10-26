@@ -12,10 +12,18 @@ Consumer evidence update (2026-10-26 JST):
 [Gossip PR #36](https://github.com/katsuakikureyama/Gossip/pull/36) reports the
 unchanged `_wp_array_get` passing all 24 retained Go/PHP cases using exact GoHP
 pin `b8dc1757ed61f459d51362da004aa1d73d024116` and PHP 8.3.36. It checks return
-types/values and input/path/default preservation. This adds the 25th successful
-original as a separate unit; the earlier 24-original/262-case combined binary
-remains separate. No 25-original/286-case combined PASS or full WordPress
-compatibility is inferred. This status sync does not repin or rerun Gossip.
+types/values and input/path/default preservation. That was a separate 25th unit.
+Subsequently [Gossip PR #37](https://github.com/katsuakikureyama/Gossip/pull/37)
+merged as `9abd4b8364ca5e776473f637d76186e5b98f0047`: 25 unchanged originals plus
+48 owned drivers were translated/built into one binary and all 294 Go/PHP cases
+passed (262 earlier cases + 24 lookup cases + 8 new settings compositions), using
+the same exact GoHP #64 pin above. This is a measured combined run, not addition
+of old PASS counts. No full WordPress compatibility or adoption of later GoHP
+revisions is inferred. This status sync does not repin or rerun Gossip.
+
+[`array_slice`](array-slice-boundary.md) adds positional selection with actual
+int/null/bool bounds to WebMCP-excluded `gohp.cli.generate`. No consumer adoption,
+route/auth/deployment change or Gossip pin/source modification is included.
 
 [`array_merge`](array-merge-boundary.md) extends the same WebMCP-excluded local
 `gohp.cli.generate` operation with nonrecursive array merging. Explicit positional
