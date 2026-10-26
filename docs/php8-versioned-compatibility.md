@@ -73,7 +73,7 @@ mutation and external side effects where relevant. Encode unmeasured dimensions
 explicitly. Nondeterministic fields may be normalized only by documented,
 case-specific rules that preserve meaningful differences.
 
-The current v0.3 harness measures stdout and normal exits, plus a bounded
+The current v0.4 harness measures stdout and normal exits, plus a bounded
 startup baseline from one separate `php -r` probe before the suite. The probe
 uses the same inherited environment and records only the documented allowlist:
 CLI SAPI, integer size, default timezone, selected INI settings, selected
@@ -93,10 +93,22 @@ text equality, and general stderr, exceptions and side effects remain
 Go build or generated Go execution. Fixture-local setup—such as the booleans
 fixture's `LC_CTYPE=C`—remains source-hash-bound rather than inferred from the
 baseline, and a fixture can still override or suppress warnings internally.
+For each process actually observed, v0.4 stores only stdout byte count, SHA-256
+and exit code (with `-1` for no portable numeric status), not raw stdout; absent
+processes stay absent rather than becoming zero-valued results. Those fields are
+event-hash-bound and replayed against the stdout/exit verdict. A separate
+read-only two-archive comparison can call out a local PHP-versus-Go stdout
+mismatch or a native stdout difference only when the candidate/corpus identity,
+clean inputs and quiet successful processes are all compatible. A native
+difference is an observation under the displayed oracle environments, never
+proof that the PHP target caused it or that a PHP specification change intended
+it. Nonzero exits, exceptions, diagnostics and side effects remain outside that
+comparison.
+
 The current harness does not yet provide the full diagnostics/state/configuration
-evidence above. Historical v0.1/v0.2 archives retain their original scope: no
-baseline or quiet-success record is invented for them, while the v0.3 reader can
-display them without granting new guarantees. PHP's [`ini_get`](https://www.php.net/manual/en/function.ini-get.php),
+evidence above. Historical v0.1/v0.2/v0.3 archives retain their original scope:
+no baseline, quiet-success or process-output record is invented for them, while
+the v0.4 reader can display them without granting new guarantees. PHP's [`ini_get`](https://www.php.net/manual/en/function.ini-get.php),
 [`get_loaded_extensions`](https://www.php.net/manual/en/function.get-loaded-extensions.php),
 [`setlocale`](https://www.php.net/manual/en/function.setlocale.php) and
 [`date_default_timezone_get`](https://www.php.net/manual/en/function.date-default-timezone-get.php)

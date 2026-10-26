@@ -33,6 +33,7 @@ func TestEvaluateRequiresExactDifferentialLifecycleAndPayload(t *testing.T) {
 	}
 	payload := map[string]any{
 		"diagnostics": testQuietEvidence(),
+		"outputs":     testExecutionOutputs("same", "same"),
 		"case_id":     "case.core", "php_target": "8.3", "php_version": "8.3.30", "fixture_sha256": hashBytes(fixture), "generated_sha256": strings.Repeat("b", 64),
 		"phases":      map[string]string{"parse": "pass", "codegen": "pass", "go-build": "pass", "go-execute": "pass", "differential": "pass"},
 		"comparisons": map[string]string{"stdout": "pass", "exit": "pass", "stderr": "not-checked", "exceptions": "not-checked", "side_effects": "not-checked"},
@@ -60,6 +61,54 @@ func TestEvaluateRequiresExactDifferentialLifecycleAndPayload(t *testing.T) {
 	}
 	if report.Cases[0].Phase == nil || report.Cases[0].GeneratedSHA256 != strings.Repeat("b", 64) {
 		t.Fatalf("missing measured phase evidence: %#v", report.Cases[0])
+	}
+	// Real test2json output splits the v0.4 payload in the middle of JSON.
+	// Recover full lines without combining different emitters or losing duplicates.
+	for _, tt := range []struct {
+		name string
+		pass bool
+	}{
+		{"split", true}, {"split marker", true}, {"interleaved", true},
+		{"wrong test", false}, {"wrong package", false}, {"truncated", false},
+		{"duplicate", false}, {"multiple lines", false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			line := base[3]["Output"]
+			cut := 1024
+			if tt.name == "split marker" {
+				cut = 7
+			}
+			part := func(output, pkg, test string) map[string]string {
+				return map[string]string{"Action": "output", "Package": pkg, "Test": test, "Output": output}
+			}
+			chunks := []map[string]string{part(line[:cut], testCase.Package, testCase.Test)}
+			pkg, test := testCase.Package, testCase.Test
+			if tt.name == "interleaved" {
+				chunks = append(chunks, part("unrelated log\n", pkg, "TestDifferential"))
+			}
+			if tt.name == "wrong test" {
+				test = "TestDifferential"
+			}
+			if tt.name == "wrong package" {
+				pkg += "/other"
+			}
+			if tt.name != "truncated" {
+				chunks = append(chunks, part(line[cut:], pkg, test))
+			}
+			if tt.name == "duplicate" {
+				chunks = append(chunks, base[3])
+			}
+			if tt.name == "multiple lines" {
+				chunks = []map[string]string{part(line+line, pkg, test)}
+			}
+			events := append([]map[string]string{}, base[:3]...)
+			events = append(events, chunks...)
+			events = append(events, base[4:]...)
+			r, err := Evaluate(catalog, strings.NewReader(eventLines(t, events)), testMetadata())
+			if err != nil || (r.Overall == "pass") != tt.pass {
+				t.Fatalf("split output verdict: %+v, %v", r, err)
+			}
+		})
 	}
 
 	// A passed child cannot hide a failed parent; the phase data remains useful.

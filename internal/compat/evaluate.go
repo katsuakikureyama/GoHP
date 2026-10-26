@@ -34,6 +34,7 @@ type loggedPayload struct {
 }
 
 type casePayload struct {
+	Outputs         *ExecutionOutputs   `json:"outputs,omitempty"`
 	Diagnostics     *DiagnosticEvidence `json:"diagnostics,omitempty"`
 	CaseID          string              `json:"case_id"`
 	PHPTarget       string              `json:"php_target"`
@@ -82,6 +83,15 @@ func evaluate(c Catalog, events io.Reader, meta Metadata, fixture fixtureLookup,
 	}
 	lifecycles := make(map[string]*lifecycle)
 	payloads := make(map[string][]loggedPayload)
+	// test2json may split one log line across several output events. Keep
+	// fragments isolated by package/test, including when parallel tests interleave.
+	// Older archives retain their original event-level interpretation on replay.
+	pending := make(map[string]string)
+	logPayload := func(output, pkg, test string) {
+		if payload, ok := payloadFromOutput(output); ok {
+			payloads[payload.CaseID] = append(payloads[payload.CaseID], loggedPayload{casePayload: payload, packageName: pkg, test: test})
+		}
+	}
 	for _, event := range parsed {
 		packageKey := event.Package + "\x00"
 		if lifecycles[packageKey] == nil {
@@ -113,10 +123,34 @@ func evaluate(c Catalog, events io.Reader, meta Metadata, fixture fixtureLookup,
 			}
 		}
 		if event.Action == "output" {
-			if payload, ok := payloadFromOutput(event.Output); ok {
-				payloads[payload.CaseID] = append(payloads[payload.CaseID], loggedPayload{casePayload: payload, packageName: event.Package, test: event.Test})
+			if schema != RunSchema {
+				logPayload(event.Output, event.Package, event.Test)
+				continue
 			}
+			output := pending[key] + event.Output
+			for {
+				i := strings.IndexByte(output, '\n')
+				if i < 0 {
+					break
+				}
+				if i > 4*1024*1024 {
+					return Report{}, fmt.Errorf("go test output line exceeds 4 MiB")
+				}
+				logPayload(output[:i], event.Package, event.Test)
+				output = output[i+1:]
+			}
+			if len(output) > 4*1024*1024 {
+				return Report{}, fmt.Errorf("go test output line exceeds 4 MiB")
+			}
+			pending[key] = output
+		} else if event.Action == "pass" || event.Action == "fail" || event.Action == "skip" {
+			logPayload(pending[key], event.Package, event.Test)
+			delete(pending, key)
 		}
+	}
+	for key, output := range pending {
+		pkg, test, _ := strings.Cut(key, "\x00")
+		logPayload(output, pkg, test)
 	}
 	report := Report{
 		Schema:        schema,
@@ -222,6 +256,7 @@ func evaluateCase(testCase Case, states map[string]*lifecycle, payloads map[stri
 			evidence.GeneratedSHA256 = payload.GeneratedSHA256
 			evidence.Phase = payloadPhase(payload)
 			evidence.Diagnostics = payload.Diagnostics
+			evidence.Outputs = payload.Outputs
 			if payload.Diagnostics != nil {
 				evidence.Phase.QuietStderr = payload.Diagnostics.Status
 			}
@@ -324,6 +359,9 @@ func payloadShape(p casePayload, schema string) string {
 	if detail := diagnosticShape(p.Diagnostics, schema); detail != "" {
 		return detail
 	}
+	if detail := outputShape(p, schema); detail != "" {
+		return detail
+	}
 	if (p.GeneratedSHA256 != "" || p.Phases.Codegen == "pass") && !validSHA256(p.GeneratedSHA256) {
 		return "differential payload has an invalid generated source hash"
 	}
@@ -346,7 +384,7 @@ func payloadShape(p casePayload, schema string) string {
 }
 
 func positiveDifferentialDetail(p casePayload, schema string) string {
-	if schema == RunSchema {
+	if schema == RunSchema || schema == RunSchemaQuiet {
 		if p.Diagnostics != nil && p.Diagnostics.Status == "fail" {
 			return "quiet stderr requirement failed"
 		}

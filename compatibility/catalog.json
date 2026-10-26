@@ -2160,7 +2160,7 @@
       "kind": "tooling",
       "name": "Read-only archived compatibility views",
       "implementation": "implemented",
-      "contract": "Records a bounded PHP CLI startup baseline and per-positive-fixture quiet stderr, and reads v0.1/v0.2/v0.3 hash-bound archives without merging runs or hiding overall failures.",
+      "contract": "Records a bounded PHP CLI startup baseline, quiet stderr and per-process output hashes, and reads v0.1/v0.2/v0.3/v0.4 hash-bound archives without merging verdicts or hiding failures.",
       "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "unit.compat.archive", "test": "TestLoadArchiveReplaysWithoutSourceAndRejectsChangedEvidence", "file": "internal/compat/archive_test.go", "kind": "unit", "assertions": ["pass/fail/skip archives replay without source files", "changed hashes, verdicts, phases, duplicates and escaping symlinks are rejected"]},
@@ -2177,6 +2177,25 @@
         {"case_id": "unit.compat.view", "test": "TestViewKeepsRunsAndFailureVisibleThroughFilters", "file": "internal/compat/archive_test.go", "kind": "unit", "assertions": ["target and status filters retain each run, its overall failure, configuration and all cases", "archive text cannot insert raw HTML or Markdown links"]}
       ],
       "limitations": ["Internal consistency only, not authenticity, source revalidation or CI job success", "No latest/best selection, revision applicability or combined-target support verdict", "No PHP language compatibility claim from these tooling checks; arbitrary diagnostic equality remains unmeasured"]
+    },
+    {
+      "id": "gohp.tooling.output-comparison",
+      "kind": "tooling",
+      "name": "Read-only recorded stdout comparison",
+      "implementation": "partial",
+      "contract": "Separates target-local PHP/Go stdout mismatch from native stdout differences for matching clean candidate/corpus identities; observations never prove a version-caused or intended change.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"unit.compat.output_verdicts","test":"TestOutputObservationsValidateVerdicts","file":"internal/compat/outputs_test.go","kind":"unit","assertions":["stdout hashes, counts and exit observations must agree with reported verdicts"]},
+        {"case_id":"unit.compat.output_required_fields","test":"TestProcessOutputRequiresExplicitZeroObservations","file":"internal/compat/outputs_test.go","kind":"unit","assertions":["absent and null fields cannot become observed zero output or successful exit"]},
+        {"case_id":"unit.compat.output_archive","test":"TestOutputArchiveKeepsHistoricalObservationsAbsent","file":"internal/compat/outputs_test.go","kind":"unit","assertions":["v0.1-v0.3 archives gain no output observation; v0.4 output changes must match events"]},
+        {"case_id":"unit.compat.output_classification","test":"TestCompareOutputsSeparatesNativeAndTranspilerObservations","file":"internal/compat/output_comparison_test.go","kind":"unit","assertions":["synthetic native differences and local mismatches classify separately", "changed inputs and unrelated failures cannot gain cross-run classification"]},
+        {"case_id":"unit.compat.compare_cli_arity","test":"TestRunRequiresExactlyTwoArchives","file":"cmd/gohp-compat-compare/main_test.go","kind":"unit","assertions":["exactly two caller-selected archives are required"]},
+        {"case_id":"unit.compat.compare_cli_format","test":"TestRunRejectsInvalidFormatBeforeArchiveOutput","file":"cmd/gohp-compat-compare/main_test.go","kind":"unit","assertions":["unsupported format rejected before output"]},
+        {"case_id":"unit.compat.compare_cli_load","test":"TestRunArchiveErrorWritesNoPartialComparison","file":"cmd/gohp-compat-compare/main_test.go","kind":"unit","assertions":["either archive failure leaves stdout empty"]},
+        {"case_id":"unit.compat.compare_cli_write","test":"TestRunReportsOutputWriteFailure","file":"cmd/gohp-compat-compare/main_test.go","kind":"unit","assertions":["output failure is not successful rendering"]}
+      ],
+      "limitations": ["Same candidate/corpus required; oracle configuration differences remain visible but are not normalized", "No causality, intended PHP-version difference, combined support or release verdict", "No comparison of nonzero exits, arbitrary diagnostics, exceptions or side effects", "Hashes and environment identities are producer assertions, not authenticity"]
     },
     {
       "id": "gohp.tooling.composer-inventory",

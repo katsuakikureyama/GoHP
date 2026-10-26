@@ -33,7 +33,7 @@ func TestPHPBaselineArchiveSchemas(t *testing.T) {
 		}
 	}
 	view, err := BuildView([]Report{legacy, current}, ViewFilter{Kind: "builtin"})
-	if err != nil || view.Schema != "gohp.compatibility.view/v0.3" || view.Runs[0].Metadata.PHPBaseline != nil || view.Runs[1].Metadata.PHPBaseline == nil {
+	if err != nil || view.Schema != "gohp.compatibility.view/v0.4" || view.Runs[0].Metadata.PHPBaseline != nil || view.Runs[1].Metadata.PHPBaseline == nil {
 		t.Fatalf("mixed archive view lost baseline distinction: %+v, %v", view, err)
 	}
 	text := string(ViewMarkdown(view))
