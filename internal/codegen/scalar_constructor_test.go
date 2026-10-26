@@ -64,7 +64,7 @@ func TestScalarConstructorBoundaries(t *testing.T) {
 		`class X { public function __construct(array $x) {} }`,
 		`class X { public function __construct(callable $x) {} }`,
 		`class X { public function f(int $x) {} }`,
-		`function __construct(int $x) {}`, `function f(string $x) {}`,
+		`function __construct(float $x) {}`, `function f(string $x = null) {}`,
 		`class X { private function __construct(int $x) {} }`,
 		`class X { public function __construct(int $x) {return 1;} }`,
 		`class X { public function __construct(int $x) {} } $x = new X(1); $x->__construct(2);`,

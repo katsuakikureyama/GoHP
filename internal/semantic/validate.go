@@ -137,7 +137,7 @@ func validateParameterTypes(f ir.Function, method bool) error {
 	constructor := method && strings.EqualFold(f.Name, "__construct")
 	for _, annotation := range f.ParamTypes {
 		scalar := annotation == "int" || annotation == "string" || annotation == "bool"
-		if (annotation != "" && annotation != "array" && annotation != "callable" && !scalar) || (scalar && !method) {
+		if annotation != "" && annotation != "array" && annotation != "callable" && !scalar {
 			return malformed(f.Line, "unsupported IR parameter type")
 		}
 		if annotation != "" && method && !(constructor && scalar) {
@@ -1078,6 +1078,9 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 				}
 				if annotation == "callable" && args[i].kind != callableKind && args[i].kind != unknownKind {
 					return valueType{}, unsupported(expr.Line, "callable parameter requires a generated arrow")
+				}
+				if want, scalar := (map[string]kind{"int": intKind, "string": stringKind, "bool": boolKind})[annotation]; scalar && args[i].kind != unknownKind && args[i].kind != want {
+					return valueType{}, unsupported(expr.Line, annotation+" parameter requires exact matching argument type")
 				}
 			}
 		}

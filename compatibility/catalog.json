@@ -3,6 +3,23 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.scalar-function-parameters",
+      "kind": "syntax",
+      "name": "Exact scalar global-function parameters",
+      "implementation": "partial",
+      "contract": "Named global functions admit canonical int/string/bool parameters with exact entry guards, including mixtures with array/callable/untyped parameters. Known direct-call mismatches reject; unknown and host inputs are guarded before body execution. All-exact-scalar signatures with closed scalar bodies use owned ScalarFrame locals; mixed or non-scalar scopes keep value maps.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.scalar_function_parameters","test":"TestDifferential/scalar_function_parameters","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/scalar_function_parameters.php","assertions":["stdout","exit","exact scalar values, local/caller isolation, loops/early returns, untyped null suffix, array copies, forwarding and literal callback"]},
+        {"case_id":"compiler.scalar_function_parameters","test":"TestScalarFunctionParameterLowering","file":"internal/codegen/scalar_function_test.go","kind":"compiler","assertions":["canonical aligned metadata, guarded scalar frame initialization/lifetime, mixed legacy guards, local reassignment and source maps"]},
+        {"case_id":"negative.scalar_function_parameters.source","test":"TestScalarFunctionParameterBoundaries","file":"internal/codegen/scalar_function_test.go","kind":"negative","assertions":["known direct and forward/dead mismatches, arity, entry and reassigned facts, unsupported defaults/types/methods/arrows/reference syntax reject"]},
+        {"case_id":"negative.scalar_function_parameters.ir","test":"TestScalarFunctionParameterMalformedIR","file":"internal/codegen/scalar_function_test.go","kind":"negative","assertions":["noncanonical/misaligned metadata, unsupported types and typed null suffix reject without output"]},
+        {"case_id":"negative.scalar_function_parameters.runtime","test":"TestScalarFunctionRuntimeGuards","file":"tests/scalar_function_runtime_test.go","kind":"negative","assertions":["unknown mismatches and callback elements reject, local reassignment preserves downstream guards, entry guard precedes body"]},
+        {"case_id":"compiler.scalar_function_parameters.host","test":"TestScalarFunctionHostEntry","file":"tests/scalar_function_runtime_test.go","kind":"compiler","assertions":["external module host ABI accepts exact scalars, rejects non-PHP Go types and later-parameter mismatches, preserves arity/context and invocation state"]}
+      ],
+      "limitations": ["No weak scalar coercion, strict_types syntax, TypeError/invalid-call side-effect equivalence or inferred return types", "No typed defaults, nullable/union/intersection/float/class types, scalar-typed ordinary methods/arrows, references, variadics or named arguments", "Mixed/untyped and non-scalar scopes remain on legacy maps; general frame/shared-array/reference ownership remains unfinished", "Owned fixture is not Gossip/WordPress adoption; existing local CLI WebMCP exclusion remains"]
+    },
+    {
       "id": "php.operator.integer-subtraction",
       "kind": "operator",
       "name": "Actual-int64 binary subtraction",
@@ -51,7 +68,7 @@
         {"case_id":"unit.scalar_parameter.domain","test":"TestScalarParameterExactDomain","file":"runtime/scalar_parameter_test.go","kind":"unit","assertions":["exact int64/string/bool preservation, foreign values and all other domains reject without coercion"]},
         {"case_id":"negative.scalar_constructor.runtime","test":"TestScalarConstructorRuntimeGuards","file":"tests/scalar_constructor_runtime_test.go","kind":"negative","assertions":["dynamic mismatches fail before body, contextual entry retains guard, reassignment preserves downstream guards"]}
       ],
-      "limitations": ["No PHP weak scalar conversions, strict_types syntax or TypeError equivalence", "Public constructor only; no scalar-typed global/ordinary method/arrow parameters, typed/nonnull defaults or nullable/union/class/float/array/callable constructor types", "Original HTML support classes and processor/render adoption require separate evidence; owned fixture does not certify them"]
+      "limitations": ["No PHP weak scalar conversions, strict_types syntax or TypeError equivalence", "Constructor contract only; global scalar parameters have a separate contract; no scalar-typed ordinary method/arrow parameters, typed/nonnull defaults or nullable/union/class/float/array/callable constructor types", "Original HTML support classes and processor/render adoption require separate evidence; owned fixture does not certify them"]
     },
     {
       "id": "php.syntax.form-feed-escape",
@@ -472,11 +489,11 @@
         {"case_id":"unit.bool_return.values","test":"TestBoolReturnActualBooleans","file":"runtime/bool_return_test.go","kind":"unit","assertions":["true and false preserve exact bool type/value"]},
         {"case_id":"negative.bool_return.coercion","test":"TestBoolReturnRejectsCoercion","file":"runtime/bool_return_test.go","kind":"negative","assertions":["null/integer/string/array/object are rejected without truthiness coercion"]},
         {"case_id":"compiler.bool_return.paths","test":"TestBoolReturnTypeAndSourceMap","file":"internal/codegen/bool_return_test.go","kind":"compiler","assertions":["mixed-case annotation canonicalizes; forward, conditional, foreach and fallthrough returns guard values with source maps"]},
-        {"case_id":"negative.bool_return.source","test":"TestBoolReturnUnsupportedSource","file":"internal/codegen/bool_return_test.go","kind":"negative","assertions":["known non-bool/dead-arm returns, unsupported declarations, scalar typed params/methods and bare returns are rejected"]},
+        {"case_id":"negative.bool_return.source","test":"TestBoolReturnUnsupportedSource","file":"internal/codegen/bool_return_test.go","kind":"negative","assertions":["known non-bool/dead-arm returns, unsupported declarations, typed defaults/methods and bare returns are rejected"]},
         {"case_id":"negative.bool_return.ir","test":"TestBoolReturnRejectsNoncanonicalIR","file":"internal/codegen/bool_return_test.go","kind":"negative","assertions":["noncanonical/unsupported return-type IR is rejected before generation"]},
         {"case_id":"negative.bool_return.runtime","test":"TestBoolReturnRuntimeGuards","file":"tests/bool_return_runtime_test.go","kind":"negative","assertions":["compiled unknown non-bools across conditional/foreach returns and fallthrough fail explicitly"]}
       ],
-      "limitations": ["Actual bool values only; PHP weak scalar return coercion is outside this subset", "No typed methods/scalar parameters, nullable/union/intersection or boolean alias return types", "No path-completeness proof or inferred call return types", "Runtime rejection is not PHP TypeError/catchability equivalence", "Gossip numeric-array adoption still requires other dependencies and pinned original-source comparison"]
+      "limitations": ["Actual bool values only; PHP weak scalar return coercion is outside this subset", "No typed methods, nullable/union/intersection or boolean alias return types", "No path-completeness proof or inferred call return types", "Runtime rejection is not PHP TypeError/catchability equivalence", "Gossip numeric-array adoption still requires other dependencies and pinned original-source comparison"]
     },
     {
       "id": "php.builtin.in-array-strict-scalar",
@@ -931,7 +948,7 @@
         {"case_id": "negative.array_return.source", "test": "TestArrayReturnUnsupportedSourceFailsClosed", "file": "internal/codegen/array_return_test.go", "kind": "negative", "assertions": ["unsupported return/parameter types and bare or known non-array returns produce no generated output"]},
         {"case_id": "negative.array_return.runtime", "test": "TestArrayReturnRuntimeGuards", "file": "tests/array_return_runtime_test.go", "kind": "negative", "assertions": ["compiled unknown null/scalar returns and fallthrough fail explicitly"]}
       ],
-      "limitations": ["Only array and separately bounded bool return declarations; no nullable/union/intersection types, scalar typed parameters or typed methods", "No path-completeness proof or branch-sensitive narrowing", "Failure is not PHP TypeError/catchability equivalence; native harness compares stdout and normal exits", "Gossip adoption requires its own pinned original-source evidence"]
+      "limitations": ["Only array and separately bounded bool return declarations; no nullable/union/intersection types or typed methods; exact scalar parameters have a separate contract", "No path-completeness proof or branch-sensitive narrowing", "Failure is not PHP TypeError/catchability equivalence; native harness compares stdout and normal exits", "Gossip adoption requires its own pinned original-source evidence"]
     },
     {
       "id": "php.syntax.foreach",
@@ -2056,7 +2073,7 @@
         {"case_id": "unit.storage_frame.closed", "test": "TestFrameClosedAndNilOperationsReject", "file": "internal/storage/frame_test.go", "kind": "unit", "assertions": ["closed and nil frames reject binding operations without resurrection; close is idempotent on a valid frame"]},
         {"case_id": "unit.storage_frame.domain", "test": "TestFrameInvalidWritesPreserveBindings", "file": "internal/storage/frame_test.go", "kind": "unit", "assertions": ["invalid scalar payloads and nil bind sources reject before creating or changing frame bindings or alias groups"]}
       ],
-      "limitations": ["Compiler reference syntax and reference-aware array storage are not implemented", "internal/storage aliases remain internal; the separate generated-scalar-frames contract connects value-only nullary scalar functions through a runtime facade, not PHP references", "General frame integration, temporary/array ownership, cyclic values and PHP destructor order remain unimplemented", "docs/reference-value-model.md and tests/oracle/reference_semantics.php specify future contracts; native-oracle-only results are not generated-Go compatibility evidence"]
+      "limitations": ["Compiler reference syntax and reference-aware array storage are not implemented", "internal/storage aliases remain internal; the separate generated-scalar-frames contract connects value-only nullary or all-exact-scalar-parameter functions through a runtime facade, not PHP references", "General frame integration, temporary/array ownership, cyclic values and PHP destructor order remain unimplemented", "docs/reference-value-model.md and tests/oracle/reference_semantics.php specify future contracts; native-oracle-only results are not generated-Go compatibility evidence"]
     },
     {
       "id": "php.syntax.include-require",
@@ -2097,18 +2114,18 @@
       "kind": "tooling",
       "name": "Owned local frames for closed scalar functions",
       "implementation": "partial",
-      "contract": "Parameter-free global functions with conservatively proven scalar-only bodies use canonical storage through runtime.ScalarFrame, with explicit deferred Close; all other scopes retain existing value-map semantics.",
+      "contract": "Global functions with no parameters or all-exact-scalar parameters and conservatively proven scalar-only bodies use canonical storage through runtime.ScalarFrame, with explicit deferred Close; all other scopes retain existing value-map semantics.",
       "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "diff.scalar_frame", "test": "TestDifferential/scalar_frame", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/scalar_frame.php", "assertions": ["stdout", "exit", "scalar local copies, repeated calls, loop exits, explicit/implicit returns and coexistence with legacy array/arrow scopes"]},
-        {"case_id": "compiler.scalar_frame.selection", "test": "TestScalarFrameSelection", "file": "internal/codegen/scalar_frame_test.go", "kind": "compiler", "assertions": ["only closed scalar nullary functions use owned frames; calls, params, arrays including dead tails, objects and arrows keep legacy maps"]},
+        {"case_id": "compiler.scalar_frame.selection", "test": "TestScalarFrameSelection", "file": "internal/codegen/scalar_frame_test.go", "kind": "compiler", "assertions": ["closed scalar nullary or all-exact-scalar-parameter functions use owned frames; calls, untyped/mixed params, arrays including dead tails, objects and arrows keep legacy maps"]},
         {"case_id": "compiler.scalar_frame.source_map", "test": "TestScalarFrameSourceMap", "file": "internal/codegen/scalar_frame_test.go", "kind": "compiler", "assertions": ["owned variable statements retain PHP mappings; lifecycle scaffolding stays unmapped and method/main storage stays isolated"]},
         {"case_id": "negative.scalar_frame.admission", "test": "TestScalarFramePreservesRejection", "file": "internal/codegen/scalar_frame_test.go", "kind": "negative", "assertions": ["undefined/conditional variables, PHP references, invalid dead tails and malformed scalar IR still reject without output"]},
         {"case_id": "compiler.scalar_frame.external_consumer", "test": "TestScalarFrameExternalConsumer", "file": "tests/scalar_frame_runtime_test.go", "kind": "compiler", "assertions": ["generated functions build and run in a real external Go module via runtime only; arity/context/overflow guards, invocation state and legacy array copies remain intact"]},
         {"case_id": "unit.runtime.scalar_frame.values", "test": "TestScalarFrameValuesAndMissing", "file": "runtime/scalar_frame_test.go", "kind": "unit", "assertions": ["runtime facade preserves scalar values, missing versus null and independent value copies"]},
         {"case_id": "unit.runtime.scalar_frame.boundary", "test": "TestScalarFrameRejectsInvalidAndClosedUse", "file": "runtime/scalar_frame_test.go", "kind": "unit", "assertions": ["unsupported payloads reject without mutation; nil/closed use rejects and Close is idempotent"]}
       ],
-      "limitations": ["No PHP reference syntax, reference arguments/returns or exported alias operations", "All calls, parameters, methods, arrows, arrays, objects, foreach and main retain legacy value-map scopes", "No general temporary/shared-array ownership, PHP destructor/exception equivalence or performance claim", "New generated outputs require a matching GoHP runtime revision; IR schema and CLI options are unchanged"]
+      "limitations": ["No PHP reference syntax, reference arguments/returns or exported alias operations", "All calls, untyped/mixed parameters, methods, arrows, arrays, objects, foreach and main retain legacy value-map scopes", "No general temporary/shared-array ownership, PHP destructor/exception equivalence or performance claim", "New generated outputs require a matching GoHP runtime revision; IR schema and CLI options are unchanged"]
     },
     {
       "id": "gohp.tooling.cli-generate",

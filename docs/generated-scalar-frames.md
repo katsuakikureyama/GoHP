@@ -8,8 +8,8 @@ PHP syntax or reference support, and not a performance claim.
 
 ## Selection and lifetime
 
-Only parameter-free global functions whose **entire body** stays in a proven
-scalar domain use the new frame. The conservative classifier runs after normal
+Only global functions with no parameters or **all exact int/string/bool**
+parameters whose **entire body** stays in a proven scalar domain use the frame. The conservative classifier runs after normal
 semantic validation; it does not admit previously rejected source or IR.
 
 - Expressions: int/string/bool/null literals, defined locals, the existing
@@ -17,13 +17,16 @@ semantic validation; it does not admit previously rejected source or IR.
   defined-variable `isset` (including multiple such operands).
 - Statements: ordinary assignment, echo, return, if/else, while, break/continue.
   Both branches and dead tails are inspected. Each operand must also qualify.
-- All calls, parameters (including optional-null ones), methods, arrows,
+- All calls, untyped/mixed parameters (including optional-null ones), methods, arrows,
   arrays/objects, foreach, unknown forms and top-level main retain the existing
   value-map implementation. No runtime guessing, per-value fallback or
   interprocedural return-type assumption selects a frame.
 
 Selected functions create one `rt.NewScalarFrame()` after their arity/context
-guards and immediately `defer v.Close()`. Variable reads and writes use Read
+guards and immediately `defer v.Close()`. Typed parameters pass ScalarParameter
+before their first Write; later-parameter failure also runs the deferred release.
+See the separate [scalar parameter contract](scalar-function-parameters.md).
+Variable reads and writes use Read
 and Write; return guards, scalar copying, short-circuit behavior, Execution
 propagation and statement source maps remain unchanged. Explicit/implicit
 return and Go panic unwinding all run the deferred release. The scaffolding is
@@ -35,7 +38,7 @@ Write retains storage's exact scalar guard. Close is idempotent and closed
 reads/writes reject. No Bind, Reference, Slot or other alias operation is exposed
 to generated code. No finalizers or GC-timed releases are introduced.
 
-Existing parameter/array/callable/object behavior is untouched. This deliberately
+Existing untyped/array/callable/object behavior is untouched. This deliberately
 does not solve array ownership by smuggling an eager-cloned array into scalar
 storage. The shared-array separation design remains an independent R1/R3 gate.
 
@@ -57,7 +60,8 @@ runtime overflow failure, subsequent calls, preserved invocation state and
 legacy array copies without PHP. CI records the exact revision/runtime and
 target-specific evidence. New generated files require a runtime revision that
 provides ScalarFrame; existing generated Go remains compatible. IR stays at
-0.1 because its accepted shapes and meanings have not changed.
+0.1: the parameter extension reuses aligned ParamTypes; previous shapes and
+accepted meanings are preserved.
 
 R1 is partial. General frame migration, address IR, temporary and shared-array
 ownership, PHP references, by-reference calls/returns, cycles and destructor
