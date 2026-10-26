@@ -15,7 +15,7 @@ import (
 
 func TestTokenizerResponseBinding(t *testing.T) {
 	source := []byte("some text")
-	valid := tokenization{Schema: "gohp.php.tokens/v0.1", PHPVersion: "8.3.36", Bytes: len(source), SHA256: fmt.Sprintf("%x", sha256.Sum256(source)), Tokens: []Token{{Kind: "T_INLINE_HTML", Bytes: len(source)}}}
+	valid := tokenization{Schema: "gohp.php.tokens/v0.2", PHPVersion: "8.3.36", Bytes: len(source), SHA256: fmt.Sprintf("%x", sha256.Sum256(source)), Tokens: []Token{{Kind: "T_INLINE_HTML", Bytes: len(source)}}, InternalFunctions: []string{"strlen"}, Extensions: []string{"Core"}, ZendExtensions: []string{}}
 	raw, err := json.Marshal(valid)
 	if err != nil {
 		t.Fatal(err)
@@ -31,6 +31,15 @@ func TestTokenizerResponseBinding(t *testing.T) {
 		{"wrong bytes", func(r *tokenization) { r.Bytes++ }},
 		{"wrong hash", func(r *tokenization) { r.SHA256 = "wrong" }},
 		{"missing tokens", func(r *tokenization) { r.Tokens = nil }},
+		{"missing native names", func(r *tokenization) { r.InternalFunctions = nil }},
+		{"missing extensions", func(r *tokenization) { r.Extensions = nil }},
+		{"missing zend extensions", func(r *tokenization) { r.ZendExtensions = nil }},
+		{"unsorted names", func(r *tokenization) { r.InternalFunctions = []string{"z", "a"} }},
+		{"duplicate names", func(r *tokenization) { r.InternalFunctions = []string{"strlen", "strlen"} }},
+		{"empty name", func(r *tokenization) { r.Extensions = []string{""} }},
+		{"control name", func(r *tokenization) { r.Extensions = []string{"a\nb"} }},
+		{"long name", func(r *tokenization) { r.Extensions = []string{strings.Repeat("a", 1025)} }},
+		{"oversized names", func(r *tokenization) { r.InternalFunctions = make([]string, 10001) }},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			bad := valid

@@ -39,7 +39,7 @@ func inventory(ctx context.Context, manifestPath, sourceRoot, target string, sca
 		Schema: Schema, Status: "lexical-only", PHPTarget: target,
 		TokenizerSHA256: fmt.Sprintf("%x", sha256.Sum256([]byte(tokenizerScript))),
 		Verification:    verified, Files: make([]FileInventory, 0, len(sources)), Compatibility: "unverified",
-		Notice: "Native token_get_all(flags=0), php -n, short_open_tag=0. No grammar validation, name resolution, source execution, GoHP compilation or compatibility percentage. Declaration markers include methods; name-parenthesis candidates can include attributes and first-class callable syntax. Every other opening parenthesis remains visible. Semantic units, resolved calls and dependency closure remain unmeasured.",
+		Notice: "Native token_get_all(flags=0), php -n, short_open_tag=0. Native internal-name and selected declaration-marker matches are name-only evidence, never call resolution or GoHP support. Qualified names remain unresolved; namespace/import/conditional/method context is not resolved. No grammar validation, source execution, GoHP compilation or compatibility percentage. Candidates can include attributes and first-class callable syntax. Every other opening parenthesis remains visible. Semantic units, resolved calls and dependency closure remain unmeasured.",
 	}
 	totalTokens := 0
 	for _, source := range sources {
@@ -57,6 +57,14 @@ func inventory(ctx context.Context, manifestPath, sourceRoot, target string, sca
 			return Report{}, fmt.Errorf("tokenizer PHP version changed within the selection")
 		}
 		report.PHPVersion = tokens.PHPVersion
+		environment, err := nativeEnvironment(tokens)
+		if err != nil {
+			return Report{}, err
+		}
+		if report.NativeEnvironment.SHA256 != "" && report.NativeEnvironment.SHA256 != environment.SHA256 {
+			return Report{}, fmt.Errorf("native name environment changed within the selection")
+		}
+		report.NativeEnvironment = environment
 		if len(tokens.Tokens) > 500000-totalTokens {
 			return Report{}, fmt.Errorf("selection exceeds 500000 total token limit")
 		}
@@ -66,6 +74,9 @@ func inventory(ctx context.Context, manifestPath, sourceRoot, target string, sca
 			return Report{}, fmt.Errorf("analyze %s: %w", source.Path, err)
 		}
 		report.Files = append(report.Files, file)
+	}
+	if err := attachNameEvidence(report.Files, report.NativeEnvironment.InternalFunctions); err != nil {
+		return Report{}, err
 	}
 	return report, nil
 }

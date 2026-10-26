@@ -4,7 +4,7 @@ package sourceinventory
 
 import "github.com/katsuakikureyama/GoHP/internal/corpus"
 
-const Schema = "gohp.corpus.lexical-inventory/v0.1"
+const Schema = "gohp.corpus.lexical-inventory/v0.2"
 
 // Token is a native tokenizer's byte-length observation, never source code to
 // execute. Punctuation uses CHAR_ plus two uppercase hexadecimal digits.
@@ -45,19 +45,22 @@ type FileInventory struct {
 	Declarations            []Marker        `json:"declaration_markers"`
 	Parentheses             []Marker        `json:"open_parentheses"`
 	CandidateNames          []NameFrequency `json:"name_parenthesis_frequencies"`
+	NameEvidence            []NameEvidence  `json:"candidate_name_evidence"`
+	NameEvidenceStatus      string          `json:"name_evidence_status"`
 	UnclassifiedParentheses int             `json:"unclassified_parentheses"`
 	SemanticUnits           *int            `json:"semantic_units"`
 	ResolvedCalls           *int            `json:"resolved_calls"`
 }
 
 type Report struct {
-	Schema          string          `json:"schema"`
-	Status          string          `json:"status"`
-	PHPTarget       string          `json:"php_target"`
-	PHPVersion      string          `json:"php_version"`
-	TokenizerSHA256 string          `json:"tokenizer_sha256"`
-	Verification    corpus.Report   `json:"verification"`
-	Files           []FileInventory `json:"files"`
-	Compatibility   string          `json:"compatibility"`
-	Notice          string          `json:"notice"`
+	Schema            string            `json:"schema"`
+	Status            string            `json:"status"`
+	PHPTarget         string            `json:"php_target"`
+	PHPVersion        string            `json:"php_version"`
+	TokenizerSHA256   string            `json:"tokenizer_sha256"`
+	NativeEnvironment NativeEnvironment `json:"native_environment"`
+	Verification      corpus.Report     `json:"verification"`
+	Files             []FileInventory   `json:"files"`
+	Compatibility     string            `json:"compatibility"`
+	Notice            string            `json:"notice"`
 }

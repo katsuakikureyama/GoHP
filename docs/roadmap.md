@@ -19,7 +19,8 @@ evidence. This roadmap does not add catalog statuses or a new CLI operation.
   a current-main application result nor a combined WordPress percentage.
 - The first whole-file [source manifest](application-corpus.md) is frozen and
   byte-verifiable, with a bounded native-token [lexical inventory](application-corpus.md#lexical-inventory).
-  Resolved syntax/callsite coverage and comparative performance
+  Candidate names now retain native-environment and selected-declaration name
+  evidence, explicitly not dispatch resolution. Resolved syntax/callsite coverage and comparative performance
   are **not measured**; function/callsite/case denominators remain unfrozen. Show
   `n/a`, not zero, 100%, or a ratio derived from compiler test counts.
 
@@ -28,7 +29,7 @@ evidence. This roadmap does not add catalog statuses or a new CLI operation.
 | Workstream | Current state | Next observable result / completion criterion |
 |---|---|---|
 | Documentation | README and compatibility tables reorganized; historical target claims distinguished | Keep the entry point, implementation limits and evidence links aligned in each affected change |
-| Application inventory | Whole-file identity and native-token lexical counts available; grammar/name resolution and dependencies unresolved, no percentage | Resolve syntax/calls while retaining unknown/unparsed content; establish semantic denominators and per-target blockers |
+| Application inventory | Whole-file identity, native-token counts and candidate name evidence available; grammar/name resolution and dependencies unresolved, no percentage | Use frequency-ranked name evidence to prioritize AST/dependency resolution while retaining unknown/unparsed content; establish semantic denominators and per-target blockers |
 | Reference/value integration | R1 partial: internal ownership/storage exists | Finish bounded writable locations and temporary lifetime; then a PHP source → Go binary comparison of reference assignment/update/unset (R2), with rejected unsupported forms |
 | Performance baseline | Planned; no PHP/Go benchmark | Publish one reproducible, output-checked small workload per target, separating build, startup, execution and memory measurements |
 | Frontend adapter | Assessment only; no candidate installed | Audit/pin a candidate and demonstrate target-aware parsing, diagnostics/spans and supported-IR parity in shadow mode before replacement |

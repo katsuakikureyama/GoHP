@@ -17,11 +17,14 @@ import (
 var tokenizerScript string
 
 type tokenization struct {
-	Schema     string  `json:"schema"`
-	PHPVersion string  `json:"php_version"`
-	Bytes      int     `json:"bytes"`
-	SHA256     string  `json:"sha256"`
-	Tokens     []Token `json:"tokens"`
+	Schema            string   `json:"schema"`
+	PHPVersion        string   `json:"php_version"`
+	Bytes             int      `json:"bytes"`
+	SHA256            string   `json:"sha256"`
+	Tokens            []Token  `json:"tokens"`
+	InternalFunctions []string `json:"internal_functions"`
+	Extensions        []string `json:"extensions"`
+	ZendExtensions    []string `json:"zend_extensions"`
 }
 
 func tokenize(ctx context.Context, source []byte) (tokenization, error) {
@@ -51,8 +54,11 @@ func decodeTokens(raw, source []byte) (tokenization, error) {
 	if _, err := d.Token(); err != io.EOF {
 		return tokenization{}, fmt.Errorf("trailing PHP tokenizer output")
 	}
-	if result.Schema != "gohp.php.tokens/v0.1" || result.Bytes != len(source) || result.SHA256 != fmt.Sprintf("%x", sha256.Sum256(source)) || result.Tokens == nil || len(result.Tokens) > 250000 {
+	if result.Schema != "gohp.php.tokens/v0.2" || result.Bytes != len(source) || result.SHA256 != fmt.Sprintf("%x", sha256.Sum256(source)) || result.Tokens == nil || len(result.Tokens) > 250000 {
 		return tokenization{}, fmt.Errorf("PHP tokenizer response does not bind the complete source")
+	}
+	if _, err := nativeEnvironment(result); err != nil {
+		return tokenization{}, err
 	}
 	return result, nil
 }

@@ -31,18 +31,20 @@ func Analyze(path string, source []byte, tokens []Token) (FileInventory, error) 
 
 	hash := sha256.Sum256(source)
 	report := FileInventory{
-		Path:           path,
-		SHA256:         fmt.Sprintf("%x", hash),
-		Bytes:          len(source),
-		Tokens:         len(tokens),
-		TokenKinds:     make([]Frequency, 0),
-		Declarations:   make([]Marker, 0),
-		Parentheses:    make([]Marker, 0),
-		CandidateNames: make([]NameFrequency, 0),
-		GrammarStatus:  "not-validated",
-		UnparsedBytes:  len(source),
-		SemanticUnits:  nil,
-		ResolvedCalls:  nil,
+		Path:               path,
+		SHA256:             fmt.Sprintf("%x", hash),
+		Bytes:              len(source),
+		Tokens:             len(tokens),
+		TokenKinds:         make([]Frequency, 0),
+		Declarations:       make([]Marker, 0),
+		Parentheses:        make([]Marker, 0),
+		CandidateNames:     make([]NameFrequency, 0),
+		NameEvidence:       make([]NameEvidence, 0),
+		NameEvidenceStatus: "not-measured",
+		GrammarStatus:      "not-validated",
+		UnparsedBytes:      len(source),
+		SemanticUnits:      nil,
+		ResolvedCalls:      nil,
 	}
 
 	frequencies := make(map[string]Frequency)
