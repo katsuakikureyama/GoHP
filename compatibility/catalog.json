@@ -3,6 +3,22 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.declared-property-write",
+      "kind": "syntax",
+      "name": "Simple assignment to a declared public property",
+      "implementation": "partial",
+      "contract": "A defined bare variable known to hold a generated class may assign an existing literal public untyped property with a supported value. Setter clones arrays, getters retain detached reads, object identifiers stay shared. Mutable property reads retain existence validation but use unknown value type and existing runtime guards rather than assuming the default remains permanent.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.property_write","test":"TestDifferential/property_write","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/property_write.php","assertions":["stdout","exit","source object construction and data assignment, nested array independence, known aliases, method this, case-sensitive names, once-only RHS, type transitions and object/arrow identity"]},
+        {"case_id":"compiler.property_write","test":"TestPublicPropertyWriteLoweringAndSourceMap","file":"internal/codegen/property_write_test.go","kind":"compiler","assertions":["assign_property IR and declared setter, clone boundary, once-only RHS, mutable property reads and statement maps"]},
+        {"case_id":"negative.property_write.source","test":"TestPublicPropertyWriteBoundaries","file":"internal/codegen/property_write_test.go","kind":"negative","assertions":["unknown/undefined/nonobject receiver, undeclared/dynamic/chained/indexed/compound/reference targets reject before output"]},
+        {"case_id":"negative.property_write.ir","test":"TestPublicPropertyWriteMalformedIR","file":"internal/codegen/property_write_test.go","kind":"negative","assertions":["malformed target metadata/shape and unrelated statement payloads fail closed"]},
+        {"case_id":"negative.property_write.runtime","test":"TestPublicPropertyWriteRuntimeGuards","file":"tests/property_write_runtime_test.go","kind":"negative","assertions":["generated count/strlen/array-return retain actual-value guards after property writes"]}
+      ],
+      "limitations": ["Known generated class variable receiver only; unknown function-parameter/foreign receiver is excluded even after is_object", "Declared public untyped properties and simple statement assignment only; no dynamic names/properties, nested/index/append targets, compound/reference/assignment expressions", "Defaults remain scalar/null literals; no array defaults, constructors, inheritance, visibility or static properties", "No general object/reference/warning/exception equivalence; Gossip adoption requires a separate original-source pin/comparison"]
+    },
+    {
       "id": "php.builtin.str_starts_with",
       "kind": "builtin",
       "name": "str_starts_with(string haystack, string needle): bool",

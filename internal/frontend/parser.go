@@ -352,7 +352,16 @@ func (p *parser) stmt() ir.Stmt {
 		}
 		s.Kind = "assign"
 		s.Name = p.name("var")
-		if p.peek().kind == "sym" && p.peek().text == "[" {
+		if p.accept("->") {
+			property := p.name("id")
+			s.Kind = "assign_property"
+			s.Target = ir.Expr{Kind: "property", Text: property, Line: s.Line,
+				Args: []ir.Expr{{Kind: "var", Text: s.Name, Line: s.Line}}}
+			s.Name = ""
+			if p.peek().kind != "sym" || p.peek().text != "=" {
+				p.fail("property assignment requires one declared property and =")
+			}
+		} else if p.peek().kind == "sym" && p.peek().text == "[" {
 			p.pop()
 			base := ir.Expr{Kind: "var", Text: s.Name, Line: s.Line}
 			if p.peek().kind == "sym" && p.peek().text == "]" {

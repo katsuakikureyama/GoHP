@@ -190,6 +190,33 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 				return err
 			}
 			scope[stmt.Name] = t
+		case "assign_property":
+			target := stmt.Target
+			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || stmt.Body != nil ||
+				target.Kind != "property" || !validName(target.Text) || target.Params != nil || len(target.Args) != 1 {
+				return malformed(stmt.Line, "property assignment requires a single named property target")
+			}
+			base := target.Args[0]
+			if base.Kind != "var" || !validName(base.Text) || base.Args != nil || base.Params != nil {
+				return malformed(stmt.Line, "property assignment requires a bare variable receiver")
+			}
+			receiver, exists := scope[base.Text]
+			if !exists || receiver.kind != objectKind {
+				return unsupported(stmt.Line, "property assignment requires a known generated class variable")
+			}
+			info, exists := v.classes[receiver.class]
+			if !exists {
+				return unsupported(stmt.Line, "property assignment requires a declared generated class")
+			}
+			if _, exists := info.properties[target.Text]; !exists {
+				return unsupported(stmt.Line, "property assignment requires a declared public property")
+			}
+			if _, err := v.expr(base, scope); err != nil {
+				return err
+			}
+			if _, err := v.expr(stmt.Expr, scope); err != nil {
+				return err
+			}
 		case "assign_index":
 			target := stmt.Target
 			if target.Kind != "index" || len(target.Args) != 2 || target.Args[0].Kind != "var" || stmt.Name != "" {
@@ -926,11 +953,13 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		}
 		if receiver.kind == objectKind {
 			if info, ok := v.classes[receiver.class]; ok {
-				property, ok := info.properties[expr.Text]
+				_, ok := info.properties[expr.Text]
 				if !ok {
 					return valueType{}, unsupported(expr.Line, "unknown property "+receiver.class+"::$"+expr.Text)
 				}
-				return property, nil
+				// Public properties are untyped mutable slots. A default is not a
+				// permanent type: aliases/methods may have changed the value.
+				return valueType{kind: unknownKind}, nil
 			}
 		}
 		return valueType{kind: unknownKind}, nil

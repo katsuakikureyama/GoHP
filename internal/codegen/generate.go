@@ -111,6 +111,11 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 			g.emit("case %q: return rt.Clone(self.P_%s)\n", v.Name, v.Name)
 		}
 		g.emit("}; panic(\"undefined property\") }\n")
+		g.emit("func (self *C_%s) Set(k string, value any) { switch k {", name(c.Name))
+		for _, v := range c.Properties {
+			g.emit("case %q: self.P_%s = rt.Clone(value); return\n", v.Name, v.Name)
+		}
+		g.emit("}; panic(\"undefined property assignment\") }\n")
 		g.emit("func (self *C_%s) PHPObject() bool { return self != nil }\n", name(c.Name))
 		for _, f := range c.Methods {
 			g.function(f, c.Name)
@@ -192,6 +197,12 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			e := g.expr(s.Expr, scope)
 			scope[s.Name] = true
 			g.emit("v[%q]=rt.Clone(%s)\n", s.Name, e)
+		case "assign_property":
+			// Semantic validation admits only a known generated class variable
+			// and one declared public property; no host/dynamic setter dispatch.
+			receiver := g.expr(s.Target.Args[0], scope)
+			value := g.expr(s.Expr, scope)
+			g.emit("(%s).(interface{Set(string,any)}).Set(%q,%s)\n", receiver, s.Target.Text, value)
 		case "assign_index":
 			root := s.Target.Args[0].Text // Shape validated before generation.
 			if root == "this" || root == "GLOBALS" || strings.HasPrefix(root, "_") {

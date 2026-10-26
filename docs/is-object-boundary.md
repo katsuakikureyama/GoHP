@@ -17,9 +17,12 @@ The generated marker is a Go implementation detail, not a callable PHP method.
 
 Arity, undefined variables, reserved-name redeclaration and statically invalid
 bool use fail before output. Builtin callable lookup remains excluded. No object
-truthiness, reference comparison, constructors, property writes, array property
+truthiness, reference comparison, constructors, general property writes, array property
 defaults, inheritance, arbitrary host-object admission, object/Closure methods,
 resources or incomplete classes are added. Missing reads still fail normally.
+Later [declared-property assignment](public-property-write.md) is a separate
+known-receiver syntax contract; the predicate does not narrow unknown receivers
+or admit foreign host objects.
 
 The owned differential fixture composes classes/arrows, typed bool/array returns,
 ordered arrays, callbacks, short-circuit property access and a visible once-only
