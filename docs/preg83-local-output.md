@@ -93,6 +93,11 @@ pinned PHP 8.3.36. Set `GOHP_PREG83_GENERATED_PHP_IMAGE` to the exact image in t
 test; absent configuration explicitly skips the comparison. It is not registered
 as a supported builtin in the default CGO0 compatibility ledger.
 
+Measured local result: [2026-10-27 evidence](evidence/preg83-b3-2026-10-27.md),
+including failed setup attempts, corrected configuration, exact source identities
+and eleven typed native/generated observations. This is Darwin ARM64 enabled-backend
+evidence; standard Linux CGO0 CI is a separate regression gate.
+
 The compiler flag is a developer-local source-generation option. UI / WebMCP /
 MCP capability is **excluded**: no server operation, browser call, authentication
 route, external resource mutation or automatic submit is introduced. Existing
