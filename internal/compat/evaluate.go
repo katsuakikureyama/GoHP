@@ -83,6 +83,15 @@ func evaluate(c Catalog, events io.Reader, meta Metadata, fixture fixtureLookup,
 	}
 	lifecycles := make(map[string]*lifecycle)
 	payloads := make(map[string][]loggedPayload)
+	// test2json may split one log line across several output events. Keep
+	// fragments isolated by package/test, including when parallel tests interleave.
+	// Older archives retain their original event-level interpretation on replay.
+	pending := make(map[string]string)
+	logPayload := func(output, pkg, test string) {
+		if payload, ok := payloadFromOutput(output); ok {
+			payloads[payload.CaseID] = append(payloads[payload.CaseID], loggedPayload{casePayload: payload, packageName: pkg, test: test})
+		}
+	}
 	for _, event := range parsed {
 		packageKey := event.Package + "\x00"
 		if lifecycles[packageKey] == nil {
@@ -114,10 +123,34 @@ func evaluate(c Catalog, events io.Reader, meta Metadata, fixture fixtureLookup,
 			}
 		}
 		if event.Action == "output" {
-			if payload, ok := payloadFromOutput(event.Output); ok {
-				payloads[payload.CaseID] = append(payloads[payload.CaseID], loggedPayload{casePayload: payload, packageName: event.Package, test: event.Test})
+			if schema != RunSchema {
+				logPayload(event.Output, event.Package, event.Test)
+				continue
 			}
+			output := pending[key] + event.Output
+			for {
+				i := strings.IndexByte(output, '\n')
+				if i < 0 {
+					break
+				}
+				if i > 4*1024*1024 {
+					return Report{}, fmt.Errorf("go test output line exceeds 4 MiB")
+				}
+				logPayload(output[:i], event.Package, event.Test)
+				output = output[i+1:]
+			}
+			if len(output) > 4*1024*1024 {
+				return Report{}, fmt.Errorf("go test output line exceeds 4 MiB")
+			}
+			pending[key] = output
+		} else if event.Action == "pass" || event.Action == "fail" || event.Action == "skip" {
+			logPayload(pending[key], event.Package, event.Test)
+			delete(pending, key)
 		}
+	}
+	for key, output := range pending {
+		pkg, test, _ := strings.Cut(key, "\x00")
+		logPayload(output, pkg, test)
 	}
 	report := Report{
 		Schema:        schema,
