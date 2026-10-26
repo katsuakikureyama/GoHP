@@ -2305,6 +2305,8 @@
       "contract": "Checks exact manifest and whole-file byte identities without execution; all PHP compatibility and application measurements remain unverified or null.",
       "php_targets": ["8.3", "8.4"],
       "checks": [
+        {"case_id": "unit.corpus.pin", "test": "TestPinnedCorpusManifest", "file": "internal/corpus/pinned_test.go", "kind": "unit", "assertions": ["committed whole-file selection metadata remains readable offline; no upstream checkout or execution is verified"]},
+        {"case_id": "unit.corpus.fingerprint", "test": "TestSourceFingerprintIncludesCorpusManifest", "file": "cmd/gohp-compat/corpus_fingerprint_test.go", "kind": "unit", "assertions": ["pinned source selection changes affect the compatibility evidence fingerprint; build reports do not; symlink input is refused"]},
         {"case_id": "unit.corpus.verify", "test": "TestVerify", "file": "internal/corpus/corpus_test.go", "kind": "unit", "assertions": ["exact manifest hash and selected source totals retained; no execution or compatibility measurement"]},
         {"case_id": "unit.corpus.invalid_manifest", "test": "TestVerifyRejectsInvalidManifests", "file": "internal/corpus/corpus_test.go", "kind": "unit", "assertions": ["ambiguous JSON, invalid provenance, targets, paths and bounds rejected"]},
         {"case_id": "unit.corpus.invalid_source", "test": "TestVerifyRejectsSourceFiles", "file": "internal/corpus/corpus_test.go", "kind": "unit", "assertions": ["missing, mismatched, escaping and nonregular files rejected"]},

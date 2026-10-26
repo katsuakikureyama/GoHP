@@ -69,6 +69,14 @@ For audit, retain stdout together with the GoHP tool commit, command and Go/OS
 configuration; this schema does not auto-detect or authenticate the running binary.
 No compiler/oracle identity is invented because neither is run.
 
+The compatibility runner's source fingerprint includes JSON manifests under
+`corpus/`, in addition to its Go/PHP/catalog inputs. Changing the selected
+manifest therefore changes the runner's input identity even if compiler code is
+unchanged. Keep generated reports outside that input directory (for example in
+`build/`, which is excluded). This binding does not turn a corpus-byte check into
+a PHP compatibility observation. Offline CI checks that the committed selection
+metadata remains valid without downloading the selected WordPress files.
+
 The strict v0.1 manifest requires exactly the fields shown in the committed
 example: nonempty id/upstream repository/version, a 40-lowercase-hex upstream
 revision, `whole-file` selection with a nonempty exclusion explanation and
