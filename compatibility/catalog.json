@@ -2056,7 +2056,7 @@
         {"case_id": "unit.storage_frame.closed", "test": "TestFrameClosedAndNilOperationsReject", "file": "internal/storage/frame_test.go", "kind": "unit", "assertions": ["closed and nil frames reject binding operations without resurrection; close is idempotent on a valid frame"]},
         {"case_id": "unit.storage_frame.domain", "test": "TestFrameInvalidWritesPreserveBindings", "file": "internal/storage/frame_test.go", "kind": "unit", "assertions": ["invalid scalar payloads and nil bind sources reject before creating or changing frame bindings or alias groups"]}
       ],
-      "limitations": ["Compiler reference syntax and reference-aware array storage are not implemented", "internal/storage scalar-only slots and explicit frame release are unit-tested but not connected to parser, generated frames, codegen or public runtime APIs; no PHP reference support follows from those unit checks", "Temporary/array ownership, cyclic values, PHP destructor order and generated exit-path cleanup remain unimplemented", "docs/reference-value-model.md and tests/oracle/reference_semantics.php specify future contracts; native-oracle-only results are not generated-Go compatibility evidence"]
+      "limitations": ["Compiler reference syntax and reference-aware array storage are not implemented", "internal/storage aliases remain internal; the separate generated-scalar-frames contract connects value-only nullary scalar functions through a runtime facade, not PHP references", "General frame integration, temporary/array ownership, cyclic values and PHP destructor order remain unimplemented", "docs/reference-value-model.md and tests/oracle/reference_semantics.php specify future contracts; native-oracle-only results are not generated-Go compatibility evidence"]
     },
     {
       "id": "php.syntax.include-require",
@@ -2091,6 +2091,24 @@
       "php_targets": ["8.3", "8.4"],
       "checks": [],
       "limitations": ["No credentials, DB writes or extension equivalence claim"]
+    },
+    {
+      "id": "gohp.tooling.generated-scalar-frames",
+      "kind": "tooling",
+      "name": "Owned local frames for closed scalar functions",
+      "implementation": "partial",
+      "contract": "Parameter-free global functions with conservatively proven scalar-only bodies use canonical storage through runtime.ScalarFrame, with explicit deferred Close; all other scopes retain existing value-map semantics.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id": "diff.scalar_frame", "test": "TestDifferential/scalar_frame", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/scalar_frame.php", "assertions": ["stdout", "exit", "scalar local copies, repeated calls, loop exits, explicit/implicit returns and coexistence with legacy array/arrow scopes"]},
+        {"case_id": "compiler.scalar_frame.selection", "test": "TestScalarFrameSelection", "file": "internal/codegen/scalar_frame_test.go", "kind": "compiler", "assertions": ["only closed scalar nullary functions use owned frames; calls, params, arrays including dead tails, objects and arrows keep legacy maps"]},
+        {"case_id": "compiler.scalar_frame.source_map", "test": "TestScalarFrameSourceMap", "file": "internal/codegen/scalar_frame_test.go", "kind": "compiler", "assertions": ["owned variable statements retain PHP mappings; lifecycle scaffolding stays unmapped and method/main storage stays isolated"]},
+        {"case_id": "negative.scalar_frame.admission", "test": "TestScalarFramePreservesRejection", "file": "internal/codegen/scalar_frame_test.go", "kind": "negative", "assertions": ["undefined/conditional variables, PHP references, invalid dead tails and malformed scalar IR still reject without output"]},
+        {"case_id": "compiler.scalar_frame.external_consumer", "test": "TestScalarFrameExternalConsumer", "file": "tests/scalar_frame_runtime_test.go", "kind": "compiler", "assertions": ["generated functions build and run in a real external Go module via runtime only; arity/context/overflow guards, invocation state and legacy array copies remain intact"]},
+        {"case_id": "unit.runtime.scalar_frame.values", "test": "TestScalarFrameValuesAndMissing", "file": "runtime/scalar_frame_test.go", "kind": "unit", "assertions": ["runtime facade preserves scalar values, missing versus null and independent value copies"]},
+        {"case_id": "unit.runtime.scalar_frame.boundary", "test": "TestScalarFrameRejectsInvalidAndClosedUse", "file": "runtime/scalar_frame_test.go", "kind": "unit", "assertions": ["unsupported payloads reject without mutation; nil/closed use rejects and Close is idempotent"]}
+      ],
+      "limitations": ["No PHP reference syntax, reference arguments/returns or exported alias operations", "All calls, parameters, methods, arrows, arrays, objects, foreach and main retain legacy value-map scopes", "No general temporary/shared-array ownership, PHP destructor/exception equivalence or performance claim", "New generated outputs require a matching GoHP runtime revision; IR schema and CLI options are unchanged"]
     },
     {
       "id": "gohp.tooling.cli-generate",

@@ -1,8 +1,10 @@
 # Scalar frame lifecycle (R1, internal only)
 
 `internal/storage.Frame` owns named scalar bindings on top of the existing
-[Slot foundation](scalar-slot-foundation.md). It does not replace generated
-`map[string]any` frames, admit PHP reference syntax, or implement PHP exceptions.
+[Slot foundation](scalar-slot-foundation.md). A bounded
+[generated scalar integration](generated-scalar-frames.md) now uses it through
+a runtime facade; general `map[string]any` frames remain in place. It does not
+admit PHP reference syntax or implement PHP exceptions.
 Only exact null, bool, int64 and string values are admitted; the boundary is the
 same for the independently tested PHP 8.3 and 8.4 targets.
 
@@ -48,12 +50,12 @@ The PHP-only reference specification from #82 remains separate and unchanged;
 its PHP 8.3 observations are not inherited by PHP 8.4. This increment requires
 no new native-only run because it neither admits nor generates new PHP syntax.
 
-R1 is still partial: generated exit-path integration, address IR, temporary and
+R1 is still partial: general generated-frame integration, address IR, temporary and
 shared-array ownership, detach-on-write, cyclic values and PHP destructor order
 are not implemented. Map iteration during Close has no destructor-order meaning
-in the scalar-only domain. The current value runtime remains unchanged. Add
-generated call/return and target-specific native comparisons at the integration
-boundary, not by treating these unit tests as language support.
+in the scalar-only domain. Existing array/object value semantics remain unchanged.
+The separate scalar integration records generated-call and target-specific
+native evidence; these internal ownership tests alone are not language support.
 
 No CLI, route, service capability, authentication or WebMCP operation changes.
 The existing local `gohp.cli.generate` exclusion applies. Gossip pins and corpora
