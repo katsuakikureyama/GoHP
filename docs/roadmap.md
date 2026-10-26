@@ -17,16 +17,17 @@ evidence. This roadmap does not add catalog statuses or a new CLI operation.
 - [Gossip's earlier original-source comparisons](integration.md) are useful
   historical evidence at their recorded compiler/source pins. They are neither
   a current-main application result nor a combined WordPress percentage.
-- Application-wide inventory/coverage and comparative performance are
-  **not measured**. No application denominator has been frozen; show `n/a`,
-  not zero, 100%, or a ratio derived from compiler test counts.
+- The first whole-file [source manifest](application-corpus.md) is frozen and
+  byte-verifiable. Application-wide inventory/coverage and comparative performance
+  are **not measured**; function/callsite/case denominators remain unfrozen. Show
+  `n/a`, not zero, 100%, or a ratio derived from compiler test counts.
 
 ## Priorities and completion criteria
 
 | Workstream | Current state | Next observable result / completion criterion |
 |---|---|---|
 | Documentation | README and compatibility tables reorganized; historical target claims distinguished | Keep the entry point, implementation limits and evidence links aligned in each affected change |
-| Application inventory | Planned; no frozen manifest or percentage | Pin source and dependency scope; report syntax/callsite inventory, blockers and per-target counts with explicit denominators |
+| Application inventory | Whole-file source manifest and read-only byte verifier available; dependencies unresolved, no percentage | Inventory all selected content including unknown/unparsed units; report blockers and per-target counts with explicit denominators |
 | Reference/value integration | R1 partial: internal ownership/storage exists | Finish bounded writable locations and temporary lifetime; then a PHP source → Go binary comparison of reference assignment/update/unset (R2), with rejected unsupported forms |
 | Performance baseline | Planned; no PHP/Go benchmark | Publish one reproducible, output-checked small workload per target, separating build, startup, execution and memory measurements |
 | Frontend adapter | Assessment only; no candidate installed | Audit/pin a candidate and demonstrate target-aware parsing, diagnostics/spans and supported-IR parity in shadow mode before replacement |
@@ -43,9 +44,11 @@ as application compatibility.
 
 ## First application inventory
 
-Start with a **pinned WordPress core `wp-includes/functions.php`** as the
-frequency/inventory candidate. It is a planning scope, not yet an imported or
-measured corpus. Before publishing any ratio, commit a manifest that records:
+The **pinned WordPress core `wp-includes/functions.php`** is the first
+frequency/inventory candidate. Its [manifest and byte verifier](application-corpus.md)
+fix the complete source-file selection, notice and version provenance; they do
+not parse, compile or execute it. Before publishing any ratio, complete the
+remaining inventory/run evidence:
 
 - Upstream project/release/revision, source path and byte hash, provenance and
   license notices; distinguish upstream identity from a retained Gossip copy.
@@ -77,7 +80,8 @@ Show numerator, denominator, scope identity and unmeasured counts alongside any
 percentage. Target-inapplicable cases must be explicitly accounted for, not
 silently removed. Changing the manifest creates a new series of measurements;
 do not compare differently selected denominators as a single progress curve.
-The current Composer metadata reader is not this source inventory tool.
+Neither the Composer metadata reader nor source-byte verifier is a PHP
+syntax/callsite inventory tool.
 
 For executable application acceptance, retain the reference design's sequence:
 the **complete original block parser**, then hooks and broader callers. The

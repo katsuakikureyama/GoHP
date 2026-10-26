@@ -284,6 +284,9 @@ source/generated hashes and target, with status `generated`, never automatic PAS
 
 ## Composer metadata inventory
 
+For pinned original source identity (not Composer metadata or PHP callsite
+coverage), see the separate [application corpus verifier](application-corpus.md).
+
 ```sh
 go run ./cmd/gohp-inventory /path/to/project
 go run ./cmd/gohp-inventory -format json /path/to/project

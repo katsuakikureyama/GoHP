@@ -2298,6 +2298,23 @@
       "limitations": ["Same candidate/corpus required; oracle configuration differences remain visible but are not normalized", "No causality, intended PHP-version difference, combined support or release verdict", "No comparison of nonzero exits, arbitrary diagnostics, exceptions or side effects", "Hashes and environment identities are producer assertions, not authenticity"]
     },
     {
+      "id": "gohp.tooling.corpus-verification",
+      "kind": "tooling",
+      "name": "Read-only pinned application source verification",
+      "implementation": "partial",
+      "contract": "Checks exact manifest and whole-file byte identities without execution; all PHP compatibility and application measurements remain unverified or null.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id": "unit.corpus.verify", "test": "TestVerify", "file": "internal/corpus/corpus_test.go", "kind": "unit", "assertions": ["exact manifest hash and selected source totals retained; no execution or compatibility measurement"]},
+        {"case_id": "unit.corpus.invalid_manifest", "test": "TestVerifyRejectsInvalidManifests", "file": "internal/corpus/corpus_test.go", "kind": "unit", "assertions": ["ambiguous JSON, invalid provenance, targets, paths and bounds rejected"]},
+        {"case_id": "unit.corpus.invalid_source", "test": "TestVerifyRejectsSourceFiles", "file": "internal/corpus/corpus_test.go", "kind": "unit", "assertions": ["missing, mismatched, escaping and nonregular files rejected"]},
+        {"case_id": "unit.corpus.cli_usage", "test": "TestRunUsageAndReadErrors", "file": "cmd/gohp-corpus-verify/main_test.go", "kind": "unit", "assertions": ["explicit manifest and one root required; failures emit no report"]},
+        {"case_id": "unit.corpus.cli_output", "test": "TestRunVerifiesBeforeOutput", "file": "cmd/gohp-corpus-verify/main_test.go", "kind": "unit", "assertions": ["source verification is separate from compatibility; late mismatch emits no partial JSON"]},
+        {"case_id": "unit.corpus.cli_write", "test": "TestRunReportsWriteFailure", "file": "cmd/gohp-corpus-verify/main_test.go", "kind": "unit", "assertions": ["destination failure and short writes cannot report success"]}
+      ],
+      "limitations": ["No upstream authenticity, license decision or dependency closure", "No PHP parsing, callsite/function inventory, compiler or application execution; no compatibility percentage", "Requires private non-concurrently-mutated source root; not a filesystem sandbox"]
+    },
+    {
       "id": "gohp.tooling.composer-inventory",
       "kind": "tooling",
       "name": "Read-only Composer metadata inventory",

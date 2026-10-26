@@ -80,6 +80,8 @@ and the [function/feature evidence](docs/compatibility-ledger.md); test counts a
 The [roadmap](docs/roadmap.md) prioritizes a fixed application corpus and explicit
 denominators, an end-to-end reference milestone, and a small PHP/Go benchmark.
 Application coverage and performance comparisons are **not yet measured**.
+The first [WordPress source manifest](docs/application-corpus.md) fixes whole-file
+scope and supports read-only byte verification, not application compatibility.
 Earlier [Gossip source comparisons](docs/integration.md) retain their original pins;
 they do not certify current main or a complete WordPress application.
 
