@@ -9,7 +9,10 @@ const (
 	RunSchemaLegacy   = "gohp.compatibility.run/v0.1"
 	RunSchemaBaseline = "gohp.compatibility.run/v0.2"
 	RunSchemaQuiet    = "gohp.compatibility.run/v0.3"
-	RunSchema         = "gohp.compatibility.run/v0.4"
+	// RunSchemaOutputs introduced recorded stdout and process-exit observations.
+	// It remains readable after the current schema advances.
+	RunSchemaOutputs = "gohp.compatibility.run/v0.4"
+	RunSchema        = "gohp.compatibility.run/v0.5"
 )
 
 // PHPBaseline is an allowlisted observation from one separate php -r process
@@ -89,7 +92,7 @@ func validateBaseline(schema string, meta Metadata) error {
 		if meta.PHPBaseline != nil || meta.PHPBaselineSHA256 != "" {
 			return fmt.Errorf("legacy run cannot carry v0.2 PHP baseline evidence")
 		}
-	case RunSchemaBaseline, RunSchemaQuiet, RunSchema:
+	case RunSchemaBaseline, RunSchemaQuiet, RunSchemaOutputs, RunSchema:
 		if err := meta.PHPBaseline.Validate(meta.PHPVersion); err != nil {
 			return err
 		}

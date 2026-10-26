@@ -67,6 +67,9 @@ func Evaluate(c Catalog, events io.Reader, meta Metadata) (Report, error) {
 type fixtureLookup func(Case) (hash, detail string)
 
 func evaluate(c Catalog, events io.Reader, meta Metadata, fixture fixtureLookup, schema string) (Report, error) {
+	if c.Schema == "gohp.compatibility.catalog/v0.2" && schema != RunSchema {
+		return Report{}, fmt.Errorf("catalog v0.2 requires run v0.5 target-scoped evaluation")
+	}
 	if err := validateBaseline(schema, meta); err != nil {
 		return Report{}, err
 	}
@@ -123,7 +126,7 @@ func evaluate(c Catalog, events io.Reader, meta Metadata, fixture fixtureLookup,
 			}
 		}
 		if event.Action == "output" {
-			if schema != RunSchema {
+			if schema != RunSchema && schema != RunSchemaOutputs {
 				logPayload(event.Output, event.Package, event.Test)
 				continue
 			}
@@ -169,7 +172,7 @@ func evaluate(c Catalog, events io.Reader, meta Metadata, fixture fixtureLookup,
 			}
 		}
 	}
-	report.Features = evaluateFeatures(c, report.Cases, meta)
+	report.Features = evaluateFeatures(c, report.Cases, meta, schema)
 	report.Overall = overall(report.Features, lifecycles, meta.TestExit)
 	return report, nil
 }
@@ -247,6 +250,11 @@ func evaluateCase(testCase Case, states map[string]*lifecycle, payloads map[stri
 			evidence.Status = "incomplete"
 			return evidence
 		}
+	}
+	if schema == RunSchema && len(testCase.PHPTargets) != 0 && !oneOf(meta.PHPTarget, testCase.PHPTargets...) {
+		evidence.Status = "not-measured"
+		evidence.Detail = "case is not applicable to selected PHP target"
+		return evidence
 	}
 	var payload casePayload
 	payloadDetail := ""
@@ -384,7 +392,7 @@ func payloadShape(p casePayload, schema string) string {
 }
 
 func positiveDifferentialDetail(p casePayload, schema string) string {
-	if schema == RunSchema || schema == RunSchemaQuiet {
+	if schema == RunSchema || schema == RunSchemaOutputs || schema == RunSchemaQuiet {
 		if p.Diagnostics != nil && p.Diagnostics.Status == "fail" {
 			return "quiet stderr requirement failed"
 		}
@@ -416,7 +424,7 @@ func validSHA256(value string) bool {
 	return err == nil
 }
 
-func evaluateFeatures(c Catalog, cases []CaseEvidence, meta Metadata) []FeatureRow {
+func evaluateFeatures(c Catalog, cases []CaseEvidence, meta Metadata, schema string) []FeatureRow {
 	byID := make(map[string]CaseEvidence, len(cases))
 	for _, evidence := range cases {
 		byID[evidence.ID] = evidence
@@ -426,11 +434,16 @@ func evaluateFeatures(c Catalog, cases []CaseEvidence, meta Metadata) []FeatureR
 		for _, target := range entry.PHPTargets {
 			row := FeatureRow{ID: entry.ID, Target: target, Kind: entry.Kind, Name: entry.Name, Implementation: entry.Implementation, Contract: entry.Contract, Limitations: entry.Limitations}
 			for _, check := range entry.Checks {
+				if schema == RunSchema && !oneOf(target, checkTargets(entry, check)...) {
+					continue
+				}
 				row.Checks = append(row.Checks, check.CaseID)
 			}
 			sort.Strings(row.Checks)
 			if target != meta.PHPTarget {
 				row.Status = "not-measured"
+			} else if schema == RunSchema && len(row.Checks) == 0 && entry.Implementation != "unsupported" {
+				row.Status = "unverified"
 			} else {
 				row.Status = featureStatus(entry, row.Checks, byID)
 			}
@@ -467,7 +480,7 @@ func featureStatus(entry Entry, ids []string, cases map[string]CaseEvidence) str
 		return "compiler-check-pass"
 	}
 	for _, check := range entry.Checks {
-		if check.Kind == "differential" {
+		if check.Kind == "differential" && oneOf(check.CaseID, ids...) {
 			return "differential-pass (case-limited)"
 		}
 	}

@@ -48,8 +48,10 @@ func TestOutputObservationsValidateVerdicts(t *testing.T) {
 			p := casePayload{Outputs: testExecutionOutputs("same", "same"), Diagnostics: testQuietEvidence()}
 			p.Comparisons.Stdout, p.Comparisons.Exit = "pass", "pass"
 			tt.change(&p)
-			if detail := outputShape(p, RunSchema); (detail == "") != tt.valid {
-				t.Fatalf("valid=%v: %s", tt.valid, detail)
+			for _, schema := range []string{RunSchemaOutputs, RunSchema} {
+				if detail := outputShape(p, schema); (detail == "") != tt.valid {
+					t.Fatalf("schema=%s valid=%v: %s", schema, tt.valid, detail)
+				}
 			}
 		})
 	}
@@ -70,13 +72,13 @@ func TestProcessOutputRequiresExplicitZeroObservations(t *testing.T) {
 }
 
 func TestOutputArchiveKeepsHistoricalObservationsAbsent(t *testing.T) {
-	for _, schema := range []string{RunSchemaLegacy, RunSchemaBaseline, RunSchemaQuiet, RunSchema} {
+	for _, schema := range []string{RunSchemaLegacy, RunSchemaBaseline, RunSchemaQuiet, RunSchemaOutputs, RunSchema} {
 		dir, _ := savedRun(t, "8.3", "pass", schema)
 		r, err := LoadArchive(dir)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if (r.Cases[0].Outputs != nil) != (schema == RunSchema) {
+		if (r.Cases[0].Outputs != nil) != (schema == RunSchemaOutputs || schema == RunSchema) {
 			t.Fatal("historical output invented")
 		}
 		if schema == RunSchemaQuiet {

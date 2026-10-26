@@ -26,7 +26,7 @@ func QuietPHPArgs() []string {
 }
 
 func diagnosticShape(d *DiagnosticEvidence, schema string) string {
-	if schema != RunSchema && schema != RunSchemaQuiet {
+	if schema != RunSchema && schema != RunSchemaOutputs && schema != RunSchemaQuiet {
 		if d != nil {
 			return "legacy payload cannot carry quiet stderr evidence"
 		}

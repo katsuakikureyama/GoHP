@@ -50,6 +50,7 @@ type Entry struct {
 }
 
 type Check struct {
+	PHPTargets []string `json:"php_targets,omitempty"` // v0.2: nil inherits the owning entry.
 	CaseID     string   `json:"case_id"`
 	Test       string   `json:"test"`
 	File       string   `json:"file"`
@@ -60,12 +61,13 @@ type Check struct {
 
 // Case is the normalized, reusable execution identity for a catalog check.
 type Case struct {
-	ID      string `json:"id"`
-	Test    string `json:"test"`
-	Package string `json:"package"`
-	File    string `json:"file"`
-	Kind    string `json:"kind"`
-	Fixture string `json:"fixture,omitempty"`
+	PHPTargets []string `json:"php_targets,omitempty"` // Union of effective scopes of all references.
+	ID         string   `json:"id"`
+	Test       string   `json:"test"`
+	Package    string   `json:"package"`
+	File       string   `json:"file"`
+	Kind       string   `json:"kind"`
+	Fixture    string   `json:"fixture,omitempty"`
 }
 
 type PhaseEvidence struct {

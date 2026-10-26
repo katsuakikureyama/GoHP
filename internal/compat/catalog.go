@@ -70,7 +70,7 @@ func (c *Catalog) validate() error {
 // Archive validation checks identities and contracts without opening source
 // paths from a historical catalog in the consumer's current checkout.
 func (c *Catalog) validateCatalog(sourceAvailable bool) error {
-	if c.Schema != "gohp.compatibility.catalog/v0.1" {
+	if !oneOf(c.Schema, "gohp.compatibility.catalog/v0.1", "gohp.compatibility.catalog/v0.2") {
 		return fmt.Errorf("unsupported catalog schema %q", c.Schema)
 	}
 	if c.Maturity != "draft" && c.Maturity != "experimental" {
@@ -100,9 +100,31 @@ func (c *Catalog) validateCatalog(sourceAvailable bool) error {
 			return fmt.Errorf("entry %q: %w", e.ID, err)
 		}
 		for j := range e.Checks {
+			check := &e.Checks[j]
+			if check.PHPTargets != nil {
+				if c.Schema != "gohp.compatibility.catalog/v0.2" {
+					return fmt.Errorf("check php_targets requires catalog v0.2")
+				}
+				if err := targets(check.PHPTargets); err != nil {
+					return fmt.Errorf("check %q: %w", check.CaseID, err)
+				}
+				for _, target := range check.PHPTargets {
+					if !oneOf(target, e.PHPTargets...) {
+						return fmt.Errorf("check %q target %s is outside entry targets", check.CaseID, target)
+					}
+				}
+			}
 			if err := c.validateCheck(e.ID, &e.Checks[j], sourceAvailable); err != nil {
 				return err
 			}
+			identity := c.cases[check.CaseID]
+			for _, target := range checkTargets(*e, *check) {
+				if !oneOf(target, identity.PHPTargets...) {
+					identity.PHPTargets = append(identity.PHPTargets, target)
+				}
+			}
+			sort.Strings(identity.PHPTargets)
+			c.cases[check.CaseID] = identity
 		}
 	}
 	return nil
@@ -277,4 +299,28 @@ func sortedCases(c Catalog) []Case {
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].ID < result[j].ID })
 	return result
+}
+
+func checkTargets(entry Entry, check Check) []string {
+	if check.PHPTargets != nil {
+		return check.PHPTargets
+	}
+	return entry.PHPTargets
+}
+
+// DifferentialCases selects only required native/generated cases for this run.
+// Excluded cases must not be represented as skipped tests or inherited passes.
+func (c Catalog) DifferentialCases(target string) ([]Case, error) {
+	if err := phpversion.ValidateTarget(target); err != nil {
+		return nil, err
+	}
+	var result []Case
+	for _, testCase := range sortedCases(c) {
+		if testCase.Kind == "differential" && oneOf(target, testCase.PHPTargets...) {
+			// Do not expose mutable normalized scope storage to callers.
+			testCase.PHPTargets = append([]string(nil), testCase.PHPTargets...)
+			result = append(result, testCase)
+		}
+	}
+	return result, nil
 }

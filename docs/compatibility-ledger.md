@@ -24,7 +24,7 @@ Require a successful CI job before using its artifacts as release evidence.
 - `catalog.json`: the exact validated catalog used for this run, hash-bound to the report.
 - `go-test.jsonl`: exact Go test event stream, including failures and phase data.
 - `go-test.stderr`: test process stderr (infrastructure/build failures included).
-- `run.json`: `gohp.compatibility.run/v0.4` metadata, case evidence and feature rows.
+- `run.json`: `gohp.compatibility.run/v0.5` metadata, case evidence and feature rows.
 - `summary.md`: human-readable function/feature table for the selected target,
   with implementation state, bounded result, case IDs and limitations.
 
@@ -52,6 +52,20 @@ missing files/functions and paths escaping the repository. Nested subtest names
 are checked against actual execution, not guessed from syntax. The 18 rejection
 cases now have individual names instead of sharing one aggregate PASS.
 
+Catalog v0.2 adds an optional `checks[].php_targets` scope. When it is absent,
+the check inherits its entry's `php_targets`; when present, it must be a
+non-empty, duplicate-free subset of that entry's targets. The selected run
+requires only the union of scopes for each reused case ID. A case that is outside
+that union for the selected target is retained as `not-measured` without phase,
+diagnostic or process-output observations. It is neither a skipped required case
+nor evidence inherited from another target. Catalog v0.2 is accepted only by a
+run/v0.5 producer and reader; catalog v0.1 and run/v0.1–v0.4 retain their
+historical all-listed-case semantics.
+
+Each feature row lists only checks applicable to that row's target. An active
+implemented/partial row with no applicable checks is `unverified`; an explicit
+unsupported declaration remains `unsupported`, not a successful execution.
+
 Differential cases emit phase evidence from the **existing execution**, not a
 second run: parse, Go generation, Go build, Go execution and comparison. A
 differential PASS requires the matching case/target/oracle version, current
@@ -77,7 +91,7 @@ diagnostic output; a process that did not run has no observation. The raw event
 stream, including this profile and its arguments, remains SHA-256-bound by
 `event_sha256` and is replay-validated by the archive view.
 
-v0.4 also records an `outputs` observation for each PHP/Go process that was
+Run/v0.4 introduced an `outputs` observation for each PHP/Go process that was
 actually started: `{stdout_bytes, stdout_sha256, exit_code}`. It records the
 raw stdout byte count and SHA-256, never raw stdout. A process that was not
 observed has no object; it is not represented as an apparently successful zero
@@ -180,9 +194,11 @@ route, MCP protocol, session forwarding, auto-submit or new authentication path
 is introduced. CI artifact upload is an explicit workflow step using existing
 GitHub Actions authorization, not a hidden action of the CLI.
 The v0.2 PHP baseline and its hash, the v0.3 per-case quiet-success audit
-metadata, and v0.4's hash-only stdout/exit observations are runner-produced
-rather than caller-supplied capability inputs or configuration APIs; this change
-does not add an inspect/search/state/link operation or alter the exclusion.
+metadata, v0.4's hash-only stdout/exit observations, and v0.5's catalog-derived
+target scope are runner-produced rather than caller-supplied capability inputs
+or configuration APIs. Target scope only determines which catalog cases are
+required for the selected run; it does not add an inspect/search/state/link
+operation or alter the exclusion.
 
 ## Browse saved runs without rerunning tests
 
@@ -196,7 +212,7 @@ go run ./cmd/gohp-compat-view -target 8.4 -format json build/php84-run
 ```
 
 The CLI does not fetch artifacts, invoke tests/PHP/Git, change evidence or write
-output files; it prints Markdown (default) or `gohp.compatibility.view/v0.4` JSON
+output files; it prints Markdown (default) or `gohp.compatibility.view/v0.5` JSON
 to stdout. `go run` itself compiles the trusted Go tool and may populate the Go
 build cache; a prebuilt binary needs neither Go nor the source checkout.
 
@@ -217,10 +233,13 @@ rehash-checked here. v0.2 archives additionally bind a bounded pre-suite PHP
 CLI baseline, but that still is not an effective per-fixture configuration or a
 complete environment capture. v0.3 archives additionally replay the hash-bound
 quiet-success observation, which is an empty-stream check rather than diagnostic
-equivalence. v0.4 archives additionally replay hash-only stdout/exit
+equivalence. v0.4 and later archives additionally replay hash-only stdout/exit
 observations and their relation to the recorded stdout/exit verdicts; this does
-not disclose or re-execute stdout. A malicious producer can fabricate a
-consistent bundle.
+not disclose or re-execute stdout. For catalog v0.2, only run/v0.5 archives add
+target-scoped required-case semantics: cases outside a selected target's scope
+remain `not-measured` with no invented observations. The view preserves
+v0.1–v0.4 archives exactly as their recorded historical scope. A malicious
+producer can fabricate a consistent bundle.
 Metadata, environment identities and exit codes are producer assertions, not
 signed attestations. CI job status and subsequent smoke checks are not proven
 by the archived test report. Consult the trusted CI job before release use.
@@ -230,14 +249,16 @@ different revisions/configurations/catalogs and failed/incomplete runs. No run
 is labeled latest, overwritten, ranked or selected as the best result. Filters
 are exact AND matches on feature-row target, kind and status. Target filtering
 does not select runs: an 8.3 run's 8.4 row remains `not-measured` when filtering
-for 8.4. All supplied run headers, original overall results and all case details
-remain visible, including runs with zero matching rows. There is no combined
+for 8.4. For v0.5 runs, `not-measured` also means the catalog marked that case
+outside the selected target's scope; it never means that another target supplied
+the evidence. All supplied run headers, original overall results and all case
+details remain visible, including runs with zero matching rows. There is no combined
 compatibility percentage, promotion or current-revision applicability decision.
 The live runner admits PHP 8.3 only when its actual oracle is at least 8.3.36,
 and PHP 8.4 only when its actual oracle is at least 8.4.27. CI supplies a
 separate pinned image identity for each target; local host-PHP runs need no
-container and do not imply a verified image digest. The same bounded corpus is
-run separately for each target. A report has no 8.4 differential verdict until
+container and do not imply a verified image digest. Each target runs its
+catalog-scoped corpus separately. A report has no 8.4 differential verdict until
 the 8.4 execution completes; it cannot inherit the 8.3 result. The archive
 reader may display legacy 7.4 and older 8.3 runs, but they are historical
 evidence rather than active compatibility gates.
@@ -272,16 +293,16 @@ source run/attempt/URL and hashes for audit, but is not a new evidence authority
 WebMCP: **excluded**, local development evidence reader with no browser surface,
 MCP route, credentials, auto-submit, publication or remote authentication.
 Its catalog checks are Go tooling tests, never proof of PHP semantics.
-The v0.4 view always emits its own schema while strictly accepting historical
-v0.1/v0.2/v0.3 and current v0.4 runs. It retains each original run schema and
-does not synthesize a baseline for v0.1, a quiet-success observation for
-v0.1/v0.2, or process-output observations for v0.1/v0.2/v0.3 evidence. Reading
-the additional metadata adds no callable operation or authority and remains
-within this capability's exclusion.
+The v0.5 view always emits its own schema while strictly accepting historical
+v0.1/v0.2/v0.3/v0.4 and current v0.5 runs. It retains each original run schema
+and does not synthesize a baseline for v0.1, a quiet-success observation for
+v0.1/v0.2, process-output observations for v0.1/v0.2/v0.3, or target-scoped
+case status for v0.1–v0.4 evidence. Reading the additional metadata adds no
+callable operation or authority and remains within this capability's exclusion.
 
 ## Compare two saved output observations
 
-Use this separate read-only tool when two v0.4 archives should be compared as
+Use this separate read-only tool when two v0.4 or v0.5 archives should be compared as
 the same candidate and corpus under two native oracle environments:
 
 ```sh
@@ -296,12 +317,13 @@ file. Its exit status reports rendering/usage/archive errors only: exit 0 is
 not a support gate, a native-version conclusion or a promotion decision.
 
 Before any cross-run native classification, both archives must be complete,
-clean v0.4 records with the same commit, tree, source fingerprint, catalog hash,
+clean v0.4-or-v0.5 records with the same commit, tree, source fingerprint, catalog hash,
 Go toolchain/platform/image, build flags and recorded test command. The compared case
 must have the same case/test/package/kind/fixture identity and fixture hash.
 Legacy or output-missing records, dirty or changed-input candidates,
-unrelated failed/incomplete runs and unrelated cases are `not-comparable`; their data is
-not silently matched. An actually observed target-local stdout mismatch remains
+unrelated failed/incomplete runs, cases absent from either archive, and a v0.5
+case outside either selected target scope are `not-comparable`; their data is not
+silently matched. An actually observed target-local stdout mismatch remains
 reportable as `transpiler-stdout-mismatch` even though it failed its run; this
 does not permit cross-run native classification or promote that run to success.
 The output retains both run metadata, schema and overall
@@ -330,9 +352,10 @@ two caller-readable archived evidence directories. Input schema:
 
 `inspect`: read and validate the two archives and their compatibility for a
 cross-run comparison. `prepare`: derive the report in memory. `save` / `commit`:
-none. The audit output includes the two input archive identities and stdout
-observations, but it creates no new evidence authority. Local filesystem read
-permission is the only authorization. WebMCP: **excluded** — this is a local
+none. The audit output includes the two input archive identities, their retained
+run schema and scoped/not-comparable distinctions, and stdout observations, but
+it creates no new evidence authority. Local filesystem read permission is the
+only authorization. WebMCP: **excluded** — this is a local
 developer read-only tool with no browser or server surface, MCP protocol,
 credentials, publication, auto-submit or authentication route.
 

@@ -1,5 +1,5 @@
 {
-  "schema": "gohp.compatibility.catalog/v0.1",
+  "schema": "gohp.compatibility.catalog/v0.2",
   "maturity": "experimental",
   "entries": [
     {
@@ -942,7 +942,8 @@
         {"case_id":"compiler.policy.oracle_admission","test":"TestMetadataOracleAdmission","file":"cmd/gohp-compat/main_test.go","kind":"compiler","assertions":["live metadata gate rejects old/mismatched/missing oracles and records admitted identity before tests"]},
         {"case_id":"compiler.policy.php84_ir","test":"TestDirectIRPreservesEnabledPHP84Target","file":"internal/codegen/version_test.go","kind":"compiler","assertions":["direct IR retains explicit PHP8.4 target"]},
         {"case_id":"compiler.policy.php84_profile","test":"TestPHP84DeclarationProfile","file":"internal/codegen/php84_profile_test.go","kind":"compiler","assertions":["target-specific builtin redeclaration and deprecated class boundary"]},
-        {"case_id":"compiler.policy.native_declarations","test":"TestNativeTargetDeclarationBoundary","file":"tests/php84_profile_test.go","kind":"compiler","assertions":["native selected-version declaration outcome and compiler admission; not diagnostic equivalence or generated execution"]}
+        {"case_id":"compiler.policy.native_declarations","test":"TestNativeTargetDeclarationBoundary","file":"tests/php84_profile_test.go","kind":"compiler","assertions":["native selected-version declaration outcome and compiler admission; not diagnostic equivalence or generated execution"]},
+        {"case_id":"compiler.policy.scoped_array_any","test":"TestTargetScopedArrayAnyDeclaration","file":"internal/codegen/target_scope_test.go","kind":"compiler","assertions":["the same mixed-case array_any user declaration generates for 8.3 and fails closed for 8.4"]}
       ],
       "limitations": ["Admission is not a compatibility or vulnerability-free guarantee for later patches","Only pinned and measured oracle versions have differential evidence","Historical snapshots remain readable with retired targets and older patch versions; no current support inferred"]
     },
@@ -954,6 +955,7 @@
       "contract": "Lowers declared named functions, fixed value arguments and explicit returns in the closed subset.",
       "php_targets": ["8.3", "8.4"],
       "checks": [
+        {"case_id":"diff.php83_array_any_declaration","test":"TestDifferential/php83_array_any_declaration","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/php83_array_any_declaration.php","php_targets":["8.3"],"assertions":["PHP 8.3 user array_any declaration and mixed-case calls match generated stdout; not the PHP 8.4 builtin"]},
         {"case_id": "diff.core", "test": "TestDifferential/core", "file": "tests/differential_test.go", "kind": "differential", "fixture": "tests/fixtures/core.php", "assertions": ["native PHP stdout equals generated Go stdout"]}
       ],
       "limitations": ["No optional, scalar typed, variadic or by-reference parameters", "Only capture-free generated arrows; no general callable resolution"]
@@ -2208,10 +2210,13 @@
       "kind": "tooling",
       "name": "Read-only archived compatibility views",
       "implementation": "implemented",
-      "contract": "Records a bounded PHP CLI startup baseline, quiet stderr and per-process output hashes, and reads v0.1/v0.2/v0.3/v0.4 hash-bound archives without merging verdicts or hiding failures.",
+      "contract": "Records target-scoped cases, a bounded PHP CLI startup baseline, quiet stderr and per-process output hashes, and reads v0.1-v0.5 hash-bound archives without merging verdicts or hiding failures.",
       "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "unit.compat.archive", "test": "TestLoadArchiveReplaysWithoutSourceAndRejectsChangedEvidence", "file": "internal/compat/archive_test.go", "kind": "unit", "assertions": ["pass/fail/skip archives replay without source files", "changed hashes, verdicts, phases, duplicates and escaping symlinks are rejected"]},
+        {"case_id":"unit.compat.target_scopes","test":"TestCatalogTargetScopes","file":"internal/compat/target_scope_test.go","kind":"unit","assertions":["check targets inherit entry scope or form a nonempty unique subset; reused cases union their scopes"]},
+        {"case_id":"unit.compat.target_evaluation","test":"TestEvaluateTargetScopedCases","file":"internal/compat/target_scope_test.go","kind":"unit","assertions":["outside-target cases are not-measured; missing or skipped active cases and empty active feature rows cannot pass"]},
+        {"case_id":"unit.compat.target_archive","test":"TestTargetScopedArchiveReplay","file":"internal/compat/target_scope_test.go","kind":"unit","assertions":["v0.5 replays scoped evidence; fabricated outside-target evidence and pre-v0.5 runs with scoped catalogs are rejected"]},
         {"case_id": "unit.compat.quiet_evidence", "test": "TestQuietEvidenceCannotPromoteUnobservedOrNoisyRuns", "file": "internal/compat/diagnostics_test.go", "kind": "unit", "assertions": ["missing, conflicting or nonempty stderr observations cannot become positive differential PASS"]},
         {"case_id": "unit.compat.quiet_archive", "test": "TestQuietArchivePreservesHistoricalScope", "file": "internal/compat/diagnostics_test.go", "kind": "unit", "assertions": ["v0.1/v0.2 replay retains unmeasured quiet stderr", "v0.3 observations and schema cannot be changed independently of event evidence"]},
         {"case_id": "unit.compat.process_stderr", "test": "TestCaptureCommandStderrObservations", "file": "tests/quiet_success_test.go", "kind": "unit", "assertions": ["successful and failed subprocess stdout/stderr are separated, launch failure is not an empty-stream observation"]},

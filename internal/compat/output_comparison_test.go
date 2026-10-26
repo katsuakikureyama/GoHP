@@ -42,6 +42,12 @@ func TestCompareOutputsSeparatesNativeAndTranspilerObservations(t *testing.T) {
 		{"fixture_changed", func(a, b *Report) { b.Cases[0].FixtureSHA256 = strings.Repeat("e", 64) }, "not-comparable"},
 		{"missing_case", func(a, b *Report) { b.Cases = nil }, "not-comparable"},
 		{"missing_output", func(a, b *Report) { b.Cases[0].Outputs = nil }, "not-comparable"},
+		{"outside_target", func(a, b *Report) {
+			b.Cases[0].Status = "not-measured"
+			b.Cases[0].Outputs, b.Cases[0].Phase, b.Cases[0].Diagnostics = nil, nil, nil
+			b.Cases[0].GeneratedSHA256 = ""
+		}, "not-comparable"},
+		{"mixed_output_schemas", func(a, b *Report) { b.Schema = RunSchemaOutputs }, "matching-stdout-both-runs"},
 		{"legacy", func(a, b *Report) { b.Schema = RunSchemaQuiet; b.Cases[0].Outputs = nil }, "not-comparable"},
 		{"unrelated_failure", func(a, b *Report) { b.Overall = "failed"; b.Cases[0].Status = "incomplete" }, "not-comparable"},
 		{"nonzero", func(a, b *Report) { b.Cases[0].Outputs.Go.ExitCode = 7; b.Cases[0].Phase.Exit = "fail" }, "not-comparable"},

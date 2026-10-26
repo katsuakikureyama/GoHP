@@ -37,7 +37,7 @@ func sameStdout(a, b *ProcessOutput) bool {
 }
 
 func outputShape(p casePayload, schema string) string {
-	if schema != RunSchema {
+	if schema != RunSchema && schema != RunSchemaOutputs {
 		if p.Outputs != nil {
 			return "legacy payload cannot carry process output evidence"
 		}

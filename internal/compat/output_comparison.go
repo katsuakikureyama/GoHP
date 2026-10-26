@@ -45,8 +45,8 @@ const outputComparisonNotice = "Observation-only comparison of two validated arc
 func CompareOutputs(left, right Report) OutputComparison {
 	r := OutputComparison{Schema: "gohp.compatibility.output-comparison/v0.1", Notice: outputComparisonNotice,
 		Left: comparisonRun(left), Right: comparisonRun(right), ContextIssues: []string{}, OracleDifferences: []string{}, Cases: []OutputComparisonCase{}}
-	if left.Schema != RunSchema || right.Schema != RunSchema {
-		r.ContextIssues = append(r.ContextIssues, "both runs require v0.4 output observations")
+	if !hasOutputObservations(left.Schema) || !hasOutputObservations(right.Schema) {
+		r.ContextIssues = append(r.ContextIssues, "both runs require v0.4 or later output observations")
 	}
 	lm, rm := left.Metadata, right.Metadata
 	if lm.Dirty != "clean" || rm.Dirty != "clean" {
@@ -121,6 +121,10 @@ func CompareOutputs(left, right Report) OutputComparison {
 		r.Cases = append(r.Cases, row)
 	}
 	return r
+}
+
+func hasOutputObservations(schema string) bool {
+	return schema == RunSchemaOutputs || schema == RunSchema
 }
 
 func comparisonRun(r Report) ComparisonRun {

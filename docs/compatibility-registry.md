@@ -1,4 +1,4 @@
-# Compatibility registry and verification ledger (design v0.4)
+# Compatibility registry and verification ledger (design v0.5)
 
 ## Decision and delivery status
 
@@ -35,7 +35,7 @@ compatibility promotion or deployment is added.
 | `implementation` | `unsupported`, `partial`, or `implemented` within the stated contract; not a test verdict |
 | `contract` | Exact supported input/operation domain, e.g. one-argument `count(array)` |
 | `php_targets` | Intended target minors, not evidence of PASS |
-| `checks` | Real test file/name, kind, optional fixture and measured assertions |
+| `checks` | Real test file/name, kind, optional fixture, optional target subset and measured assertions; an omitted check subset inherits the entry targets |
 | `limitations` | Unsupported inputs/modes and unverified behaviour |
 
 Use separate entries or case IDs for distinct signatures/modes when implemented.
@@ -47,15 +47,22 @@ deliberately added; the seed is not an exhaustive list of PHP functions. Unknown
 extension/package requirements remain unresolved, never implicitly supported.
 
 Fixtures aggregate features, but rejection cases now have named subtests and
-catalog checks have stable case IDs. Link only assertions actually executed.
-Appearing in a fixture does not prove every aspect of a feature.
+catalog checks have stable case IDs. Catalog v0.2 allows `checks[].php_targets`
+only as a non-empty, duplicate-free subset of the containing entry's targets;
+an omitted value inherits the entry targets. If a case ID is reused, its required
+targets are the union of all linked check scopes. Link only assertions actually
+executed. Appearing in a fixture does not prove every aspect of a feature.
 
 ## Run ledger: what was checked and passed?
 
-CI publishes a distinct `gohp.compatibility.run/v0.4` JSON artifact for each
-active target job: PHP 8.3 and PHP 8.4. The same bounded corpus is executed
-independently for each target. A later series receives its own policy/matrix
-entry and artifact only after it is explicitly enabled.
+CI publishes a distinct `gohp.compatibility.run/v0.5` JSON artifact for each
+active target job: PHP 8.3 and PHP 8.4. The selected target executes its
+catalog-v0.2 scoped corpus independently: a check with no `php_targets`
+inherits the entry scope, while an explicit subset can be required only for
+selected targets. Reused case IDs use the union of their linked scopes.
+Out-of-scope cases are recorded only as `not-measured`, without borrowed phase
+or process observations. A later series receives its own policy/matrix entry
+and artifact only after it is explicitly enabled.
 Keep it outside the source commit: embedding the commit's own SHA in a tracked
 report would require a different commit. Record:
 
@@ -113,9 +120,12 @@ claim diagnostic equivalence. The selected values use PHP's documented
 [`get_loaded_extensions`](https://www.php.net/manual/en/function.get-loaded-extensions.php),
 [`setlocale`](https://www.php.net/manual/en/function.setlocale.php) and
 [`date_default_timezone_get`](https://www.php.net/manual/en/function.date-default-timezone-get.php)
-interfaces. Readers strictly retain v0.1/v0.2/v0.3 evidence as its historical
-scope: they invent neither a missing baseline, quiet-success observation nor
-process-output observation. Their generated view is v0.4.
+interfaces. Readers strictly retain v0.1/v0.2/v0.3/v0.4 evidence as its
+historical scope: they invent neither a missing baseline, quiet-success
+observation, process-output observation nor v0.5 target scope. Catalog v0.2
+requires run/v0.5; the v0.5 view records its scoped `not-measured` cases without
+inventing observations. Older catalog/run pairs retain their prior all-listed-case
+semantics.
 
 The separate read-only two-archive output comparison is a derived diagnostic,
 not a support matrix or a target-admission rule. It requires the same clean
@@ -125,8 +135,9 @@ version/image/baseline differences. It labels only matching stdout in both runs,
 an observed native stdout difference, an observed local transpiler stdout
 mismatch, or `not-comparable`. The native label does not establish why native
 output differs and never proves an intended PHP version or specification change.
-Unrelated failed/incomplete, legacy/output-missing, dirty or changed-input records are not
-comparable for native cross-run classification. A measured target-local mismatch
+Unrelated failed/incomplete, legacy/output-missing, dirty or changed-input records,
+and v0.5 cases outside either selected target scope are not comparable for native
+cross-run classification. A measured target-local mismatch
 can still be reported in its failed run without granting it success.
 It does not compare nonzero exits, exceptions, diagnostics or side
 effects.
@@ -144,6 +155,7 @@ latest applicable result, verified contract, limitations and evidence.
 | `differential-pass (case-limited)` | Required native comparisons passed for stated cases and measured dimensions |
 | `failed` | A required case failed at this revision/target |
 | `incomplete` | A required case skipped, errored or did not run |
+| `not-measured` | Not required for this target, or absent from historical recorded scope; never inherited evidence |
 
 Keep historical PHP 7.4.33 and PHP 8.3.30 evidence separate from active PHP
 8.3.36-or-newer and PHP 8.4.27-or-newer evidence. A failed/incomplete current
@@ -154,7 +166,7 @@ decision with provenance. Missing evidence never becomes green. Do not average
 mixed targets into a universal compatibility percentage. Tooling entries show
 `compiler-check-pass`, never differential PASS from Go-only unit tests.
 
-There is no blanket `supported`/Done state in v0.4. Future support claims need
+There is no blanket `supported`/Done state in v0.5. Future support claims need
 an owner-reviewed bounded contract, all required cases for every claimed target,
 explicit negative boundaries and all claimed observable dimensions. Arbitrary
 WordPress/Composer application compatibility cannot be derived by counting green
