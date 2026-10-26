@@ -87,7 +87,8 @@ byte-oriented and remains separate from WordPress recursive helpers.
 ## Values and semantics
 
 Values currently use Go `any`: int64, byte strings, bool, null, ordered arrays,
-native generated class pointers and bounded callable wrappers. Generated arrays have insertion order, numeric-string
+native generated class pointers and bounded callable wrappers. Generated arrays
+have insertion order, numeric-string
 key normalization, last-value replacement without reordering and independent
 nested copies on assignments, arguments and returns. This eager copy models value
 semantics for supported array operations, including functional root-binding
@@ -139,8 +140,9 @@ they do not add general PHP constant lookup or declaration support. See the
 
 In addition to those target-resolved constants, the 8.4 semantic profile rejects declarations of `array_find`,
 `array_find_key`, `array_any` and `array_all`, because those names are reserved
-by PHP 8.4. A [bounded array_any](array-any-boundary.md) call is implemented for
-8.4; calls to the other three remain unsupported. It also rejects a
+by PHP 8.4. [Bounded array_any](array-any-boundary.md) and
+[array_all](array-all-boundary.md) calls are implemented for 8.4;
+array_find/array_find_key calls remain unsupported. It also rejects a
 class named `_`: PHP 8.4 deprecates that class name, and GoHP does not model the
 native deprecation diagnostic. These are target-specific, fail-closed
 boundaries, not a claim of diagnostic equivalence. Nullable typed defaults,

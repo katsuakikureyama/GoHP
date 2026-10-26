@@ -17,7 +17,7 @@ function lists live in the linked tables; actual results are per-run evidence.
 | Area | Current generated-code scope |
 |---|---|
 | [Syntax and control flow](docs/compatibility.md#syntax-and-control-flow) | Named functions, braced conditionals, foreach/while, bounded calls and array writes |
-| [Built-in functions](docs/compatibility.md#built-in-functions) | Selected array/string/type helpers; bounded `array_any` is PHP 8.4-only |
+| [Built-in functions](docs/compatibility.md#built-in-functions) | Selected array/string/type helpers; bounded `array_any` / `array_all` are PHP 8.4-only |
 | [Values and types](docs/compatibility.md#values-and-types) | int64, byte strings, bool, null and ordered arrays with detached value copies |
 | [Objects and callables](docs/compatibility.md#objects-and-callables) | Simple public classes and capture-free arrows; no inheritance or captured closures |
 

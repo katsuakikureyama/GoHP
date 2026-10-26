@@ -135,7 +135,8 @@ PHP 8.4 has explicit target behavior: the target-resolved major/minor constants
 share the documented cross-target boundary, while the four new core array
 function names are reserved against declarations and class `_` is rejected
 because its native deprecation is not modeled. A [bounded array_any](array-any-boundary.md)
-is now implemented only for 8.4; the other new array functions and native PHP
+and [bounded array_all](array-all-boundary.md) are implemented only for 8.4;
+array_find/array_find_key and native PHP
 diagnostic equivalence remain unsupported. Nullable typed defaults,
 `exit`/`die`, property hooks and asymmetric property visibility remain
 unsupported. See [the PHP 8.4 target contract](php84-target.md).
