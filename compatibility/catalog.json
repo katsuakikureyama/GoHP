@@ -2298,23 +2298,23 @@
       "limitations": ["Same candidate/corpus required; oracle configuration differences remain visible but are not normalized", "No causality, intended PHP-version difference, combined support or release verdict", "No comparison of nonzero exits, arbitrary diagnostics, exceptions or side effects", "Hashes and environment identities are producer assertions, not authenticity"]
     },
     {
-      "id": "gohp.tooling.source-corpus",
+      "id": "gohp.tooling.corpus-verification",
       "kind": "tooling",
-      "name": "Pinned whole-file source corpus inspection",
+      "name": "Read-only pinned application source verification",
       "implementation": "partial",
-      "contract": "Checks a bounded offline manifest against selected whole-file bytes; separates subject and provenance counts, while analysis stays not-measured and compatibility unverified.",
+      "contract": "Checks exact manifest and whole-file byte identities without execution; all PHP compatibility and application measurements remain unverified or null.",
       "php_targets": ["8.3", "8.4"],
       "checks": [
-        {"case_id": "unit.corpus.identity", "test": "TestCorpusIdentity", "file": "internal/corpus/inspect_test.go", "kind": "unit", "assertions": ["manifest hash and sorted file identities retain selection order and separate subject/provenance totals; analysis remains absent"]},
-        {"case_id": "unit.corpus.manifest", "test": "TestCorpusManifestRejections", "file": "internal/corpus/inspect_test.go", "kind": "unit", "assertions": ["ambiguous, noncanonical, malformed, unbounded or unsafe manifest declarations fail closed"]},
-        {"case_id": "unit.corpus.sources", "test": "TestCorpusSourceRejections", "file": "internal/corpus/inspect_test.go", "kind": "unit", "assertions": ["missing, changed, nonregular or symlinked sources reject without a partial report"]},
-        {"case_id": "unit.corpus.pin", "test": "TestPinnedCorpusManifest", "file": "internal/corpus/pinned_test.go", "kind": "unit", "assertions": ["committed whole-file selection metadata stays readable offline; no upstream checkout or execution is verified"]},
-        {"case_id": "unit.corpus.cli_outputs", "test": "TestCorpusCLIOutputs", "file": "cmd/gohp-corpus/main_test.go", "kind": "unit", "assertions": ["deterministic JSON and Markdown retain unverified compatibility and unmeasured analysis"]},
-        {"case_id": "unit.corpus.cli_failures", "test": "TestCorpusCLIFailures", "file": "cmd/gohp-corpus/main_test.go", "kind": "unit", "assertions": ["usage, inspection and output failures are explicit; inspection failure writes no stdout"]},
-        {"case_id": "unit.corpus.markdown", "test": "TestCorpusMarkdownEscapes", "file": "cmd/gohp-corpus/main_test.go", "kind": "unit", "assertions": ["declared metadata is escaped and unmeasured counts are not displayed as zero"]},
-        {"case_id": "unit.corpus.fingerprint", "test": "TestSourceFingerprintIncludesCorpusManifest", "file": "cmd/gohp-compat/corpus_fingerprint_test.go", "kind": "unit", "assertions": ["pinned manifests affect the evidence source fingerprint; output reports do not; symlink input is refused"]}
+        {"case_id": "unit.corpus.pin", "test": "TestPinnedCorpusManifest", "file": "internal/corpus/pinned_test.go", "kind": "unit", "assertions": ["committed whole-file selection metadata remains readable offline; no upstream checkout or execution is verified"]},
+        {"case_id": "unit.corpus.fingerprint", "test": "TestSourceFingerprintIncludesCorpusManifest", "file": "cmd/gohp-compat/corpus_fingerprint_test.go", "kind": "unit", "assertions": ["pinned source selection changes affect the compatibility evidence fingerprint; build reports do not; symlink input is refused"]},
+        {"case_id": "unit.corpus.verify", "test": "TestVerify", "file": "internal/corpus/corpus_test.go", "kind": "unit", "assertions": ["exact manifest hash and selected source totals retained; no execution or compatibility measurement"]},
+        {"case_id": "unit.corpus.invalid_manifest", "test": "TestVerifyRejectsInvalidManifests", "file": "internal/corpus/corpus_test.go", "kind": "unit", "assertions": ["ambiguous JSON, invalid provenance, targets, paths and bounds rejected"]},
+        {"case_id": "unit.corpus.invalid_source", "test": "TestVerifyRejectsSourceFiles", "file": "internal/corpus/corpus_test.go", "kind": "unit", "assertions": ["missing, mismatched, escaping and nonregular files rejected"]},
+        {"case_id": "unit.corpus.cli_usage", "test": "TestRunUsageAndReadErrors", "file": "cmd/gohp-corpus-verify/main_test.go", "kind": "unit", "assertions": ["explicit manifest and one root required; failures emit no report"]},
+        {"case_id": "unit.corpus.cli_output", "test": "TestRunVerifiesBeforeOutput", "file": "cmd/gohp-corpus-verify/main_test.go", "kind": "unit", "assertions": ["source verification is separate from compatibility; late mismatch emits no partial JSON"]},
+        {"case_id": "unit.corpus.cli_write", "test": "TestRunReportsWriteFailure", "file": "cmd/gohp-corpus-verify/main_test.go", "kind": "unit", "assertions": ["destination failure and short writes cannot report success"]}
       ],
-      "limitations": ["No PHP parsing, call resolution, dependency closure, compilation, execution or coverage percentage", "Repository/revision/version declarations are not authenticated by local byte matching", "No WordPress source redistribution, license decision, automatic download or source modification", "Use a private stable source directory; path checks are not a hostile-filesystem sandbox"]
+      "limitations": ["No upstream authenticity, license decision or dependency closure", "No PHP parsing, callsite/function inventory, compiler or application execution; no compatibility percentage", "Requires private non-concurrently-mutated source root; not a filesystem sandbox"]
     },
     {
       "id": "gohp.tooling.composer-inventory",

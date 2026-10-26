@@ -8,7 +8,7 @@ import (
 
 func TestSourceFingerprintIncludesCorpusManifest(t *testing.T) {
 	root := t.TempDir()
-	manifest := filepath.Join(root, "corpora", "synthetic", "manifest.json")
+	manifest := filepath.Join(root, "corpus", "wordpress-functions.json")
 	if err := os.MkdirAll(filepath.Dir(manifest), 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -33,14 +33,17 @@ func TestSourceFingerprintIncludesCorpusManifest(t *testing.T) {
 	if before == after {
 		t.Fatal("changing the pinned selection must change the evidence source fingerprint")
 	}
-	write(filepath.Join(root, "corpora", "synthetic", "report.json"), `{"status":"unverified"}`)
+	if err := os.Mkdir(filepath.Join(root, "build"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	write(filepath.Join(root, "build", "report.json"), `{"status":"unverified"}`)
 	if fingerprint() != after {
 		t.Fatal("an inspection report is output, not a pinned source input")
 	}
 	if err := os.Remove(manifest); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Symlink("report.json", manifest); err != nil {
+	if err := os.Symlink("../build/report.json", manifest); err != nil {
 		t.Skipf("symlinks unavailable: %v", err)
 	}
 	if _, err := sourceFingerprint(root); err == nil {

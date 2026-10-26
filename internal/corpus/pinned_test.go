@@ -1,17 +1,24 @@
 package corpus
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 // The committed selection must remain readable without fetching upstream code.
 // This checks metadata, not whether a WordPress checkout matches the pin.
 func TestPinnedCorpusManifest(t *testing.T) {
-	m, _, err := readManifest("../../corpora/wordpress-functions/manifest.json")
+	raw, err := os.ReadFile("../../corpus/wordpress-functions.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, err := parseManifest(raw)
 	if err != nil {
 		t.Fatal(err)
 	}
 	var subjects, provenance int
 	for _, file := range m.Files {
-		if file.Role == "subject" {
+		if file.Role == "source" {
 			subjects++
 			if file.Path != "wp-includes/functions.php" {
 				t.Fatalf("unexpected selected source unit: %s", file.Path)

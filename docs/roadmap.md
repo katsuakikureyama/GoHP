@@ -17,17 +17,17 @@ evidence. This roadmap does not add catalog statuses or a new CLI operation.
 - [Gossip's earlier original-source comparisons](integration.md) are useful
   historical evidence at their recorded compiler/source pins. They are neither
   a current-main application result nor a combined WordPress percentage.
-- The first [source manifest](source-corpus.md) freezes one whole WordPress file
-  and two provenance files. This fixes file identity, not a functional denominator.
-  Function/syntax/callsite inventory, application coverage and comparative
-  performance remain **not measured**; show `n/a`, not zero or compiler-test ratios.
+- The first whole-file [source manifest](application-corpus.md) is frozen and
+  byte-verifiable. Application-wide inventory/coverage and comparative performance
+  are **not measured**; function/callsite/case denominators remain unfrozen. Show
+  `n/a`, not zero, 100%, or a ratio derived from compiler test counts.
 
 ## Priorities and completion criteria
 
 | Workstream | Current state | Next observable result / completion criterion |
 |---|---|---|
 | Documentation | README and compatibility tables reorganized; historical target claims distinguished | Keep the entry point, implementation limits and evidence links aligned in each affected change |
-| Application inventory | Partial: whole-file identity manifest and offline inspector; no syntax/callsite counts or percentage | Resolve dependency scope; report classified/unknown inventory, blockers and per-target counts with explicit denominators |
+| Application inventory | Whole-file source manifest and read-only byte verifier available; dependencies unresolved, no percentage | Inventory all selected content including unknown/unparsed units; report blockers and per-target counts with explicit denominators |
 | Reference/value integration | R1 partial: internal ownership/storage exists | Finish bounded writable locations and temporary lifetime; then a PHP source → Go binary comparison of reference assignment/update/unset (R2), with rejected unsupported forms |
 | Performance baseline | Planned; no PHP/Go benchmark | Publish one reproducible, output-checked small workload per target, separating build, startup, execution and memory measurements |
 | Frontend adapter | Assessment only; no candidate installed | Audit/pin a candidate and demonstrate target-aware parsing, diagnostics/spans and supported-IR parity in shadow mode before replacement |
@@ -44,12 +44,11 @@ as application compatibility.
 
 ## First application inventory
 
-The [initial manifest](../corpora/wordpress-functions/manifest.json) pins the
-entire WordPress core `wp-includes/functions.php` at development snapshot
-`7.2-beta1-64693`. The [offline inspector](source-corpus.md) checks its bytes and
-two provenance files without parsing or executing PHP. GoHP stores metadata,
-not the upstream source. This is not stable-release or whole-file compatibility.
-Before publishing any ratio, extend the measurements to cover:
+The **pinned WordPress core `wp-includes/functions.php`** is the first
+frequency/inventory candidate. Its [manifest and byte verifier](application-corpus.md)
+fix the complete source-file selection, notice and version provenance; they do
+not parse, compile or execute it. Before publishing any ratio, complete the
+remaining inventory/run evidence:
 
 - Upstream project/release/revision, source path and byte hash, provenance and
   license notices; distinguish upstream identity from a retained Gossip copy.
@@ -72,7 +71,6 @@ Keep these measurements separate:
 
 | Measurement | Denominator and evidence | What it does not mean |
 |---|---|---|
-| Source identity | Manifest hash and each selected whole file's byte count/SHA-256; subject and provenance totals kept separate | A byte match is not parsing, authenticated origin, a functional denominator or PHP compatibility |
 | Syntax/callsite inventory | All occurrences in the fixed scope, with classified and unknown counts; show occurrence frequency separately from unique symbol counts | Recognizing a name does not establish support for that call's signature, values or effects |
 | Original-unit compile ratio | Successfully generated **and built** unchanged units / all selected original units for that target; list blockers and missing dependencies | A successful build is not PHP equivalence; rewritten units and owned substitutes are separate categories |
 | Case execution ratio | Passed / all applicable predefined cases at the fixed source/compiler/target; failed, incomplete and unmeasured cases stay visible | A small fixture set does not establish every input or an entire application's behavior |
@@ -82,7 +80,8 @@ Show numerator, denominator, scope identity and unmeasured counts alongside any
 percentage. Target-inapplicable cases must be explicitly accounted for, not
 silently removed. Changing the manifest creates a new series of measurements;
 do not compare differently selected denominators as a single progress curve.
-The current Composer metadata reader is not this source inventory tool.
+Neither the Composer metadata reader nor source-byte verifier is a PHP
+syntax/callsite inventory tool.
 
 For executable application acceptance, retain the reference design's sequence:
 the **complete original block parser**, then hooks and broader callers. The
