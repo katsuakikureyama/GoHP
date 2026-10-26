@@ -843,6 +843,17 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 			return valueType{kind: boolKind}, nil
 		}
+		if strings.EqualFold(expr.Text, "str_contains") {
+			if len(args) != 2 {
+				return valueType{}, unsupported(expr.Line, "str_contains expects two arguments")
+			}
+			for _, arg := range args {
+				if arg.kind != stringKind && arg.kind != unknownKind {
+					return valueType{}, unsupported(expr.Line, "str_contains requires two strings")
+				}
+			}
+			return valueType{kind: boolKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "strcasecmp") {
 			if len(args) != 2 {
 				return valueType{}, unsupported(expr.Line, "strcasecmp expects two arguments")

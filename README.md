@@ -74,6 +74,9 @@ and ASCII `strtolower(string)`. String-only `strcasecmp(string, string)` adds
 binary-safe ASCII case-insensitive comparison with an integer result; no
 coercion, Unicode folding or locale collation. See the
 [comparison boundary](docs/strcasecmp-boundary.md).
+[`str_contains(string, string): bool`](docs/str-contains-boundary.md) checks
+case-sensitive byte substring membership, including an empty needle. Actual
+strings only; no coercion, Unicode folding or token-boundary interpretation.
 [`array_key_first(array)`](docs/array-key-first-boundary.md) and
 [`array_key_last(array)`](docs/array-key-last-boundary.md) return the first/last
 insertion-order int/string key, or null for an empty array, without modifying it.

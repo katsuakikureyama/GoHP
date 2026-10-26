@@ -4,8 +4,9 @@ This contract adds a deliberately small nested-array address subset. It is
 intended to model the pure array/boolean path checks in WordPress
 `wp_should_add_elements_class_name` (WordPress `wp-includes/block-supports/elements.php`, lines
 33–97), not to make WordPress, its external resolvers, or class-based block
-settings runnable. Consumer adoption and an unchanged-source comparison for
-that function remain unverified.
+settings runnable. Gossip subsequently verified that unchanged caller at its
+exact GoHP #67 pin; see the [consumer evidence](integration.md). This does not
+certify the surrounding render hook/CSS/HTML pipeline or later compiler revisions.
 
 ## Nested `isset` address
 
