@@ -23,7 +23,7 @@ func ArrayReverse(value, preserveKeys any) any {
 				index++
 			}
 			key = n
-			output.noteIntegerKey(n)
+			output.index.Observe(n)
 		}
 		output.Entries = append(output.Entries, Entry{Key: key, Value: Clone(entry.Value)})
 	}

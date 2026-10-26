@@ -7,57 +7,28 @@ import (
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/katsuakikureyama/GoHP/internal/arraykey"
 )
 
 type Entry struct{ Key, Value any }
 type Array struct {
-	Entries         []Entry
-	next            int64
-	nextInitialized bool
-	nextBlocked     bool
+	Entries []Entry
+	index   arraykey.Index
 }
 
-// noteIntegerKey tracks PHP 8.3's next automatic key independently of string
-// entries. The zero value starts at 0 for automatic insertion, but the first
-// explicit integer key (including a negative one) establishes its own successor.
-func (a *Array) noteIntegerKey(n int64) {
-	if a.nextBlocked || (a.nextInitialized && n < a.next) {
-		return
-	}
-	a.nextInitialized = true
-	if n == math.MaxInt64 {
-		a.nextBlocked = true
-	} else {
-		a.next = n + 1
-	}
-}
+func Key(v any) any { return arraykey.Normalize(v) }
 
-func Key(v any) any {
-	switch x := v.(type) {
-	case int64:
-		return x
-	case string:
-		if n, e := strconv.ParseInt(x, 10, 64); e == nil && strconv.FormatInt(n, 10) == x {
-			return n
-		}
-		return x
-	default:
-		panic("unsupported array key type")
-	}
-}
 func NewArray(es ...Entry) Array {
 	a := Array{}
 	for _, e := range es {
 		k := e.Key
 		if k == nil {
-			if a.nextBlocked {
-				panic("array key overflow unsupported")
-			}
-			k = a.next
+			k = a.index.Next()
 		}
 		k = Key(k)
 		if n, ok := k.(int64); ok {
-			a.noteIntegerKey(n)
+			a.index.Observe(n)
 		}
 		found := false
 		for i := range a.Entries {
@@ -174,9 +145,10 @@ func ArrayKeys(v any) any {
 	if !ok {
 		panic("array_keys requires array")
 	}
-	keys := Array{Entries: make([]Entry, len(a.Entries)), next: int64(len(a.Entries)), nextInitialized: len(a.Entries) > 0}
+	keys := Array{Entries: make([]Entry, len(a.Entries))}
 	for i, e := range a.Entries {
 		keys.Entries[i] = Entry{Key: int64(i), Value: e.Key}
+		keys.index.Observe(int64(i))
 	}
 	return keys
 }
@@ -188,9 +160,10 @@ func ArrayValues(v any) any {
 	if !ok {
 		panic("array_values requires array")
 	}
-	values := Array{Entries: make([]Entry, len(a.Entries)), next: int64(len(a.Entries)), nextInitialized: len(a.Entries) > 0}
+	values := Array{Entries: make([]Entry, len(a.Entries))}
 	for i, e := range a.Entries {
 		values.Entries[i] = Entry{Key: int64(i), Value: Clone(e.Value)}
+		values.index.Observe(int64(i))
 	}
 	return values
 }

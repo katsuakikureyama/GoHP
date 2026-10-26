@@ -67,9 +67,6 @@ func TestArrayAppendSelfSnapshotAndMaximum(t *testing.T) {
 	if got := atMaximum.Entries[1]; !reflect.DeepEqual(got, Entry{Key: int64(math.MaxInt64), Value: "maximum"}) {
 		t.Fatalf("maximum append = %#v, want maximum key", got)
 	}
-	if !atMaximum.nextBlocked {
-		t.Fatal("maximum append did not block a following automatic key")
-	}
 	assertArrayAppendPanic(t, func() { ArrayAppend(atMaximum, "overflow") }, "array key overflow unsupported")
 }
 

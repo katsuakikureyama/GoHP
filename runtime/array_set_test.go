@@ -52,20 +52,21 @@ func TestArraySetCopyAndOrder(t *testing.T) {
 	if !reflect.DeepEqual(input, before) {
 		t.Fatal("updated array aliases the original nested storage")
 	}
-	if updated.next != input.next || updated.nextBlocked != input.nextBlocked {
+	if updated.index != input.index {
 		t.Fatal("replacement changed next-index metadata")
 	}
 	higher := ArraySet(input, int64(12), "higher").(Array)
-	if higher.next != 13 || higher.nextBlocked {
+	if higher.index.Next() != 13 {
 		t.Fatal("inserting a larger key lost next-index metadata")
 	}
 	maximum := ArraySet(input, int64(math.MaxInt64), "maximum").(Array)
 	maximum = ArraySet(maximum, int64(math.MaxInt64), "replaced").(Array)
-	if !maximum.nextBlocked || Get(maximum, int64(math.MaxInt64)) != "replaced" {
+	if Get(maximum, int64(math.MaxInt64)) != "replaced" {
 		t.Fatal("maximum-key replacement lost its blocked next index")
 	}
+	assertArrayAppendPanic(t, func() { ArrayAppend(maximum, nil) }, "array key overflow unsupported")
 	negative := ArraySet(NewArray(), int64(-5), "negative").(Array)
-	if negative.next != -4 {
+	if negative.index.Next() != -4 {
 		t.Fatal("PHP 8.3 empty-array negative-key metadata was lost")
 	}
 }

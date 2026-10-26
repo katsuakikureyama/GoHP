@@ -144,14 +144,14 @@ substitute a custom Go hook engine for untested original `WP_Hook` behavior.
 | Stage | Deliverable / exit condition | Status |
 |---|---|---|
 | R0 | Design and executable PHP-only reference contracts; record exact native run separately | This change; GoHP reference support remains unsupported |
-| R1 | Internal slot/value ownership primitives and shared-array separation design implemented behind closed boundaries; existing no-reference behavior preserved | Partial: scalar slots, explicit Frame release, bounded scalar codegen and internal shared scalar containers implemented; PHP key/index policy, nested/temporary ownership and general runtime/frame integration pending |
+| R1 | Internal slot/value ownership primitives and shared-array separation design implemented behind closed boundaries; existing no-reference behavior preserved | Partial: scalar slots, explicit Frame release, bounded scalar codegen and internal shared scalar containers with common bounded key/index policy implemented; array-valued slots, nested/temporary ownership and general runtime/frame integration pending |
 | R2 | Bounded variable reference assignment/unset, explicit address IR and binding lifetime; source + malformed-IR negatives and PHP/Go comparisons | Not implemented |
 | R3 | Reference-bearing arrays, element/declared-property locations, copy-timing and lifetime cases; key order/next-index and existing copy isolation retained | Not implemented |
 | R4 | By-reference parameters/returns, reference foreach and closure captures, each with explicit bounded contracts and call-path evidence | Not implemented |
 | R5 | Generic dynamic callable forms and original application acceptance (full block parser, then hooks) | Not implemented; not implied by R0–R4 |
 
-Next bounded implementation: R1's shared key/index policy and array-value/temporary
-ownership integration, building on shared scalar containers and explicit Frame release. Keep parser acceptance unchanged;
+Next bounded implementation: R1's array-value/temporary ownership integration,
+building on shared scalar containers, common key/index policy and explicit Frame release. Keep parser acceptance unchanged;
 exercise real alias/copy/lifetime contracts, then integrate the storage model
 across codegen/runtime boundaries in reviewed increments. If a narrower scalar
 R2 subset precedes array migration, reject arrays/objects/unsupported locations

@@ -21,7 +21,7 @@ func TestArrayReturnCopiesArrayValuesAndMetadata(t *testing.T) {
 	if !reflect.DeepEqual(returned, input) {
 		t.Fatalf("array return = %#v, want %#v", returned, input)
 	}
-	if returned.next != input.next || returned.nextInitialized != input.nextInitialized || returned.nextBlocked != input.nextBlocked {
+	if returned.index != input.index {
 		t.Fatalf("array return lost automatic-key metadata: got %#v, want %#v", returned, input)
 	}
 
