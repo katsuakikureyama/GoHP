@@ -31,6 +31,12 @@ by-reference parameter. These are Go storage contracts, not PHP-to-Go differenti
 tests. They do not increase the supported PHP feature count or prove generated
 reference execution. Native PHP expectations were recorded separately in #82.
 
+The eight existing tests are registered as `unit.storage_slot.*` checks under
+`php.syntax.array-write-and-reference`. That entry remains `unsupported` even
+when these checks pass. This makes the internal work visible in the function /
+feature ledger without presenting it as generated-Go reference compatibility.
+No new tests or alternate slot implementation are introduced by that registration.
+
 No service operation is added; the existing local `gohp.cli.generate` WebMCP
 exclusion remains applicable. No Gossip compiler pin changes are required.
 
