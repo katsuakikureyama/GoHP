@@ -1,5 +1,11 @@
 # Gossip builder contract v0.1 (proposal)
 
+[Bare foreach break](foreach-break-boundary.md) adds an incremental loop-exit
+contract. Owned token-array selection with str_starts_with is not a replacement
+for the original render caller's strtok/while/HTML path. Consumer pins and source
+certification remain separate; local gohp.cli.generate stays WebMCP-excluded,
+without route/auth/deployment changes.
+
 Bounded [foreach continue](foreach-continue-boundary.md),
 [null defaults and isset lists](array-get-prerequisites.md) address the parser
 blockers measured in Gossip PR #35. The first real original-source execution

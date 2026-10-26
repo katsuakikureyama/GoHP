@@ -316,10 +316,9 @@ func (p *parser) block() []ir.Stmt {
 func (p *parser) stmt() ir.Stmt {
 	s := ir.Stmt{Line: p.peek().line}
 	switch {
-	case p.peek().kind == "id" && strings.EqualFold(p.peek().text, "continue"):
-		p.pop()
-		s.Kind = "continue"
-		p.need(";")
+	case p.peek().kind == "id" && (strings.EqualFold(p.peek().text, "continue") || strings.EqualFold(p.peek().text, "break")):
+		s.Kind = strings.ToLower(p.pop().text)
+		p.need(";") // Only bare loop transfers; no explicit level.
 	case p.accept("echo"):
 		s.Kind = "echo"
 		s.Expr = p.expr(0)
@@ -328,10 +327,6 @@ func (p *parser) stmt() ir.Stmt {
 		s.Kind = "return"
 		s.Expr = p.expr(0)
 		p.need(";")
-	case p.peek().kind == "id" && strings.EqualFold(p.peek().text, "continue"):
-		p.pop()
-		s.Kind = "continue"
-		p.need(";") // No level expression, including explicit continue 1.
 	case p.accept("foreach"):
 		s.Kind = "foreach"
 		p.need("(")

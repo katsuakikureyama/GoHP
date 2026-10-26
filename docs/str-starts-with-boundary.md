@@ -24,8 +24,9 @@ only an earlier guard; the two operations are not interchangeable.
 
 Our fixture uses owned strings/token arrays and guard composition. It does not
 execute or certify the unchanged full render function. Stateful `strtok`, its
-`while`/`break` control flow and `WP_HTML_Tag_Processor` remain separate missing
-dependencies. No Gossip source, pins, corpora or consumer adoption are changed.
+`while` control flow and `WP_HTML_Tag_Processor` remain separate missing
+dependencies. [Bare break](foreach-break-boundary.md) currently applies only to
+foreach, not that while loop. No Gossip source, pins, corpora or consumer adoption are changed.
 
 Catalog entry `php.builtin.str_starts_with` remains `partial` with six checks:
 native differential, compiler/source mapping, static rejection, byte behavior,

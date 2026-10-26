@@ -10,7 +10,7 @@ type Expr struct {
 	Params     []string // Only arrow expressions: fixed, untyped, capture-free parameters.
 }
 type Stmt struct {
-	// continue has no payload and targets the nearest enclosing foreach.
+	// continue and break have no payload and target the nearest enclosing foreach.
 	Kind, Name string
 	Line       int
 	Expr       Expr

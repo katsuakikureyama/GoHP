@@ -65,7 +65,9 @@ and method `$this`). Arrays detach at write/read boundaries; object identifiers
 retain identity. This adds neither dynamic properties nor unknown receiver writes.
 Bare [`continue;`](docs/foreach-continue-boundary.md) now targets the nearest
 enclosing `foreach`, including inside braced conditionals. Numeric levels and
-other loop kinds are excluded. Together with bounded
+other loop kinds are excluded. Bare [`break;`](docs/foreach-break-boundary.md)
+exits that nearest foreach entirely; nested outer loops continue normally.
+Together with bounded
 [trailing untyped null defaults and defined bare/multiple isset](docs/array-get-prerequisites.md),
 this resolves the syntax blockers measured for Gossip's `_wp_array_get`.
 The subsequent [literal-null identity fix](docs/literal-null-identity.md) and
