@@ -134,8 +134,9 @@ PASS, and absence of an 8.4 report is `unverified`, not an inherited success.
 PHP 8.4 has explicit target behavior: the target-resolved major/minor constants
 share the documented cross-target boundary, while the four new core array
 function names are reserved against declarations and class `_` is rejected
-because its native deprecation is not modeled. The profile does not implement
-the new functions or reproduce PHP diagnostics. Nullable typed defaults,
+because its native deprecation is not modeled. A [bounded array_any](array-any-boundary.md)
+is now implemented only for 8.4; the other new array functions and native PHP
+diagnostic equivalence remain unsupported. Nullable typed defaults,
 `exit`/`die`, property hooks and asymmetric property visibility remain
 unsupported. See [the PHP 8.4 target contract](php84-target.md).
 
@@ -144,7 +145,8 @@ when omitted. Run/view v0.5 records excluded cases as `not-measured`, without
 inventing process observations. Active missing/skipped cases remain incomplete.
 The PHP 8.3-only user `array_any` declaration is a concrete scoped fixture;
 PHP 8.4 rejects that reserved declaration under a separate native/compiler
-boundary check. This does not implement the PHP 8.4 builtin. Historical runs
+boundary check. A separate 8.4-only fixture now measures the bounded builtin.
+Historical runs
 retain their original schema and applicability semantics. Output comparison
 classifies a case measured on only one target as `not-comparable`.
 

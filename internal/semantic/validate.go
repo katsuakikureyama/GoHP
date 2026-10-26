@@ -45,6 +45,7 @@ type validator struct {
 	functions  map[string]int
 	minimum    map[string]int
 	parameters map[string][]string
+	returns    map[string]string
 }
 
 // Validate rejects malformed IR and operations that are statically outside the
@@ -53,7 +54,7 @@ func Validate(p ir.Program) error {
 	if err := phpversion.ValidateTarget(p.PHPVersion); err != nil {
 		return fmt.Errorf("PHP003: %w", err)
 	}
-	v := validator{target: p.PHPVersion, classes: make(map[string]classInfo, len(p.Classes)), functions: make(map[string]int, len(p.Functions)), minimum: map[string]int{}, parameters: make(map[string][]string, len(p.Functions))}
+	v := validator{target: p.PHPVersion, classes: make(map[string]classInfo, len(p.Classes)), functions: make(map[string]int, len(p.Functions)), minimum: map[string]int{}, parameters: make(map[string][]string, len(p.Functions)), returns: map[string]string{}}
 	// Collect before validating bodies so literal callbacks can refer forward
 	// or back to their own declaration without dynamic callable resolution.
 	for _, f := range p.Functions {
@@ -66,6 +67,7 @@ func Validate(p ir.Program) error {
 		v.functions[strings.ToLower(f.Name)] = len(f.Params)
 		v.minimum[strings.ToLower(f.Name)] = len(f.Params) - f.OptionalNullParams
 		v.parameters[strings.ToLower(f.Name)] = f.ParamTypes
+		v.returns[strings.ToLower(f.Name)] = f.ReturnType
 	}
 	for _, c := range p.Classes {
 		if phpversion.DeprecatedClassName(p.PHPVersion, c.Name) {
@@ -828,6 +830,26 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 						return valueType{}, unsupported(expr.Line, "in_array requires scalar haystack values")
 					}
 				}
+			}
+			return valueType{kind: boolKind}, nil
+		}
+		// In 8.3 this name remains an ordinary user function. Do not reserve
+		// or lower it globally merely because the 8.4 builtin is implemented.
+		if v.target == "8.4" && strings.EqualFold(expr.Text, "array_any") {
+			if len(expr.Args) != 2 || expr.Args[1].Kind != "string" || !validName(expr.Args[1].Text) {
+				return valueType{}, unsupported(expr.Line, "array_any expects one array and a literal named callback")
+			}
+			callback := strings.ToLower(expr.Args[1].Text)
+			if v.functions[callback] != 2 || v.minimum[callback] != 2 || v.returns[callback] != "bool" {
+				return valueType{}, unsupported(expr.Line, "array_any callback requires two untyped value parameters and a bool return declaration")
+			}
+			for _, annotation := range v.parameters[callback] {
+				if annotation != "" {
+					return valueType{}, unsupported(expr.Line, "array_any callback parameters must be untyped")
+				}
+			}
+			if args[0].kind != arrayKind && args[0].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "array_any requires an array")
 			}
 			return valueType{kind: boolKind}, nil
 		}

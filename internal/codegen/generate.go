@@ -494,6 +494,16 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		if n == "strtok" {
 			return "execution.Strtok(" + args(e.Args) + ")"
 		}
+		if n == "array_any" && g.p.PHPVersion == "8.4" {
+			// Validate has already proved a two-value, untyped named callback
+			// with a bool return declaration; keep request-local state intact.
+			callback := name(e.Args[1].Text)
+			call := "F_" + callback + "(value,key)"
+			if g.execution {
+				call = "FContext_" + callback + "(execution,value,key)"
+			}
+			return "rt.ArrayAny(" + g.expr(e.Args[0], scope) + ", func(value, key any) any { return " + call + " })"
+		}
 		if n == "array_map" {
 			if len(e.Args) != 2 || e.Args[0].Kind != "string" {
 				g.fail(e.Line, "array_map expects a literal named callback and one array")
