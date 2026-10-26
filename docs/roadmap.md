@@ -18,7 +18,8 @@ evidence. This roadmap does not add catalog statuses or a new CLI operation.
   historical evidence at their recorded compiler/source pins. They are neither
   a current-main application result nor a combined WordPress percentage.
 - The first whole-file [source manifest](application-corpus.md) is frozen and
-  byte-verifiable. Application-wide inventory/coverage and comparative performance
+  byte-verifiable, with a bounded native-token [lexical inventory](application-corpus.md#lexical-inventory).
+  Resolved syntax/callsite coverage and comparative performance
   are **not measured**; function/callsite/case denominators remain unfrozen. Show
   `n/a`, not zero, 100%, or a ratio derived from compiler test counts.
 
@@ -27,7 +28,7 @@ evidence. This roadmap does not add catalog statuses or a new CLI operation.
 | Workstream | Current state | Next observable result / completion criterion |
 |---|---|---|
 | Documentation | README and compatibility tables reorganized; historical target claims distinguished | Keep the entry point, implementation limits and evidence links aligned in each affected change |
-| Application inventory | Whole-file source manifest and read-only byte verifier available; dependencies unresolved, no percentage | Inventory all selected content including unknown/unparsed units; report blockers and per-target counts with explicit denominators |
+| Application inventory | Whole-file identity and native-token lexical counts available; grammar/name resolution and dependencies unresolved, no percentage | Resolve syntax/calls while retaining unknown/unparsed content; establish semantic denominators and per-target blockers |
 | Reference/value integration | R1 partial: internal ownership/storage exists | Finish bounded writable locations and temporary lifetime; then a PHP source → Go binary comparison of reference assignment/update/unset (R2), with rejected unsupported forms |
 | Performance baseline | Planned; no PHP/Go benchmark | Publish one reproducible, output-checked small workload per target, separating build, startup, execution and memory measurements |
 | Frontend adapter | Assessment only; no candidate installed | Audit/pin a candidate and demonstrate target-aware parsing, diagnostics/spans and supported-IR parity in shadow mode before replacement |
@@ -66,11 +67,17 @@ cannot, by itself, claim a complete PHP callsite inventory. Use the
 [parser evaluation](parser-adapter-assessment.md) or an explicitly bounded
 inventory method with unknown/unparsed counts. Regex/name matches are not
 resolved PHP calls and cannot yield a support percentage.
+The new lexical inventory counts every token byte and opening parenthesis using
+the selected native tokenizer. Declaration markers and name/parenthesis
+frequencies are prioritization hints only. It records all source bytes as
+grammar-unparsed, keeps unclassified parentheses visible, and does not define a
+semantic function or resolved-call denominator.
 
 Keep these measurements separate:
 
 | Measurement | Denominator and evidence | What it does not mean |
 |---|---|---|
+| Lexical inventory | Every token and byte; every opening parenthesis, including unclassified forms; native version, flags and source/tool hashes | Function-keyword markers and name/parenthesis frequency are not resolved calls, parsed functions or support percentages |
 | Syntax/callsite inventory | All occurrences in the fixed scope, with classified and unknown counts; show occurrence frequency separately from unique symbol counts | Recognizing a name does not establish support for that call's signature, values or effects |
 | Original-unit compile ratio | Successfully generated **and built** unchanged units / all selected original units for that target; list blockers and missing dependencies | A successful build is not PHP equivalence; rewritten units and owned substitutes are separate categories |
 | Case execution ratio | Passed / all applicable predefined cases at the fixed source/compiler/target; failed, incomplete and unmeasured cases stay visible | A small fixture set does not establish every input or an entire application's behavior |

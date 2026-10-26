@@ -90,47 +90,69 @@ type TargetMeasurement struct {
 // beneath sourceRoot. The caller is responsible for supplying a private root
 // that is not mutated concurrently; Verify performs no writes.
 func Verify(manifestPath, sourceRoot string) (Report, error) {
+	report, _, err := load(manifestPath, sourceRoot, false)
+	return report, err
+}
+
+// Source contains the exact bytes already checked against a manifest entry.
+// Only source-role files are retained; notices/provenance are still verified.
+type Source struct {
+	Path  string
+	Bytes []byte
+}
+
+// LoadSources returns all checked source buffers only after the entire manifest
+// selection passes. Consumers must use these buffers, not reopen source paths.
+func LoadSources(manifestPath, sourceRoot string) (Report, []Source, error) {
+	return load(manifestPath, sourceRoot, true)
+}
+
+func load(manifestPath, sourceRoot string, retain bool) (Report, []Source, error) {
 	manifestBytes, err := readRegular(manifestPath, maxManifestBytes)
 	if err != nil {
-		return Report{}, fmt.Errorf("manifest: %w", err)
+		return Report{}, nil, fmt.Errorf("manifest: %w", err)
 	}
 	manifest, err := parseManifest(manifestBytes)
 	if err != nil {
-		return Report{}, fmt.Errorf("manifest: %w", err)
+		return Report{}, nil, fmt.Errorf("manifest: %w", err)
 	}
 	root, err := resolvedDirectory(sourceRoot)
 	if err != nil {
-		return Report{}, fmt.Errorf("source root: %w", err)
+		return Report{}, nil, fmt.Errorf("source root: %w", err)
 	}
 
 	var sourceBytes int64
 	var sourceCount int
+	var sources []Source
 	for _, entry := range manifest.Files {
 		resolved, err := resolveSelected(root, entry.Path)
 		if err != nil {
-			return Report{}, fmt.Errorf("%s: %w", entry.Path, err)
+			return Report{}, nil, fmt.Errorf("%s: %w", entry.Path, err)
 		}
 		info, err := os.Stat(resolved)
 		if err != nil {
-			return Report{}, fmt.Errorf("%s: %w", entry.Path, err)
+			return Report{}, nil, fmt.Errorf("%s: %w", entry.Path, err)
 		}
 		if !info.Mode().IsRegular() {
-			return Report{}, fmt.Errorf("%s: selected file is not regular", entry.Path)
+			return Report{}, nil, fmt.Errorf("%s: selected file is not regular", entry.Path)
 		}
 		if info.Size() != entry.Bytes {
-			return Report{}, fmt.Errorf("%s: size mismatch: got %d, want %d", entry.Path, info.Size(), entry.Bytes)
+			return Report{}, nil, fmt.Errorf("%s: size mismatch: got %d, want %d", entry.Path, info.Size(), entry.Bytes)
 		}
 		contents, err := readRegular(resolved, maxFileBytes)
 		if err != nil {
-			return Report{}, fmt.Errorf("%s: %w", entry.Path, err)
+			return Report{}, nil, fmt.Errorf("%s: %w", entry.Path, err)
 		}
 		digest := sha256.Sum256(contents)
-		if hex.EncodeToString(digest[:]) != entry.SHA256 {
-			return Report{}, fmt.Errorf("%s: sha256 mismatch", entry.Path)
+		if int64(len(contents)) != entry.Bytes || hex.EncodeToString(digest[:]) != entry.SHA256 {
+			return Report{}, nil, fmt.Errorf("%s: size or sha256 mismatch", entry.Path)
 		}
 		if entry.Role == "source" {
 			sourceCount++
 			sourceBytes += entry.Bytes
+			if retain {
+				sources = append(sources, Source{Path: entry.Path, Bytes: contents})
+			}
 		}
 	}
 	manifestDigest := sha256.Sum256(manifestBytes)
@@ -144,7 +166,7 @@ func Verify(manifestPath, sourceRoot string) (Report, error) {
 		SourceFileCount: sourceCount, SourceBytes: sourceBytes,
 		Compatibility: "unverified", Measurements: Measurements{}, Targets: targets,
 		Notice: "Source-byte equality only: this does not verify upstream authenticity, dependency closure, parser coverage, or PHP compatibility.",
-	}, nil
+	}, sources, nil
 }
 
 func readRegular(filename string, limit int64) ([]byte, error) {
