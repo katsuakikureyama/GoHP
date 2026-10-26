@@ -70,8 +70,9 @@ The policy preserves the existing runtime behavior for the active 8.3/8.4
 targets. It does not admit new targets or imply identical behavior across all
 PHP 8.x versions. Neither runtime nor storage imports the other for this policy.
 
-No pointer into a slice of entries is exposed. General generated/host temporary
-ownership, nested-value retain/release, address IR and operation-specific
+No pointer into a slice of entries is exposed. Internal value temporaries now
+have explicit retain/transfer/release; generated/host integration,
+nested-value retain/release, address IR and operation-specific
 evaluation order still need explicit integration contracts. Do not silently
 wrap a runtime.Array or eager Clone and treat it as reference-capable storage.
 

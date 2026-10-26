@@ -31,8 +31,9 @@ not eager runtime Clone results. Array Read results require caller Close;
 Write retains before release. Frame/element scalar-only constraints follow the
 canonical cell's live constrained bindings, preventing alias writes from
 introducing nested arrays or cycles. Synchronous one-level Slot-rooted mutations
-now borrow the owned handle without a read temporary. General generated temporary
-ownership, persistent locations and nested/cyclic values remain unfinished R1/R3 work.
+now borrow the owned handle without a read temporary. Separate internal value
+temporaries retain/transfer/release snapshots. Generated temporary integration,
+persistent locations and nested/cyclic values remain unfinished R1/R3 work.
 
 Tests exercise alias writes, ordinary scalar copies, rebinding, unset/recreation,
 missing versus null, self-binding, and the local-binding behavior of a simulated
@@ -59,4 +60,4 @@ At commit `01a28db` (Go 1.23.0, darwin/arm64), with
 
 The PHP-only specification from #82 is reused as the behavioral reference; no
 new PHP execution or generated-reference comparison is claimed. Remaining R1
-temporary/generated-frame/nested integration and R2–R5 are not complete.
+generated temporary/frame/nested integration and R2–R5 are not complete.

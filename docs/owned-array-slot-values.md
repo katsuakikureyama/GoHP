@@ -35,6 +35,46 @@ copy does not update ordinary elements in the stored value; explicit value
 assignment back is a separate operation. Do not lower PHP root/element writes
 as an unconditional Read/mutate/Write sequence: that can separate too early.
 
+## Owned value temporaries
+
+Internal `Temporary` owns a scalar or scalar-element array **value snapshot**,
+not a source binding, reference argument or writable location. It reuses Slot's
+canonical retain/release rules; there is no second cell or reference engine.
+
+- `NewTemporary(value)` retains once; the caller still owns its input. A zero
+  Temporary is inactive; use `NewTemporary(nil)` for a live present-null value.
+- `Slot.Snapshot()` returns `(nil, false)` for absence, without initializing the
+  Slot. A present result retains its value once, without a `Read` intermediate
+  or outer alias. Later source replacement/rebinding/unset cannot change that
+  captured value. Array element references still follow the canonical rules.
+- `MoveTo(destination)` writes through the destination's current binding and
+  consumes the temporary only after successful assignment. Write retains before
+  release, including self-root assignment. Nil destinations or scalar-only
+  domain failures leave both owners intact for retry or cleanup.
+- `Take()` consumes the temporary and transfers its existing value owner to the
+  caller, without another retain. A returned array requires caller `Close`.
+  Neither method exposes a borrowed payload while the temporary is live.
+- `Close()` releases a remaining value once and is safe after consumption or on
+  an inactive zero value. Nil receivers reject. `Take`/`MoveTo` reject inactive
+  values; consumed temporaries cannot be reused or resurrected.
+
+Install `defer temporary.Close()` immediately after acquisition as a Go failure
+guard, including when a later operand panics. Also consume/close at the selected
+operation's lifetime boundary: postponing every release to function exit is
+**not** a valid universal lowering. A held array snapshot can keep an earlier
+container's element reference alive, changing later separation. The tests
+observe that releasing such a snapshot before versus after a subsequent copy
+write produces independent versus shared element values. This is internal
+lifetime evidence, not a new PHP evaluation-order or exception contract.
+
+These pointer-only, non-concurrent temporaries are not exposed by the public
+runtime or emitted by codegen. Generated arrays still use eager-copy
+`runtime.Array`; selected `ScalarFrame` functions exclude them. The next
+integration needs a bounded runtime value adapter and expression-level ownership
+planning (evaluation, result transfer, cleanup and lazy branches), before a
+generated scope can actually own/release shared-array temporaries. Adding an
+empty function-level cleanup scope now would not implement that integration.
+
 ## Synchronous writes through the owning Slot
 
 `ArrayWrite(key, value)`, `ArrayAppend(value)`, `ArrayBind(key, source)` and
@@ -98,16 +138,18 @@ by this storage. The existing value runtime still handles its earlier subset.
 
 Internal unit checks cover owned copies, outer aliases, replacement/final
 release, scalar-domain propagation, synchronous mutations/current-root lookup,
-and invalid mutations without separation. They
+invalid mutations without separation, and temporary capture/transfer/release.
+They
 remain under the **unsupported** reference feature in the catalog. Existing
 scalar Frame ABI checks and both active target CI corpora must remain green.
 PHP 8.3.36 native-only observations in #82 are unchanged; they are not new
 generated-reference or PHP 8.4 native-reference evidence.
 
-R1 remains partial: synchronous Slot-rooted writes are implemented, but persistent
-locations, general generated-frame/temporary integration, nested ownership and
-cyclic reclamation are unfinished. The next gate is explicit ownership/release
-for generated array temporaries and operation-specific locations across calls,
+R1 remains partial: synchronous Slot-rooted writes and internal value temporaries
+are implemented, but persistent locations, general generated-frame/temporary
+integration, nested ownership and cyclic reclamation are unfinished. The next
+gate is a bounded runtime adapter and expression-level ownership plan for
+generated array temporaries, plus operation-specific locations across calls,
 before enabling array reference syntax or replacing runtime storage. There is
 no performance or application-acceptance claim.
 
