@@ -26,8 +26,8 @@ func LoadArchive(dir string) (Report, error) {
 	if err := strictJSON(raw, &r); err != nil {
 		return Report{}, fmt.Errorf("decode run.json: %w", err)
 	}
-	if r.Schema != "gohp.compatibility.run/v0.1" {
-		return Report{}, fmt.Errorf("unsupported run schema %q", r.Schema)
+	if err := validateBaseline(r.Schema, r.Metadata); err != nil {
+		return Report{}, err
 	}
 	if !validSHA256(r.Metadata.SourceSHA256) {
 		return Report{}, fmt.Errorf("missing or invalid recorded source fingerprint")
@@ -72,7 +72,7 @@ func LoadArchive(dir string) (Report, error) {
 			return "", evidence.Detail
 		}
 		return evidence.FixtureSHA256, ""
-	})
+	}, r.Schema)
 	if err != nil {
 		return Report{}, fmt.Errorf("replay saved evidence: %w", err)
 	}

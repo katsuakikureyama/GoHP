@@ -1,14 +1,17 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/katsuakikureyama/GoHP/internal/compat"
 )
 
-// Exercise the actual pre-run metadata gate with a version-probe stub. No
+// Exercise the actual pre-run metadata gate with a startup-baseline stub. No
 // legacy PHP binary is installed or executed, and no fixture/test run starts.
 func TestMetadataOracleAdmission(t *testing.T) {
 	if runtime.GOOS == "windows" {
@@ -34,10 +37,7 @@ func TestMetadataOracleAdmission(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
-			stub := "#!/bin/sh\nprintf '%s' '" + tt.version + "'\n"
-			if err := os.WriteFile(filepath.Join(dir, "php"), []byte(stub), 0700); err != nil {
-				t.Fatal(err)
-			}
+			writePHPStub(t, dir, baselineJSON(t, tt.version))
 			t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 			t.Setenv("GOHP_COMMIT", strings.Repeat("a", 40))
 			t.Setenv("GOHP_TREE", strings.Repeat("b", 40))
@@ -54,7 +54,46 @@ func TestMetadataOracleAdmission(t *testing.T) {
 			if tt.accepted && (meta.PHPTarget != expectedTarget || meta.PHPVersion != tt.version) {
 				t.Fatalf("actual oracle identity lost: %+v", meta)
 			}
+			if tt.accepted && (meta.PHPBaseline == nil || meta.PHPBaseline.PHPVersion != meta.PHPVersion || meta.PHPBaselineSHA256 != compat.PHPBaselineHash(meta.PHPBaseline)) {
+				t.Fatal("admitted oracle lost its startup baseline binding")
+			}
 		})
+	}
+}
+
+func baselineJSON(t *testing.T, version string) string {
+	t.Helper()
+	empty := ""
+	ini := make(map[string]*string, len(compat.PHPINIKeys()))
+	for _, key := range compat.PHPINIKeys() {
+		ini[key] = &empty
+	}
+	locales := make(map[string]*string, len(compat.PHPLocaleKeys()))
+	for _, key := range compat.PHPLocaleKeys() {
+		locales[key] = nil
+	}
+	b, err := json.Marshal(compat.PHPBaseline{
+		Scope:          "cli-startup-baseline",
+		PHPVersion:     version,
+		SAPI:           "cli",
+		IntSize:        8,
+		Timezone:       "UTC",
+		INI:            ini,
+		Locales:        locales,
+		Extensions:     []compat.PHPExtension{},
+		ZendExtensions: []compat.PHPExtension{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(b)
+}
+
+func writePHPStub(t *testing.T, dir, output string) {
+	t.Helper()
+	stub := "#!/bin/sh\nprintf '%s' '" + output + "'\n"
+	if err := os.WriteFile(filepath.Join(dir, "php"), []byte(stub), 0700); err != nil {
+		t.Fatal(err)
 	}
 }
 

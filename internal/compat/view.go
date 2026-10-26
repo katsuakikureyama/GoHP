@@ -57,7 +57,7 @@ func BuildView(reports []Report, filter ViewFilter) (View, error) {
 	if err := filter.Validate(); err != nil {
 		return View{}, err
 	}
-	view := View{Schema: "gohp.compatibility.view/v0.1", Notice: viewNotice, Filter: filter, Runs: make([]ViewRun, 0, len(reports))}
+	view := View{Schema: "gohp.compatibility.view/v0.2", Notice: viewNotice, Filter: filter, Runs: make([]ViewRun, 0, len(reports))}
 	for _, report := range reports {
 		run := ViewRun{Metadata: report.Metadata, Overall: report.Overall, CatalogSHA256: report.CatalogSHA256, EventSHA256: report.EventSHA256, TotalFeatures: len(report.Features), Features: []FeatureRow{}, Cases: report.Cases}
 		for _, row := range report.Features {
@@ -91,6 +91,7 @@ func ViewMarkdown(view View) []byte {
 			fmt.Fprintf(&b, "%s: %s  \n", item[0], viewText(orUnknown(item[1])))
 		}
 		fmt.Fprintf(&b, "Test process exit: %d\n\n", m.TestExit)
+		writeBaselineMarkdown(&b, m)
 		if len(run.Features) == 0 {
 			b.WriteString("No matching feature rows. This is not a passing compatibility verdict.\n\n")
 		} else {

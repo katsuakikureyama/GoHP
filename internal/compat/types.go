@@ -6,25 +6,27 @@ package compat
 // Metadata identifies the environment that produced one evidence run.
 // Empty optional oracle/CI fields are preserved rather than invented.
 type Metadata struct {
-	Commit       string `json:"commit"`
-	Tree         string `json:"tree"`
-	Dirty        string `json:"dirty"`
-	GoVersion    string `json:"go_version"`
-	GOOS         string `json:"goos"`
-	GOARCH       string `json:"goarch"`
-	PHPTarget    string `json:"php_target"`
-	PHPVersion   string `json:"php_version"`
-	Image        string `json:"php_image"`
-	GoImage      string `json:"go_image"`
-	RunURL       string `json:"run_url"`
-	RunID        string `json:"run_id"`
-	Attempt      string `json:"attempt"`
-	Command      string `json:"command"`
-	StartedAt    string `json:"started_at"`
-	BuildFlags   string `json:"build_flags"`
-	Provenance   string `json:"provenance"`
-	SourceSHA256 string `json:"source_sha256"`
-	TestExit     int    `json:"test_exit"`
+	Commit            string       `json:"commit"`
+	Tree              string       `json:"tree"`
+	Dirty             string       `json:"dirty"`
+	GoVersion         string       `json:"go_version"`
+	GOOS              string       `json:"goos"`
+	GOARCH            string       `json:"goarch"`
+	PHPTarget         string       `json:"php_target"`
+	PHPVersion        string       `json:"php_version"`
+	Image             string       `json:"php_image"`
+	GoImage           string       `json:"go_image"`
+	RunURL            string       `json:"run_url"`
+	RunID             string       `json:"run_id"`
+	Attempt           string       `json:"attempt"`
+	Command           string       `json:"command"`
+	StartedAt         string       `json:"started_at"`
+	BuildFlags        string       `json:"build_flags"`
+	Provenance        string       `json:"provenance"`
+	SourceSHA256      string       `json:"source_sha256"`
+	TestExit          int          `json:"test_exit"`
+	PHPBaseline       *PHPBaseline `json:"php_baseline,omitempty"`
+	PHPBaselineSHA256 string       `json:"php_baseline_sha256,omitempty"`
 }
 
 type Catalog struct {

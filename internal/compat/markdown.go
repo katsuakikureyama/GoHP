@@ -23,7 +23,8 @@ func Markdown(r Report) []byte {
 	if r.Metadata.Commit == "" || r.Metadata.Dirty != "clean" {
 		b.WriteString("This evidence is run-scoped and must not be treated as a current-release pass.\n\n")
 	}
-	b.WriteString("`differential-pass (case-limited)` covers only its listed fixture cases. Stderr, exception and side-effect comparisons are not measured in schema v0.1.\n\n")
+	writeBaselineMarkdown(&b, r.Metadata)
+	b.WriteString("`differential-pass (case-limited)` covers only its listed fixture cases. Stderr, exception and side-effect comparisons are not measured.\n\n")
 	b.WriteString("| Feature | PHP target | Implementation | Status | Contract / limitations | Evidence cases |\n")
 	b.WriteString("|---|---|---|---|---|---|\n")
 	for _, feature := range r.Features {
@@ -42,6 +43,42 @@ func Markdown(r Report) []byte {
 		fmt.Fprintf(&b, "| %s | %s | %s | %s |\n", md(testCase.ID), md(testCase.Kind), md(testCase.Status), md(testCase.Detail))
 	}
 	return b.Bytes()
+}
+
+func writeBaselineMarkdown(b *bytes.Buffer, m Metadata) {
+	if m.PHPBaseline == nil {
+		b.WriteString("PHP startup baseline: not recorded (legacy archive).\n\n")
+		return
+	}
+	p := m.PHPBaseline
+	fmt.Fprintf(b, "PHP startup baseline SHA-256: %s  \nSAPI: %s; integer bytes: %d; timezone: %s.\n\n", viewText(m.PHPBaselineSHA256), viewText(p.SAPI), p.IntSize, viewText(p.Timezone))
+	b.WriteString("Separate pre-suite CLI probe only; not each fixture's effective state. Fixture overrides and later changes are not measured here.\n\n")
+	b.WriteString("| Baseline setting | Observed value |\n|---|---|\n")
+	for _, group := range []struct {
+		prefix string
+		keys   []string
+		values map[string]*string
+	}{{"ini.", PHPINIKeys(), p.INI}, {"locale.", PHPLocaleKeys(), p.Locales}} {
+		for _, key := range group.keys {
+			fmt.Fprintf(b, "| %s | %s |\n", viewText(group.prefix+key), baselineValue(group.values[key]))
+		}
+	}
+	for _, group := range []struct {
+		label  string
+		values []PHPExtension
+	}{{"extension.", p.Extensions}, {"zend-extension.", p.ZendExtensions}} {
+		for _, extension := range group.values {
+			fmt.Fprintf(b, "| %s | %s |\n", viewText(group.label+extension.Name), baselineValue(extension.Version))
+		}
+	}
+	b.WriteString("\n")
+}
+
+func baselineValue(value *string) string {
+	if value == nil {
+		return "unavailable (null)"
+	}
+	return viewText(fmt.Sprintf("%q", *value))
 }
 
 func md(value string) string {
