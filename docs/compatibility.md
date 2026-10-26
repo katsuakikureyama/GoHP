@@ -17,7 +17,7 @@ This table is the current curated summary, not a blanket support claim.
 | Boolean control | Braced `if` / `elseif` / `else if` / `else`, short-circuit `&&` / `\|\|`, scalar `===` / `!==` plus literal-null type probes, `(bool)`, prefix `!`/`!!` | Scalar/array truthiness only; no unbraced/alternative syntax, branch-local escape, object truthiness, general array/object identity, loose `!=` or keyword logical operators; [contract](boolean-boundary.md) |
 | Functions | Named functions, fixed value arguments, bounded `array`/generated-arrow `callable` parameters and global `: array` / actual-bool `: bool` returns | `core.php`, `array_parameter.php`, `arrow_callable.php`, `array_return.php`, `bool_return.php`; [parameters](array-parameter-boundary.md) / [arrows](arrow-callable-boundary.md) / [array](array-return-boundary.md) / [bool](bool-return-boundary.md); no weak bool-return coercion, non-null-default/scalar-typed/by-reference/variadic args or typed methods |
 | Arrays | `[]` and `array(...)`; mixed ordered keys/values, reads, nested value copies, foreach; one-level element assignment and append to existing array variables | Literal construction keys; literal/variable int/string write keys. No auto-vivification, nested targets, references, unpacking or array union; [syntax](legacy-array-syntax.md), [write boundary](array-write-boundary.md) |
-| References / storage model | PHP syntax unsupported; internal scalar-slot primitives only | [Foundation and staged gates](reference-value-model.md), [R1 slice](scalar-slot-foundation.md); internal unit checks and native-only observations are not generated-Go reference support |
+| References / storage model | Unsupported; design and native-only specification available | [Foundation and staged gates](reference-value-model.md); PHP-only observations are not GoHP differential checks and do not increase ledger counts |
 | Classes | Public scalar/null defaults and implicit null, bounded public constructors including trailing untyped null defaults and exact scalar parameters, property reads/methods/declared assignment, known-object `(array)` snapshots | [Constructor/snapshot](block-data-constructor.md), [scalar parameter](scalar-constructor-boundary.md), [writes](public-property-write.md); no dynamic properties, inheritance, typed/non-null defaults, weak scalar conversion, nonpublic/static members or general casts |
 | Object predicate | `is_object(value)` for generated class instances and generated arrows (PHP Closures) | Explicit object marker, actual bool and once-only evaluation; [boundary](is-object-boundary.md). No object truthiness or foreign-object admission |
 | Closures/dynamic callbacks | Partial: capture-free arrows, generated-arrow `callable` arguments and variable invocation | [Arrow boundary](arrow-callable-boundary.md); anonymous `function`, captures, string/method callables and typed arrows remain excluded. `array_map` retains its separate [literal named callback contract](array-map-boundary.md) |
@@ -81,10 +81,6 @@ see the [callback contract](array-map-boundary.md), not a general callback or
 Gossip adoption claim.
 
 ## Active PHP version policy
-
-The product is designed for [independently verified PHP 8.x version targets](php-version-compatibility.md).
-The following 8.3 policy is the initial active target, not a permanent product
-limit; adding a series requires its own behavior, corpus and evidence.
 
 The sole active compatibility target is the PHP **8.3** language series. Native
 differential tests must run against PHP **8.3.36 or newer** in that series. The

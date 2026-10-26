@@ -100,11 +100,6 @@ source map yet; compile-time diagnostics include original PHP line numbers.
 
 ## Version model
 
-The product direction is a [transpiler with independently verified PHP 8.x
-version targets](php-version-compatibility.md), not permanent PHP 8.3-only support.
-Target-specific semantic profiles are an admission requirement for later series;
-the existing target registry alone does not implement their behavior.
-
 Only the `8.3` target label is accepted by the active compiler. It denotes the
 PHP 8.3 language series, while native differential execution enforces the
 separate PHP 8.3.36-or-newer oracle floor. This is not a full-language support
@@ -122,9 +117,8 @@ Append uses a distinct `assign_append` statement with a variable-only target;
 it shares runtime copy/index semantics without admitting empty-bracket reads.
 The [reference/value foundation](reference-value-model.md) defines the next
 location/cell and shared-array separation design, with native-only oracle
-specifications and staged acceptance gates. The first [internal scalar-slot
-slice](scalar-slot-foundation.md) is implemented but not wired to generated code;
-it does not enable references or change existing runtime paths. Reference-bearing arrays require copy-timing and
+specifications and staged acceptance gates. It does not enable references or
+change the current runtime. Reference-bearing arrays require copy-timing and
 binding-lifetime semantics, not merely pointers added to the existing Clone.
 Add scalar types and conversions with warning/exception differential
 fixtures; then inheritance and include/autoload boundaries. Source maps, structured

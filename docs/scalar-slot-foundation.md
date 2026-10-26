@@ -1,60 +1,53 @@
-# Internal scalar slots — first R1 slice
+# Scalar slot foundation (R1, first increment)
 
-This is internal storage machinery, **not PHP reference syntax support**.
-`runtime/scalar_slot.go` is unexported and not connected to generated frames,
-codegen, the parser, IR or public host APIs. Existing `Clone`, arrays, object
-identity and execution context behavior are unchanged. R1 is still partial:
-shared array storage and automatic frame/temporary ownership are not implemented.
+`internal/storage` implements bindings for null, bool, int64 and byte strings.
+It is internal compiler infrastructure, not a public runtime API or PHP syntax
+support. Generated programs still use the existing value runtime. References
+remain unsupported in the compatibility catalog.
 
-It follows the [reference/value design](reference-value-model.md) and GoHP's
-[version-specific PHP 8.x verification policy](php-version-compatibility.md).
-The initial behavioral reference is PHP 8.3.36; these unit checks do not establish
-compatibility with every PHP 8.x release or add another active compiler target.
+A zero-value Slot is absent; a present null is different. Read returns a value
+and presence without creating storage. Write changes the contents of an existing
+reference group. Bind joins the source group and releases only the destination's
+old binding; an undefined source becomes null. Unset removes a binding, leaving
+other aliases intact. Recreating that binding is independent. Reading a scalar
+and writing it elsewhere does not propagate the outer reference.
 
-## Closed internal contract
+Each reference cell counts logical bindings. Bind retains its new cell before
+releasing the old one; Unset deterministically releases an owner and clears the
+contents on last release. These counts must not use Go GC/finalizers. Slots are
+pointer-only, must not be copied, and are not concurrency-safe. Future generated
+frames must explicitly release every binding on all exit paths. Such frame
+integration and lifetime enforcement are not implemented by this increment.
 
-| Operation | Internal contract |
-|---|---|
-| `newScalarSlot` | Create one independent, undefined binding; undefined is not present null |
-| `isDefined` / `read` | Probe presence without mutation; reading undefined fails; read returns a scalar payload, never a reference cell |
-| `assign` | Accept only exact Go `int64`, `string`, `bool`, or untyped nil; write through an existing alias; reject everything else before mutation |
-| `bind` | Source must already be defined; rebind only the destination to the source cell, leaving the destination's former aliases intact |
-| `unset` | Release just this binding; repeated unset is harmless; assigning afterwards creates independent contents |
+Arrays, objects, callables, host pointers and cells passed as values are rejected
+before any write. Supporting arrays here by calling the existing eager Clone
+would violate the copy-timing contracts in [the design](reference-value-model.md).
+Shared ArrayStorage, detach-on-write, temporary ownership, locations for array
+elements/properties and cyclic values remain unfinished R1/R3 work.
 
-Go copies of `scalarSlot` are handles to the **same** binding. They do not create
-a PHP value copy or another reference owner. Create a distinct slot, then use
-`assign(source.read())` for a scalar value copy or `bind(source)` for a distinct
-alias. The zero Go handle is invalid; every operation diagnoses it explicitly.
-Self-binding and binding two slots already in the same alias set are no-ops.
+Tests exercise alias writes, ordinary scalar copies, rebinding, unset/recreation,
+missing versus null, self-binding, and the local-binding behavior of a simulated
+by-reference parameter. These are Go storage contracts, not PHP-to-Go differential
+tests. They do not increase the supported PHP feature count or prove generated
+reference execution. Native PHP expectations were recorded separately in #82.
 
-Reference cells count distinct live bindings. Binding another slot increments
-that count; rebind/unset releases the old binding; final release clears the
-payload. Go GC and finalizers are not used to decide logical ownership. Owners
-must explicitly release slots; frame cleanup, temporary lifetime and escapes
-are later integration work. Operations are synchronous, not concurrency-safe.
+The eight existing tests are registered as `unit.storage_slot.*` checks under
+`php.syntax.array-write-and-reference`. That entry remains `unsupported` even
+when these checks pass. This makes the internal work visible in the function /
+feature ledger without presenting it as generated-Go reference compatibility.
+No new tests or alternate slot implementation are introduced by that registration.
 
-Arrays (including empty ones), objects, callables, floats, Go `int`, typed nil,
-foreign values, slots and cells are rejected as payloads. No general coercion,
-address lookup, undefined-source creation, element/property access, cycle or
-destructor behavior is introduced. This prevents reference-bearing arrays from
-accidentally using the existing eager `Clone` semantics.
+No service operation is added; the existing local `gohp.cli.generate` WebMCP
+exclusion remains applicable. No Gossip compiler pin changes are required.
 
-## Evidence and status
+## Verification
 
-Five runtime unit checks cover scalar copies versus shared writes, destination
-rebinding and unset/recreation, retained bindings and parameter-like local
-rebinding, Go handle identity/owner counts, and failure without state mutation.
-The parameter-like sequence is explicit slot operations, **not generated
-function-call or by-reference-return evidence**.
+At commit `01a28db` (Go 1.23.0, darwin/arm64), with
+`GOCACHE=/tmp/gohp-go-cache GOPROXY=off GOTOOLCHAIN=go1.23.0`:
 
-The catalog attaches these `unit.scalar_slot.*` checks to the existing
-`php.syntax.array-write-and-reference` entry, which stays `unsupported`. The
-existing source-rejection checks remain. Unit PASS is not PHP differential
-PASS, and the historical 15-case native-only oracle from [PR #82](https://github.com/katsuakikureyama/GoHP/pull/82)
-is not rerun or relabeled as generated-Go compatibility evidence.
+- `go test -count=1 ./internal/storage`: PASS (8 tests, 0.194s).
+- `go vet ./internal/storage`: PASS.
 
-Next: explicit frame/temporary lifetime and reference-aware array ownership /
-separation in bounded internal increments, then migrate codegen locations and
-calls with target-specific differential evidence. Keep `&` and `unset` closed
-until that integration's own bounded contract and negative checks pass.
-No new CLI, service/user operation, WebMCP capability or authentication route.
+The PHP-only specification from #82 is reused as the behavioral reference; no
+new PHP execution or generated-reference comparison is claimed. Remaining R1
+array/temporary/frame integration and R2–R5 are not complete.

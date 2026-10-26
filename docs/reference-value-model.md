@@ -1,14 +1,12 @@
 # Reference, value and assignment foundation
 
-Status: **PHP reference support is unsupported**. The design and native-only
-specification are recorded in PR #82; the first [internal scalar-slot R1 slice](scalar-slot-foundation.md)
-is implemented but not connected to generated code. R1 is not complete.
+Status: **design + native-oracle specification; scalar-only internal slots implemented**.
 Baseline: main `565e65e6c9d8e211b06779739bfba76b07c4d92d` (#81).
 Target: PHP 8.3, oracle floor 8.3.36. Later series need separate policy and
-evidence; they must not inherit these results. See the
-[PHP 8.x version-specific compatibility policy](php-version-compatibility.md).
-The original R0 specification did not change compiler/runtime/IR behavior;
-the R1 scalar slice leaves compiler acceptance and existing runtime paths unchanged.
+evidence; they must not inherit these results. No compiler/runtime/IR changes
+were introduced by the original design or its PHP-only specification. The first
+implementation is [scalar slot infrastructure](scalar-slot-foundation.md), kept
+separate from generated programs; PHP reference syntax remains unsupported.
 
 ## Decision
 
@@ -92,9 +90,8 @@ The second sequence separates array storage while the external alias still
 exists. An eager deep-copy which always preserves internal reference cells at
 assignment time would incorrectly make the first sequence share as well.
 Conversely, recursively copying every cell loses the second sequence's alias.
-Both sequences passed the pinned PHP 8.3.36 native-only run in
-[PR #82](https://github.com/katsuakikureyama/GoHP/pull/82); neither is evidence of
-generated-Go behavior or another PHP target's behavior.
+This is a proposed contract until the pinned native run is recorded in the PR;
+it is never evidence of generated-Go behavior.
 
 PHP 8.3.36's
 [`zend_array_dup_value`](https://github.com/php/php-src/blob/php-8.3.36/Zend/zend_hash.c)
@@ -141,16 +138,15 @@ substitute a custom Go hook engine for untested original `WP_Hook` behavior.
 
 | Stage | Deliverable / exit condition | Status |
 |---|---|---|
-| R0 | Design and executable PHP-only reference contracts; record exact native run separately | Complete in #82; native-only 15 cases, not compiler support |
-| R1 | Internal slot/value ownership primitives and shared-array separation design implemented behind closed boundaries; existing no-reference behavior preserved | Partial: scalar-only slots implemented; array storage, frame/temporary lifetime and codegen integration pending |
+| R0 | Design and executable PHP-only reference contracts; record exact native run separately | This change; GoHP reference support remains unsupported |
+| R1 | Internal slot/value ownership primitives and shared-array separation design implemented behind closed boundaries; existing no-reference behavior preserved | Partial: scalar slots implemented; shared-array storage and frame/temporary ownership integration pending |
 | R2 | Bounded variable reference assignment/unset, explicit address IR and binding lifetime; source + malformed-IR negatives and PHP/Go comparisons | Not implemented |
 | R3 | Reference-bearing arrays, element/declared-property locations, copy-timing and lifetime cases; key order/next-index and existing copy isolation retained | Not implemented |
 | R4 | By-reference parameters/returns, reference foreach and closure captures, each with explicit bounded contracts and call-path evidence | Not implemented |
 | R5 | Generic dynamic callable forms and original application acceptance (full block parser, then hooks) | Not implemented; not implied by R0–R4 |
 
-The first R1 slice implements internal scalar slot/read/value-write/bind/unset
-primitives and explicit binding-owner counts. Next are frame/temporary lifetime
-and shared-array ownership/separation. Keep parser acceptance unchanged;
+Next bounded implementation: R1's shared-array storage and ownership integration,
+building on scalar slot/read/value-write/bind/unset primitives. Keep parser acceptance unchanged;
 exercise real alias/copy/lifetime contracts, then integrate the storage model
 across codegen/runtime boundaries in reviewed increments. If a narrower scalar
 R2 subset precedes array migration, reject arrays/objects/unsupported locations
