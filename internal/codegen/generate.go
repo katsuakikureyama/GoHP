@@ -57,6 +57,9 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		if n == "empty" || n == "continue" {
 			g.fail(f.Line, "reserved language construct "+n)
 		}
+		if n == "str_contains" {
+			g.fail(f.Line, "reserved function "+n)
+		}
 		if _, ok := g.funcs[n]; ok || n == "in_array" || n == "isset" || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "array_key_exists" || n == "array_is_list" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "is_null" || n == "is_int" || n == "is_array" || n == "is_object" || n == "strtolower" || n == "strcasecmp" || n == "sprintf" || n == "str_replace" || n == "stripslashes" || n == "array_map" || n == "addslashes" {
 			g.fail(f.Line, "duplicate or reserved function "+n)
 		}
@@ -429,6 +432,12 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 				g.fail(e.Line, "count expects one argument")
 			}
 			return "rt.Count(" + args(e.Args) + ")"
+		}
+		if n == "str_contains" {
+			if len(e.Args) != 2 {
+				g.fail(e.Line, "str_contains expects two arguments")
+			}
+			return "rt.StrContains(" + args(e.Args) + ")"
 		}
 		if n == "strcasecmp" {
 			if len(e.Args) != 2 {
