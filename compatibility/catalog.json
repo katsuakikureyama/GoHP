@@ -3,6 +3,21 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.is_object",
+      "kind": "builtin",
+      "name": "is_object(value)",
+      "implementation": "partial",
+      "contract": "One evaluated supported value, actual bool result. Generated class instances (including empty classes) and generated arrows (PHP Closures) explicitly mark object identity. Scalar/null/array values and unmarked foreign Go values return false, without property access, coercion or mutation.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.is_object","test":"TestDifferential/is_object","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/is_object.php","assertions":["stdout","exit","generated classes/Closure arrows versus nonobjects, dynamic forwarding, typed bool/array returns, callbacks, once-only argument and short-circuit property reads"]},
+        {"case_id":"compiler.is_object","test":"TestIsObjectLoweringAndSourceMap","file":"internal/codegen/is_object_test.go","kind":"compiler","assertions":["case-insensitive direct builtin, class/empty-class object markers and guarded bool-return source map"]},
+        {"case_id":"negative.is_object","test":"TestIsObjectBoundaries","file":"internal/codegen/is_object_test.go","kind":"negative","assertions":["arity, undefined reads, redeclaration, builtin callback lookup and bool-as-array misuse fail before output"]},
+        {"case_id":"unit.runtime.is_object","test":"TestIsObjectValueDomain","file":"runtime/is_object_test.go","kind":"unit","assertions":["explicit identity and valid arrows only; nil/invalid/foreign/getter-only values do not become PHP objects"]}
+      ],
+      "limitations": ["Existing generated class/arrow subset only; no arbitrary host values, resources, incomplete classes, inheritance, constructors or new property syntax", "Type predicate only: no object truthiness, identity/reference comparison, methods or warning/exception equivalence", "Gossip adoption requires a separate exact pin and original-source comparison"]
+    },
+    {
       "id": "php.syntax.array-path-probes",
       "kind": "syntax",
       "name": "Defined-root nested isset and array-address null coalescing",

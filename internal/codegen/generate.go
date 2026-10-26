@@ -57,7 +57,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		if n == "empty" || n == "continue" {
 			g.fail(f.Line, "reserved language construct "+n)
 		}
-		if _, ok := g.funcs[n]; ok || n == "in_array" || n == "isset" || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "array_key_exists" || n == "array_is_list" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "is_null" || n == "is_int" || n == "is_array" || n == "strtolower" || n == "strcasecmp" || n == "sprintf" || n == "str_replace" || n == "stripslashes" || n == "array_map" || n == "addslashes" {
+		if _, ok := g.funcs[n]; ok || n == "in_array" || n == "isset" || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "array_key_exists" || n == "array_is_list" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "is_null" || n == "is_int" || n == "is_array" || n == "is_object" || n == "strtolower" || n == "strcasecmp" || n == "sprintf" || n == "str_replace" || n == "stripslashes" || n == "array_map" || n == "addslashes" {
 			g.fail(f.Line, "duplicate or reserved function "+n)
 		}
 		g.funcs[n] = len(f.Params)
@@ -108,6 +108,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 			g.emit("case %q: return rt.Clone(self.P_%s)\n", v.Name, v.Name)
 		}
 		g.emit("}; panic(\"undefined property\") }\n")
+		g.emit("func (self *C_%s) PHPObject() bool { return self != nil }\n", name(c.Name))
 		for _, f := range c.Methods {
 			g.function(f, c.Name)
 		}
@@ -416,7 +417,7 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 			}
 			return "rt.SprintfZeroPad(" + args(e.Args) + ")"
 		}
-		booleanBuiltins := map[string]string{"is_null": "IsNull", "is_int": "IsInt", "is_bool": "IsBool", "is_string": "IsString", "is_array": "IsArray", "strtolower": "StrToLower"}
+		booleanBuiltins := map[string]string{"is_object": "IsObject", "is_null": "IsNull", "is_int": "IsInt", "is_bool": "IsBool", "is_string": "IsString", "is_array": "IsArray", "strtolower": "StrToLower"}
 		if builtin, ok := booleanBuiltins[n]; ok {
 			if len(e.Args) != 1 {
 				g.fail(e.Line, n+" expects one argument")
