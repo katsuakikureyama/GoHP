@@ -60,6 +60,10 @@ writable-local/storage boundary before publishing output into generated PHP.
 
 ## Verification boundaries
 
+The [2026-10-27 measurement](evidence/preg83-b2-2026-10-27.md) records the
+successful enabled/default checks, 24 retained cases and seven fresh state
+operations. It is runtime evidence only, not a generated-code compatibility entry.
+
 - Opt-in `TestPregMatch83RetainedReference` reads the SHA-pinned Gossip PHP8.3.36
   record and directly compares all 24 typed returns, ordered capture arrays and
   last-error values. This reuses stored PHP evidence; it does not rerun PHP or

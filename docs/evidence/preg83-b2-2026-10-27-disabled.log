@@ -1,0 +1,38 @@
+=== RUN   TestPreg83ReportsUnavailableWithoutOptionalBackend
+--- PASS: TestPreg83ReportsUnavailableWithoutOptionalBackend (0.00s)
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend/missing_delimiters
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend/missing_required_modifier
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend/unsupported_modifier
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend/unescaped_inner_delimiter
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend/too_long_pattern
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend/too_long_subject
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend/negative_offset_below_subject
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend/positive_offset_after_subject
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend/minimum_offset
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend/zero_match_limit
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend/zero_depth_limit
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend/zero_heap_limit
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend/match_limit_above_bridge_ceiling
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend/depth_limit_above_bridge_ceiling
+=== RUN   TestPreg83RejectsDomainsBeforeOptionalBackend/heap_limit_above_bridge_ceiling
+--- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend (0.00s)
+    --- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend/missing_delimiters (0.00s)
+    --- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend/missing_required_modifier (0.00s)
+    --- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend/unsupported_modifier (0.00s)
+    --- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend/unescaped_inner_delimiter (0.00s)
+    --- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend/too_long_pattern (0.00s)
+    --- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend/too_long_subject (0.00s)
+    --- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend/negative_offset_below_subject (0.00s)
+    --- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend/positive_offset_after_subject (0.00s)
+    --- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend/minimum_offset (0.00s)
+    --- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend/zero_match_limit (0.00s)
+    --- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend/zero_depth_limit (0.00s)
+    --- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend/zero_heap_limit (0.00s)
+    --- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend/match_limit_above_bridge_ceiling (0.00s)
+    --- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend/depth_limit_above_bridge_ceiling (0.00s)
+    --- PASS: TestPreg83RejectsDomainsBeforeOptionalBackend/heap_limit_above_bridge_ceiling (0.00s)
+=== RUN   TestPreg83RequiresExecutionWithoutOptionalBackend
+--- PASS: TestPreg83RequiresExecutionWithoutOptionalBackend (0.00s)
+PASS
+ok  	github.com/katsuakikureyama/GoHP/runtime	0.212s
