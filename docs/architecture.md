@@ -115,7 +115,11 @@ grows. The [one-level assignment design](array-write-boundary.md) uses an explic
 root-binding target and functional array replacement, not reference cells.
 Append uses a distinct `assign_append` statement with a variable-only target;
 it shares runtime copy/index semantics without admitting empty-bracket reads.
-Nested lvalues/references and closures require a further location/cell design.
+The [reference/value foundation](reference-value-model.md) defines the next
+location/cell and shared-array separation design, with native-only oracle
+specifications and staged acceptance gates. It does not enable references or
+change the current runtime. Reference-bearing arrays require copy-timing and
+binding-lifetime semantics, not merely pointers added to the existing Clone.
 Add scalar types and conversions with warning/exception differential
 fixtures; then inheritance and include/autoload boundaries. Source maps, structured
 runtime diagnostics and persistent compatibility reports remain open work.
