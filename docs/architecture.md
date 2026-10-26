@@ -90,9 +90,10 @@ Values currently use Go `any`: int64, byte strings, bool, null, ordered arrays,
 native generated class pointers and bounded callable wrappers. Generated arrays
 have insertion order, numeric-string
 key normalization, last-value replacement without reordering and independent
-nested copies on assignments, arguments and returns. This eager copy models value
-semantics for supported array operations, including functional root-binding
-replacement for one-level writes; it does not implement
+nested value-copy semantics on assignments, arguments and returns. The general
+legacy path uses eager copies and functional root-binding replacement for
+one-level writes; the proved straight-line scope below uses owned shared storage
+internally and detached legacy values at its boundaries. Neither path implements
 PHP references or production copy-on-write optimization. Object identity remains
 pointer identity. Class methods are real generated Go methods; interface assertions
 provide method dispatch, not an AST/opcode evaluator. The bounded class contract
@@ -106,13 +107,16 @@ scalar-element array handles, with explicit copy/read/release, synchronous
 Slot-rooted mutations and internal value snapshots with single consumption/release.
 Internal shared containers separate storage on write and track reference ownership; Frame and
 element bindings remain scalar-only, including through aliases. Only selected
-closed scalar functions currently use the generated Frame facade. This is R1
-infrastructure, not a migration of generated arrays or PHP-reference support.
+closed scalar functions use the generated Frame facade. This is R1 infrastructure,
+not PHP-reference support.
 An additive ValueSlot/ValueTemporary runtime facade now wraps canonical storage
 for scalars and canonical flat scalar arrays. Import rejects noncanonical keys,
 nested values and non-reconstructible hidden index state; export is a detached
-legacy value. It is opt-in, exposes no reference API, and is not emitted by codegen.
-Persistent locations, generated temporary integration and nested shared storage remain
+legacy value. Codegen now uses it in proved nullary, straight-line flat-array
+scopes, with operation-scoped temporary cleanup and lazy selected-arm acquisition.
+Other array scopes retain the legacy map; no reference API is exposed. See the
+[ownership plan](owned-array-slot-values.md#first-generated-scope-and-expression-ownership).
+Persistent locations, general generated temporary integration and nested shared storage remain
 unfinished; the [reference/value model](reference-value-model.md) owns those gates.
 
 Runtime arithmetic is restricted to integral coercions. Overflow, missing keys,

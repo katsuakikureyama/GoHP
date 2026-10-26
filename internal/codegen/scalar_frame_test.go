@@ -13,29 +13,29 @@ import (
 
 func TestScalarFrameSelection(t *testing.T) {
 	for _, tc := range []struct {
-		name, source string
-		owned        bool
+		name, source  string
+		scalar, value bool
 	}{
-		{"scalar", `function selected() { $a = 1; $b = $a; $a = 'changed'; return $b; }`, true},
-		{"control_flow", `function selected() { $i = 0; while ($i !== 3) { $i = $i + 1; if ($i === 1) { continue; } else { break; } } return $i; }`, true},
-		{"lazy_scalar", `function selected(): bool { $x = null; $y = false; return isset($x, $y) || ($y ? true : !$y); }`, true},
-		{"bare_return", `function selected() { return; }`, true},
-		{"fallthrough", `function selected() { $x = 1; }`, true},
-		{"scalar_parameters", `function selected(int $i, string $s, bool $b) { $copy = $i; $i = 'changed'; return $b ? $s : $i; }`, true},
-		{"mixed_parameters", `function selected(int $i, $other) { return $i; }`, false},
-		{"scalar_parameter_array_body", `function selected(int $i) { $i = []; return $i; }`, false},
-		{"untyped_parameter", `function selected($x) { return $x; }`, false},
-		{"optional_parameter", `function selected($x = null) { return $x; }`, false},
-		{"array_parameter", `function selected(array $x) { return $x; }`, false},
-		{"array_return", `function selected(): array { return []; }`, false},
-		{"mixed_local", `function selected() { $x = 1; $x = []; return $x; }`, false},
-		{"array_branch", `function selected() { $x = 1; if (false) { $x = []; } return $x; }`, false},
-		{"dead_array", `function selected() { return 1; $x = []; }`, false},
-		{"foreach", `function selected() { foreach ([1] as $x) { return $x; } return null; }`, false},
-		{"builtin", `function selected() { return strlen('x'); }`, true},
-		{"user_call", `function other() { return 1; } function selected() { return other(); }`, false},
-		{"object", `class Item {} function selected() { return new Item(); }`, false},
-		{"arrow", `function selected() { $f = fn($x) => $x; return $f(1); }`, false},
+		{"scalar", `function selected() { $a = 1; $b = $a; $a = 'changed'; return $b; }`, true, false},
+		{"control_flow", `function selected() { $i = 0; while ($i !== 3) { $i = $i + 1; if ($i === 1) { continue; } else { break; } } return $i; }`, true, false},
+		{"lazy_scalar", `function selected(): bool { $x = null; $y = false; return isset($x, $y) || ($y ? true : !$y); }`, true, false},
+		{"bare_return", `function selected() { return; }`, true, false},
+		{"fallthrough", `function selected() { $x = 1; }`, true, false},
+		{"scalar_parameters", `function selected(int $i, string $s, bool $b) { $copy = $i; $i = 'changed'; return $b ? $s : $i; }`, true, false},
+		{"mixed_parameters", `function selected(int $i, $other) { return $i; }`, false, false},
+		{"scalar_parameter_array_body", `function selected(int $i) { $i = []; return $i; }`, false, false},
+		{"untyped_parameter", `function selected($x) { return $x; }`, false, false},
+		{"optional_parameter", `function selected($x = null) { return $x; }`, false, false},
+		{"array_parameter", `function selected(array $x) { return $x; }`, false, false},
+		{"array_return", `function selected(): array { return []; }`, false, true},
+		{"mixed_local", `function selected() { $x = 1; $x = []; return $x; }`, false, true},
+		{"array_branch", `function selected() { $x = 1; if (false) { $x = []; } return $x; }`, false, false},
+		{"dead_array", `function selected() { return 1; $x = []; }`, false, true},
+		{"foreach", `function selected() { foreach ([1] as $x) { return $x; } return null; }`, false, false},
+		{"builtin", `function selected() { return strlen('x'); }`, true, false},
+		{"user_call", `function other() { return 1; } function selected() { return other(); }`, false, false},
+		{"object", `class Item {} function selected() { return new Item(); }`, false, false},
+		{"arrow", `function selected() { $f = fn($x) => $x; return $f(1); }`, false, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			p, err := frontend.Parse("<?php "+tc.source, testTarget(t))
@@ -59,12 +59,19 @@ func TestScalarFrameSelection(t *testing.T) {
 				}
 				found = true
 				body := string(out[fset.Position(fn.Body.Pos()).Offset:fset.Position(fn.Body.End()).Offset])
-				if got := strings.Contains(body, "rt.NewScalarFrame()"); got != tc.owned {
-					t.Fatalf("owned frame = %v, want %v:\n%s", got, tc.owned, body)
+				if got := strings.Contains(body, "rt.NewScalarFrame()"); got != tc.scalar {
+					t.Fatalf("scalar frame = %v, want %v:\n%s", got, tc.scalar, body)
 				}
-				if tc.owned {
+				if got := strings.Contains(body, "map[string]*rt.ValueSlot{}"); got != tc.value {
+					t.Fatalf("owned value slots = %v, want %v:\n%s", got, tc.value, body)
+				}
+				if tc.scalar {
 					if strings.Count(body, "defer v.Close()") != 1 || strings.Contains(body, "v[") {
 						t.Fatalf("owned frame bypasses read/write or exit cleanup:\n%s", body)
+					}
+				} else if tc.value {
+					if !strings.Contains(body, "defer temporary.Close()") || strings.Contains(body, "v := map[string]any{}") {
+						t.Fatalf("owned value slots bypass cleanup or fell back:\n%s", body)
 					}
 				} else if !strings.Contains(body, "v := map[string]any{}") || strings.Contains(body, "v.Read(") {
 					t.Fatalf("legacy value frame changed:\n%s", body)

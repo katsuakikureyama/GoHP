@@ -27,8 +27,10 @@ semantic validation; it does not admit previously rejected source or IR.
   and result-discarding calls which satisfy the same builtin proof.
   Both branches and dead tails are inspected. Each operand must also qualify.
 - All unlisted calls, untyped/mixed parameters (including optional-null ones), methods, arrows,
-  arrays/objects, foreach, unknown forms and top-level main retain the existing
-  value-map implementation. No runtime guessing, per-value fallback or
+  arrays/objects, foreach, unknown forms and top-level main remain excluded from
+  ScalarFrame. A separate [straight-line flat-array lane](owned-array-slot-values.md#first-generated-scope-and-expression-ownership)
+  can select nullary globals; all other excluded scopes keep value maps.
+  No runtime guessing, per-value fallback or
   interprocedural return-type assumption selects a frame.
 
 The builtin list is deliberately explicit, not an inference from a PHP return
@@ -56,16 +58,15 @@ Write retains storage's exact scalar guard. Close is idempotent and closed
 reads/writes reject. No Bind, Reference, Slot or other alias operation is exposed
 to generated code. No finalizers or GC-timed releases are introduced.
 
-Existing untyped/array/callable/object behavior is untouched. This deliberately
+Existing untyped/array/callable/object parameter behavior is untouched. This deliberately
 does not solve array ownership by smuggling an eager-cloned array into scalar
 storage. The shared-array separation design remains an independent R1/R3 gate.
 
 ## Evidence and boundaries
 
-`gohp.tooling.generated-scalar-frames` records twelve checks independently for
-PHP 8.3 and 8.4: the original seven frame contracts plus five builtin-integration
-checks (native/generated comparison, selection, lowering/source maps, preserved
-rejection and an external-module host consumer).
+`gohp.tooling.generated-scalar-frames` records its checks independently for
+PHP 8.3 and 8.4 (native/generated comparison, selection, lowering/source maps,
+preserved rejection and an external-module host consumer).
 `tests/fixtures/scalar_frame.php` observes scalar copies, byte/UTF-8 strings,
 boundary integers, conditional/loop exits, explicit/implicit return values,
 repeated calls and coexistence with legacy array/arrow scopes. The normal
@@ -81,8 +82,9 @@ types/arity/nil Execution and preservation of the caller's tokenizer state.
 Scalar temporaries remain ordinary Go values. The separate internal
 [owned value temporary](owned-array-slot-values.md#owned-value-temporaries)
 can capture/transfer/release scalar-array snapshots through a separate opt-in
-ValueSlot/ValueTemporary facade, but not this scalar frame or codegen. This does
-not implement generated shared-array temporary lifetimes or a PHP exception model.
+ValueSlot/ValueTemporary facade. A separate nullary straight-line generated lane
+now uses these temporaries; ScalarFrame itself remains scalar-only. This does
+not implement general shared-array lifetimes or a PHP exception model.
 
 The external consumer checks the generated ABI, nil Execution and arity guards,
 runtime overflow failure, subsequent calls, preserved invocation state and
@@ -92,7 +94,7 @@ provides ScalarFrame; existing generated Go remains compatible. IR stays at
 0.1: the parameter extension reuses aligned ParamTypes; previous shapes and
 accepted meanings are preserved.
 
-R1 is partial. General frame migration, address IR, temporary and shared-array
+R1 is partial. General frame migration, address IR, general temporary/shared-array
 ownership, PHP references, by-reference calls/returns, cycles and destructor
 order remain unimplemented. There is no PHP warning/exception-equivalence or
 Gossip/WordPress acceptance claim. The reference feature stays unsupported.
