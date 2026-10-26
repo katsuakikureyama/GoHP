@@ -63,10 +63,12 @@ Declared public properties now accept bounded [simple assignment](docs/public-pr
 through a statically known generated-class variable (including known aliases
 and method `$this`). Arrays detach at write/read boundaries; object identifiers
 retain identity. This adds neither dynamic properties nor unknown receiver writes.
-Bare [`continue;`](docs/foreach-continue-boundary.md) now targets the nearest
-enclosing `foreach`, including inside braced conditionals. Numeric levels and
-other loop kinds are excluded. Bare [`break;`](docs/foreach-break-boundary.md)
-exits that nearest foreach entirely; nested outer loops continue normally.
+Bounded [`while (condition) { body }`](docs/while-boundary.md) re-evaluates its
+condition before each iteration. Bare [`continue;`](docs/foreach-continue-boundary.md)
+and [`break;`](docs/foreach-break-boundary.md) target the nearest enclosing
+`foreach` or `while`, including inside braced conditionals. Continue rechecks
+the while condition; break exits without rechecking it. Numeric levels,
+unbraced/alternative syntax and for/do/switch are excluded.
 Together with bounded
 [trailing untyped null defaults and defined bare/multiple isset](docs/array-get-prerequisites.md),
 this resolves the syntax blockers measured for Gossip's `_wp_array_get`.

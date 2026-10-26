@@ -327,6 +327,13 @@ func (p *parser) stmt() ir.Stmt {
 		s.Kind = "return"
 		s.Expr = p.expr(0)
 		p.need(";")
+	case p.peek().kind == "id" && strings.EqualFold(p.peek().text, "while"):
+		p.pop()
+		s.Kind = "while"
+		p.need("(")
+		s.Expr = p.expr(0)
+		p.need(")")
+		s.Body = p.block()
 	case p.accept("foreach"):
 		s.Kind = "foreach"
 		p.need("(")
