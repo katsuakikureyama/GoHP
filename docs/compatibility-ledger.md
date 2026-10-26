@@ -149,7 +149,8 @@ interfaces.
 The source fingerprint is SHA-256
 of a lexically ordered JSON list of `{path, sha256}` for Go/PHP files, `go.mod`,
 `go.sum` when present, `compatibility/catalog.json` and the inventory's
-`internal/inventory/testdata/**/composer.json` / `composer.lock` fixtures, excluding `.git`, `build`
+`internal/inventory/testdata/**/composer.json` / `composer.lock` fixtures, plus
+the pinned application manifests under `corpus/**/*.json`, excluding `.git`, `build`
 and `.cache` trees. It does not hash documentation or container configuration;
 image identities and flags are recorded separately. Source must not change during
 the run. A hash binds bytes; it is not a signature or a guarantee of trusted code.
