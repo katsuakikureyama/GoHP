@@ -3,6 +3,22 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.operator.integer-subtraction",
+      "kind": "operator",
+      "name": "Actual-int64 binary subtraction",
+      "implementation": "partial",
+      "contract": "Left-associative binary minus at addition precedence above concatenation, actual int64 operands only, safe extreme bounds with overflow-to-float rejection. Existing literal-only unary minus remains separate.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.integer_subtraction","test":"TestDifferential/integer_subtraction","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/integer_subtraction.php","assertions":["stdout","exit","left association, addition/concat precedence, negative operands, unknown forwarding, lazy coalesce strlen-offset and property reads"]},
+        {"case_id":"compiler.integer_subtraction","test":"TestIntegerSubtractionLowering","file":"internal/codegen/subtract_test.go","kind":"compiler","assertions":["binary IR association/precedence, guarded lowering and statement map"]},
+        {"case_id":"negative.integer_subtraction.source","test":"TestIntegerSubtractionBoundary","file":"internal/codegen/subtract_test.go","kind":"negative","assertions":["static domain mismatch, intact decrement tokens and general unary negation reject"]},
+        {"case_id":"unit.integer_subtraction","test":"TestIntegerSubtractionRuntime","file":"runtime/subtract_test.go","kind":"unit","assertions":["actual results/extreme bounds and domain/overflow rejection"]},
+        {"case_id":"negative.integer_subtraction.runtime","test":"TestIntegerSubtractionRuntimeGuards","file":"tests/subtract_runtime_test.go","kind":"negative","assertions":["dynamic string and overflow fail closed"]}
+      ],
+      "limitations": ["Actual int64 only, no weak scalar coercion, floats, general unary negation, decrement or compound writes", "Overflow failure is not PHP float/error equivalence; local CLI WebMCP excluded", "Consumer add_freeform adoption must be measured separately after its initial parser rejection"]
+    },
+    {
       "id": "php.syntax.parser-output-prerequisites",
       "kind": "syntax",
       "name": "Bounded method defaults, property append, factory snapshots and byte substr",
@@ -1443,7 +1459,7 @@
         {"case_id":"negative.negative_integer_string","test":"TestUnsupported/negative_integer_string","file":"tests/differential_test.go","kind":"negative","assertions":["string is rejected outside the bounded literal-only contract"]},
         {"case_id":"negative.negative_integer_repeated_sign","test":"TestUnsupported/negative_integer_repeated_sign","file":"tests/differential_test.go","kind":"negative","assertions":["repeated_sign is rejected outside the bounded literal-only contract"]},
         {"case_id":"negative.negative_integer_decrement","test":"TestUnsupported/negative_integer_decrement","file":"tests/differential_test.go","kind":"negative","assertions":["decrement is rejected outside the bounded literal-only contract"]},
-        {"case_id":"negative.negative_integer_subtraction","test":"TestUnsupported/negative_integer_subtraction","file":"tests/differential_test.go","kind":"negative","assertions":["subtraction is rejected outside the bounded literal-only contract"]},
+        {"case_id":"negative.negative_integer_subtraction","test":"TestUnsupported/negative_integer_subtraction","file":"tests/differential_test.go","kind":"negative","assertions":["noninteger subtraction operands remain rejected; actual-int64 binary subtraction has a separate bounded entry"]},
         {"case_id":"negative.negative_integer_minimum_token","test":"TestUnsupported/negative_integer_minimum_token","file":"tests/differential_test.go","kind":"negative","assertions":["minimum_token is rejected outside the bounded literal-only contract"]},
         {"case_id":"negative.negative_integer_float","test":"TestUnsupported/negative_integer_float","file":"tests/differential_test.go","kind":"negative","assertions":["float is rejected outside the bounded literal-only contract"]},
         {"case_id":"negative.negative_integer_nondecimal","test":"TestUnsupported/negative_integer_nondecimal","file":"tests/differential_test.go","kind":"negative","assertions":["nondecimal is rejected outside the bounded literal-only contract"]}

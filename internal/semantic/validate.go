@@ -586,6 +586,11 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			return valueType{}, err
 		}
 		switch expr.Text {
+		case "-":
+			if (left.kind != intKind && left.kind != unknownKind) || (right.kind != intKind && right.kind != unknownKind) {
+				return valueType{}, unsupported(expr.Line, "subtraction requires int operands")
+			}
+			return valueType{kind: intKind}, nil
 		case "+":
 			if !isNumericOrUnknown(left) || !isNumericOrUnknown(right) {
 				return valueType{}, unsupported(expr.Line, "addition requires supported numeric scalars")

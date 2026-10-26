@@ -152,7 +152,7 @@ func lex(s string) ([]token, error) {
 		matched := false
 		// Keep multi-character operators longest-first so === is never split
 		// into the unsupported = token followed by ==.
-		for _, op := range []string{"===", "!==", "&&", "||", "??", "=>", "->"} {
+		for _, op := range []string{"===", "!==", "&&", "||", "??", "=>", "->", "--"} {
 			if strings.HasPrefix(s[i:], op) {
 				ts = append(ts, token{op, ln, "sym"})
 				i += len(op)
@@ -463,7 +463,7 @@ func (p *parser) prec(t token) int {
 	if t.kind == "sym" && t.text == "." {
 		return 5
 	}
-	if t.kind == "sym" && t.text == "+" {
+	if t.kind == "sym" && (t.text == "+" || t.text == "-") {
 		return 6
 	}
 	if isStrictComparison(t) {

@@ -71,6 +71,8 @@ parameters have a [separate boundary](docs/scalar-constructor-boundary.md).
 The bounded [parser-output prerequisites](docs/parser-output-boundary.md) also
 admit public untyped method null defaults, bare returns, declared array-property
 append, sole-new method factory casts and byte-oriented string/int `substr`.
+Actual-integer [binary subtraction](docs/integer-subtraction.md) is also admitted,
+with overflow rejection and no scalar coercion or general unary negation.
 Bounded [`while (condition) { body }`](docs/while-boundary.md) re-evaluates its
 condition before each iteration. Bare [`continue;`](docs/foreach-continue-boundary.md)
 and [`break;`](docs/foreach-break-boundary.md) target the nearest enclosing
