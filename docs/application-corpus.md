@@ -3,8 +3,9 @@
 The first selection is the **complete, unchanged** WordPress
 `wp-includes/functions.php`, not a list of functions already supported by GoHP.
 The [manifest](../corpus/wordpress-functions.json) freezes source identity and
-selection only. Function/callsite counts, dependency closure, compilation,
-execution and application compatibility are **unmeasured**.
+selection only. A separate [lexical inventory](#lexical-inventory) records token
+observations. Semantic function/resolved-call counts, dependency closure,
+compilation, execution and application compatibility are **unmeasured**.
 
 ## Provenance and scope
 
@@ -89,6 +90,100 @@ trailing JSON are rejected. Limits: 1 MiB manifest, 64 files, 16 MiB per file,
 the source root; an escaping symlink is rejected. The manifest itself must be a
 regular file, not a symlink. Inputs must not be mutated concurrently: these checks
 are **not a sandbox against filesystem races or hostile local processes**.
+
+## Lexical inventory
+
+The separate `gohp-corpus-inventory` command reads the same manifest, verifies
+**all** selected source/notice/provenance files, and retains the exact checked
+source buffers. Only then does it feed those buffers to a fixed, embedded PHP
+tokenizer program on stdin; paths are not reopened. The byte-only verifier above
+still does not invoke PHP. No parser library or compiler frontend is replaced.
+
+```sh
+go run ./cmd/gohp-corpus-inventory -manifest corpus/wordpress-functions.json \
+  -php-version 8.3 /path/to/pinned/WordPress
+```
+
+Use an explicitly trusted `php` on PATH matching the selected series and oracle
+floor (default 8.3; 8.4 is separate). The tool invokes PHP with `-n`,
+`short_open_tag=0`, `memory_limit=256M`, `display_errors=stderr`, `log_errors=0`;
+input text is **never** included, evaluated or used as executable script.
+It does not invoke Composer, autoload, a shell or the compiler, fetch data, or
+write source/report files. `go run` itself builds the trusted tool and can populate
+Go's build cache. Local filesystem permissions and the private stable-root
+requirement still apply; this is not a hostile-process sandbox.
+
+The [native token_get_all](https://www.php.net/manual/en/function.token-get-all.php)
+scanner is used with flags **0**, not `TOKEN_PARSE`. This intentionally permits
+lexical observations even for invalid grammar; a successful inventory is not a
+syntax-validity result. Token names, not numeric identifiers, bind the protocol
+because [PHP token numbers can change across versions](https://www.php.net/manual/en/tokens.php).
+
+JSON result `gohp.corpus.lexical-inventory/v0.1` has `status: lexical-only`,
+`compatibility: unverified`, selected `php_target`, observed `php_version`,
+SHA-256 of the embedded tokenizer, and the unchanged nested verification report
+binding the exact manifest and every selected file. Each source file records:
+
+- Path, SHA-256, byte/token totals and a sorted histogram of **all** native token
+  kinds and bytes, including whitespace, comments and string data. Single-byte
+  punctuation uses `CHAR_XX` hexadecimal labels. Lengths must partition the
+  complete source; malformed or partial token responses fail rather than omit bytes.
+- `grammar_status: not-validated`, `unparsed_bytes` equal to the **entire file**,
+  and `semantic_units` / `resolved_calls: null`. Lexical byte coverage and grammar
+  parsing are different dimensions, not a 100% compatibility claim.
+- A marker for every `T_FUNCTION` / `T_FN`. `named-function-marker` is a name
+  following the function keyword (optional by-reference ampersand), not a global
+  function count: it can include methods. Anonymous, arrow and unclassified
+  function markers remain separate. No scope or body is parsed.
+- A location for **every** literal opening parenthesis: function/arrow parameters,
+  language-form, constructor-name, member-name, variable-parenthesis,
+  name-parenthesis or unclassified. Classification skips only whitespace/comments.
+  The unclassified count is explicit and its positions are retained.
+- Frequencies of exact name spellings immediately preceding parentheses in the
+  `name-parenthesis` category. These are candidates, **not resolved calls** or
+  supported builtins: attributes and first-class callable creation can look the
+  same lexically. Namespaces, signature/value types, conditional declarations,
+  dispatch and dependency resolution are not evaluated. No catalog-name join is
+  used to create support claims. Sorting is frequency descending then byte spelling.
+
+Positions are zero-based half-open byte offsets for the keyword or opening
+parenthesis and one-based LF-counted source lines. Name base64 preserves exact
+bytes; a display `name` is also emitted when valid UTF-8. Source bodies, comments
+and string literals are not copied into the report. Identifiers are not redacted;
+this tool is not a secret scanner. File results retain manifest source order.
+
+Limits in addition to the manifest limits: 250,000 tokens per file, 500,000 for
+the selection, 16 MiB stdout / 64 KiB stderr per tokenizer process and a shared
+30-second tokenizer deadline. A failed process, any stderr, wrong series/floor,
+changed PHP version between files, invalid token tape or exhausted limit fails
+the **entire** inventory. No file or token is silently dropped. CLI exit codes
+are 0 success/help, 2 usage, 1 pipeline/output failure; pipeline errors emit only
+generic diagnostics and no JSON. Output-device failures may leave partial bytes;
+consumers must check exit status. Retain command, GoHP commit/toolchain and PHP
+image identity separately with the report; hashes are not authentication.
+
+CI exercises the trusted tokenizer on repository-owned, side-effectful and
+syntactically invalid source-as-data, separately per PHP target. CI does not fetch
+the WordPress selection; original-source measurements are separate observations.
+
+### Inventory capability
+
+Stable ID: `gohp.corpus.inventory`. Owner/service: local GoHP development tool;
+resource: caller-selected manifest and source root. Input schema has required
+nonempty strings `manifest`, `source_root`, optional enum `php_target` (`8.3`,
+`8.4`, default `8.3`), no additional properties. CLI maps target to `-php-version`;
+all flags precede the one root. Result is the versioned JSON above or a nonzero
+failure, never a save/publication state.
+
+`inspect`: verify and retain the full selection. `prepare`: execute only the
+trusted tokenizer on the retained buffers and construct lexical observations.
+`save` / `commit`: **excluded**, no mutation/publication. Authorization is local
+read/execute permission; stdout/stderr and caller-retained run metadata provide
+local evidence, not an authenticated server audit. WebMCP, AI Assist, browser UI,
+MCP and automatic submit are **excluded**: no hosted operation or route exists,
+and no browser/S2S/MCP/webhook authentication is changed. The existing verifier
+capability below remains distinct. Tooling tests live in the existing catalog;
+they are not application differential evidence.
 
 ## Next evidence, not claimed here
 
