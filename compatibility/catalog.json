@@ -2045,9 +2045,17 @@
       "php_targets": ["8.3"],
       "checks": [
         {"case_id": "negative.array_nested_write", "test": "TestUnsupported/array_nested_write", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["nested array assignment is rejected"]},
-        {"case_id": "negative.reference", "test": "TestUnsupported/reference", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["reference assignment is rejected"]}
+        {"case_id": "negative.reference", "test": "TestUnsupported/reference", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["reference assignment is rejected"]},
+        {"case_id": "unit.storage_slot.undefined", "test": "TestSlotZeroValueIsUndefined", "file": "internal/storage/slot_test.go", "kind": "unit", "assertions": ["internal zero-value slot is absent, without creating storage"]},
+        {"case_id": "unit.storage_slot.scalars", "test": "TestSlotNewAndWriteSupportOnlyScalarValues", "file": "internal/storage/slot_test.go", "kind": "unit", "assertions": ["internal null, bool, int64 and string construction/writes retain exact values"]},
+        {"case_id": "unit.storage_slot.domain", "test": "TestSlotRejectsUnsupportedValuesWithoutMutation", "file": "internal/storage/slot_test.go", "kind": "unit", "assertions": ["unsupported Go int, float, slice and struct payloads reject before changing prior value"]},
+        {"case_id": "unit.storage_slot.alias_rebind", "test": "TestSlotBindSharesWritesAndRebindingLeavesFormerPeersBound", "file": "internal/storage/slot_test.go", "kind": "unit", "assertions": ["explicit internal aliases share writes; destination rebind leaves former peers intact"]},
+        {"case_id": "unit.storage_slot.bind_creation", "test": "TestSlotBindUndefinedSourceCreatesPresentNullAndSelfBindingWorks", "file": "internal/storage/slot_test.go", "kind": "unit", "assertions": ["internal binding creates present null for undefined source; initialized/undefined self-binding and nil-source rejection"]},
+        {"case_id": "unit.storage_slot.unset", "test": "TestSlotUnsetDetachesOnlySelectedBinding", "file": "internal/storage/slot_test.go", "kind": "unit", "assertions": ["internal unset removes only its binding; recreation does not reconnect surviving aliases"]},
+        {"case_id": "unit.storage_slot.value_copy", "test": "TestSlotValueAssignmentReadsValueWithoutBinding", "file": "internal/storage/slot_test.go", "kind": "unit", "assertions": ["internal scalar read/write value copy is independent of source binding"]},
+        {"case_id": "unit.storage_slot.local_rebind", "test": "TestSlotByReferenceParameterRebindingAndUnsetAreLocal", "file": "internal/storage/slot_test.go", "kind": "unit", "assertions": ["explicit parameter-like local slot mutation/rebinding/unset leaves caller binding intact; not generated call/return evidence"]}
       ],
-      "limitations": ["Copy-on-write and PHP reference semantics are not implemented", "docs/reference-value-model.md and tests/oracle/reference_semantics.php specify future contracts only; native-oracle-only results are not generated-Go compatibility evidence"]
+      "limitations": ["Compiler reference syntax and reference-aware array storage are not implemented", "internal/storage scalar-only slot primitives are unit-tested but not connected to parser, codegen, frames or public runtime APIs; no PHP reference support follows from those unit checks", "docs/reference-value-model.md and tests/oracle/reference_semantics.php specify future contracts; native-oracle-only results are not generated-Go compatibility evidence"]
     },
     {
       "id": "php.syntax.include-require",
