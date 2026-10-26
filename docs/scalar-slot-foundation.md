@@ -20,7 +20,7 @@ pointer-only, must not be copied, and are not concurrency-safe.
 [Scalar Frame lifecycle](storage-frame-lifecycle.md) now provides named local
 bindings with explicit Close and separately owned exported references. Future
 generated frames must use explicit release on all exit paths. This is wired for
-closed nullary scalar functions only; general frame/temporary integration is
+closed nullary or all-exact-scalar-parameter functions only; general frame/temporary integration is
 still unimplemented.
 
 Arrays, objects, callables, host pointers and cells passed as values are rejected

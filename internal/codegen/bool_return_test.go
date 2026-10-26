@@ -71,7 +71,7 @@ func TestBoolReturnUnsupportedSource(t *testing.T) {
 		"<?php function result(): bool|int { return true; }",
 		"<?php function result(): bool&int { return true; }",
 		"<?php function result(): true { return true; }",
-		"<?php function result(bool $v): bool { return $v; }",
+		"<?php function result(bool $v = null): bool { return $v; }",
 		"<?php class X { public function result(): bool { return true; } }",
 	} {
 		t.Run(source, func(t *testing.T) {

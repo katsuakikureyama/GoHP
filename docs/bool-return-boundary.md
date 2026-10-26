@@ -17,7 +17,8 @@ unchanged. A named one-argument bool-return function can be an existing literal
 The [PHP type-declaration reference](https://www.php.net/manual/en/language.types.declarations.php)
 describes scalar coercions and return type enforcement. PHP may accept a scalar
 return that GoHP rejects under this boundary. Runtime rejection is not PHP
-TypeError text, stack or catchability equivalence. Typed methods/scalar parameters,
+TypeError text, stack or catchability equivalence. Exact scalar parameters now have
+a [separate entry contract](scalar-function-parameters.md). Typed methods,
 nullable/union/intersection/standalone true or false return types, `boolean`
 aliases, general callable values and weak return coercions are excluded.
 

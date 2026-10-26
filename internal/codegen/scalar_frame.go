@@ -3,9 +3,9 @@ package codegen
 import "github.com/katsuakikureyama/GoHP/internal/ir"
 
 // scalarFrameBody is a conservative storage-domain proof, not PHP admission or
-// type validation. It runs only after semantic.Validate, for parameter-free
-// global functions. Every value entering locals must originate in a scalar
-// literal or an operation whose operands and result remain scalar. Unknown
+// type validation. It runs only after semantic.Validate, for global functions
+// with no parameters or all-exact-scalar parameters. Every local value must
+// originate in a scalar literal, guarded parameter or scalar operation. Unknown
 // forms (including all calls) retain the existing value-map implementation.
 // Inspect dead tails and both branches too; never infer safety from reachability.
 func scalarFrameBody(body []ir.Stmt) bool {
@@ -28,11 +28,30 @@ func scalarFrameBody(body []ir.Stmt) bool {
 	return true
 }
 
+// Untyped inputs can carry arrays, objects or callables even if a particular
+// caller passes scalars. Selection must hold for host entries and every call.
+func scalarFrameParameters(function ir.Function) bool {
+	if len(function.Params) == 0 {
+		return true
+	}
+	if len(function.ParamTypes) != len(function.Params) {
+		return false
+	}
+	for _, annotation := range function.ParamTypes {
+		switch annotation {
+		case "int", "string", "bool":
+		default:
+			return false
+		}
+	}
+	return true
+}
+
 func scalarFrameExpr(expr ir.Expr) bool {
 	switch expr.Kind {
 	case "int", "string", "bool", "null", "var":
-		// Definite assignment is still enforced by validation/codegen. With no
-		// parameters or non-scalar producers, every defined local is scalar.
+		// Definite assignment is still enforced by validation/codegen. Entry
+		// guards and the absence of non-scalar producers keep locals scalar.
 	case "bool_cast", "not", "ternary", "isset_var", "isset_multi":
 	case "binary":
 		switch expr.Text {
