@@ -26,7 +26,7 @@ type generator struct {
 	execution bool
 	// Only closed scalar bodies with proven scalar entry values use owned storage.
 	scalarFrame bool
-	// First shared-value lane: proven nullary, straight-line flat-array scopes.
+	// Shared-value lane: proven nullary flat-array scopes and bounded control flow.
 	ownedValues bool
 }
 

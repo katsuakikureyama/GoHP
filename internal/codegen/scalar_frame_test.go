@@ -29,7 +29,7 @@ func TestScalarFrameSelection(t *testing.T) {
 		{"array_parameter", `function selected(array $x) { return $x; }`, false, false},
 		{"array_return", `function selected(): array { return []; }`, false, true},
 		{"mixed_local", `function selected() { $x = 1; $x = []; return $x; }`, false, true},
-		{"array_branch", `function selected() { $x = 1; if (false) { $x = []; } return $x; }`, false, false},
+		{"array_branch", `function selected() { $x = 1; if (false) { $x = []; } return $x; }`, false, true},
 		{"dead_array", `function selected() { return 1; $x = []; }`, false, true},
 		{"foreach", `function selected() { foreach ([1] as $x) { return $x; } return null; }`, false, false},
 		{"builtin", `function selected() { return strlen('x'); }`, true, false},

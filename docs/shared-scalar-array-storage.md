@@ -102,8 +102,8 @@ reference arrays. R1 remains partial. Explicit Slot array ownership, synchronous
 mutations and value temporaries now have an opt-in value-only runtime adapter
 for canonical flat values (see the owned Slot contract). Persistent locations
 and general generated temporary ownership are still needed for broader migration;
-the first nullary straight-line generated scope now uses the value-only adapter
-with operation-scoped temporaries, without reference operations.
+the nullary generated scope now uses the value-only adapter with operation-scoped
+temporaries and proved if/while domains, without reference operations.
 No performance, warning/exception, cycle or application acceptance claim is made.
 
 No CLI/route/authentication/capability, target policy, oracle environment, CI

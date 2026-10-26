@@ -28,7 +28,7 @@ semantic validation; it does not admit previously rejected source or IR.
   Both branches and dead tails are inspected. Each operand must also qualify.
 - All unlisted calls, untyped/mixed parameters (including optional-null ones), methods, arrows,
   arrays/objects, foreach, unknown forms and top-level main remain excluded from
-  ScalarFrame. A separate [straight-line flat-array lane](owned-array-slot-values.md#first-generated-scope-and-expression-ownership)
+  ScalarFrame. A separate [proved flat-array lane](owned-array-slot-values.md#first-generated-scope-and-expression-ownership)
   can select nullary globals; all other excluded scopes keep value maps.
   No runtime guessing, per-value fallback or
   interprocedural return-type assumption selects a frame.
@@ -82,7 +82,7 @@ types/arity/nil Execution and preservation of the caller's tokenizer state.
 Scalar temporaries remain ordinary Go values. The separate internal
 [owned value temporary](owned-array-slot-values.md#owned-value-temporaries)
 can capture/transfer/release scalar-array snapshots through a separate opt-in
-ValueSlot/ValueTemporary facade. A separate nullary straight-line generated lane
+ValueSlot/ValueTemporary facade. A separate nullary generated lane with bounded if/while
 now uses these temporaries; ScalarFrame itself remains scalar-only. This does
 not implement general shared-array lifetimes or a PHP exception model.
 

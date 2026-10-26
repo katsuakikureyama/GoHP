@@ -15,52 +15,109 @@ const (
 	flatArrayValue
 )
 
-// ownedValueLocals proves the entire straight-line, nullary global scope after
-// semantic validation. No host array, unlisted call result, alias or nested element can
-// enter it. Domains follow all assignments, including dead tails. Unsupported
-// scopes retain the legacy map; this proof does not broaden PHP admission.
-// Control-flow statements need a separate join/loop proof and are not selected.
+// ownedValueLocals proves a nullary global scope after semantic validation.
+// No host array, unlisted call result, alias or nested element can enter it.
+// Branches join conservatively; loops require a domain invariant at every write,
+// not just at their textual end. Unsupported scopes retain the legacy map.
+// This storage proof never broadens PHP admission or definite assignment.
 func ownedValueLocals(f ir.Function) ([]string, bool) {
 	if len(f.Params) != 0 {
 		return nil, false
 	}
-	locals := map[string]valueDomain{}
-	hasArray := false
-	for _, stmt := range f.Body {
-		domain := ownedValueDomain(stmt.Expr, locals)
-		if domain == 0 {
-			return nil, false
-		}
-		hasArray = hasArray || domain&flatArrayValue != 0
-		switch stmt.Kind {
-		case "assign":
-			locals[stmt.Name] = domain
-		case "assign_index":
-			if domain != scalarValue || locals[stmt.Target.Args[0].Text] != flatArrayValue || ownedValueDomain(stmt.Target.Args[1], locals) != scalarValue {
-				return nil, false
-			}
-		case "assign_append":
-			if domain != scalarValue || locals[stmt.Target.Text] != flatArrayValue {
-				return nil, false
-			}
-		case "echo", "call_stmt":
-			if domain != scalarValue {
-				return nil, false
-			}
-		case "return":
-		default:
-			return nil, false
-		}
-	}
-	if !hasArray {
+	proof := ownedValueProof{names: map[string]bool{}}
+	if !proof.body(f.Body, map[string]valueDomain{}, nil) || !proof.hasArray {
 		return nil, false
 	}
-	names := make([]string, 0, len(locals))
-	for name := range locals {
+	names := make([]string, 0, len(proof.names))
+	for name := range proof.names {
 		names = append(names, name)
 	}
 	sort.Strings(names)
 	return names, true
+}
+
+type ownedValueProof struct {
+	names    map[string]bool
+	hasArray bool
+}
+
+func cloneValueDomains(source map[string]valueDomain) map[string]valueDomain {
+	copy := make(map[string]valueDomain, len(source))
+	for name, domain := range source {
+		copy[name] = domain
+	}
+	return copy
+}
+
+// limits contains the invariant for every active loop-entry local. Branch/body
+// locals still need lexical definite assignment before reads on each iteration.
+// They get a reusable function-owned slot, never a Go defer inside the loop.
+func (proof *ownedValueProof) body(body []ir.Stmt, locals, limits map[string]valueDomain) bool {
+	for _, stmt := range body {
+		if stmt.Kind == "break" || stmt.Kind == "continue" {
+			// Semantic validation checks the enclosing loop and empty payload.
+			// Inspect dead tails in a detached environment without rewriting the
+			// caller's state at the reachable transfer. Invariants still apply.
+			locals = cloneValueDomains(locals)
+			continue
+		}
+		domain := ownedValueDomain(stmt.Expr, locals)
+		if domain == 0 {
+			return false
+		}
+		proof.hasArray = proof.hasArray || domain&flatArrayValue != 0
+		switch stmt.Kind {
+		case "assign":
+			if limit, constrained := limits[stmt.Name]; constrained && domain&^limit != 0 {
+				return false
+			}
+			proof.names[stmt.Name] = true
+			locals[stmt.Name] = domain
+		case "assign_index":
+			if domain != scalarValue || locals[stmt.Target.Args[0].Text] != flatArrayValue || ownedValueDomain(stmt.Target.Args[1], locals) != scalarValue {
+				return false
+			}
+		case "assign_append":
+			if domain != scalarValue || locals[stmt.Target.Text] != flatArrayValue {
+				return false
+			}
+		case "echo", "call_stmt":
+			if domain != scalarValue {
+				return false
+			}
+		case "return":
+			locals = cloneValueDomains(locals) // Still inspect unreachable code.
+		case "if":
+			left, right := cloneValueDomains(locals), cloneValueDomains(locals)
+			if !proof.body(stmt.Body, left, limits) || !proof.body(stmt.ElseBody, right, limits) {
+				return false
+			}
+			// Keep the entry state too: no constant/return-sensitive pruning and
+			// no promotion of branch-only names, even when both arms define one.
+			for name, before := range locals {
+				locals[name] = before | left[name] | right[name]
+			}
+		case "while":
+			loopLimits := cloneValueDomains(limits)
+			for name, before := range locals {
+				if outer, constrained := loopLimits[name]; constrained {
+					loopLimits[name] = outer & before
+				} else {
+					loopLimits[name] = before
+				}
+			}
+			if !proof.body(stmt.Body, cloneValueDomains(locals), loopLimits) {
+				return false
+			}
+			// Every write stays within the header domain, including before any
+			// break/continue/return and in nested loops. The unchanged header is
+			// therefore a sound upper bound for zero or arbitrarily many trips,
+			// subsequent condition evaluations and every post-loop local.
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 func ownedValueDomain(e ir.Expr, locals map[string]valueDomain) valueDomain {
