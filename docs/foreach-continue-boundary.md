@@ -1,13 +1,14 @@
 # Bounded foreach continue
 
 Bare `continue;` (case-insensitive) skips the remainder of the current iteration
-of the nearest lexically enclosing `foreach`. It is permitted in nested braced
+of the nearest lexically enclosing `foreach` or [bounded while](while-boundary.md).
+For while, it re-evaluates the condition before the next iteration. It is permitted in nested braced
 `if` / `elseif` / `else` blocks, nested foreach loops, named functions and methods
 containing their own foreach. Calling a function from a loop does not give that
 function a loop context. It does not exit the loop or advance an outer loop.
 
 The frontend emits a payload-free `continue` statement in IR v0.1. Semantic
-validation tracks foreach context separately for every function/method and
+validation tracks loop context separately for every function/method and
 rejects continue outside a loop, even in a dead branch. Expressions, levels,
 targets, bodies and other hidden payloads on a continue IR node are rejected.
 Codegen emits an ordinary Go continue with the PHP statement source mapping;
@@ -21,7 +22,7 @@ still do not escape, and all supported/unsupported dead statements are checked.
 Existing foreach snapshot iteration and array-copy behavior remain unchanged.
 
 Explicit numeric levels (including `continue 1`), expressions, unbraced bodies,
-while/for/do loops and switch are not added. Bare
+for/do loops and switch are not added. Braced while is tracked separately. Bare
 [foreach break](foreach-break-boundary.md) is tracked separately. No warning/exception
 equivalence or PHP 8.4 support is claimed. Tests link through catalog entry
 `php.syntax.foreach_continue`, status `partial`; native comparison uses the

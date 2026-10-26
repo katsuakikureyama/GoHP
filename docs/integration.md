@@ -1,8 +1,9 @@
 # Gossip builder contract v0.1 (proposal)
 
-[Bare foreach break](foreach-break-boundary.md) adds an incremental loop-exit
-contract. Owned token-array selection with str_starts_with is not a replacement
-for the original render caller's strtok/while/HTML path. Consumer pins and source
+[Bounded while](while-boundary.md) adds condition re-evaluation and nearest-loop
+break/continue, with conservative guards for loop-carried types. Owned token-array
+selection with str_starts_with is not a replacement for the original render
+caller's stateful strtok and HTML processing. Consumer pins and source
 certification remain separate; local gohp.cli.generate stays WebMCP-excluded,
 without route/auth/deployment changes.
 
@@ -48,6 +49,17 @@ functions plus an owned data-holder class and composition driver exercise output
 serialization skip decisions followed by class-necessity decisions. The earlier
 26-original/334-case binary remains unchanged. This is not a 27-original/358-case
 combined PASS, nor a claim about registry, render hooks, CSS or HTML generation.
+
+[Gossip PR #40](https://github.com/katsuakikureyama/Gossip/pull/40), merged as
+`d6d7adfee959826fdc5d3960d55a3ff01920433f`, moves owned holder construction and
+property assignment into translated PHP at exact GoHP #71 pin
+`ce38319b4245ccea0a7ae627f53b4396acabfce6`. Its separately measured one-binary run
+passes the retained 24-case corpus (16 direct/8 composed): three unchanged
+originals, two owned functions and one owned data class. Source input and the
+other observed inputs remain unchanged. Neither observer injects generated
+fields on this path. Earlier 24/334 configurations and pins are unchanged, not
+summed or rerun. This is not original WP_Block_Type/registry/render support or
+adoption of the later break/while increments; no Gossip files are changed here.
 
 [`str_starts_with`](str-starts-with-boundary.md) adds the byte-prefix dependency
 used later in the render caller. Owned token/guard tests do not certify its

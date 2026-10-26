@@ -49,7 +49,7 @@ func TestForeachBreakUnsupportedSource(t *testing.T) {
 		"outer_level":             "foreach ([1] as $v) { foreach ([2] as $w) { break 2; } }",
 		"dynamic_level":           "foreach ([1] as $v) { break $v; }",
 		"parenthesized_level":     "foreach ([1] as $v) { break(1); }",
-		"while":                   "while (true) { break; }",
+		"while_level":             "while (true) { break 1; }",
 		"redeclare":               "function BrEaK() { return 1; }",
 		"dead_semantic":           "foreach ([1] as $v) { break; echo count(false); }",
 		"dead_codegen":            "foreach ([1] as $v) { break; echo $undefined; }",
