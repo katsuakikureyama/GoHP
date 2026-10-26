@@ -25,7 +25,8 @@ describes argument evaluation and default by-value passing; the
 describes declaration checks. Runtime rejection here is a Go failure, not PHP
 TypeError message, stack, catchability or error-side-effect equivalence.
 
-Excluded here: scalar/nullable/union/intersection parameter types, defaults on
+Exact scalar parameters have a [separate boundary](scalar-function-parameters.md).
+Excluded here: nullable/union/intersection parameter types, defaults on
 typed parameters, references, variadics, named arguments and typed methods.
 The separate bounded default rule admits only trailing **untyped** `= null`
 parameters on named global functions; it does not broaden this typed-array

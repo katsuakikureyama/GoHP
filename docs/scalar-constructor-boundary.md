@@ -21,9 +21,9 @@ properties. Static entry facts are updated by assignments; unknown later values
 retain runtime guards. Scalars pass unchanged, including empty strings, byte
 strings and false/zero. No new persistent property type is introduced.
 
-IR uses existing ParamTypes, now allowing canonical int/string/bool only on
-constructors. Global functions retain array/callable parameter support; ordinary
-methods and arrows do not gain scalar annotations. Generated New/NewContext and
+IR uses existing ParamTypes with canonical int/string/bool for constructors.
+Global functions also have a separate [exact scalar parameter contract](scalar-function-parameters.md)
+alongside array/callable support; ordinary methods and arrows do not gain scalar annotations. Generated New/NewContext and
 M/MContext entry paths all reuse the same guards and existing Execution dispatch.
 
 Motivation: original WP_HTML_Span and WP_HTML_Text_Replacement constructors use
@@ -36,7 +36,8 @@ See the [HTML dependency map](html-processor-dependencies.md).
 Catalog checks cover source/IR rejection, entry lowering/source maps, exact
 runtime domains, generated dynamic guards and PHP8.3.36 comparison. Existing
 differential evidence compares stdout/normal exits, not exceptions or arbitrary
-side effects. Later PHP targets remain disabled.
+side effects. PHP 8.4 is now independently active; its evidence is measured
+separately and does not inherit the original PHP 8.3 results.
 
 Capability: existing local `gohp.cli.generate`, WebMCP `excluded`; no new route,
 authentication, service operation, dependency or deployment.

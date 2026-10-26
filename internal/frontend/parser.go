@@ -249,8 +249,8 @@ func (p *parser) function(method bool) ir.Function {
 				switch strings.ToLower(annotation.text) {
 				case "array", "callable":
 				case "int", "string", "bool":
-					if !method || !strings.EqualFold(f.Name, "__construct") {
-						p.fail("scalar parameter declarations require a public constructor")
+					if method && !strings.EqualFold(f.Name, "__construct") {
+						p.fail("scalar parameter declarations require a global function or public constructor")
 					}
 				default:
 					p.fail("unsupported parameter declaration")

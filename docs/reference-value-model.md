@@ -7,7 +7,7 @@ evidence; they must not inherit these results. No compiler/runtime/IR changes
 were introduced by the original design or its PHP-only specification. The first
 implementation is [scalar slot infrastructure](scalar-slot-foundation.md), kept
 with [explicit scalar Frame lifecycle](storage-frame-lifecycle.md) and
-[bounded generated integration](generated-scalar-frames.md) for nullary scalar
+[bounded generated integration](generated-scalar-frames.md) for nullary or all-exact-scalar-parameter
 functions; PHP reference syntax remains unsupported. The native specification below is
 still PHP 8.3-only even though the compiler now has an independent PHP 8.4 target.
 

@@ -75,7 +75,8 @@ The next structural milestone is the [reference/value/assignment foundation](doc
 storage locations, aliases and reference-aware array separation. Its native-PHP
 specification is not generated-Go evidence; references remain unsupported.
 The [first generated-frame integration](docs/generated-scalar-frames.md) now
-uses owned storage for closed nullary scalar functions only; other scopes keep
+uses owned storage for closed scalar functions with no arguments or all exact
+scalar-typed arguments; other scopes keep
 their existing value semantics.
 Declared public properties now accept bounded [simple assignment](docs/public-property-write.md)
 through a statically known generated-class variable (including known aliases
@@ -189,11 +190,13 @@ are checked rather than silently dropping the declaration. Bool returns require
 actual bool values, without weak scalar coercion. Fixed positional `array`
 parameters are checked before the body and receive detached value copies. Named
 global functions may additionally use trailing untyped `= null` defaults; typed
-or method defaults remain excluded. See the
+defaults remain excluded (untyped method null defaults have a separate boundary). See the
 [array parameter boundary](docs/array-parameter-boundary.md). Capture-free
 `fn($value, $key) => expression` arrows can be passed through global `callable`
 parameters and invoked through variables; [this bounded contract](docs/arrow-callable-boundary.md)
 does not include string/method callables, captures or typed arrow signatures.
+Named global functions now accept [exact int/string/bool parameters](docs/scalar-function-parameters.md),
+with entry checks and no weak scalar coercion.
 Public constructors additionally accept [exact int/string/bool parameters](docs/scalar-constructor-boundary.md)
 without weak scalar conversion. Other parameter/return types and typed ordinary methods remain excluded. See the
 [array return boundary](docs/array-return-boundary.md) and

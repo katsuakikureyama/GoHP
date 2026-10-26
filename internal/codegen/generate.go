@@ -23,7 +23,7 @@ type generator struct {
 	suppress bool
 	// Emit execution-aware calls only for programs containing stateful builtins.
 	execution bool
-	// Only closed, parameter-free scalar function bodies use owned storage yet.
+	// Only closed scalar bodies with proven scalar entry values use owned storage.
 	scalarFrame bool
 }
 
@@ -183,7 +183,7 @@ func (g *generator) emit(s string, a ...any) {
 func (g *generator) fail(line int, msg string) { panic(fmt.Errorf("PHP004 line %d: %s", line, msg)) }
 func (g *generator) function(f ir.Function, c string) {
 	previousFrame := g.scalarFrame
-	g.scalarFrame = c == "" && len(f.Params) == 0 && f.ReturnType != "array" && scalarFrameBody(f.Body)
+	g.scalarFrame = c == "" && scalarFrameParameters(f) && f.ReturnType != "array" && scalarFrameBody(f.Body)
 	defer func() { g.scalarFrame = previousFrame }()
 	if g.execution && c == "" {
 		g.emit("func F_%s(args ...any) any { return FContext_%s(&rt.Execution{}, args...) }\n", name(f.Name), name(f.Name))
@@ -216,7 +216,11 @@ func (g *generator) function(f ir.Function, c string) {
 			g.fail(f.Line, "duplicate or reserved parameter "+n)
 		}
 		scope[n] = true
-		if len(f.ParamTypes) != 0 && f.ParamTypes[i] == "array" {
+		if g.scalarFrame {
+			// Selection proves a scalar annotation for every parameter; the
+			// runtime entry guard runs before storing the value or entering PHP.
+			g.emit("v.Write(%q,rt.ScalarParameter(args[%d],%q))\n", n, i, f.ParamTypes[i])
+		} else if len(f.ParamTypes) != 0 && f.ParamTypes[i] == "array" {
 			g.emit("v[%q]=rt.ArrayParameter(args[%d])\n", n, i)
 		} else if len(f.ParamTypes) != 0 && f.ParamTypes[i] == "callable" {
 			g.emit("v[%q]=rt.CallableParameter(args[%d])\n", n, i)
