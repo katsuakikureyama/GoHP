@@ -23,7 +23,7 @@ This is not general expression-statement support. Literal/variable reads,
 binary/ternary expressions, standalone construction, parenthesized calls,
 chained receivers, nullsafe/static calls, assignments inside arguments and
 unbraced conditionals remain outside this increment. Anonymous closures,
-references, destructors, warning/exception equivalence and typed methods are
+references, destructors, warning/exception equivalence and typed ordinary methods are
 not added. Discarding an object result does not add a PHP destructor model.
 
 ## Why this increment

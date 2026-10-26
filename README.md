@@ -170,7 +170,8 @@ or method defaults remain excluded. See the
 `fn($value, $key) => expression` arrows can be passed through global `callable`
 parameters and invoked through variables; [this bounded contract](docs/arrow-callable-boundary.md)
 does not include string/method callables, captures or typed arrow signatures.
-Other parameter and return types and typed methods remain excluded. See the
+Public constructors additionally accept [exact int/string/bool parameters](docs/scalar-constructor-boundary.md)
+without weak scalar conversion. Other parameter/return types and typed ordinary methods remain excluded. See the
 [array return boundary](docs/array-return-boundary.md) and
 [bool return boundary](docs/bool-return-boundary.md).
 Strict scalar `in_array(needle, haystack, true)` is also available: the needle

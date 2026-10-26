@@ -246,8 +246,10 @@ func (p *parser) function() ir.Function {
 			paramType := ""
 			if p.peek().kind == "id" {
 				annotation := p.pop()
-				if !strings.EqualFold(annotation.text, "array") && !strings.EqualFold(annotation.text, "callable") {
-					p.fail("only array/callable parameter declarations are supported")
+				switch strings.ToLower(annotation.text) {
+				case "array", "callable", "int", "string", "bool":
+				default:
+					p.fail("unsupported parameter declaration")
 				}
 				paramType, typed = strings.ToLower(annotation.text), true
 			}
