@@ -722,6 +722,18 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		if err != nil {
 			return valueType{}, err
 		}
+		if strings.EqualFold(expr.Text, "strtok") {
+			if len(args) != 1 && len(args) != 2 {
+				return valueType{}, unsupported(expr.Line, "strtok requires one or two strings")
+			}
+			for _, arg := range args {
+				if arg.kind != stringKind && arg.kind != unknownKind {
+					return valueType{}, unsupported(expr.Line, "strtok requires actual strings")
+				}
+			}
+			// string|false: preserve runtime guards instead of promising a string.
+			return valueType{kind: unknownKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "in_array") {
 			if len(args) != 3 || expr.Args[2].Kind != "bool" || expr.Args[2].Text != "true" {
 				return valueType{}, unsupported(expr.Line, "in_array expects three arguments with literal true strictness")
