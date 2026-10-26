@@ -34,7 +34,38 @@ pointer-only, non-concurrent handles; explicit cleanup is the caller's duty.
 copy does not update ordinary elements in the stored value; explicit value
 assignment back is a separate operation. Do not lower PHP root/element writes
 as an unconditional Read/mutate/Write sequence: that can separate too early.
-Address operations and their evaluation/copy timing remain a later gate.
+
+## Synchronous writes through the owning Slot
+
+`ArrayWrite(key, value)`, `ArrayAppend(value)`, `ArrayBind(key, source)` and
+`ArrayReference(key)` operate directly on the **current** array-valued binding.
+They borrow its owned handle privately for the duration of one synchronous
+call, without creating an array read copy, promoting the outer Slot to a
+reference, or exposing the handle/element Slot. The existing ScalarArray engine
+still owns key normalization, index allocation, validation and separation.
+
+- Outer aliases share the mutation; ordinary array value copies separate on
+  mutation. Element references retain the existing early/late copy-timing rules.
+- Nil/undefined/null/scalar roots reject without autovivification. Unsupported
+  keys, values, sources and exhausted append indices reject before separation;
+  a failed operation must not change subsequent alias behavior.
+- `ArrayBind` changes only the selected element binding. An undefined valid
+  source becomes null only after validation. `ArrayReference` returns a fresh
+  caller-owned alias and creates a missing null element after separation. The
+  caller must `Unset` that alias; rebinding it does not rebind the element.
+- The borrow cannot escape, invoke user code or span a root replacement,
+  rebinding or unset. No extra temporary owner or release obligation is created
+  (apart from the explicitly returned reference). Existing `Slot.Unset` and
+  replacement/rebinding continue to release the payload.
+- Arguments are already evaluated when each method resolves the current root.
+  If an argument's evaluation replaces/rebinds that Slot, mutation targets its
+  new array, not an earlier snapshot. This is an internal API contract, **not**
+  a universal PHP LHS/RHS evaluation rule or a location held across callbacks.
+
+These operations cover one-level scalar elements only. They do not provide
+persistent address handles, nested paths, element deletion, general frames or
+generated temporary lifetime. Future lowering must choose an operation-specific
+address/lifetime contract and verify it against each admitted native target.
 
 ## Keep bounded scalar domains closed
 
@@ -65,18 +96,20 @@ by this storage. The existing value runtime still handles its earlier subset.
 
 ## Evidence and next gate
 
-Six internal unit checks cover owned copies, outer aliases, replacement/final
-release, scalar-domain propagation and invalid Bind without separation. They
+Internal unit checks cover owned copies, outer aliases, replacement/final
+release, scalar-domain propagation, synchronous mutations/current-root lookup,
+and invalid mutations without separation. They
 remain under the **unsupported** reference feature in the catalog. Existing
 scalar Frame ABI checks and both active target CI corpora must remain green.
 PHP 8.3.36 native-only observations in #82 are unchanged; they are not new
 generated-reference or PHP 8.4 native-reference evidence.
 
-R1 remains partial: general generated-frame/temporary integration, writable
-array locations, nested ownership and cyclic reclamation are unfinished. The
-next gate is a bounded owned array location operation with explicit lifetime
-and copy timing, before enabling new reference syntax or replacing runtime
-storage. There is no performance or application-acceptance claim.
+R1 remains partial: synchronous Slot-rooted writes are implemented, but persistent
+locations, general generated-frame/temporary integration, nested ownership and
+cyclic reclamation are unfinished. The next gate is explicit ownership/release
+for generated array temporaries and operation-specific locations across calls,
+before enabling array reference syntax or replacing runtime storage. There is
+no performance or application-acceptance claim.
 
 No compiler/parser/IR/runtime ABI, CLI/capability/auth/WebMCP, target/oracle/CI,
 Gossip pin or deployment change. The local CLI's existing exclusion remains.

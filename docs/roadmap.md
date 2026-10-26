@@ -12,8 +12,9 @@ evidence. This roadmap does not add catalog statuses or a new CLI operation.
 - PHP 8.3 and 8.4 are active closed-subset targets with independent pinned
   oracles. No result covers every patch, PHP feature or application.
 - Functions, value arrays, simple classes and capture-free arrows generate Go.
-  Internal scalar frames, shared scalar arrays and owned array-valued Slots are
-  implemented, but PHP references and generated shared-array integration are not.
+  Internal scalar frames, shared scalar arrays, owned array-valued Slots and
+  synchronous Slot-rooted array mutations are implemented, but PHP references
+  and generated shared-array integration are not.
 - [Gossip's earlier original-source comparisons](integration.md) are useful
   historical evidence at their recorded compiler/source pins. They are neither
   a current-main application result nor a combined WordPress percentage.
@@ -30,7 +31,7 @@ evidence. This roadmap does not add catalog statuses or a new CLI operation.
 |---|---|---|
 | Documentation | README and compatibility tables reorganized; historical target claims distinguished | Keep the entry point, implementation limits and evidence links aligned in each affected change |
 | Application inventory | Whole-file identity, native-token/name evidence and top-six dependency triage available; grammar/name resolution and dependency closure unresolved, no percentage | Follow the observed hook/global/reference/callable prerequisites and AST/dependency investigation; retain unknown/unparsed content and separate selection identities |
-| Reference/value integration | R1 partial: internal ownership/storage exists | Finish bounded writable locations and temporary lifetime; then a PHP source → Go binary comparison of reference assignment/update/unset (R2), with rejected unsupported forms |
+| Reference/value integration | R1 partial: internal ownership/storage and synchronous Slot-rooted mutations exist | Finish generated temporary lifetime and locations across calls; then a PHP source → Go binary comparison of reference assignment/update/unset (R2), with rejected unsupported forms |
 | Performance baseline | Planned; no PHP/Go benchmark | Publish one reproducible, output-checked small workload per target, separating build, startup, execution and memory measurements |
 | Frontend adapter | Assessment only; no candidate installed | Audit/pin a candidate and demonstrate target-aware parsing, diagnostics/spans and supported-IR parity in shadow mode before replacement |
 | Application acceptance | Earlier bounded Gossip runs only | Translate an unchanged complete application unit and its actual dependency closure; compare behavior at exact application/compiler/oracle pins |
@@ -111,9 +112,10 @@ this document changes none of them.
 ## Reference milestone
 
 Use the existing [R0–R5 gates](reference-value-model.md#delivery-gates-and-status),
-not a second storage engine. R1 needs explicit writable-location and temporary
-lifetimes without changing PHP syntax acceptance. Its internal unit results do
-not count as reference support.
+not a second storage engine. R1 now has synchronous one-level mutations through
+the owning Slot, without a Read/copy/writeback temporary. Persistent locations
+and generated temporary lifetimes still need explicit contracts without changing
+PHP syntax acceptance. Its internal unit results do not count as reference support.
 
 The first end-to-end R2 target is bounded scalar variable reference assignment,
 write-through, rebinding and unset. For each admitted PHP target, compare source
