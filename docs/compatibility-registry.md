@@ -1,4 +1,4 @@
-# Compatibility registry and verification ledger (design v0.1)
+# Compatibility registry and verification ledger (design v0.2)
 
 ## Decision and delivery status
 
@@ -49,7 +49,7 @@ Appearing in a fixture does not prove every aspect of a feature.
 
 ## Run ledger: what was checked and passed?
 
-CI publishes a distinct `gohp.compatibility.run/v0.1` JSON artifact for each
+CI publishes a distinct `gohp.compatibility.run/v0.2` JSON artifact for each
 active target job: PHP 8.3 and PHP 8.4. The same bounded corpus is executed
 independently for each target. A later series receives its own policy/matrix
 entry and artifact only after it is explicitly enabled.
@@ -60,6 +60,13 @@ report would require a different commit. Record:
 - Unique run/attempt/job ID, immutable evidence URL, timestamp and command.
 - Exact Go version, OS/architecture, flags, runtime revision, PHP target and
   actual oracle version, plus reference image content digest.
+- A bounded, pre-suite PHP CLI startup baseline and canonical JSON SHA-256:
+  SAPI, integer size, default timezone, an explicit allowlist of INI values,
+  available selected locale categories, and sorted regular/Zend extension names
+  with nullable versions. It is captured by a separate `php -r` process with
+  the suite's inherited environment; a probe error or malformed value rejects
+  the run before tests. The hash catches accidental metadata mismatch, not
+  producer tampering.
 - Case ID, linked feature IDs, fixture hashes and generated-source hashes where
   applicable. Changed fixtures must not silently reuse older results.
 - Separate `parse`, `codegen`, `go-build`, `go-execute`, `differential` phases,
@@ -75,6 +82,20 @@ The current differential harness measures stdout equality and successful exit
 only. The missing-key check measures explicit Go failure and source-map location,
 not equivalent PHP errors. Source-map checks are compiler tooling tests, not PHP
 language compatibility evidence.
+
+The PHP baseline is intentionally not a full environment, `phpinfo`, INI dump
+or per-fixture effective-state capture. A fixture may change its own process
+state (for example the booleans fixture sets `LC_CTYPE=C`), and its source hash
+rather than the startup baseline binds that override. The ledger does not use
+configuration metadata to classify native-version changes automatically or to
+claim diagnostic equivalence. The selected values use PHP's documented
+[`phpversion`](https://www.php.net/manual/en/function.phpversion.php),
+[`ini_get`](https://www.php.net/manual/en/function.ini-get.php),
+[`get_loaded_extensions`](https://www.php.net/manual/en/function.get-loaded-extensions.php),
+[`setlocale`](https://www.php.net/manual/en/function.setlocale.php) and
+[`date_default_timezone_get`](https://www.php.net/manual/en/function.date-default-timezone-get.php)
+interfaces. Readers accept v0.1 evidence as historical scope without inventing
+a missing baseline; their generated view is v0.2.
 
 ### Derived per-target view
 
@@ -99,7 +120,7 @@ decision with provenance. Missing evidence never becomes green. Do not average
 mixed targets into a universal compatibility percentage. Tooling entries show
 `compiler-check-pass`, never differential PASS from Go-only unit tests.
 
-There is no blanket `supported`/Done state in v0.1. Future support claims need
+There is no blanket `supported`/Done state in v0.2. Future support claims need
 an owner-reviewed bounded contract, all required cases for every claimed target,
 explicit negative boundaries and all claimed observable dimensions. Arbitrary
 WordPress/Composer application compatibility cannot be derived by counting green

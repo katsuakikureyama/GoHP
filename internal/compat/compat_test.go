@@ -188,5 +188,6 @@ func eventLines(t *testing.T, events []map[string]string) string {
 }
 
 func testMetadata() Metadata {
-	return Metadata{GoVersion: "go1.test", GOOS: "test", GOARCH: "test", PHPTarget: "8.3", PHPVersion: "8.3.30", Command: "go test -json", StartedAt: "2026-10-25T00:00:00Z", Dirty: "clean", Provenance: "local-git"}
+	b := testPHPBaseline("8.3.30")
+	return Metadata{GoVersion: "go1.test", GOOS: "test", GOARCH: "test", PHPTarget: "8.3", PHPVersion: "8.3.30", Command: "go test -json", StartedAt: "2026-10-25T00:00:00Z", Dirty: "clean", Provenance: "local-git", PHPBaseline: b, PHPBaselineSHA256: PHPBaselineHash(b)}
 }

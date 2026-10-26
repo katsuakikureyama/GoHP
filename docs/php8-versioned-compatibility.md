@@ -18,8 +18,9 @@ Keep these identities separate:
 
 - Target series: explicit compiler input, propagated through frontend, IR,
   semantic validation, generated code and relevant runtime operations.
-- Oracle: actual PHP_VERSION, immutable image digest, extensions and versions,
-  php.ini settings, error reporting, locale, timezone and platform details.
+- Oracle: actual PHP_VERSION, immutable image digest, bounded CLI startup
+  baseline (extensions and versions, selected php.ini settings, locale,
+  timezone and platform details), and its canonical metadata hash.
 - Candidate: compiler/runtime commit, generated source hash, Go toolchain,
   platform/build flags and dependency identities.
 - Corpus: stable case IDs, exact source/input hashes, expected outcome per
@@ -72,10 +73,25 @@ mutation and external side effects where relevant. Encode unmeasured dimensions
 explicitly. Nondeterministic fields may be normalized only by documented,
 case-specific rules that preserve meaningful differences.
 
-The current v0.1 harness measures stdout and normal exits; it does not yet
-provide the full diagnostics/state/configuration evidence above. Evolve the
-evidence schema and readers explicitly when adding these fields. Historical
-archives keep their original scope and do not gain new guarantees.
+The current v0.2 harness measures stdout and normal exits, plus a bounded
+startup baseline from one separate `php -r` probe before the suite. The probe
+uses the same inherited environment and records only the documented allowlist:
+CLI SAPI, integer size, default timezone, selected INI settings, selected
+available locale categories and sorted regular/Zend extension lists. It fails
+closed before tests if it cannot produce the required baseline, and a canonical
+JSON SHA-256 detects accidental metadata mismatch. This is not a full
+environment/`phpinfo`/INI capture, per-fixture effective state, authenticity
+proof, reproducibility guarantee or automatic native-version-versus-compiler
+classification. Fixture-local setup—such as the booleans fixture's
+`LC_CTYPE=C`—remains source-hash-bound rather than inferred from the baseline.
+The current harness does not yet provide the full diagnostics/state/configuration
+evidence above. Historical v0.1 archives retain their original scope and no
+baseline is invented for them; the v0.2 reader can display them without granting
+new guarantees. PHP's [`ini_get`](https://www.php.net/manual/en/function.ini-get.php),
+[`get_loaded_extensions`](https://www.php.net/manual/en/function.get-loaded-extensions.php),
+[`setlocale`](https://www.php.net/manual/en/function.setlocale.php) and
+[`date_default_timezone_get`](https://www.php.net/manual/en/function.date-default-timezone-get.php)
+define the corresponding observations.
 
 ## Delivery and current boundary
 

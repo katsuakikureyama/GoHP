@@ -144,11 +144,16 @@ func commandText(program string, args ...string) string {
 }
 
 func metadata() (compat.Metadata, error) {
+	baseline, err := probePHPBaseline()
+	if err != nil {
+		return compat.Metadata{}, err
+	}
 	m := compat.Metadata{
 		Commit: os.Getenv("GOHP_COMMIT"), Tree: os.Getenv("GOHP_TREE"), Dirty: os.Getenv("GOHP_DIRTY"),
 		GoVersion: commandText("go", "version"), GOOS: runtime.GOOS, GOARCH: runtime.GOARCH,
-		PHPVersion: commandText("php", "-r", "echo PHP_VERSION;"),
-		PHPTarget:  os.Getenv("GOHP_PHP_TARGET"), Image: os.Getenv("GOHP_PHP_IMAGE"),
+		PHPVersion:  baseline.PHPVersion,
+		PHPBaseline: baseline, PHPBaselineSHA256: compat.PHPBaselineHash(baseline),
+		PHPTarget: os.Getenv("GOHP_PHP_TARGET"), Image: os.Getenv("GOHP_PHP_IMAGE"),
 		GoImage: os.Getenv("GOHP_GO_IMAGE"), RunURL: os.Getenv("GOHP_RUN_URL"),
 		RunID: os.Getenv("GOHP_RUN_ID"), Attempt: os.Getenv("GOHP_RUN_ATTEMPT"),
 		Command: "go test -count=1 -json ./cmd/... ./internal/... ./runtime ./tests", StartedAt: time.Now().UTC().Format(time.RFC3339Nano),

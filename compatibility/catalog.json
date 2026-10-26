@@ -2119,10 +2119,15 @@
       "kind": "tooling",
       "name": "Read-only archived compatibility views",
       "implementation": "implemented",
-      "contract": "Reads hash-bound catalog/event archives, replays stored verdicts and filters feature rows without merging runs or hiding overall failures.",
+      "contract": "Records a bounded PHP CLI startup baseline and reads v0.1/v0.2 hash-bound archives, replaying stored verdicts without merging runs or hiding overall failures.",
       "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id": "unit.compat.archive", "test": "TestLoadArchiveReplaysWithoutSourceAndRejectsChangedEvidence", "file": "internal/compat/archive_test.go", "kind": "unit", "assertions": ["pass/fail/skip archives replay without source files", "changed hashes, verdicts, phases, duplicates and escaping symlinks are rejected"]},
+        {"case_id": "unit.compat.baseline_archive", "test": "TestPHPBaselineArchiveSchemas", "file": "internal/compat/php_baseline_test.go", "kind": "unit", "assertions": ["legacy and baseline archives retain separate guarantees", "missing, mismatched and changed baseline evidence is rejected"]},
+        {"case_id": "unit.compat.baseline_projection", "test": "TestPHPBaselineProjection", "file": "internal/compat/php_baseline_test.go", "kind": "unit", "assertions": ["allowlisted keys and sorted unique extensions are required", "null and empty values stay distinct and output is escaped"]},
+        {"case_id": "unit.compat.baseline_probe_rejection", "test": "TestProbePHPBaselineRejectsInvalidOracleOutput", "file": "cmd/gohp-compat/php_baseline_test.go", "kind": "unit", "assertions": ["probe failure, diagnostics, incomplete or unbounded JSON fails before test execution"]},
+        {"case_id": "unit.compat.baseline_probe_projection", "test": "TestProbePHPBaselinePreservesProjectionAndHash", "file": "cmd/gohp-compat/php_baseline_test.go", "kind": "unit", "assertions": ["probe retains nullable versions and empty settings with canonical hash"]},
+        {"case_id": "compiler.compat.baseline_native_probe", "test": "TestProbePHPBaselineNativePHP", "file": "cmd/gohp-compat/php_baseline_test.go", "kind": "compiler", "assertions": ["native PHP executes baseline collection and returns the complete projection, not PHP semantic equivalence"]},
         {"case_id": "unit.compat.view", "test": "TestViewKeepsRunsAndFailureVisibleThroughFilters", "file": "internal/compat/archive_test.go", "kind": "unit", "assertions": ["target and status filters retain each run, its overall failure, configuration and all cases", "archive text cannot insert raw HTML or Markdown links"]}
       ],
       "limitations": ["Internal consistency only, not authenticity, source revalidation or CI job success", "No latest/best selection, revision applicability or combined-target support verdict", "No PHP language compatibility claim from these Go-only tooling tests"]

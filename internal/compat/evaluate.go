@@ -59,12 +59,15 @@ type casePayload struct {
 // It deliberately makes absent or contradictory evidence incomplete rather
 // than promoting it to a compatibility pass.
 func Evaluate(c Catalog, events io.Reader, meta Metadata) (Report, error) {
-	return evaluate(c, events, meta, c.fixtureHash)
+	return evaluate(c, events, meta, c.fixtureHash, RunSchema)
 }
 
 type fixtureLookup func(Case) (hash, detail string)
 
-func evaluate(c Catalog, events io.Reader, meta Metadata, fixture fixtureLookup) (Report, error) {
+func evaluate(c Catalog, events io.Reader, meta Metadata, fixture fixtureLookup, schema string) (Report, error) {
+	if err := validateBaseline(schema, meta); err != nil {
+		return Report{}, err
+	}
 	if err := validateMetadata(meta); err != nil {
 		return Report{}, err
 	}
@@ -115,7 +118,7 @@ func evaluate(c Catalog, events io.Reader, meta Metadata, fixture fixtureLookup)
 		}
 	}
 	report := Report{
-		Schema:        "gohp.compatibility.run/v0.1",
+		Schema:        schema,
 		Metadata:      meta,
 		CatalogSHA256: c.SHA256,
 		EventSHA256:   hashBytes(raw),
