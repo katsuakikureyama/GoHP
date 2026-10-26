@@ -3,6 +3,24 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.parser-output-prerequisites",
+      "kind": "syntax",
+      "name": "Bounded method defaults, property append, factory snapshots and byte substr",
+      "implementation": "partial",
+      "contract": "Public untyped methods admit trailing null defaults and bare null returns where untyped returns were valid; known bare-variable declared array properties admit []=RHS once against the current post-RHS slot; sole-return-new methods of known classes retain that object class for existing guarded snapshots; substr accepts actual string/int offset/int-or-null length with byte clamps.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.parser_output","test":"TestDifferential/parser_output","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/parser_output.php","assertions":["stdout","exit","method null defaults/bare and fallthrough null, factory snapshot, seed copies, same-slot RHS reset append ordering, caller execution and byte substr"]},
+        {"case_id":"compiler.parser_output","test":"TestParserOutputLowering","file":"internal/codegen/parser_output_test.go","kind":"compiler","assertions":["canonical bare-null return, method min/max suffix, named declared append IR, guarded factory cast, substr nil padding and statement maps"]},
+        {"case_id":"negative.parser_output.source","test":"TestParserOutputUnsupportedSource","file":"internal/codegen/parser_output_test.go","kind":"negative","assertions":["method arity/type/default, top/typed/constructor bare returns, unknown/nested append, non-simple/foreign factory casts, substr arity/domain/redeclaration reject"]},
+        {"case_id":"negative.parser_output.ir","test":"TestParserOutputMalformedIR","file":"internal/codegen/parser_output_test.go","kind":"negative","assertions":["wrong append target/receiver and extraneous payload rejected before generation"]},
+        {"case_id":"negative.parser_output.runtime","test":"TestParserOutputRuntimeGuards","file":"tests/parser_output_runtime_test.go","kind":"negative","assertions":["unknown actual substr domains and scalar/null property-append slots fail closed"]},
+        {"case_id":"unit.runtime.substr","test":"TestSubstrBounds","file":"runtime/substr_test.go","kind":"unit","assertions":["byte offsets/lengths, empty/zero/NUL/invalidUTF8 and extremeint64 bounds"]},
+        {"case_id":"negative.runtime.substr","test":"TestSubstrRejectsInvalidDomains","file":"runtime/substr_test.go","kind":"negative","assertions":["actual domains checked even on empty selection"]}
+      ],
+      "limitations": ["No scalar coercion, Unicode character slicing, autovivification, references or PHP error equivalence", "Known bare-variable declared public property append only; no nested/indexed/chained/compound writes", "Factory knowledge is restricted to one unconditional return-new body on a known class; no arbitrary return inference or general casts", "No typed/non-null method defaults, named/unpacked/variadic args, constructor bare returns or typed void semantics", "Local CLI WebMCP excluded; unchanged original parser adoption requires separate pinned consumer evidence"]
+    },
+    {
       "id": "php.syntax.form-feed-escape",
       "kind": "syntax",
       "name": "Bounded form-feed string escape",
@@ -63,11 +81,11 @@
       "checks": [
         {"case_id":"diff.constructor_null_defaults","test":"TestDifferential/constructor_null_defaults","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/constructor_null_defaults.php","assertions":["stdout","exit","omitted/null/zero, zero-argument all-optional, case-insensitive names, argument/body ordering, fresh instances and shared strtok execution"]},
         {"case_id":"compiler.constructor_null_defaults","test":"TestConstructorNullDefaults","file":"internal/codegen/constructor_null_defaults_test.go","kind":"compiler","assertions":["optional suffix IR, runtime min/max guard and constructor statement maps"]},
-        {"case_id":"negative.constructor_null_defaults.source","test":"TestConstructorNullDefaultsBoundaries","file":"internal/codegen/constructor_null_defaults_test.go","kind":"negative","assertions":["below/above arity, required-after-optional, typed/nonpublic constructors, ordinary method defaults and direct re-entry reject"]},
+        {"case_id":"negative.constructor_null_defaults.source","test":"TestConstructorNullDefaultsBoundaries","file":"internal/codegen/constructor_null_defaults_test.go","kind":"negative","assertions":["below/above arity, required-after-optional, typed/nonpublic constructors, non-null method defaults and direct re-entry reject"]},
         {"case_id":"negative.constructor_null_defaults.ir","test":"TestConstructorNullDefaultsMalformedIR","file":"internal/codegen/constructor_null_defaults_test.go","kind":"negative","assertions":["negative/excessive optional suffix counts reject before generation"]},
         {"case_id":"negative.constructor_null_defaults.runtime","test":"TestConstructorNullDefaultsRuntimeGuards","file":"tests/constructor_null_defaults_runtime_test.go","kind":"negative","assertions":["unknown actual values retain count/strlen/array-return guards after optional constructor initialization"]}
       ],
-      "limitations": ["Only public untyped constructors with trailing null defaults; no ordinary method defaults, non-null expressions, typed/variadic/reference/named/unpacked parameters or inheritance", "Source arity is bounded even where PHP ignores surplus arguments; runtime panics do not claim PHP error equivalence", "Reuses existing NullDefaultArgs and execution dispatch; no new runtime API, request lifecycle or original WordPress parser adoption", "WebMCP excluded: local developer compiler, not a browser/service operation"]
+      "limitations": ["Constructor entry only; ordinary public method null defaults are covered by parser-output prerequisites; no non-null expressions, typed/variadic/reference/named/unpacked parameters or inheritance", "Source arity is bounded even where PHP ignores surplus arguments; runtime panics do not claim PHP error equivalence", "Reuses existing NullDefaultArgs and execution dispatch; no new runtime API, request lifecycle or original WordPress parser adoption", "WebMCP excluded: local developer compiler, not a browser/service operation"]
     },
     {
       "id": "php.syntax.public-data-class",
@@ -85,7 +103,7 @@
         {"case_id":"negative.runtime.object_array","test":"TestObjectToArrayRejectsOutsideGeneratedPropertyDomain","file":"runtime/object_array_test.go","kind":"negative","assertions":["scalar/array/Closure/nil/unmarked or invalid objects rejected"]},
         {"case_id":"negative.block_constructor.runtime","test":"TestBlockConstructorAndArrayCastRuntimeGuards","file":"tests/block_constructor_runtime_test.go","kind":"negative","assertions":["actual value guards remain after constructor initialization or array snapshot forwarding"]}
       ],
-      "limitations": ["Public untyped constructor only, with optional trailing null defaults; no ordinary method or non-null defaults, annotations, explicit returns, direct re-entry, other magic methods, inheritance or private/static/typed properties", "Known generated-class cast only; no general scalar/array/Closure/unknown/foreign casts, dynamic properties or visibility key mangling", "Explicit defaults remain scalar/null literals; no array defaults, references, general object/error equivalence or HTTP request-lifetime semantics", "Gossip adoption requires separate original class/caller pin and typed observations"]
+      "limitations": ["Public untyped constructor only, with optional trailing null defaults; ordinary methods covered separately; no non-null defaults, annotations, explicit returns, direct re-entry, other magic methods, inheritance or private/static/typed properties", "Known generated-class cast only; no general scalar/array/Closure/unknown/foreign casts, dynamic properties or visibility key mangling", "Explicit defaults remain scalar/null literals; no array defaults, references, general object/error equivalence or HTTP request-lifetime semantics", "Gossip adoption requires separate original class/caller pin and typed observations"]
     },
     {
       "id": "php.syntax.while",
@@ -400,10 +418,10 @@
       "checks": [
         {"case_id":"diff.null_defaults","test":"TestDifferential/null_defaults","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/null_defaults.php","assertions":["stdout","exit","omitted versus explicit null/value arguments, forwarding, literal array_map callback arity and caller-array isolation"]},
         {"case_id":"compiler.null_defaults","test":"TestNullDefaultParametersLowering","file":"internal/codegen/null_defaults_test.go","kind":"compiler","assertions":["OptionalNullParams IR suffix, min/max lowering, parameter guard ordering, forwarding, literal callback adapter and source map"]},
-        {"case_id":"negative.null_defaults","test":"TestNullDefaultParametersBoundary","file":"internal/codegen/null_defaults_test.go","kind":"negative","assertions":["missing/extra arity, non-null/typed/method defaults, required-after-optional, callback below minimum and malformed IR fail closed"]},
+        {"case_id":"negative.null_defaults","test":"TestNullDefaultParametersBoundary","file":"internal/codegen/null_defaults_test.go","kind":"negative","assertions":["missing/extra arity, non-null/typed/method-non-null defaults, required-after-optional, callback below minimum and malformed IR fail closed"]},
         {"case_id":"unit.runtime.null_defaults","test":"TestNullDefaultArgs","file":"runtime/null_default_args_test.go","kind":"unit","assertions":["padding with canonical null leaves caller slice unchanged; invalid bounds and arity panic explicitly"]}
       ],
-      "limitations": ["Only trailing untyped null defaults on named global functions", "No typed or method defaults, non-null expressions, named arguments, references, variadics or general PHP coercion", "Runtime arity failure is not PHP warning/TypeError/catchability equivalence", "Gossip adoption requires a separate pinned original-source comparison"]
+      "limitations": ["Only trailing untyped null defaults on named global functions", "Method null defaults covered separately; no typed defaults, non-null expressions, named arguments, references, variadics or general PHP coercion", "Runtime arity failure is not PHP warning/TypeError/catchability equivalence", "Gossip adoption requires a separate pinned original-source comparison"]
     },
     {
       "id": "php.syntax.bool-return-type",
@@ -1933,7 +1951,7 @@
         }
       ],
       "limitations": [
-        "Statement-only variable root; no nested/property/reference append, empty-bracket reads or assignment expressions",
+        "Variable-root entry only; declared property append covered separately; no nested/reference append, empty-bracket reads or assignment expressions",
         "No undefined/null/scalar auto-vivification, compound assignment or unset",
         "Int64 overflow fails explicitly, not PHP warning/exception equivalence",
         "Eager array copies; no new object alias, cyclic reference or Zend copy-on-write semantics"

@@ -32,7 +32,9 @@ type valueType struct {
 type classInfo struct {
 	properties       map[string]valueType
 	methods          map[string]int
-	constructorArity int // Zero also describes a class without a constructor.
+	methodMinimum    map[string]int
+	methodNewReturn  map[string]string // Only a sole "return new DeclaredClass(...)" body.
+	constructorArity int               // Zero also describes a class without a constructor.
 	constructorMin   int
 }
 
@@ -64,7 +66,7 @@ func Validate(p ir.Program) error {
 		if !validName(c.Name) {
 			return malformed(1, "invalid class name")
 		}
-		info := classInfo{properties: map[string]valueType{}, methods: map[string]int{}}
+		info := classInfo{properties: map[string]valueType{}, methods: map[string]int{}, methodMinimum: map[string]int{}, methodNewReturn: map[string]string{}}
 		for _, property := range c.Properties {
 			if !validName(property.Name) {
 				return malformed(property.Value.Line, "invalid property name")
@@ -79,6 +81,10 @@ func Validate(p ir.Program) error {
 				return malformed(method.Line, "invalid method name")
 			}
 			info.methods[strings.ToLower(method.Name)] = len(method.Params)
+			info.methodMinimum[strings.ToLower(method.Name)] = len(method.Params) - method.OptionalNullParams
+			if len(method.Body) == 1 && method.Body[0].Kind == "return" && method.Body[0].Expr.Kind == "new" {
+				info.methodNewReturn[strings.ToLower(method.Name)] = strings.ToLower(method.Body[0].Expr.Text)
+			}
 			if strings.EqualFold(method.Name, "__construct") {
 				info.constructorArity = len(method.Params)
 				info.constructorMin = len(method.Params) - method.OptionalNullParams
@@ -116,9 +122,6 @@ func Validate(p ir.Program) error {
 func validateParameterTypes(f ir.Function, method bool) error {
 	if f.OptionalNullParams < 0 || f.OptionalNullParams > len(f.Params) {
 		return malformed(f.Line, "invalid optional-null parameter count")
-	}
-	if method && !strings.EqualFold(f.Name, "__construct") && f.OptionalNullParams != 0 {
-		return unsupported(f.Line, "method parameter defaults are unsupported")
 	}
 	if len(f.ParamTypes) != 0 && len(f.ParamTypes) != len(f.Params) {
 		return malformed(f.Line, "parameter types must align with parameter names")
@@ -218,7 +221,7 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 				return err
 			}
 			scope[stmt.Name] = t
-		case "assign_property":
+		case "assign_property", "assign_property_append":
 			target := stmt.Target
 			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || stmt.Body != nil ||
 				target.Kind != "property" || !validName(target.Text) || target.Params != nil || len(target.Args) != 1 {
@@ -870,6 +873,21 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 			return valueType{kind: intKind}, nil
 		}
+		if strings.EqualFold(expr.Text, "substr") {
+			if len(args) < 2 || len(args) > 3 {
+				return valueType{}, unsupported(expr.Line, "substr expects two or three arguments")
+			}
+			if args[0].kind != stringKind && args[0].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "substr requires a string")
+			}
+			if args[1].kind != intKind && args[1].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "substr offset requires int")
+			}
+			if len(args) == 3 && args[2].kind != intKind && args[2].kind != nullKind && args[2].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "substr length requires int or null")
+			}
+			return valueType{kind: stringKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "array_keys") {
 			if len(args) != 1 {
 				return valueType{}, unsupported(expr.Line, "array_keys expects one argument")
@@ -1121,8 +1139,13 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 				if !ok {
 					return valueType{}, unsupported(expr.Line, "unknown method "+receiver.class+"::"+expr.Text)
 				}
-				if len(expr.Args)-1 != arity {
+				if len(expr.Args)-1 > arity || len(expr.Args)-1 < info.methodMinimum[strings.ToLower(expr.Text)] {
 					return valueType{}, unsupported(expr.Line, "unsupported argument count for "+receiver.class+"::"+expr.Text)
+				}
+				if class, ok := info.methodNewReturn[strings.ToLower(expr.Text)]; ok {
+					if _, declared := v.classes[class]; declared {
+						return valueType{kind: objectKind, class: class}, nil
+					}
 				}
 			}
 		}

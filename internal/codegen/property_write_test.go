@@ -95,7 +95,7 @@ func TestPublicPropertyWriteBoundaries(t *testing.T) {
 		"dynamic_property":          `class Box { public $value = null; } $box = new Box(); $name = 'value'; $box->$name = 'after';`,
 		"nested_property":           `class Box { public $value = null; } $box = new Box(); $box->value->next = 'after';`,
 		"property_index":            `class Box { public $value = null; } $box = new Box(); $box->value[0] = 'after';`,
-		"property_append":           `class Box { public $value = null; } $box = new Box(); $box->value[] = 'after';`,
+		"nested_property_append":    `class Box { public $value = null; } $box = new Box(); $box->value[0][] = 'after';`,
 		"compound_assignment":       `class Box { public $value = null; } $box = new Box(); $box->value += 1;`,
 		"reference_assignment":      `class Box { public $value = null; } $box = new Box(); $box->value =& $other;`,
 		"assignment_expression_rhs": `class Box { public $value = null; } $box = new Box(); $result = $box->value = 'after';`,

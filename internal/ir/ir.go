@@ -16,7 +16,7 @@ type Stmt struct {
 	Kind, Name string
 	Line       int
 	Expr       Expr
-	Target     Expr // assign_index: index(variable,key); assign_append: variable; assign_property: property(variable)
+	Target     Expr // assign_index: index(variable,key); assign_append: variable; assign_property/assign_property_append: property(variable)
 	Body       []Stmt
 	ElseBody   []Stmt // if only; nil means absent, non-nil may be empty
 	Key, Value string

@@ -331,7 +331,11 @@ func (p *parser) stmt() ir.Stmt {
 		p.need(";")
 	case p.accept("return"):
 		s.Kind = "return"
-		s.Expr = p.expr(0)
+		if p.peek().kind == "sym" && p.peek().text == ";" {
+			s.Expr = ir.Expr{Kind: "null", Text: "null", Line: s.Line}
+		} else {
+			s.Expr = p.expr(0)
+		}
 		p.need(";")
 	case p.peek().kind == "id" && strings.EqualFold(p.peek().text, "while"):
 		p.pop()
@@ -370,6 +374,10 @@ func (p *parser) stmt() ir.Stmt {
 			s.Target = ir.Expr{Kind: "property", Text: property, Line: s.Line,
 				Args: []ir.Expr{{Kind: "var", Text: s.Name, Line: s.Line}}}
 			s.Name = ""
+			if p.accept("[") {
+				p.need("]")
+				s.Kind = "assign_property_append"
+			}
 			if p.peek().kind != "sym" || p.peek().text != "=" {
 				p.fail("property assignment requires one declared property and =")
 			}

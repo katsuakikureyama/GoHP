@@ -19,7 +19,7 @@ comparison separately, using an exact compiler pin.
   foreach, including nested conditionals. Additional composition fixtures here
   do not replace that implementation or its evidence.
 
-Non-null/expression defaults, typed/ordinary-method/arrow defaults, named arguments,
+Non-null/expression defaults, typed/arrow defaults, named arguments,
 variadics, references, undefined-variable suppression, nested/property isset,
 scalar-root PHP coercions, numeric continue levels and general loop support
 remain excluded. No control-flow narrowing is implied by an isset result.
