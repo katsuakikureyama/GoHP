@@ -843,6 +843,17 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 			return valueType{kind: boolKind}, nil
 		}
+		if strings.EqualFold(expr.Text, "str_starts_with") {
+			if len(args) != 2 {
+				return valueType{}, unsupported(expr.Line, "str_starts_with expects two arguments")
+			}
+			for _, arg := range args {
+				if arg.kind != stringKind && arg.kind != unknownKind {
+					return valueType{}, unsupported(expr.Line, "str_starts_with requires two strings")
+				}
+			}
+			return valueType{kind: boolKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "str_contains") {
 			if len(args) != 2 {
 				return valueType{}, unsupported(expr.Line, "str_contains expects two arguments")

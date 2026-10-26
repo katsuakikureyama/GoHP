@@ -3,6 +3,23 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.str_starts_with",
+      "kind": "builtin",
+      "name": "str_starts_with(string haystack, string needle): bool",
+      "implementation": "partial",
+      "contract": "Two positional actual strings, each evaluated once. Case-sensitive byte prefix comparison returns bool, including true for empty needle. Both domains checked before empty-needle success; middle/suffix matches alone are false.",
+      "php_targets": ["8.3"],
+      "checks": [
+        {"case_id":"diff.str_starts_with","test":"TestDifferential/str_starts_with","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/str_starts_with.php","assertions":["stdout","exit","empty/exact/prefix versus middle/suffix, case-sensitive Unicode and NUL bytes, actual bool, single evaluation, short-circuit and nested coalescing composition"]},
+        {"case_id":"compiler.str_starts_with","test":"TestStrStartsWithLoweringAndSourceMap","file":"internal/codegen/str_starts_with_test.go","kind":"compiler","assertions":["case-insensitive call, typed bool return and statement source map"]},
+        {"case_id":"negative.str_starts_with.source","test":"TestStrStartsWithUnsupportedSource","file":"internal/codegen/str_starts_with_test.go","kind":"negative","assertions":["arity, known nonstrings, undefined reads, invalid dead operands, named/unpacked args, redeclaration, builtin callable lookup and wrong return kind rejected"]},
+        {"case_id":"unit.runtime.str_starts_with","test":"TestStrStartsWithBytes","file":"runtime/str_starts_with_test.go","kind":"unit","assertions":["exact bool for empty/start/exact/middle/suffix/longer needles, case sensitivity, partial UTF-8, NUL and invalid bytes"]},
+        {"case_id":"negative.str_starts_with.domain","test":"TestStrStartsWithRejectsNonStrings","file":"runtime/str_starts_with_test.go","kind":"negative","assertions":["both actual-string domains required, including empty other operand"]},
+        {"case_id":"negative.str_starts_with.runtime","test":"TestStrStartsWithRuntimeGuards","file":"tests/str_starts_with_runtime_test.go","kind":"negative","assertions":["generated dynamic nonstring arguments rejected without coercion or empty-needle bypass"]}
+      ],
+      "limitations": ["No weak scalar/null/object coercion, named arguments, unpacking or builtin callable lookup", "Byte prefix only; no Unicode normalization/case folding, trimming, tokenization or grapheme semantics", "Does not implement remaining WordPress render dependencies or claim unchanged-source consumer adoption; PHP exception/message equivalence excluded"]
+    },
+    {
       "id": "php.builtin.is_object",
       "kind": "builtin",
       "name": "is_object(value)",
