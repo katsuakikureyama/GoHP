@@ -7,9 +7,9 @@ compiler admission or PHP-version compatibility. The default build still uses
 
 This implements B1 of the consumer's [staged contract](https://github.com/katsuakikureyama/Gossip/blob/f6236ac365fbc09e8491e351c46ba013720a6de4/docs/pcre2-bridge-contract.md).
 B2 now has a separate experimental [PHP8.3 value adapter](preg83-value-wrapper.md),
-not compiler builtin admission. B3 (validated writable local output IR/storage)
-remains unfinished. No storage/Frame APIs, generated runtime imports, compiler
-behavior or Gossip pins change through the engine bridge.
+not compiler builtin admission. A separate [B3 local-output compiler experiment](preg83-local-output.md)
+connects a deliberately narrower source profile. No storage/Frame APIs or Gossip
+pins change through the engine bridge itself.
 
 ## Engine contract
 

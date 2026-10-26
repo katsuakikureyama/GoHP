@@ -4,10 +4,10 @@ import "github.com/katsuakikureyama/GoHP/internal/ir"
 
 // Scan validated IR, including dead branches and arrow bodies. Every generated
 // call in a stateful program must propagate the same explicit execution.
-func usesStrtok(p ir.Program) bool {
+func usesExecution(p ir.Program) bool {
 	var expression func(ir.Expr) bool
 	expression = func(e ir.Expr) bool {
-		if e.Kind == "call" && name(e.Text) == "strtok" {
+		if e.Kind == "call" && (name(e.Text) == "strtok" || name(e.Text) == "preg_last_error") {
 			return true
 		}
 		for _, arg := range e.Args {
@@ -20,7 +20,7 @@ func usesStrtok(p ir.Program) bool {
 	var statements func([]ir.Stmt) bool
 	statements = func(stmts []ir.Stmt) bool {
 		for _, s := range stmts {
-			if expression(s.Expr) || expression(s.Target) || statements(s.Body) || statements(s.ElseBody) {
+			if s.Kind == "preg_match_local" || expression(s.Expr) || expression(s.Target) || statements(s.Body) || statements(s.ElseBody) {
 				return true
 			}
 		}

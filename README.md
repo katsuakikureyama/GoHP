@@ -88,6 +88,11 @@ locates frequent candidates' definitions and records unresolved hook/translation
 Earlier [Gossip source comparisons](docs/integration.md) retain their original pins;
 they do not certify current main or a complete WordPress application.
 
+The optional [PHP 8.3 regex local-output experiment](docs/preg83-local-output.md)
+connects a narrow `preg_match` statement to the PCRE2 adapter. It needs explicit
+compiler opt-in and a separately enabled native backend; ordinary CGO0 CI is
+not evidence of PCRE compatibility. PHP 8.4 and general output references remain excluded.
+
 ## Scope and documentation
 
 - [Architecture](docs/architecture.md) and [PHP 8.x versioned design](docs/php8-versioned-compatibility.md)

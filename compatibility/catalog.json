@@ -3,6 +3,24 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "gohp.tooling.preg83-local-output",
+      "kind": "tooling",
+      "name": "Opt-in PHP 8.3 regex compiler boundary (not native compatibility)",
+      "implementation": "partial",
+      "contract": "Default-CGO0 checks for an explicit PHP8.3-only local-output profile: source and IR admission, shared Execution lowering, publication, runtime guards and unavailable-backend failure. These tooling checks may execute under either active ledger target but do not establish PHP regex support for either target.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"compiler.preg83.lowering","test":"TestPreg83CompilerLowering","file":"internal/codegen/preg83_test.go","kind":"compiler","assertions":["explicit local-output IR lowers to detached capture publication and shared Execution with source maps"]},
+        {"case_id":"negative.preg83.source","test":"TestPreg83CompilerUnsupportedSource","file":"internal/codegen/preg83_test.go","kind":"negative","assertions":["undefined/non-null/alias/nested/general-output forms fail before generation"]},
+        {"case_id":"negative.preg83.ir","test":"TestPreg83CompilerMalformedIR","file":"internal/codegen/preg83_test.go","kind":"negative","assertions":["hidden payloads and malformed output signatures reject before generation"]},
+        {"case_id":"negative.preg83.profile","test":"TestPreg83CompilerProfileGate","file":"internal/codegen/preg83_test.go","kind":"negative","assertions":["default, PHP8.4 and unknown profiles cannot admit experimental regex calls"]},
+        {"case_id":"compiler.preg83.cli","test":"TestPreg83CLIProfileAndPublication","file":"cmd/gohp/preg83_test.go","kind":"compiler","assertions":["profile recorded in fresh provenance; rejected source creates no output/report"]},
+        {"case_id":"negative.preg83.local_inputs","test":"TestPreg83LocalRejectsUnmeasuredInputs","file":"runtime/preg83_local_test.go","kind":"negative","assertions":["actual-type and bounded-input failures are explicit and preserve prior error state"]},
+        {"case_id":"negative.preg83.disabled_generated","test":"TestPreg83GeneratedDisabledBackend","file":"tests/preg83_disabled_test.go","kind":"negative","assertions":["actual generated CGO0 program stops explicitly without fabricated PHP false or subsequent publication"]}
+      ],
+      "limitations": ["No native PCRE differential claim from default tooling checks", "Enabled PHP8.3 native comparison is separately opt-in; PHP8.4 profile, general references and WordPress parser execution remain excluded", "Nested captures use the legacy detached-value map lane, not canonical ValueSlot storage"]
+    },
+    {
       "id": "php.builtin.array_all",
       "kind": "builtin",
       "name": "PHP 8.4 array_all with a literal bool callback",

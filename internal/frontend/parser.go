@@ -17,9 +17,17 @@ type token struct {
 	kind string
 }
 type parser struct {
-	ts      []token
-	pos     int
-	version string
+	ts                []token
+	pos               int
+	version           string
+	experimentalPCRE2 bool
+}
+
+// Options selects syntax that is intentionally outside the default closed
+// frontend. Enabling it only records source admission; it never installs or
+// enables a PCRE2 backend for a generated Go build.
+type Options struct {
+	ExperimentalPCRE2 bool
 }
 
 func lex(s string) ([]token, error) {
@@ -204,7 +212,14 @@ func (p *parser) name(kind string) string {
 	}
 	return t.text
 }
-func Parse(src, version string) (out ir.Program, err error) {
+func Parse(src, version string) (ir.Program, error) {
+	return ParseWithOptions(src, version, Options{})
+}
+
+// ParseWithOptions parses the closed subset plus explicitly selected
+// experiments. Semantic validation remains the authority for target/profile
+// admission and for malformed manually constructed IR.
+func ParseWithOptions(src, version string, options Options) (out ir.Program, err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			if x, ok := e.(error); ok {
@@ -221,9 +236,12 @@ func Parse(src, version string) (out ir.Program, err error) {
 	if e != nil {
 		return out, e
 	}
-	p := &parser{ts: ts, version: version}
+	p := &parser{ts: ts, version: version, experimentalPCRE2: options.ExperimentalPCRE2}
 	out.Version = ir.Version
 	out.PHPVersion = version
+	if options.ExperimentalPCRE2 {
+		out.RegexProfile = ir.Preg83Profile
+	}
 	for p.peek().kind != "eof" {
 		switch {
 		case p.accept("function"):
@@ -409,10 +427,80 @@ func (p *parser) stmt() ir.Stmt {
 			p.fail("array assignment requires one level and =")
 		}
 		p.need("=")
-		s.Expr = p.expr(0)
+		if s.Kind == "assign" && p.experimentalPCRE2 && p.startsPregMatchLocal() {
+			s = p.pregMatchLocal(s)
+		} else {
+			s.Expr = p.expr(0)
+		}
 		p.need(";")
 	}
 	return s
+}
+
+// preg_match_local has a deliberately fixed source signature:
+// preg_match('/.../s', $subject, $out, PREG_OFFSET_CAPTURE, $offset).
+// Keeping the writable output outside Expr prevents it being mistaken for an
+// ordinary value argument downstream. The profile flag is deliberately not
+// represented as generic call metadata: this statement kind is the signature.
+func (p *parser) startsPregMatchLocal() bool {
+	return p.pos+1 < len(p.ts) && p.peek().kind == "id" &&
+		strings.EqualFold(p.peek().text, "preg_match") && p.ts[p.pos+1].text == "("
+}
+
+func (p *parser) pregMatchLocal(assign ir.Stmt) ir.Stmt {
+	call := p.pop()
+	p.need("(")
+	pattern := p.preg83Pattern()
+	p.need(",")
+	subject := p.preg83Subject()
+	p.need(",")
+	output := p.pop()
+	if output.kind != "var" {
+		p.fail("preg_match output requires a bare variable")
+	}
+	p.need(",")
+	flag := p.pop()
+	if flag.kind != "id" || flag.text != "PREG_OFFSET_CAPTURE" {
+		p.fail("preg_match requires PREG_OFFSET_CAPTURE")
+	}
+	p.need(",")
+	offset := p.preg83Offset()
+	p.need(")")
+	return ir.Stmt{
+		Kind:   "preg_match_local",
+		Name:   assign.Name,
+		Line:   assign.Line,
+		Target: ir.Expr{Kind: "var", Text: output.text, Line: output.line},
+		Expr: ir.Expr{Kind: "call", Text: "preg_match", Line: call.line,
+			Args: []ir.Expr{pattern, subject, offset}},
+	}
+}
+
+func (p *parser) preg83Pattern() ir.Expr {
+	t := p.pop()
+	if t.kind != "string" || len(t.text) < 3 || t.text[0] != '/' || !strings.HasSuffix(t.text, "/s") {
+		p.fail("preg_match requires a literal /.../s pattern")
+	}
+	return ir.Expr{Kind: "string", Text: t.text, Line: t.line}
+}
+
+func (p *parser) preg83Subject() ir.Expr {
+	t := p.pop()
+	if t.kind != "var" && t.kind != "string" {
+		p.fail("preg_match subject requires a bare string variable or literal")
+	}
+	return ir.Expr{Kind: t.kind, Text: t.text, Line: t.line}
+}
+
+func (p *parser) preg83Offset() ir.Expr {
+	t := p.pop()
+	if t.kind == "sym" && t.text == "-" {
+		return p.negativeInteger(t)
+	}
+	if t.kind != "var" && t.kind != "int" {
+		p.fail("preg_match offset requires a bare integer variable or literal")
+	}
+	return ir.Expr{Kind: t.kind, Text: t.text, Line: t.line}
 }
 
 // Keep assignment parsing (including [] append targets) unchanged. Standalone
