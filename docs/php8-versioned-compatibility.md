@@ -79,16 +79,28 @@ archives keep their original scope and do not gain new guarantees.
 
 ## Delivery and current boundary
 
-Currently only target **8.3** is enabled, with a native oracle admission floor of
-**8.3.36**, and only the documented language subset is implemented. Other PHP
-8.x targets are planned/unverified. This document enables no new targets.
+Targets **8.3** and **8.4** are enabled for the documented language subset.
+Their native oracle admission floors are **8.3.36** and **8.4.27** respectively.
+The default remains 8.3. The target labels, floors, CI image identities and
+target-specific profile rules are source configuration; each target still needs
+its own successful differential evidence for a given revision. The same bounded
+corpus is deliberately executed once per target. An 8.3 PASS is never an 8.4
+PASS, and absence of an 8.4 report is `unverified`, not an inherited success.
+
+PHP 8.4 currently has a small explicit profile: the four new core array
+function names are reserved against declarations, and class `_` is rejected
+because its native deprecation is not modeled. This profile does not implement
+the new functions or reproduce PHP diagnostics. Nullable typed defaults,
+`exit`/`die`, property hooks and asymmetric property visibility remain
+unsupported. See [the PHP 8.4 target contract](php84-target.md).
 
 Implement the direction in bounded increments:
 
 1. Extend target/configuration evidence and per-target expectations where the
    current registry/report schema is insufficient.
-2. Add one additional minor with its own pinned oracle, relevant semantic
-   differences, positive/negative cases and CI job. Keep 8.3 as a regression row.
+2. Extend 8.4 evidence from its independent CI row, then add another minor with
+   its own pinned oracle, relevant semantic differences, positive/negative
+   cases and CI job. Keep enabled targets as regression rows.
 3. Publish target-by-target results, then expand targets and observable behavior
    using the same admission process. No specific new minor is selected here.
 

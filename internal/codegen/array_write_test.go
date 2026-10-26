@@ -15,7 +15,7 @@ $key = 'old';
 $items[$key] = 'after';
 echo $items['old'];
 `
-	p, err := frontend.Parse(source, "8.3")
+	p, err := frontend.Parse(source, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestArrayWriteMalformedTarget(t *testing.T) {
 			if tt.name != "undefined_root" {
 				body = append([]ir.Stmt{{Kind: "assign", Name: "items", Line: 1, Expr: arrayLiteral}}, body...)
 			}
-			p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: body}
+			p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: body}
 			if _, err := Generate(p); err == nil || !strings.Contains(err.Error(), tt.code) {
 				t.Fatalf("malformed array target was not rejected safely: %v", err)
 			}

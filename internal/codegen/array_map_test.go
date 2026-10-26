@@ -9,7 +9,7 @@ import (
 )
 
 func TestArrayMapAndAddSlashesLowerToRuntimeBoundaries(t *testing.T) {
-	p, err := frontend.Parse("<?php $items = ['first' => \"O'Reilly\"]; $mapped = ArRaY_MaP('MaPpEr', $items); foreach ($mapped as $key => $value) { echo $key . ':' . $value; } function mapper($value) { return AdDsLaShEs($value); }", "8.3")
+	p, err := frontend.Parse("<?php $items = ['first' => \"O'Reilly\"]; $mapped = ArRaY_MaP('MaPpEr', $items); foreach ($mapped as $key => $value) { echo $key . ':' . $value; } function mapper($value) { return AdDsLaShEs($value); }", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +51,7 @@ func TestArrayMapAndAddSlashesKnownUnsupportedFormsFailBeforeGeneration(t *testi
 		{"array_result_not_string_for_lowercase", "<?php function mapper($value) { return $value; } echo strtolower(array_map('mapper', []));"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			p, err := frontend.Parse(tt.src, "8.3")
+			p, err := frontend.Parse(tt.src, testTarget(t))
 			if err == nil {
 				_, err = Generate(p)
 			}
@@ -64,7 +64,7 @@ func TestArrayMapAndAddSlashesKnownUnsupportedFormsFailBeforeGeneration(t *testi
 
 func TestArrayMapWrongCallbackIRIsRejectedBeforeGeneration(t *testing.T) {
 	p := ir.Program{
-		Version: ir.Version, PHPVersion: "8.3",
+		Version: ir.Version, PHPVersion: testTarget(t),
 		Functions: []ir.Function{{Name: "wrapper", Params: []string{"value"}, Line: 1, Body: []ir.Stmt{{
 			Kind: "return", Line: 1, Expr: ir.Expr{Kind: "call", Text: "array_map", Line: 1, Args: []ir.Expr{
 				{Kind: "int", Text: "1", Line: 1}, {Kind: "var", Text: "value", Line: 1},

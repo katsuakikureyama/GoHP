@@ -158,7 +158,7 @@ func TestViewKeepsRunsAndFailureVisibleThroughFilters(t *testing.T) {
 	if strings.Contains(md, "<script>") || strings.Contains(md, "[click](javascript:") || strings.Contains(md, "|\nrow") {
 		t.Fatalf("unescaped archive text: %s", md)
 	}
-	for _, f := range []ViewFilter{{Target: "8.4"}, {Kind: "unknown"}, {Status: "supported"}} {
+	for _, f := range []ViewFilter{{Target: "8.5"}, {Kind: "unknown"}, {Status: "supported"}} {
 		if _, err := BuildView([]Report{older}, f); err == nil {
 			t.Fatalf("invalid filter accepted: %+v", f)
 		}

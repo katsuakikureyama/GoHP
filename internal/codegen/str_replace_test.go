@@ -8,7 +8,7 @@ import (
 )
 
 func TestStrReplaceLowersToRuntimeBoundary(t *testing.T) {
-	p, err := frontend.Parse("<?php echo StR_RePlAcE('cat', 'dog', 'cat cat');", "8.3")
+	p, err := frontend.Parse("<?php echo StR_RePlAcE('cat', 'dog', 'cat cat');", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func TestStrReplaceKnownUnsupportedFormsFailBeforeGeneration(t *testing.T) {
 		{name: "redeclare", src: "<?php function StR_RePlAcE($a, $b, $c) { return $a; }"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			p, err := frontend.Parse(tt.src, "8.3")
+			p, err := frontend.Parse(tt.src, testTarget(t))
 			if err == nil {
 				_, err = Generate(p)
 			}

@@ -22,7 +22,7 @@ function later(array $items, callable $callback): bool {
 }
 $callback = Fn($value, $key) => !is_string($key);
 echo forward([-5 => 'value'], $callback, null) ? 'yes' : 'no';
-`, "8.3")
+`, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +93,7 @@ func TestArrowCallableUnsupportedSource(t *testing.T) {
 		{"bool_return", "function take(): bool { return fn() => true; }"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+tc.source, "8.3")
+			p, err := frontend.Parse("<?php "+tc.source, testTarget(t))
 			if err == nil {
 				var output []byte
 				output, err = Generate(p)
@@ -119,7 +119,7 @@ func TestArrowCallableMalformedIR(t *testing.T) {
 		{Kind: "invoke", Args: []ir.Expr{boolean}, Line: 1},
 		{Kind: "invoke", Text: "registry_name", Args: []ir.Expr{{Kind: "var", Text: "cb", Line: 1}}, Line: 1},
 	} {
-		p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: []ir.Stmt{{Kind: "assign", Name: "result", Expr: expr, Line: 1}}}
+		p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: []ir.Stmt{{Kind: "assign", Name: "result", Expr: expr, Line: 1}}}
 		if output, err := Generate(p); err == nil || !strings.Contains(err.Error(), "IR002") || len(output) != 0 {
 			t.Fatalf("malformed IR accepted: %#v: %v", expr, err)
 		}

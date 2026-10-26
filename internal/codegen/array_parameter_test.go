@@ -17,7 +17,7 @@ function mixed(array $left, $flag, ArRaY $right): bool {
     return $left;
 }
 function plain($value) { return $value; }
-`, "8.3")
+`, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +75,7 @@ func TestArrayParameterUnsupportedSource(t *testing.T) {
 		{"named_arg", "function take(array $a) { return $a; } take(a: []);"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+tc.source, "8.3")
+			p, err := frontend.Parse("<?php "+tc.source, testTarget(t))
 			if err == nil {
 				var output []byte
 				output, err = Generate(p)
@@ -92,7 +92,7 @@ func TestArrayParameterUnsupportedSource(t *testing.T) {
 
 func TestArrayParameterMalformedIR(t *testing.T) {
 	for _, annotations := range [][]string{{"array", ""}, {"ARRAY"}, {"bool"}, {"CALLABLE"}, {"?array"}} {
-		p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Functions: []ir.Function{{
+		p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Functions: []ir.Function{{
 			Name: "take", Params: []string{"a"}, ParamTypes: annotations, Line: 1,
 			Body: []ir.Stmt{{Kind: "return", Line: 1, Expr: ir.Expr{Kind: "var", Text: "a", Line: 1}}},
 		}}}
@@ -101,7 +101,7 @@ func TestArrayParameterMalformedIR(t *testing.T) {
 		}
 	}
 	// Validate all signatures before an earlier caller can index later metadata.
-	p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Functions: []ir.Function{
+	p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Functions: []ir.Function{
 		{Name: "caller", Line: 1, Body: []ir.Stmt{{Kind: "return", Line: 1, Expr: ir.Expr{Kind: "call", Text: "later", Line: 1}}}},
 		{Name: "later", ParamTypes: []string{"array"}, Line: 2},
 	}}

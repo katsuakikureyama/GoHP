@@ -28,7 +28,7 @@ foreach ($box->items as $item) { echo $item; }
 echo $box->replace(['three']);
 foreach ($box->items as $item) { echo $item; }
 `
-	p, err := frontend.Parse(source, "8.3")
+	p, err := frontend.Parse(source, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +101,7 @@ func TestPublicPropertyWriteBoundaries(t *testing.T) {
 		"assignment_expression_rhs": `class Box { public $value = null; } $box = new Box(); $result = $box->value = 'after';`,
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			var out []byte
 			if err == nil {
 				out, err = Generate(p)
@@ -127,7 +127,7 @@ func TestPublicPropertyWriteMalformedIR(t *testing.T) {
 			body = append([]ir.Stmt{{Kind: "assign", Name: "box", Line: 1, Expr: ir.Expr{Kind: "new", Text: "Box", Line: 1}}}, body...)
 		}
 		return ir.Program{
-			Version: ir.Version, PHPVersion: "8.3",
+			Version: ir.Version, PHPVersion: testTarget(t),
 			Classes: []ir.Class{{Name: "Box", Properties: []ir.Property{{Name: "items", Value: ir.Expr{Kind: "null", Text: "null", Line: 1}}}}},
 			Body:    body,
 		}

@@ -13,7 +13,7 @@ func TestIssetNegativeLiteralLowering(t *testing.T) {
 		{"- /* gap\n */ 7", "-7"},
 	} {
 		t.Run(tt.key, func(t *testing.T) {
-			p, err := frontend.Parse("<?php\n$items = [];\necho IsSeT($items["+tt.key+"]);", "8.3")
+			p, err := frontend.Parse("<?php\n$items = [];\necho IsSeT($items["+tt.key+"]);", testTarget(t))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -46,7 +46,7 @@ func TestIssetNegativeLiteralBoundary(t *testing.T) {
 	} {
 		t.Run(key, func(t *testing.T) {
 			source := "<?php function marker() { return 1; } $key = 1; $items = []; echo isset($items[" + key + "]);"
-			p, err := frontend.Parse(source, "8.3")
+			p, err := frontend.Parse(source, testTarget(t))
 			if err == nil {
 				var output []byte
 				output, err = Generate(p)

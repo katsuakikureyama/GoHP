@@ -25,7 +25,7 @@ $p->add('abcd');
 $p->add('abcd', 1, 2);
 $short = substr('abcd', 1);
 `
-	p, err := frontend.Parse(source, "8.3")
+	p, err := frontend.Parse(source, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestParserOutputUnsupportedSource(t *testing.T) {
 		"substr_redeclare":        `function SuBsTr($x) { return $x; }`,
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			var out []byte
 			if err == nil {
 				out, err = Generate(p)
@@ -112,7 +112,7 @@ func TestParserOutputMalformedIR(t *testing.T) {
 		"body_payload":   {Kind: "assign_property_append", Target: target, Body: []ir.Stmt{}, Expr: null, Line: 2},
 	} {
 		t.Run(name, func(t *testing.T) {
-			p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Classes: []ir.Class{{Name: "C", Properties: []ir.Property{{Name: "items", Value: null}}}}, Body: []ir.Stmt{{Kind: "assign", Name: "box", Expr: ir.Expr{Kind: "new", Text: "C", Line: 1}, Line: 1}, stmt}}
+			p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Classes: []ir.Class{{Name: "C", Properties: []ir.Property{{Name: "items", Value: null}}}}, Body: []ir.Stmt{{Kind: "assign", Name: "box", Expr: ir.Expr{Kind: "new", Text: "C", Line: 1}, Line: 1}, stmt}}
 			out, err := Generate(p)
 			if err == nil || len(out) != 0 || !strings.Contains(err.Error(), "IR002") {
 				t.Fatalf("malformed IR generated %s: %v", out, err)

@@ -23,7 +23,7 @@ while (true) {
   marker('dead');
 }
 marker('after');`
-	p, err := frontend.Parse(source, "8.3")
+	p, err := frontend.Parse(source, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +71,7 @@ func TestCallStatementUnsupportedSource(t *testing.T) {
 		"no_binding":          "function f() {return 1;} f(); echo $x;",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			var out []byte
 			if err == nil {
 				out, err = Generate(p)
@@ -95,7 +95,7 @@ func TestCallStatementMalformedIR(t *testing.T) {
 		"call_payload":    {Kind: "call_stmt", Expr: ir.Expr{Kind: "call", Text: "strlen", Args: valid.Args, Params: []string{"hidden"}}},
 	} {
 		t.Run(name, func(t *testing.T) {
-			p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: []ir.Stmt{stmt}}
+			p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: []ir.Stmt{stmt}}
 			out, err := Generate(p)
 			if err == nil || len(out) != 0 {
 				t.Fatalf("malformed output %s: %v", out, err)

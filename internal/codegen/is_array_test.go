@@ -8,7 +8,7 @@ import (
 )
 
 func TestIsArrayLowersToRuntimeBoundary(t *testing.T) {
-	p, err := frontend.Parse("<?php function check($value) { return Is_ArRaY($value); } echo check([]);", "8.3")
+	p, err := frontend.Parse("<?php function check($value) { return Is_ArRaY($value); } echo check([]);", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -119,6 +119,7 @@ then use this read-only consumer (all flags precede the directory arguments):
 ```sh
 go run ./cmd/gohp-compat-view -kind builtin build/php74-run build/php83-run
 go run ./cmd/gohp-compat-view -target 8.3 -status unsupported -format json build/php83-run
+go run ./cmd/gohp-compat-view -target 8.4 -format json build/php84-run
 ```
 
 The CLI does not fetch artifacts, invoke tests/PHP/Git, change evidence or write
@@ -148,15 +149,18 @@ Runs remain separate in caller-provided order, including duplicate inputs,
 different revisions/configurations/catalogs and failed/incomplete runs. No run
 is labeled latest, overwritten, ranked or selected as the best result. Filters
 are exact AND matches on feature-row target, kind and status. Target filtering
-does not select runs: an 8.3 run's 7.4 row remains `not-measured` when filtering
-for 7.4. All supplied run headers, original overall results and all case details
+does not select runs: an 8.3 run's 8.4 row remains `not-measured` when filtering
+for 8.4. All supplied run headers, original overall results and all case details
 remain visible, including runs with zero matching rows. There is no combined
 compatibility percentage, promotion or current-revision applicability decision.
-The live runner admits PHP 8.3 only when its actual oracle is at least 8.3.36.
-CI additionally supplies its pinned image identity; local host-PHP runs need no
-container and do not imply a verified image digest. The archive reader may
-display legacy 7.4 and older 8.3 runs, but they are historical evidence rather
-than active compatibility gates.
+The live runner admits PHP 8.3 only when its actual oracle is at least 8.3.36,
+and PHP 8.4 only when its actual oracle is at least 8.4.27. CI supplies a
+separate pinned image identity for each target; local host-PHP runs need no
+container and do not imply a verified image digest. The same bounded corpus is
+run separately for each target. A report has no 8.4 differential verdict until
+the 8.4 execution completes; it cannot inherit the 8.3 result. The archive
+reader may display legacy 7.4 and older 8.3 runs, but they are historical
+evidence rather than active compatibility gates.
 
 Accepted kinds: `syntax`, `operator`, `type`, `builtin`, `extension`, `tooling`,
 `application`. Accepted statuses: `unsupported`, `unverified`,
@@ -172,13 +176,12 @@ Stable ID: `gohp.compat.view`; owner/resource: local GoHP development tool /
 caller-readable archived test evidence. Input schema:
 
 ```json
-{"type":"object","properties":{"archives":{"type":"array","minItems":1,"items":{"type":"string","minLength":1}},"target":{"enum":["","7.4","8.3"]},"kind":{"enum":["","syntax","operator","type","builtin","extension","tooling","application"]},"status":{"enum":["","unsupported","unverified","compiler-check-pass","differential-pass (case-limited)","failed","incomplete","not-measured"]},"format":{"enum":["markdown","json"]}},"required":["archives"],"additionalProperties":false}
+{"type":"object","properties":{"archives":{"type":"array","minItems":1,"items":{"type":"string","minLength":1}},"target":{"enum":["","7.4","8.3","8.4"]},"kind":{"enum":["","syntax","operator","type","builtin","extension","tooling","application"]},"status":{"enum":["","unsupported","unverified","compiler-check-pass","differential-pass (case-limited)","failed","incomplete","not-measured"]},"format":{"enum":["markdown","json"]}},"required":["archives"],"additionalProperties":false}
 ```
 
 The `7.4` filter remains solely for inspecting archived legacy evidence; it
-does not add 7.4 to the active compiler or validation policy. A future 8.4
-filter is added only with that series' explicit policy/matrix and archive schema
-support, never by treating all `8.x` records as interchangeable.
+does not add 7.4 to the active compiler or validation policy. The `8.4` filter
+selects stored 8.4 rows only; it never turns an 8.3 result into 8.4 evidence.
 
 `inspect`: read/validate archives and filters. `prepare`: derive a view in memory.
 `save` / `commit`: none. Result: a versioned view with filter, notice and per-run

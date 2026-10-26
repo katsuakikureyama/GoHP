@@ -29,7 +29,7 @@ $forwarded = forward_render([1]);
 $mapped = array_map('map_value', ['x']);
 echo $one . $two . $three . $forwarded . $mapped[0];
 `
-	p, err := frontend.Parse(source, "8.3")
+	p, err := frontend.Parse(source, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +78,7 @@ func TestNullDefaultParametersBoundary(t *testing.T) {
 		"array_map_below_minimum": "function f($first, $value, $suffix = null) { return $value; } $result = array_map('f', []);",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			if err == nil {
 				_, err = Generate(p)
 			}
@@ -93,7 +93,7 @@ func TestNullDefaultParametersBoundary(t *testing.T) {
 		"typed_optional":           {Name: "f", Params: []string{"value"}, ParamTypes: []string{"array"}, OptionalNullParams: 1, Line: 1},
 	} {
 		t.Run(name, func(t *testing.T) {
-			p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Functions: []ir.Function{function}}
+			p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Functions: []ir.Function{function}}
 			out, err := Generate(p)
 			if err == nil || len(out) != 0 || (!strings.Contains(err.Error(), "PHP00") && !strings.Contains(err.Error(), "IR002")) {
 				t.Fatalf("malformed null-default IR generated output %s: %v", out, err)

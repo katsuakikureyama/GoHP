@@ -8,7 +8,7 @@ import (
 )
 
 func TestIsNullLoweringAndSourceMap(t *testing.T) {
-	p, err := frontend.Parse("<?php\nfunction check($value): bool { return Is_NuLl($value); }\necho check(NULL);", "8.3")
+	p, err := frontend.Parse("<?php\nfunction check($value): bool { return Is_NuLl($value); }\necho check(NULL);", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}

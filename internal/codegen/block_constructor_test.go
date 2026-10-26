@@ -25,7 +25,7 @@ $count = count($shape);
 foreach ($shape as $key => $value) { echo $key; }
 echo $first->label;
 `
-	p, err := frontend.Parse(source, "8.3")
+	p, err := frontend.Parse(source, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,7 +110,7 @@ func TestBlockDataConstructorBoundaries(t *testing.T) {
 		"cast_callable":                `$value = fn($item) => $item; $array = (array)$value;`,
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			var out []byte
 			if err == nil {
 				out, err = Generate(p)
@@ -140,7 +140,7 @@ func TestBlockDataConstructorMalformedIR(t *testing.T) {
 	}
 	program := func(methods []ir.Function, body []ir.Stmt) ir.Program {
 		return ir.Program{
-			Version: ir.Version, PHPVersion: "8.3",
+			Version: ir.Version, PHPVersion: testTarget(t),
 			Classes: []ir.Class{{Name: "Box", Properties: []ir.Property{{Name: "slot", Value: canonicalNull}}, Methods: methods}},
 			Body:    body,
 		}

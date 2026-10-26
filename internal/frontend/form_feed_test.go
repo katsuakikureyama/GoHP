@@ -16,7 +16,7 @@ func TestFormFeedLiteralIR(t *testing.T) {
 		{"\"a" + string([]byte{12}) + "b\"", string([]byte{'a', 12, 'b'})},
 	} {
 		t.Run(tt.source, func(t *testing.T) {
-			p, err := Parse("<?php\n$value = "+tt.source+";\necho $value;", "8.3")
+			p, err := Parse("<?php\n$value = "+tt.source+";\necho $value;", testTarget(t))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -27,7 +27,7 @@ func TestFormFeedLiteralIR(t *testing.T) {
 		})
 	}
 	// Physical LF inside a literal still advances source locations; decoded FF does not.
-	p, err := Parse("<?php\n$value = \"a\n\\fb\";\necho $value;", "8.3")
+	p, err := Parse("<?php\n$value = \"a\n\\fb\";\necho $value;", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,14 +40,14 @@ func TestFormFeedEscapeBoundary(t *testing.T) {
 	// Other PHP escape forms remain outside this closed subset, not silently decoded.
 	for _, literal := range []string{`"\F"`, `"\v"`, `"\e"`, `"\x0c"`, `"\014"`, `"\u{c}"`, `"\$x"`, `"\q"`, `"\f$x"`, `'\F'`} {
 		t.Run(literal, func(t *testing.T) {
-			_, err := Parse("<?php echo "+literal+";", "8.3")
+			_, err := Parse("<?php echo "+literal+";", testTarget(t))
 			if err == nil || !strings.Contains(err.Error(), "PHP002") {
 				t.Fatalf("unsupported literal %s: %v", literal, err)
 			}
 		})
 	}
 	for _, source := range []string{"<?php echo \"\\f", "<?php echo '\\f", "<?php echo \"\\f\\"} {
-		if _, err := Parse(source, "8.3"); err == nil || !strings.Contains(err.Error(), "PHP001") {
+		if _, err := Parse(source, testTarget(t)); err == nil || !strings.Contains(err.Error(), "PHP001") {
 			t.Fatalf("unterminated %q: %v", source, err)
 		}
 	}

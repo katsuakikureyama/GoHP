@@ -8,7 +8,7 @@ import (
 )
 
 func TestArrayKeyLastLoweringAndSourceMap(t *testing.T) {
-	p, err := frontend.Parse("<?php\nfunction last_key(array $a) { return ArRaY_KeY_LaSt($a); }\necho last_key([7 => null]);", "8.3")
+	p, err := frontend.Parse("<?php\nfunction last_key(array $a) { return ArRaY_KeY_LaSt($a); }\necho last_key([7 => null]);", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestArrayKeyLastUnsupportedSource(t *testing.T) {
 		"dead_invalid": "echo true || array_key_last(null);",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			var out []byte
 			if err == nil {
 				out, err = Generate(p)

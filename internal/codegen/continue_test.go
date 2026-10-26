@@ -38,7 +38,7 @@ function retained(array $items): array {
 }
 echo collect([['a', 'skip', 'b'], ['skip', 'c']]);
 `
-	p, err := frontend.Parse(source, "8.3")
+	p, err := frontend.Parse(source, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +91,7 @@ func TestContinueForeachBoundary(t *testing.T) {
 		"call_form":     "foreach ([] as $item) { continue(); }",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			if err == nil {
 				_, err = Generate(p)
 			}
@@ -109,7 +109,7 @@ func TestContinueForeachBoundary(t *testing.T) {
 		"else_body": {Kind: "continue", ElseBody: []ir.Stmt{}, Line: 2},
 	} {
 		t.Run(name, func(t *testing.T) {
-			p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: []ir.Stmt{{Kind: "foreach", Line: 1, Expr: ir.Expr{Kind: "array", Line: 1}, Value: "item", Body: []ir.Stmt{stmt}}}}
+			p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: []ir.Stmt{{Kind: "foreach", Line: 1, Expr: ir.Expr{Kind: "array", Line: 1}, Value: "item", Body: []ir.Stmt{stmt}}}}
 			out, err := Generate(p)
 			if err == nil || len(out) != 0 || !strings.Contains(err.Error(), "IR002") {
 				t.Fatalf("malformed continue IR generated output %s: %v", out, err)

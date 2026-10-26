@@ -9,7 +9,7 @@ import (
 )
 
 func TestArrayAppendLoweringAndSourceMap(t *testing.T) {
-	p, err := frontend.Parse("<?php\n$items = [];\n$items[] = 'added';\n", "8.3")
+	p, err := frontend.Parse("<?php\n$items = [];\n$items[] = 'added';\n", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,7 +47,7 @@ func TestArrayAppendMalformedTarget(t *testing.T) {
 		{"legacy_name", variable, "items"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: []ir.Stmt{
+			p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: []ir.Stmt{
 				{Kind: "assign", Name: "items", Line: 1, Expr: ir.Expr{Kind: "array"}},
 				{Kind: "assign_append", Name: tt.legacy, Target: tt.target, Expr: value, Line: 2},
 			}}

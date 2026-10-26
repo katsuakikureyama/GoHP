@@ -9,7 +9,7 @@ import (
 )
 
 func TestForeachContinueLoweringAndSourceMap(t *testing.T) {
-	p, err := frontend.Parse("<?php\nforeach ([1, 2] as $v) {\n if ($v === 1) {\n  CoNtInUe;\n  echo 'dead-tail';\n }\n echo $v;\n}\necho 'after';", "8.3")
+	p, err := frontend.Parse("<?php\nforeach ([1, 2] as $v) {\n if ($v === 1) {\n  CoNtInUe;\n  echo 'dead-tail';\n }\n echo $v;\n}\necho 'after';", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +58,7 @@ func TestForeachContinueUnsupportedSource(t *testing.T) {
 		"loop_binding":            "foreach ([1] as $v) { continue; $x = 1; } echo $x;",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			var out []byte
 			if err == nil {
 				out, err = Generate(p)
@@ -80,7 +80,7 @@ func TestForeachContinueMalformedIR(t *testing.T) {
 		"else": {Kind: "continue", ElseBody: []ir.Stmt{}},
 	} {
 		t.Run(name, func(t *testing.T) {
-			p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: []ir.Stmt{{Kind: "foreach", Value: "v", Expr: ir.Expr{Kind: "array"}, Body: []ir.Stmt{stmt}}}}
+			p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: []ir.Stmt{{Kind: "foreach", Value: "v", Expr: ir.Expr{Kind: "array"}, Body: []ir.Stmt{stmt}}}}
 			out, err := Generate(p)
 			if err == nil || len(out) != 0 || !strings.Contains(err.Error(), "IR002") {
 				t.Fatalf("malformed continue produced %s: %v", out, err)
@@ -88,7 +88,7 @@ func TestForeachContinueMalformedIR(t *testing.T) {
 		})
 	}
 	for _, body := range [][]ir.Stmt{{{Kind: "continue"}}, {{Kind: "if", Expr: ir.Expr{Kind: "bool", Text: "false"}, Body: []ir.Stmt{{Kind: "continue"}}}}} {
-		p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: body}
+		p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: body}
 		if out, err := Generate(p); err == nil || len(out) != 0 || !strings.Contains(err.Error(), "enclosing foreach") {
 			t.Fatalf("outside-loop IR: %s, %v", out, err)
 		}
@@ -98,7 +98,7 @@ func TestForeachContinueMalformedIR(t *testing.T) {
 func TestForeachContinueDeadTailTypeState(t *testing.T) {
 	// The reachable false assignment must not be hidden by the dead array
 	// assignment, or scalar echo after the loop is incorrectly rejected.
-	p, err := frontend.Parse("<?php $a = []; foreach ([1] as $v) { $a = false; continue; $a = []; } echo $a;", "8.3")
+	p, err := frontend.Parse("<?php $a = []; foreach ([1] as $v) { $a = false; continue; $a = []; } echo $a;", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}

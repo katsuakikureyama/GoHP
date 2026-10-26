@@ -15,7 +15,7 @@ import (
 
 func TestIfStatementSourceMap(t *testing.T) {
 	const php = "<?php\nif (true) {\n echo 'outer';\n if (false) {\n  echo 'inner';\n }\n}\n"
-	p, err := frontend.Parse(php, "8.3")
+	p, err := frontend.Parse(php, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +66,7 @@ echo '// gohp:end';
 echo 'line
 // gohp:begin 999';
 `
-	for _, target := range []string{"8.3"} {
+	for _, target := range []string{testTarget(t)} {
 		t.Run(target, func(t *testing.T) {
 			p, err := frontend.Parse(php, target)
 			if err != nil {
@@ -160,7 +160,7 @@ echo 'line
 }
 
 func TestSourceMapUnknownPositionsAndFailure(t *testing.T) {
-	p, err := frontend.Parse("<?php echo 1; echo 2;", "8.3")
+	p, err := frontend.Parse("<?php echo 1; echo 2;", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -176,7 +176,7 @@ func TestSourceMapUnknownPositionsAndFailure(t *testing.T) {
 			}
 		}
 	}
-	_, empty, err := GenerateWithMap(ir.Program{Version: ir.Version, PHPVersion: "8.3"})
+	_, empty, err := GenerateWithMap(ir.Program{Version: ir.Version, PHPVersion: testTarget(t)})
 	if err != nil || empty.Mappings == nil || len(empty.Mappings) != 0 {
 		t.Fatalf("empty map should serialize as [], got %+v, %v", empty, err)
 	}

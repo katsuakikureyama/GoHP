@@ -8,7 +8,7 @@ import (
 )
 
 func TestNegativeIntegerLiteralLowering(t *testing.T) {
-	p, err := frontend.Parse("<?php\n$items = [-5 => 'first'];\n$items[-4] = 'written';\n$items[] = -3;\n", "8.3")
+	p, err := frontend.Parse("<?php\n$items = [-5 => 'first'];\n$items[-4] = 'written';\n$items[] = -3;\n", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 func TestStrContainsLoweringAndSourceMap(t *testing.T) {
-	p, err := frontend.Parse("<?php\nfunction contains($h, $n): bool { return StR_CoNtAiNs($h, $n); }\necho contains('abc', 'b') === true;", "8.3")
+	p, err := frontend.Parse("<?php\nfunction contains($h, $n): bool { return StR_CoNtAiNs($h, $n); }\necho contains('abc', 'b') === true;", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +40,7 @@ func TestStrContainsUnsupportedSource(t *testing.T) {
 		"array_return":     "function bad(): array { return str_contains('a', ''); }",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			var out []byte
 			if err == nil {
 				out, err = Generate(p)

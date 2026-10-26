@@ -9,7 +9,7 @@ import (
 )
 
 func TestStrtokLoweringAndSourceMap(t *testing.T) {
-	p, err := frontend.Parse("<?php\nfunction token($d) { return StRtOk($d); }\n$t = strtok('a,b', ',');\necho token(',');", "8.3")
+	p, err := frontend.Parse("<?php\nfunction token($d) { return StRtOk($d); }\n$t = strtok('a,b', ',');\necho token(',');", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,7 +47,7 @@ func TestStrtokUnsupportedSource(t *testing.T) {
 		"redeclare": "function StRtOk($x) { return $x; }", "builtin_callback": "$a = array_map('strtok', [',']);",
 	} {
 		t.Run(label, func(t *testing.T) {
-			p, err := frontend.Parse("<?php "+source, "8.3")
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
 			var out []byte
 			if err == nil {
 				out, err = Generate(p)
@@ -64,7 +64,7 @@ func TestStrtokMalformedIR(t *testing.T) {
 		{Kind: "call", Text: "strtok", Args: []ir.Expr{{Kind: "string", Text: ","}}, Params: []string{"hidden"}},
 		{Kind: "call", Text: "strtok", Args: []ir.Expr{{Kind: "string", Text: ",", Args: []ir.Expr{{Kind: "null", Text: "null"}}}}},
 	} {
-		p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Body: []ir.Stmt{{Kind: "echo", Expr: expr}}}
+		p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Body: []ir.Stmt{{Kind: "echo", Expr: expr}}}
 		out, err := Generate(p)
 		if err == nil || len(out) != 0 || !strings.Contains(err.Error(), "IR002") {
 			t.Fatalf("malformed: %s %v", out, err)

@@ -9,7 +9,7 @@ import (
 
 func TestElseifNormalizationAndSourceMap(t *testing.T) {
 	const php = "<?php\nif ('') {\n echo 'first';\n} elseif ('0') {\n echo 'second';\n} else\nif ('ok') {\n echo 'third';\n} else {\n echo 'fallback';\n}\n"
-	p, err := frontend.Parse(php, "8.3")
+	p, err := frontend.Parse(php, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}

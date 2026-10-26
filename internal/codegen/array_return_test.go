@@ -19,7 +19,7 @@ function guarded($items, $choose): array {
     }
 }
 `
-	p, err := frontend.Parse(source, "8.3")
+	p, err := frontend.Parse(source, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +49,7 @@ func TestArrayReturnTypeMixedCaseAndForwardCallLowering(t *testing.T) {
 	p, err := frontend.Parse(`<?php
 function first($items): ArRaY { return later($items); }
 function later($items): array { return $items; }
-`, "8.3")
+`, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +70,7 @@ function later($items): array { return $items; }
 func TestArrayReturnTypeMalformedIRAndTypedMethodsFailClosed(t *testing.T) {
 	for _, returnType := range []string{"ARRAY", "string", "?array", "array|int"} {
 		t.Run(returnType, func(t *testing.T) {
-			p := ir.Program{Version: ir.Version, PHPVersion: "8.3", Functions: []ir.Function{{
+			p := ir.Program{Version: ir.Version, PHPVersion: testTarget(t), Functions: []ir.Function{{
 				Name: "result", ReturnType: returnType, Line: 1,
 				Body: []ir.Stmt{{Kind: "return", Line: 1, Expr: ir.Expr{Kind: "array", Line: 1}}},
 			}}}
@@ -80,7 +80,7 @@ func TestArrayReturnTypeMalformedIRAndTypedMethodsFailClosed(t *testing.T) {
 		})
 	}
 
-	p, err := frontend.Parse(`<?php class Item { public function values(): array { return []; } }`, "8.3")
+	p, err := frontend.Parse(`<?php class Item { public function values(): array { return []; } }`, testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func TestArrayReturnUnsupportedSourceFailsClosed(t *testing.T) {
 		"<?php function result(): array { if (false) { return null; } return []; }",
 		"<?php class Item {} function result(): array { return new Item(); }",
 	} {
-		p, err := frontend.Parse(source, "8.3")
+		p, err := frontend.Parse(source, testTarget(t))
 		if err == nil {
 			var output []byte
 			output, err = Generate(p)
@@ -126,7 +126,7 @@ func TestArrayReturnRejectsInvalidElseBranches(t *testing.T) {
 		"independent_else_scope": "$value = ''; if (true) { $value = []; return $value; } else { return $value; }",
 	} {
 		t.Run(name, func(t *testing.T) {
-			p, err := frontend.Parse("<?php function result(): array { "+body+" }", "8.3")
+			p, err := frontend.Parse("<?php function result(): array { "+body+" }", testTarget(t))
 			if err != nil {
 				t.Fatal(err)
 			}

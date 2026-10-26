@@ -8,7 +8,7 @@ import (
 )
 
 func TestIsIntLoweringAndSourceMap(t *testing.T) {
-	p, err := frontend.Parse("<?php\nfunction check($value): bool { return Is_InT($value); }\necho check(0);", "8.3")
+	p, err := frontend.Parse("<?php\nfunction check($value): bool { return Is_InT($value); }\necho check(0);", testTarget(t))
 	if err != nil {
 		t.Fatal(err)
 	}
