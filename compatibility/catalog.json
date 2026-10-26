@@ -2047,7 +2047,7 @@
         {"case_id": "negative.array_nested_write", "test": "TestUnsupported/array_nested_write", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["nested array assignment is rejected"]},
         {"case_id": "negative.reference", "test": "TestUnsupported/reference", "file": "tests/differential_test.go", "kind": "negative", "assertions": ["reference assignment is rejected"]}
       ],
-      "limitations": ["Copy-on-write and PHP reference semantics are not implemented"]
+      "limitations": ["Copy-on-write and PHP reference semantics are not implemented", "docs/reference-value-model.md and tests/oracle/reference_semantics.php specify future contracts only; native-oracle-only results are not generated-Go compatibility evidence"]
     },
     {
       "id": "php.syntax.include-require",

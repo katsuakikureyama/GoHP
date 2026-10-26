@@ -59,6 +59,9 @@ numeric negation and float-promoting tokens remain outside the [bounded syntax](
 Unsupported syntax must fail
 with a diagnostic; a separate runtime-negative test must fail on a missing key.
 Compilation alone never proves PHP compatibility.
+The next structural milestone is the [reference/value/assignment foundation](docs/reference-value-model.md):
+storage locations, aliases and reference-aware array separation. Its native-PHP
+specification is not generated-Go evidence; references remain unsupported.
 Declared public properties now accept bounded [simple assignment](docs/public-property-write.md)
 through a statically known generated-class variable (including known aliases
 and method `$this`). Arrays detach at write/read boundaries; object identifiers
