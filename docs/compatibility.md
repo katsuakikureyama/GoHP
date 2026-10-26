@@ -282,6 +282,16 @@ serialization, hook ordering, or arbitrary nonzero PHP outcomes. Runtime-negativ
 tests verify failure, not equivalent PHP warning behavior. JSON CLI reports record
 source/generated hashes and target, with status `generated`, never automatic PASS.
 
+## Pinned source corpus inspection
+
+`gohp-corpus` checks a caller-provided source directory against a committed,
+whole-file manifest. The first selection is WordPress `wp-includes/functions.php`
+plus separate version/license provenance files. Its result is source identity,
+**not** PHP parsing, application execution or a compatibility percentage.
+Function/syntax/callsite counts remain unmeasured. See the
+[source corpus contract and capability](source-corpus.md) and
+[application measurement criteria](roadmap.md#first-application-inventory).
+
 ## Composer metadata inventory
 
 ```sh

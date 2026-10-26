@@ -77,8 +77,10 @@ exception or side-effect equivalence. Browse [CI runs](https://github.com/katsua
 and the [function/feature evidence](docs/compatibility-ledger.md); test counts are
 **not a PHP or WordPress compatibility percentage**.
 
-The [roadmap](docs/roadmap.md) prioritizes a fixed application corpus and explicit
-denominators, an end-to-end reference milestone, and a small PHP/Go benchmark.
+The first [source corpus](docs/source-corpus.md) pins one whole WordPress file;
+the offline inspector checks its identity, not PHP compatibility. The
+[roadmap](docs/roadmap.md) prioritizes syntax/callsite denominators, an end-to-end
+reference milestone, and a small PHP/Go benchmark.
 Application coverage and performance comparisons are **not yet measured**.
 Earlier [Gossip source comparisons](docs/integration.md) retain their original pins;
 they do not certify current main or a complete WordPress application.
