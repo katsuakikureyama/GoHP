@@ -1,0 +1,71 @@
+{
+  "schema": "gohp.corpus.manifest/v0.1",
+  "id": "wordpress-dependency-triage-54106f6",
+  "upstream": {
+    "repository": "https://github.com/WordPress/WordPress",
+    "revision": "54106f6c545fc8b881f6b39b7963002bece6c28c",
+    "version": "7.2-beta1-64693"
+  },
+  "selection": {
+    "unit": "whole-file",
+    "exclusions": "Initial named-definition inspection selects all bytes, including unsupported and unparsed content, of wp-includes/functions.php, wp-includes/plugin.php, wp-includes/class-wp-hook.php, wp-includes/l10n.php, wp-includes/option.php, and wp-includes/formatting.php, plus the directly required wp-includes/class-wp-filter-sentinel.php. This is not a dependency closure or executable bundle. Other WordPress core, plugin, theme, cache, database, and translation sources are excluded and unresolved; license.txt and wp-includes/version.php are notice/provenance only. No extracted functions or owned substitutes are selected.",
+    "dependencies": "unresolved"
+  },
+  "php_targets": ["8.3", "8.4"],
+  "files": [
+    {
+      "path": "wp-includes/functions.php",
+      "role": "source",
+      "bytes": 305835,
+      "sha256": "456ab4cc7a6e6f05b061f2b1905f44233f8906774c461f90c5b80b9841303ccc"
+    },
+    {
+      "path": "wp-includes/plugin.php",
+      "role": "source",
+      "bytes": 37910,
+      "sha256": "c0996a9afb93220e6bf0cd99fee58f9d32c80698a087ee06da5d76c6ef5c096c"
+    },
+    {
+      "path": "wp-includes/class-wp-hook.php",
+      "role": "source",
+      "bytes": 18189,
+      "sha256": "ecb2c756ee39d9d375599e33a3e7780f78a468f6e83d0e7f268a1f3689a71a5d"
+    },
+    {
+      "path": "wp-includes/class-wp-filter-sentinel.php",
+      "role": "source",
+      "bytes": 760,
+      "sha256": "68c9c675d3805a343835728d98a0efedf0df9833cb904bebf909c7e0fda5c61c"
+    },
+    {
+      "path": "wp-includes/l10n.php",
+      "role": "source",
+      "bytes": 76115,
+      "sha256": "d78b1e65151252a2c693fad08cbc01c86de3f2c63aae2b1622a05f50ff3b9ac7"
+    },
+    {
+      "path": "wp-includes/option.php",
+      "role": "source",
+      "bytes": 109703,
+      "sha256": "662fdda23f4b73bca44c0c4eac206154ec3596da6e1cbcfde828e4c56962a3a0"
+    },
+    {
+      "path": "wp-includes/formatting.php",
+      "role": "source",
+      "bytes": 360279,
+      "sha256": "d44aa1329df2fc38bf2670ad6de570e6b9eb65db9ed5507f26c683e569b2919e"
+    },
+    {
+      "path": "license.txt",
+      "role": "notice",
+      "bytes": 19903,
+      "sha256": "49e97f629ce763abb2f8f1f13da74cb5a8a9a72a0e72a7477d1540c98cef5141"
+    },
+    {
+      "path": "wp-includes/version.php",
+      "role": "provenance",
+      "bytes": 1113,
+      "sha256": "6fbc8cf7e4667ba118b92186eea0c9ec35154476790c218d55ead45eb2a1f1d1"
+    }
+  ]
+}
