@@ -27,7 +27,8 @@ optional/typed/reference parameters, one-parameter callbacks, missing bool
 return declarations and truthiness coercion are deliberately outside this
 bounded contract, even when some are valid native PHP. Existing bool-return
 guards reject unknown non-bool values and fallthrough; their panic is not a PHP
-TypeError-equivalence claim. Other new array search functions remain unsupported.
+TypeError-equivalence claim. [Bounded array_all](array-all-boundary.md) shares
+this callback contract; array_find and array_find_key remain unsupported.
 
 The `php84_array_any` fixture is required only for 8.4. The separate 8.3-only
 user-declaration fixture stays intact. Each target needs its own fixed-oracle

@@ -13,9 +13,10 @@ has its own oracle floor, pinned CI image, corpus execution and evidence; a
 result for one target never proves the other. See the
 [version-specific compatibility design](docs/php8-versioned-compatibility.md).
 
-PHP 8.4 additionally supports a [bounded `array_any`](docs/array-any-boundary.md)
-with a statically named, two-value, bool-returning callback. Its evidence is
-8.4-specific; PHP 8.3 keeps ordinary user declarations of that name.
+PHP 8.4 additionally supports [bounded `array_any`](docs/array-any-boundary.md)
+and [bounded `array_all`](docs/array-all-boundary.md) with statically named,
+two-value, bool-returning callbacks. Their evidence is 8.4-specific; PHP 8.3
+keeps ordinary user declarations of those names.
 
 ## Reproduce the proof of concept
 
