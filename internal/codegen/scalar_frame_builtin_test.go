@@ -13,7 +13,7 @@ func TestScalarFrameBuiltinSelection(t *testing.T) {
 		name, source string
 		owned        bool
 	}{
-		{"nested", `function f(string $s) { return StRlEn(strtolower(rtrim(substr($s, 0, null)))); }`, true},
+		{"nested", `function f(string $s) { return StRlEn(strtolower(rtrim(substr($s, 0, null), ' '))); }`, true},
 		{"compare", `function f(string $s) { return strcasecmp($s, 'x'); }`, true},
 		{"contains", `function f(string $s): bool { return str_contains($s, 'x') && str_starts_with($s, 'x'); }`, true},
 		{"predicates", `function f(int $i, string $s, bool $b): bool { $n = null; return is_int($i) && is_string($s) && is_bool($b) && is_null($n) && !is_array($s) && !is_object($s); }`, true},
