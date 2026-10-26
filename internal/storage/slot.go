@@ -1,7 +1,7 @@
 // Package storage contains the internal reference-storage foundation. It is
-// deliberately disconnected from generated PHP until address IR and generated
-// frame lifetimes are integrated. Only null, bool, int64 and string values are
-// admitted.
+// exposed to closed scalar generated functions through runtime.ScalarFrame;
+// reference bindings remain internal until address IR is integrated. Only
+// null, bool, int64 and string values are admitted.
 package storage
 
 // Slot is one binding, not a PHP value. Slots must only be used by pointer and

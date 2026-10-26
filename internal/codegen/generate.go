@@ -23,6 +23,8 @@ type generator struct {
 	suppress bool
 	// Emit execution-aware calls only for programs containing stateful builtins.
 	execution bool
+	// Only closed, parameter-free scalar function bodies use owned storage yet.
+	scalarFrame bool
 }
 
 func name(s string) string { return strings.ToLower(s) }
@@ -180,6 +182,9 @@ func (g *generator) emit(s string, a ...any) {
 }
 func (g *generator) fail(line int, msg string) { panic(fmt.Errorf("PHP004 line %d: %s", line, msg)) }
 func (g *generator) function(f ir.Function, c string) {
+	previousFrame := g.scalarFrame
+	g.scalarFrame = c == "" && len(f.Params) == 0 && f.ReturnType != "array" && scalarFrameBody(f.Body)
+	defer func() { g.scalarFrame = previousFrame }()
 	if g.execution && c == "" {
 		g.emit("func F_%s(args ...any) any { return FContext_%s(&rt.Execution{}, args...) }\n", name(f.Name), name(f.Name))
 		g.emit("func FContext_%s(execution *rt.Execution, args ...any) any { rt.RequireExecution(execution)\n", name(f.Name))
@@ -196,7 +201,11 @@ func (g *generator) function(f ir.Function, c string) {
 	} else {
 		g.emit("rt.Args(args,%d)\n", len(f.Params))
 	}
-	g.emit("v:=map[string]any{}; _=v\n")
+	if g.scalarFrame {
+		g.emit("v:=rt.NewScalarFrame(); defer v.Close()\n")
+	} else {
+		g.emit("v:=map[string]any{}; _=v\n")
+	}
 	scope := map[string]bool{}
 	if c != "" {
 		scope["this"] = true
@@ -247,7 +256,11 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			}
 			e := g.expr(s.Expr, scope)
 			scope[s.Name] = true
-			g.emit("v[%q]=rt.Clone(%s)\n", s.Name, e)
+			if g.scalarFrame {
+				g.emit("v.Write(%q,rt.Clone(%s))\n", s.Name, e)
+			} else {
+				g.emit("v[%q]=rt.Clone(%s)\n", s.Name, e)
+			}
 		case "assign_property":
 			// Semantic validation admits only a known generated class variable
 			// and one declared public property; no host/dynamic setter dispatch.
@@ -381,6 +394,9 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 	case "var":
 		if !scope[e.Text] {
 			g.fail(e.Line, "undefined or conditionally assigned variable $"+e.Text)
+		}
+		if g.scalarFrame {
+			return "v.Read(" + strconv.Quote(e.Text) + ")"
 		}
 		return "v[" + strconv.Quote(e.Text) + "]"
 	case "ternary":

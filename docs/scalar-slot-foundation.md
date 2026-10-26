@@ -2,7 +2,8 @@
 
 `internal/storage` implements bindings for null, bool, int64 and byte strings.
 It is internal compiler infrastructure, not a public runtime API or PHP syntax
-support. Generated programs still use the existing value runtime. References
+support. A [closed scalar subset](generated-scalar-frames.md) now uses Frame
+through a runtime facade; other generated scopes retain the existing value runtime. References
 remain unsupported in the compatibility catalog.
 
 A zero-value Slot is absent; a present null is different. Read returns a value
@@ -18,8 +19,9 @@ contents on last release. These counts must not use Go GC/finalizers. Slots are
 pointer-only, must not be copied, and are not concurrency-safe.
 [Scalar Frame lifecycle](storage-frame-lifecycle.md) now provides named local
 bindings with explicit Close and separately owned exported references. Future
-generated frames must use explicit release on all exit paths; that codegen
-integration and temporary ownership are still unimplemented.
+generated frames must use explicit release on all exit paths. This is wired for
+closed nullary scalar functions only; general frame/temporary integration is
+still unimplemented.
 
 Arrays, objects, callables, host pointers and cells passed as values are rejected
 before any write. Supporting arrays here by calling the existing eager Clone

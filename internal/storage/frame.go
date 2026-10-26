@@ -84,7 +84,8 @@ func (frame *Frame) Unset(name string) {
 
 // Close deterministically releases all frame-owned bindings. It is idempotent;
 // every other operation rejects a closed frame. No PHP destructor order is
-// implied: only scalars are admitted, and generated PHP does not use Frame yet.
+// implied: only scalars are admitted. Generated scalar scopes use this via a
+// value-only runtime facade; reference bindings remain internal.
 func (frame *Frame) Close() {
 	if frame == nil {
 		panic("storage close requires a frame")
