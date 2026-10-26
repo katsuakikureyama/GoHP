@@ -13,6 +13,10 @@ has its own oracle floor, pinned CI image, corpus execution and evidence; a
 result for one target never proves the other. See the
 [version-specific compatibility design](docs/php8-versioned-compatibility.md).
 
+PHP 8.4 additionally supports a [bounded `array_any`](docs/array-any-boundary.md)
+with a statically named, two-value, bool-returning callback. Its evidence is
+8.4-specific; PHP 8.3 keeps ordinary user declarations of that name.
+
 ## Reproduce the proof of concept
 
 Prerequisites: Docker Engine with Docker Compose v2. No credentials, external

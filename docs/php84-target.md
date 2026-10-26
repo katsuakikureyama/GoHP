@@ -18,12 +18,13 @@ equivalence.
 ## PHP 8.4-specific profile
 
 PHP 8.4 adds `array_find`, `array_find_key`, `array_any` and `array_all` to core.
-GoHP does not implement these functions. For target `8.4`, their names are
+GoHP implements only a [bounded array_any](array-any-boundary.md) subset.
+For target `8.4`, all four names are
 reserved against user declarations, case-insensitively. A declaration therefore
 fails during semantic validation instead of compiling a conflicting function.
-Calls to these functions remain unsupported. The profile uses rejection as a
-closed-subset boundary; it does not implement callback semantics or native PHP
-diagnostics.
+Calls to the other three remain unsupported. `array_any` requires a literal
+declared callback with two untyped value parameters and an explicit bool return.
+The profile does not reproduce native PHP diagnostics.
 
 PHP 8.4 also deprecates class `_`. GoHP rejects that class declaration for
 target `8.4`, rather than emitting a generated program which silently omits or
