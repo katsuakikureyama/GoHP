@@ -36,9 +36,13 @@ callback support; `php.builtin.addslashes-string` has its own bounded entry.
 The `is_array` stack at `14383426911e42134780e098fec721ce68c0debb` is integrated
 with the prior conditional/array compiler, preserving its predicate and guards.
 The new combined configuration requires fresh evidence; parent PASS results
-do not stand in for it. PHP8.3-only policy and immutable native8.3.36 image stay
-unchanged. Gossip separately pins this compiler to compare original `wp_slash`;
-that does not establish `wp_unslash`, `map_deep` or WordPress core compatibility.
+do not stand in for it. At this integration's original evidence point, its
+PHP 8.3-only admission policy and immutable native 8.3.36 image remained
+unchanged. The current compiler targets are PHP 8.3 and 8.4 under the
+[active PHP version policy](compatibility.md#active-php-version-policy); this
+historical 8.3 statement does not create 8.4 evidence. Gossip separately pins
+this compiler to compare original `wp_slash`; that does not establish
+`wp_unslash`, `map_deep` or WordPress core compatibility.
 
 `gohp.cli.generate` remains WebMCP-excluded local developer tooling. No UI,
 browser/S2S/MCP route, cookie forwarding, authentication, deployment, release or

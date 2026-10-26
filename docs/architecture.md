@@ -3,7 +3,8 @@
 Decision: implement a deliberately small, independent source-to-source pipeline.
 No upstream code is copied or forked. This creates a verifiable baseline, not a
 replacement for a complete PHP frontend. Revisit frontend reuse before expanding
-the grammar substantially; upstream evidence is in `upstream.md`.
+the grammar substantially; see the [parser assessment](parser-adapter-assessment.md).
+Current priorities and exit criteria live in the [roadmap](roadmap.md).
 
 ```
 PHP bytes -> frontend lexer/parser -> versioned semantic subset IR
@@ -85,21 +86,34 @@ byte-oriented and remains separate from WordPress recursive helpers.
 
 ## Values and semantics
 
-Values currently use Go `any`: int64, byte strings, bool, null, ordered arrays and
-native generated class pointers. PHP arrays have insertion order, numeric-string
+Values currently use Go `any`: int64, byte strings, bool, null, ordered arrays,
+native generated class pointers and bounded callable wrappers. Generated arrays have insertion order, numeric-string
 key normalization, last-value replacement without reordering and independent
 nested copies on assignments, arguments and returns. This eager copy models value
 semantics for supported array operations, including functional root-binding
 replacement for one-level writes; it does not implement
 PHP references or production copy-on-write optimization. Object identity remains
 pointer identity. Class methods are real generated Go methods; interface assertions
-provide method dispatch, not an AST/opcode evaluator. Only public scalar property
-defaults, default construction and property reads are implemented.
+provide method dispatch, not an AST/opcode evaluator. The bounded class contract
+includes public scalar/null defaults, declared property reads/writes, constructors
+with exact scalar parameters or trailing untyped null defaults, and known-object
+array snapshots. It does not include inheritance or dynamic properties; see the
+[class inventory](compatibility.md#objects-and-callables).
+
+The canonical internal Slot/cell engine now owns scalar values and bounded
+scalar-element array handles, with explicit copy/read/release. Internal shared
+containers separate storage on write and track reference ownership; Frame and
+element bindings remain scalar-only, including through aliases. Only selected
+closed scalar functions currently use the generated Frame facade. This is R1
+infrastructure, not a migration of generated arrays or PHP-reference support.
+Writable locations, general temporary lifetimes and nested shared storage remain
+unfinished; the [reference/value model](reference-value-model.md) owns those gates.
 
 Runtime arithmetic is restricted to integral coercions. Overflow, missing keys,
 invalid receiver types and unimplemented coercions terminate nonzero. They are
-not PHP-compatible exception/warning emulation. Generated lines have no complete
-source map yet; compile-time diagnostics include original PHP line numbers.
+not PHP-compatible exception/warning emulation. Reports provide
+[statement-level source maps](source-maps.md); full expression spans and automatic
+runtime diagnostic translation remain unfinished.
 
 ## Version model
 
@@ -125,7 +139,8 @@ they do not add general PHP constant lookup or declaration support. See the
 
 In addition to those target-resolved constants, the 8.4 semantic profile rejects declarations of `array_find`,
 `array_find_key`, `array_any` and `array_all`, because those names are reserved
-by PHP 8.4 even though GoHP does not implement their calls. It also rejects a
+by PHP 8.4. A [bounded array_any](array-any-boundary.md) call is implemented for
+8.4; calls to the other three remain unsupported. It also rejects a
 class named `_`: PHP 8.4 deprecates that class name, and GoHP does not model the
 native deprecation diagnostic. These are target-specific, fail-closed
 boundaries, not a claim of diagnostic equivalence. Nullable typed defaults,
@@ -136,16 +151,14 @@ pinned oracle and receives its own evidence; shared lowering never carries an
 
 ## Next decisions
 
-Adopt a full version-aware parser adapter; extend validation as the type model
-grows. The [one-level assignment design](array-write-boundary.md) uses an explicit
-root-binding target and functional array replacement, not reference cells.
-Append uses a distinct `assign_append` statement with a variable-only target;
-it shares runtime copy/index semantics without admitting empty-bracket reads.
-The [reference/value foundation](reference-value-model.md) defines the next
-location/cell and shared-array separation design, with native-only oracle
-specifications and staged acceptance gates. It does not enable references or
-change the current runtime. Reference-bearing arrays require copy-timing and
-binding-lifetime semantics, not merely pointers added to the existing Clone.
-Add scalar types and conversions with warning/exception differential
-fixtures; then inheritance and include/autoload boundaries. Source maps, structured
-runtime diagnostics and persistent compatibility reports remain open work.
+Follow the [roadmap](roadmap.md): establish application inventory/denominators,
+complete the reference/value integration gates, measure a bounded performance
+baseline and evaluate a version-aware frontend adapter. Reference-bearing arrays
+require copy-timing and binding-lifetime semantics, not merely pointers added to
+the existing Clone. Current one-level writes still use functional root replacement.
+
+Persistent compatibility reports and read-only views already exist; their
+[evidence boundary](compatibility-ledger.md) is narrower than application
+acceptance or general warning/exception/side-effect equivalence. Structured runtime
+diagnostics, full spans, captures, inheritance and include/autoload remain future
+work, selected from measured application blockers rather than parser acceptance.

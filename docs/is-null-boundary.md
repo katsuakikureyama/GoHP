@@ -23,12 +23,16 @@ and maps; these Go values do not become new PHP source types.
 
 The owned `is_null.php` fixture observes strict bool results for null/non-null
 values, dynamic forwarding, single evaluation, lazy evaluation, present-null
-versus missing keys and generated callback composition. Evidence compares stdout
-and normal exits with PHP 8.3 >=8.3.36, not general error/exception behavior.
-The feature remains partial in the compatibility catalog.
+versus missing keys and generated callback composition. Its original evidence
+compares stdout and normal exits with PHP 8.3 >=8.3.36, not general
+error/exception behavior. The current compiler targets are PHP 8.3 and 8.4
+under the [active PHP version policy](compatibility.md#active-php-version-policy);
+this historical 8.3 fixture description neither supplies nor claims separate
+8.4 evidence. The feature remains partial in the compatibility catalog.
 
 Gossip's original-source pins, corpora and evidence are unchanged. This fixture
 does not establish additional original-function compatibility or automatically
-adopt this compiler revision. PHP 8.4+ requires separate policy and evidence.
+adopt this compiler revision. Any Gossip adoption still requires its own pinned
+verification; it does not borrow evidence between the active PHP targets.
 Capability `gohp.cli.generate` stays WebMCP-excluded: local developer translation,
 no browser/API operation, authentication change, dependency or deployment.

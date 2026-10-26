@@ -1,8 +1,9 @@
 # Phase 0 implementation report
 
 > Historical report. The PHP 7.4.33 / 8.3.30 matrix described below predates
-> the active PHP 8.3.36-or-newer policy. Its evidence is preserved for
-> traceability only and is not a current support or security claim.
+> the current [PHP 8.3 and 8.4 target policy](compatibility.md#active-php-version-policy).
+> Its evidence is preserved for traceability only and is not a current support
+> or security claim.
 
 ## Working development capabilities
 

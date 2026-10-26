@@ -1,0 +1,144 @@
+# Roadmap and application acceptance
+
+This is the current priority/exit-criteria map, not a compatibility verdict or
+a release promise. GoHP remains a general-purpose, source-generating compiler;
+Gossip owns WordPress integration. The [compatibility inventory](compatibility.md)
+describes implemented contracts, the [catalog](../compatibility/catalog.json)
+links checks, and [run archives](compatibility-ledger.md) supply revision/target
+evidence. This roadmap does not add catalog statuses or a new CLI operation.
+
+## Current position
+
+- PHP 8.3 and 8.4 are active closed-subset targets with independent pinned
+  oracles. No result covers every patch, PHP feature or application.
+- Functions, value arrays, simple classes and capture-free arrows generate Go.
+  Internal scalar frames, shared scalar arrays and owned array-valued Slots are
+  implemented, but PHP references and generated shared-array integration are not.
+- [Gossip's earlier original-source comparisons](integration.md) are useful
+  historical evidence at their recorded compiler/source pins. They are neither
+  a current-main application result nor a combined WordPress percentage.
+- Application-wide inventory/coverage and comparative performance are
+  **not measured**. No application denominator has been frozen; show `n/a`,
+  not zero, 100%, or a ratio derived from compiler test counts.
+
+## Priorities and completion criteria
+
+| Workstream | Current state | Next observable result / completion criterion |
+|---|---|---|
+| Documentation | README and compatibility tables reorganized; historical target claims distinguished | Keep the entry point, implementation limits and evidence links aligned in each affected change |
+| Application inventory | Planned; no frozen manifest or percentage | Pin source and dependency scope; report syntax/callsite inventory, blockers and per-target counts with explicit denominators |
+| Reference/value integration | R1 partial: internal ownership/storage exists | Finish bounded writable locations and temporary lifetime; then a PHP source → Go binary comparison of reference assignment/update/unset (R2), with rejected unsupported forms |
+| Performance baseline | Planned; no PHP/Go benchmark | Publish one reproducible, output-checked small workload per target, separating build, startup, execution and memory measurements |
+| Frontend adapter | Assessment only; no candidate installed | Audit/pin a candidate and demonstrate target-aware parsing, diagnostics/spans and supported-IR parity in shadow mode before replacement |
+| Application acceptance | Earlier bounded Gossip runs only | Translate an unchanged complete application unit and its actual dependency closure; compare behavior at exact application/compiler/oracle pins |
+| Broader semantics | Captures, inheritance, exceptions and include/autoload remain unsupported | Select from measured application blockers; each needs a closed contract and native comparison before admission |
+| Licensing | Undecided | Owner selects terms after the existing dependency/contributor/provenance review; documentation cleanup does not select a license |
+
+Prefer changes that remove an observed application blocker or complete the
+reference model over an unranked sequence of unrelated builtins. A builtin
+addition still needs its own bounded contract; frequency alone does not justify
+accepting unsupported argument types or call forms. Parser investigation and a
+small benchmark can proceed without blocking ownership work, but neither counts
+as application compatibility.
+
+## First application inventory
+
+Start with a **pinned WordPress core `wp-includes/functions.php`** as the
+frequency/inventory candidate. It is a planning scope, not yet an imported or
+measured corpus. Before publishing any ratio, commit a manifest that records:
+
+- Upstream project/release/revision, source path and byte hash, provenance and
+  license notices; distinguish upstream identity from a retained Gossip copy.
+- Exact selection/exclusion rules and all selected source units. Preserve
+  unsupported and unparsed units in the denominator; do not extract only easy
+  functions and describe that selection as the complete file.
+- Direct/transitive dependencies, unresolved dynamic calls and external
+  services/extensions. An inventory of this file is not a dependency-complete
+  executable WordPress bundle. Unknown dependencies remain blockers.
+- Compiler/runtime revision, parser/inventory tool revision, corpus/driver
+  hashes, PHP target and exact oracle configuration for each run.
+
+The semantic frontend currently rejects out-of-subset syntax. It therefore
+cannot, by itself, claim a complete PHP callsite inventory. Use the
+[parser evaluation](parser-adapter-assessment.md) or an explicitly bounded
+inventory method with unknown/unparsed counts. Regex/name matches are not
+resolved PHP calls and cannot yield a support percentage.
+
+Keep these measurements separate:
+
+| Measurement | Denominator and evidence | What it does not mean |
+|---|---|---|
+| Syntax/callsite inventory | All occurrences in the fixed scope, with classified and unknown counts; show occurrence frequency separately from unique symbol counts | Recognizing a name does not establish support for that call's signature, values or effects |
+| Original-unit compile ratio | Successfully generated **and built** unchanged units / all selected original units for that target; list blockers and missing dependencies | A successful build is not PHP equivalence; rewritten units and owned substitutes are separate categories |
+| Case execution ratio | Passed / all applicable predefined cases at the fixed source/compiler/target; failed, incomplete and unmeasured cases stay visible | A small fixture set does not establish every input or an entire application's behavior |
+| Application acceptance | Complete original unit plus dependency closure, all required cases/dimensions measured and passing, exact pins retained | Never derive this verdict from the above ratios or from another PHP target |
+
+Show numerator, denominator, scope identity and unmeasured counts alongside any
+percentage. Target-inapplicable cases must be explicitly accounted for, not
+silently removed. Changing the manifest creates a new series of measurements;
+do not compare differently selected denominators as a single progress curve.
+The current Composer metadata reader is not this source inventory tool.
+
+For executable application acceptance, retain the reference design's sequence:
+the **complete original block parser**, then hooks and broader callers. The
+existing `WP_Block_Parser_Block` data-class result is not a parser-algorithm
+result. Original `WP_Hook` behavior must not be replaced by an owned hook mock;
+the [render dependency audit](render-dependencies.md) similarly requires the
+real HTML processor. Gossip owns source bundles, drivers and consumer repins;
+this document changes none of them.
+
+## Reference milestone
+
+Use the existing [R0–R5 gates](reference-value-model.md#delivery-gates-and-status),
+not a second storage engine. R1 needs explicit writable-location and temporary
+lifetimes without changing PHP syntax acceptance. Its internal unit results do
+not count as reference support.
+
+The first end-to-end R2 target is bounded scalar variable reference assignment,
+write-through, rebinding and unset. For each admitted PHP target, compare source
+programs and compiled Go for alias updates and surviving/recreated bindings;
+also reject unsupported locations, malformed IR and by-reference forms. Keep
+ordinary value-copy behavior unchanged. If arrays are not yet ready, reject
+array/object references explicitly rather than silently using eager copies.
+Array-element references and copy-timing migration remain the separate R3 gate;
+captures and by-reference calls remain R4. Do not relabel the PHP 8.3-only native
+reference specification as an 8.4 or generated-Go test.
+
+## Performance baseline
+
+Begin with a repository-owned, bounded array-copy/read/write workload whose
+deterministic result is checked against each selected PHP oracle. Document input
+sizes and an operation count; avoid timing large stdout writes as computation.
+Keep this a separate measurement, not a correctness or speedup gate.
+
+Record CPU/OS/architecture, Go version/build flags, compiler/runtime/source hashes,
+PHP version/image and relevant INI settings including CLI OPcache/JIT, memory
+limits, warmup and repetition counts. Report build time separately from process
+startup and execution; use repeated runs with a median and spread, not one best
+sample. Measure peak process memory on both sides with the same method; Go-only
+allocation counts are supplemental, not interchangeable with PHP peak memory.
+If a dimension cannot be observed, mark it unmeasured. Retain slow results and
+avoid extrapolating a microbenchmark to WordPress throughput.
+
+## Frontend and dynamic-feature strategy
+
+Keep the current frontend until the [adapter gates](parser-adapter-assessment.md#migration-gates)
+pass for both active targets. A new parser recognizes syntax; semantic validation,
+runtime behavior and fail-closed handling remain GoHP responsibilities. Candidate
+versions and licenses in the assessment are dated observations, not an adoption
+decision or a claim about current upstream support.
+
+Continue generating Go functions/structs and explicit runtime operations. Dynamic
+dispatch may be implemented in that runtime with separate contracts; an embedded
+interpreter or silent source rewrite is not the default fallback. Whole-application
+feasibility remains unproven. A future fallback or source-transformation mode
+would be an explicit architectural/product decision with separate evidence.
+
+## Documentation maintenance
+
+Keep README short: purpose, active targets, scope, quickstart and links. Curate
+function lists in the existing compatibility tables/catalog; put exact limits in
+their linked contracts. Update architecture only for structural changes and this
+roadmap for milestone/state changes. Preserve historical results at their original
+pins, clearly labeled; never "refresh" their versions without new observations.
+The [licensing proposal](licensing.md) remains undecided.

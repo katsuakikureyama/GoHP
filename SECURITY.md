@@ -10,11 +10,12 @@ resource quotas and reviewed artifact promotion before a service deployment.
 
 ## PHP oracle maintenance
 
-The active native compatibility oracle is PHP 8.3.36 or newer in the 8.3
-series. Its resolved immutable image digest is tracked by the test policy and
-run evidence; do not substitute a floating tag without review. PHP's
-[8.3.36 release](https://www.php.net/releases/8_3_36.php) is a security release,
-and the [supported-versions policy](https://www.php.net/supported-versions.php)
+The active native compatibility oracles are PHP 8.3.36 or newer in the 8.3
+series and PHP 8.4.27 or newer in the 8.4 series. Each target has its own resolved
+immutable image digest and run evidence; do not substitute a floating tag or
+transfer evidence between targets. The [active version policy](docs/compatibility.md#active-php-version-policy)
+and [CI matrix](.github/workflows/ci.yml) define the current admission rules.
+PHP release notices and the [supported-versions policy](https://www.php.net/supported-versions.php)
 must be reviewed when updating the approved oracle image or when deciding to
 add another series.
 

@@ -1,5 +1,9 @@
 # Gossip builder contract v0.1 (proposal)
 
+For the current compiler scope and next application acceptance criteria, see the
+[compatibility tables](compatibility.md) and [roadmap](roadmap.md). Consumer runs
+below are historical, pin-specific observations, not current-main certification.
+
 [Standalone call statements](call-statement-boundary.md) now express the
 render caller's discarded-result method call without a dummy assignment.
 The [source dependency audit](render-dependencies.md) records resolved
@@ -145,13 +149,13 @@ not protect against an attacker changing destination directories concurrently.
 and callers must discard any partial stdout on failure. Repeated generation uses
 new candidate paths rather than overwriting a previous build.
 
-`-php-version 8.3` identifies the active language series, not an arbitrary PHP
-patch. Native verification for this contract uses PHP 8.3.36 or newer within
-the 8.3 series and the
-approved immutable oracle digest recorded in run evidence. PHP 8.4+ is not an
-accepted integration target: adding it requires a separate policy/matrix and
-Gossip-owned compatibility decision. Historical 7.4 archives are readable but
-must not be used to approve a new candidate.
+`-php-version 8.3` identifies a language series, not an arbitrary PHP patch.
+The consumer observations recorded here use PHP 8.3.36 and their own immutable
+oracle/source/compiler identities. The compiler now independently admits
+[8.3 and 8.4](compatibility.md#active-php-version-policy); that does not extend
+these Gossip results to 8.4 or repin their compiler. A new consumer target needs
+a Gossip-owned compatibility decision and its own source/driver/oracle evidence.
+Historical 7.4 archives are readable but must not approve a new candidate.
 
 This integration combines the predicate/conditional stack through PR #26
 with PR #27's literal array_map and string-only addslashes, retaining the shared 8.3 oracle policy.

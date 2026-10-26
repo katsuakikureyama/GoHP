@@ -5,51 +5,65 @@ contracts from version-specific test evidence. Its initial
 [function/feature catalog](../compatibility/catalog.json) is experimental data linked to
 existing checks. The [experimental ledger](compatibility-ledger.md) now validates
 it and generates a run-scoped PHP-target report from actual test events.
-This table is the current curated summary, not a blanket support claim.
+This is the curated, navigable summary of the closed subset, not a blanket
+support claim. Start with the project overview in the [README](../README.md)
+and use the [roadmap](roadmap.md) for the next priorities; this page records the
+current contracts and their evidence boundaries.
 
-| Area | Current status | Evidence / gap |
+## Active targets and evidence
+
+| Target | Current status | Evidence boundary |
 |---|---|---|
-| PHP 8.3 | Active closed subset; native oracle is >= 8.3.36 | Independently run differential fixtures against the approved 8.3 oracle |
-| PHP 8.4 | Active closed subset; native oracle is >= 8.4.27 | Independently run the same bounded corpus against the pinned 8.4 oracle; evidence is separate from 8.3 |
-| PHP 7.4, PHP 8.5+, other series | Not active targets | Historical evidence is retained; a separate policy/matrix is required before a series is enabled |
-| Scalar values | int64, strings, bool, null; literal-only negative decimal constants | `arrays.php`, `negative_integers.php`; no float or interpolation; [negative integer boundary](negative-integer-boundary.md) |
-| Target version constants | Exact unqualified `PHP_MAJOR_VERSION` / `PHP_MINOR_VERSION`, resolved as integers from compiler target `8.3` or `8.4` | [Bounded contract](target-version-constants.md); no general constants, declarations, dynamic lookup or qualified names |
-| Type names | `gettype(value)` returns PHP labels for existing null/bool/int/string/array/generated-object values | [Bounded contract](gettype-boundary.md); float/resources/foreign host values and general reflection remain excluded |
-| Form-feed string escape | Double-quoted `"\f"` is byte 0x0C; single-quoted form remains literal | [Bounded escape](form-feed-boundary.md); byte/line tests and per-target PHP comparison, not general PHP escape support |
-| Operators | `+`, `.`, parentheses, full ternary and bounded `??` array addresses | Integral coercion only; float promotion unsupported. Ternary is non-associative; `??` has only defined bare/nested-array address left sides and lazy fallback; no `?:`, `??=`, general expression left side or object truthiness; [contracts](ternary-stripslashes-boundary.md), [nested probes](nested-array-probes.md) |
-| Boolean control | Braced `if` / `elseif` / `else if` / `else`, short-circuit `&&` / `\|\|`, scalar `===` / `!==` plus literal-null type probes, `(bool)`, prefix `!`/`!!` | Scalar/array truthiness only; no unbraced/alternative syntax, branch-local escape, object truthiness, general array/object identity, loose `!=` or keyword logical operators; [contract](boolean-boundary.md) |
-| Functions | Named functions, fixed value arguments, bounded exact `int`/`string`/`bool`, `array`/generated-arrow `callable` parameters and global `: array` / actual-bool `: bool` returns | [scalar parameters](scalar-function-parameters.md), `core.php`, `array_parameter.php`, `arrow_callable.php`, `array_return.php`, `bool_return.php`; [parameters](array-parameter-boundary.md) / [arrows](arrow-callable-boundary.md) / [array](array-return-boundary.md) / [bool](bool-return-boundary.md); no weak bool-return coercion, typed-default/by-reference/variadic args or typed methods |
-| Arrays | `[]` and `array(...)`; mixed ordered keys/values, reads, nested value copies, foreach; one-level element assignment and append to existing array variables | Literal construction keys; literal/variable int/string write keys. No auto-vivification, nested targets, references, unpacking or array union; [syntax](legacy-array-syntax.md), [write boundary](array-write-boundary.md) |
-| References / storage model | Unsupported; internal shared scalar containers, owned array-valued Slots and reference/copy-timing contracts implemented | [Foundation and staged gates](reference-value-model.md), [owned array values](owned-array-slot-values.md); internal unit checks and PHP-only observations are not generated-reference differential evidence |
-| Generated scalar frames | Bounded internal storage migration for nullary or all-exact-scalar-parameter closed scalar global functions, including selected pure builtins with scalar operands | [Selection and evidence](generated-scalar-frames.md); value-only runtime facade with explicit Close, no reference syntax or general frame migration |
-| Classes | Public scalar/null defaults and implicit null, bounded public constructors including trailing untyped null defaults and exact scalar parameters, property reads/methods/declared assignment, known-object `(array)` snapshots | [Constructor/snapshot](block-data-constructor.md), [scalar parameter](scalar-constructor-boundary.md), [writes](public-property-write.md); no dynamic properties, inheritance, typed/non-null defaults, weak scalar conversion, nonpublic/static members or general casts |
-| Object predicate | `is_object(value)` for generated class instances and generated arrows (PHP Closures) | Explicit object marker, actual bool and once-only evaluation; [boundary](is-object-boundary.md). No object truthiness or foreign-object admission |
-| Closures/dynamic callbacks | Partial: capture-free arrows, generated-arrow `callable` arguments and variable invocation | [Arrow boundary](arrow-callable-boundary.md); anonymous `function`, captures, string/method callables and typed arrows remain excluded. `array_map` retains its separate [literal named callback contract](array-map-boundary.md) |
-| Exceptions/warnings | Unsupported PHP behavior | Nonzero runtime failures; never functional PASS |
-| Parser output prerequisites | Public method null defaults/bare returns, declared array-property append, sole-new method factory snapshots and byte substr | [Closed boundary](parser-output-boundary.md); no general casts, null-array autovivification, nested writes or full parser claim |
-| Built-ins | `count(array)`, `strlen(string)`, `array_keys(array)`, `array_values(array)`, `array_key_exists(int\|string, array)`, `array_is_list(array)`, restricted `rtrim`, `is_bool`, `is_string`, `is_int`, `is_null`, `is_array`, ASCII `strtolower(string)`, `stripslashes(string)`, `addslashes(string)`, literal-callback `array_map` | Bounded arities/domains; [rtrim](rtrim-boundary.md), [boolean](boolean-boundary.md), [is_int](is-int-boundary.md), [is_null](is-null-boundary.md), [ternary](ternary-stripslashes-boundary.md), [literal callback](array-map-boundary.md); other builtins fail closed |
-| String formatting / replacement | `sprintf('%0Ns', string\|int64)` with canonical width 0–4096; `str_replace(string, string, string)` | [Zero-padding boundary](sprintf-boundary.md) / [replacement boundary](str-replace-boundary.md); no general formatting, array substitutions or count reference |
-| Stateful byte tokens | `strtok(string, delimiters)` / initialized `strtok(delimiters)` | [Execution-owned cursor](strtok-boundary.md); actual strings, byte delimiter sets, string/false results, fresh external entries and explicit same-execution sharing; no warning equivalence |
-| Case-insensitive string comparison | `strcasecmp(string, string)` | [ASCII byte comparison](strcasecmp-boundary.md); no non-string coercion or Unicode/locale folding |
-| Array-element presence | Strict one-level `isset($array[$key])` and bounded nested `isset($root[key][key]...)` | [Bounded isset](array-isset-boundary.md), [nested probes](nested-array-probes.md); nested form needs a defined root, two-or-more literal/defined-variable keys, array/null intermediates and no properties/general addresses |
-| Variable and multi-address presence | `isset($value)` and `isset($first, ...)` on defined bounded addresses | [Bounded isset](array-isset-boundary.md); false only for null/missing, left-to-right short circuit; no undefined/nested/property addresses |
-| Trailing null defaults | Named globals and public untyped methods with trailing `= null` parameters | Fixed min/max positional arity, no typed/non-null defaults; see [parser output boundary](parser-output-boundary.md) |
-| Strict scalar membership | `in_array(scalar, scalar-valued array, true)` | [Closed strict boundary](in-array-strict-boundary.md); no loose mode or array/object values |
-| Array emptiness | `empty($arrayVariable)` on a defined actual array | [Bounded empty](array-empty-boundary.md); outer count only, no undefined/scalar/index/property/expression operands |
-| Last array key | `array_key_last(array)` | [Bounded last key](array-key-last-boundary.md); insertion-order int/string key or null, input unchanged; guard empty before indexing |
-| First array key | `array_key_first(array)` | [Bounded first key](array-key-first-boundary.md); first insertion-order key, not minimum key/value; same empty-result guard |
-| Array reversal | `array_reverse(array, bool preserve_keys = false)` | [Bounded reversal](array-reverse-boundary.md); reverse outer order, retain string keys, optionally retain integer keys, detached array result; no flag coercion |
-| Array merge | `array_merge(array ...arrays)` | [Bounded merge](array-merge-boundary.md); zero or more explicit arrays, reindexed integer keys and in-place string-key replacement, detached nonrecursive result; no unpack syntax |
-| Foreach continue | Bare `continue;` in the nearest enclosing foreach/while | [Bounded control flow](foreach-continue-boundary.md); braced conditional/nested loop composition, validated dead tails, no levels/for/do/switch |
-| Foreach break | Bare `break;` exits the nearest foreach/while | [Bounded loop exit](foreach-break-boundary.md); validated dead tails and preserved pre-break type state, no levels/for/do/switch |
-| While | Braced body; condition re-evaluated before each iteration | [Bounded while](while-boundary.md); nearest break/continue, conservative loop-carried type guards, no alternative syntax or new binding escape |
-| Call statements | Direct function/builtin or bare-variable method/arrow call followed by semicolon | [Discard result only](call-statement-boundary.md); effects, guards and execution context retained; no general expression statements |
-| include/require/autoload/namespaces | Unsupported | Negative include test |
-| Composer | No resolver or package support | Never execute Composer hooks to inspect metadata |
-| mysqli / PDO / SQLite | Unsupported | No DB writes or credentials |
-| mbstring / iconv / cURL / GD | Unsupported | Extension inventory and fixtures needed |
-| XML / PCRE / serialization | Unsupported | Go library behavior must not be assumed equivalent |
-| WordPress / plugins / themes | Not runnable | Independent adapter and pinned oracle required |
+| PHP 8.3 | Active closed subset; native oracle is >= 8.3.36 | Independently run the bounded differential corpus against the approved 8.3 oracle. |
+| PHP 8.4 | Active closed subset; native oracle is >= 8.4.27 | Independently run the bounded corpus against the pinned 8.4 oracle; it is separate from 8.3 evidence. [`array_any`](array-any-boundary.md) is an 8.4-only bounded builtin. |
+| PHP 7.4, PHP 8.5+, other series | Not active targets | Historical evidence remains readable; enabling a series needs its own policy, matrix and evidence. |
+
+## Syntax and control flow
+
+| Area | Generated-code support | Boundary |
+|---|---|---|
+| Integer subtraction | Actual-integer binary `-`, with int64 overflow rejection | No scalar coercion, float promotion or general unary negation. See [subtraction](integer-subtraction.md). |
+| Literals and target constants | `int64`, strings, bool, null and literal negative decimal constants; exact unqualified `PHP_MAJOR_VERSION` / `PHP_MINOR_VERSION` resolve from compiler target `8.3` or `8.4`; double-quoted `"\f"` is byte `0x0C` | No float, interpolation, general constants/declarations/dynamic lookup/qualified names, or general escape support. See [negative integers](negative-integer-boundary.md), [target constants](target-version-constants.md), and [form feed](form-feed-boundary.md). |
+| Operators and conditionals | `+`, `.`, parentheses, full ternary, bounded `??` array addresses; braced `if` / `elseif` / `else if` / `else`; `&&`, `\|\|`, scalar `===` / `!==`, literal-null type probes, `(bool)`, `!` / `!!` | Integral coercion only; ternary is non-associative. `??` needs a defined bare/nested-array address and lazy fallback. No float promotion, `?:`, `??=`, general expression left sides, loose `!=`, keyword logical operators, unbraced/alternative syntax, branch-local escape, object truthiness or general array/object identity. See [ternary/stripslashes](ternary-stripslashes-boundary.md), [nested probes](nested-array-probes.md), and [boolean control](boolean-boundary.md). |
+| Arrays and probing | `[]` / `array(...)`, mixed ordered keys/values, reads, nested value copies, `foreach`, one-level assignment/append to existing array variables; `empty($arrayVariable)`; bounded one-level/nested `isset`; defined bare/multi-address `isset` | Construction keys are literal; write keys are literal/variable `int`/`string`. No auto-vivification, nested targets, references, unpacking or union. `empty` is outer-count only. Nested `isset` needs a defined root, two-or-more literal/defined-variable keys and array/null intermediates; no property/general/undefined addresses. See [legacy syntax](legacy-array-syntax.md), [writes](array-write-boundary.md), [isset](array-isset-boundary.md), [nested probes](nested-array-probes.md), and [empty](array-empty-boundary.md). |
+| Loops and calls | Braced `while`; bare nearest-loop `break;` / `continue;` in `foreach` or `while`; direct function/builtin and bare-variable method/arrow calls as statements | `while` re-evaluates its condition and uses conservative loop-carried type guards. No levels, `for`/`do`/`switch`, alternative syntax, new binding escape, general expression statements or chained call receivers. See [while](while-boundary.md), [continue](foreach-continue-boundary.md), [break](foreach-break-boundary.md), and [call statements](call-statement-boundary.md). |
+
+## Built-in functions
+
+Every entry below is partial: its linked boundary fixes arity, types, evaluation
+and evidence. Other builtins fail closed.
+
+| Group | Bounded support | Boundary |
+|---|---|---|
+| Array inspection and transformation | `count(array)`, `array_keys(array)`, `array_values(array)`, `array_key_exists(int\|string, array)`, `array_is_list(array)`, first/last insertion-order key, reversal, merge and positional slice via `array_key_first`, `array_key_last`, `array_reverse`, `array_merge`, `array_slice` | First/last yield an int/string key or null without mutation; reverse/slice return detached arrays; merge accepts zero or more explicit arrays, reindexes integer keys and replaces string keys in place. No implicit coercion, recursive operation or unpack syntax. See [keys](#bounded-array_keys-contract), [values](#bounded-array_values-contract), [key existence](#bounded-array_key_exists-contract), [list](#bounded-array_is_list-contract), [first](array-key-first-boundary.md), [last](array-key-last-boundary.md), [reverse](array-reverse-boundary.md), [merge](array-merge-boundary.md), and [slice](array-slice-boundary.md). |
+| Predicates and membership | `is_bool`, `is_string`, `is_int`, `is_null`, `is_array`, `is_object`, `gettype(value)`, and strict `in_array(scalar, scalar-valued array, true)` | `gettype` covers only existing null/bool/int/string/array/generated-object values; `is_object` recognizes generated classes/arrows. No float/resources/foreign hosts/general reflection, object truthiness, loose membership or array/object membership values. See [gettype](gettype-boundary.md), [boolean predicates](boolean-boundary.md), [is_int](is-int-boundary.md), [is_null](is-null-boundary.md), [is_object](is-object-boundary.md), and [strict membership](in-array-strict-boundary.md). |
+| Strings and formatting | `strlen(string)`, literal-mask `rtrim`, ASCII `strtolower`, `strcasecmp(string, string)`, `str_contains(string, string)`, `str_starts_with(string, string)`, string-only `stripslashes` / `addslashes`, `sprintf('%0Ns', string\|int64)` (width 0–4096), `str_replace(string, string, string)`, byte `substr`, and `strtok(string, delimiters)` / initialized `strtok(delimiters)` | Actual-string domains unless specified; `strtok` uses byte delimiter sets, string/false results and an execution-owned cursor. No Unicode/locale folding, general formatting, array substitutions, by-reference count, general coercion, warning equivalence or SQL/HTML/shell-safety claim. See [strlen](#bounded-strlen-contract), [rtrim](rtrim-boundary.md), [strcasecmp](strcasecmp-boundary.md), [contains](str-contains-boundary.md), [starts-with](str-starts-with-boundary.md), [ternary/stripslashes](ternary-stripslashes-boundary.md), [sprintf](sprintf-boundary.md), [replace](str-replace-boundary.md), [parser output](parser-output-boundary.md), and [strtok](strtok-boundary.md). |
+| Callbacks | `array_map('declared_function', array)` and PHP-8.4-only `array_any(array, declared_bool_callback)` | `array_map` uses one literal named user callback and one array; `array_any` uses a literal declared two-value callback with an actual bool result. No dynamic/builtin/method/arrow callbacks, captures, references or truthiness conversion. See [array_map](array-map-boundary.md) and [array_any](array-any-boundary.md). |
+
+## Values and types
+
+| Area | Generated-code support | Boundary |
+|---|---|---|
+| Scalars and arrays | int64, byte strings, bool and null; ordered arrays with numeric-string key normalization and independent nested value copies on assignment, arguments and returns | No float/resource values, general key coercion, reference-containing arrays or generated COW. Objects preserve pointer identity rather than deep-copying. See [array keys/indexes](array-index-boundary.md) and [value model](reference-value-model.md). |
+| Functions and returns | Named globals with fixed value arguments, exact `int` / `string` / `bool`, `array` / generated-arrow `callable` parameters, global `: array` and actual-bool `: bool` returns, and trailing untyped `= null` defaults | No weak bool-return conversion, typed/non-null defaults, by-reference/variadic arguments or typed methods. See [scalar parameters](scalar-function-parameters.md), [array parameters](array-parameter-boundary.md), [array returns](array-return-boundary.md), [bool returns](bool-return-boundary.md), and [parser output](parser-output-boundary.md). |
+| Internal storage foundation | Shared scalar containers and owned array-valued Slots model copy timing and ownership; scalar frames cover nullary/all-exact-scalar closed globals and selected pure scalar builtins | This is internal-only storage work, not generated array-operation support or generated-reference differential evidence. The runtime facade is value-only with explicit `Close`; PHP reference syntax remains unsupported. See [reference/value stages](reference-value-model.md), [owned array values](owned-array-slot-values.md), and [generated scalar frames](generated-scalar-frames.md). |
+| Parser-output prerequisites | Public method null defaults/bare returns, declared array-property append, sole-new method factory snapshots and byte `substr` | A closed parser-output boundary only: no general casts, null-array auto-vivification, nested writes or full parser claim. See [parser output](parser-output-boundary.md). |
+
+## Objects and callables
+
+| Area | Generated-code support | Boundary |
+|---|---|---|
+| Classes and properties | Public scalar/null defaults and implicit null; bounded public constructors (including trailing untyped null defaults and exact scalar parameters); property reads, methods, declared assignment and known-object `(array)` snapshots | No dynamic properties, inheritance, typed/non-null defaults, weak scalar conversion, nonpublic/static members or general casts. See [constructors/snapshots](block-data-constructor.md), [constructor scalars](scalar-constructor-boundary.md), and [property writes](public-property-write.md). |
+| Arrows and callable values | Capture-free arrows, generated-arrow `callable` arguments and variable invocation | No anonymous `function`, captures, string/method callables or typed arrows. See [arrow callables](arrow-callable-boundary.md); `array_map` has its separate [literal callback contract](array-map-boundary.md). |
+
+## Application and extension exclusions
+
+| Area | Status / boundary |
+|---|---|
+| References, exceptions and warnings | PHP references are unsupported; warnings/exceptions are not modeled. Runtime failures are nonzero failures, never functional PASS. |
+| Source loading and dependencies | `include` / `require` / autoload / namespaces are unsupported. Composer has no resolver/package support; metadata inspection never executes Composer hooks. |
+| Database and extensions | `mysqli`, PDO, SQLite, `mbstring`, `iconv`, cURL, GD, XML, PCRE and serialization are unsupported. Do not assume a Go library is PHP-equivalent. |
+| WordPress applications | WordPress, plugins and themes are not runnable; adoption needs an independent adapter and pinned oracle. |
 
 ## Combined subset validation
 
@@ -66,15 +80,11 @@ do not constitute a combined revision PASS.
 
 `string_array_integration.php` additionally composes the bounded sprintf and
 str_replace implementations with the array helpers (including key existence and
-list checks), guarded string conversion and byte-length observation. Its single
+list checks), guarded string conversion and byte-length observation. The two
 string entries link the same integration check; it is one measured case, not
-two independent proofs. This does not update or validate Gossip's source pins.
-generated binary is compared with the admitted native oracle for its selected
-target. Both new string entries link the same integration check; it is one
-measured case, not two independent proofs. This does not update or validate
-Gossip's source pins.
-string entries link the same integration check; it is one measured case, not
-two independent proofs. This does not update or validate Gossip's source pins.
+two independent proofs. The generated binary is compared with the admitted
+native oracle for its selected target. This does not update or validate Gossip's
+source pins.
 
 `predicate_conditional_integration.php` combines `is_array` with full ternary
 selection, array_values and guarded stripslashes, preserving empty and nested

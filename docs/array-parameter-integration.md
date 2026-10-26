@@ -1,5 +1,9 @@
 # Array parameters on the reconciled bool-return stack
 
+Historical integration record: restrictions and pending actions below describe
+that stack, not today's full compiler. See the [current inventory](compatibility.md)
+for later scalar parameters, null defaults and independent PHP 8.4 evidence.
+
 This integration retains both published histories as merge parents:
 
 - #50: `58943797038a1c87215acef265fb10951d94ec7e`, the reconciled #48/#49
@@ -30,10 +34,14 @@ The [array-parameter boundary](array-parameter-boundary.md) and
 parameters and variable invocation. Scalar/nullable/union/intersection parameter
 types, references, defaults and variadics remain unsupported. No WordPress
 original, Gossip pin or successful original-source count is changed; adoption
-requires separate pinned verification. PHP 8.4+ requires separate policy and
-evidence. No parent PR is closed or overwritten, and no main merge, release or
-deployment is performed.
+requires separate pinned verification. Its original fixed PHP 8.3 evidence
+remains tied to that integration. The current compiler targets are PHP 8.3 and
+8.4 under the [active PHP version policy](compatibility.md#active-php-version-policy),
+with separate target evidence; this document does not assert new 8.4 coverage.
+No parent PR is closed or overwritten, and no main merge, release or deployment
+is performed.
 
 Capability `gohp.cli.generate` remains WebMCP-excluded: local developer source
 translation, no browser surface, service operation, authentication change or
-automatic adoption. The merged commit must have its own fixed PHP 8.3 evidence.
+automatic adoption. The merged commit must have its own fixed target-specific
+evidence.
