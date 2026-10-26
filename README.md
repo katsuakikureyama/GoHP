@@ -61,8 +61,11 @@ with a diagnostic; a separate runtime-negative test must fail on a missing key.
 Compilation alone never proves PHP compatibility.
 Bare [`continue;`](docs/foreach-continue-boundary.md) now targets the nearest
 enclosing `foreach`, including inside braced conditionals. Numeric levels and
-other loop kinds are excluded. This removes one of Gossip's `_wp_array_get`
-blockers; default parameters and bare/multiple isset still need separate work.
+other loop kinds are excluded. Together with bounded
+[trailing untyped null defaults and defined bare/multiple isset](docs/array-get-prerequisites.md),
+this resolves the syntax blockers measured for Gossip's `_wp_array_get`.
+The subsequent [literal-null identity fix](docs/literal-null-identity.md) and
+Gossip's separately pinned comparison are recorded in the [integration contract](docs/integration.md).
 Builtins currently include `count(array)`, bounded `strlen(string)` (byte
 length only, no implicit non-string coercion), `array_keys(array)` (one argument,
 ordered keys, no value filtering) and `array_values(array)` (ordered values,

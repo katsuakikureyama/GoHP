@@ -19,7 +19,11 @@ order remain excluded. This uses the existing canonical nil runtime predicate;
 no runtime API or dependencies change.
 
 The catalog records partial operator support and the owned regression fixture.
-Gossip must adopt a new exact pin and rerun its failed24-case configuration.
+Gossip subsequently adopted main `b8dc1757ed61f459d51362da004aa1d73d024116` and
+reported all 24 retained cases passing in
+[Gossip PR #36](https://github.com/katsuakikureyama/Gossip/pull/36).
+That is a separate original-source unit, not a combined 25-original validation;
+new pins or configurations still require their own evidence.
 `gohp.cli.generate` stays explicitly WebMCP-excluded; route/auth unchanged.
 
 Primary references: [strict comparisons](https://www.php.net/manual/en/language.operators.comparison.php),
