@@ -3,8 +3,9 @@
 General `internal/storage.Slot` bindings can now own null/bool/int64/string or
 an open `*ScalarArray`. This extends the **canonical** Slot/cell engine; there is
 no second array-slot reference model. A bounded value-only runtime adapter now
-uses this storage explicitly. This is R1 infrastructure, not PHP reference
-syntax or a migration of generated array operations.
+uses this storage explicitly. A first closed generated scope now uses it too
+(below). This is bounded R1 integration, not PHP reference syntax or a wholesale
+migration of generated array operations.
 
 ## Value ownership
 
@@ -69,11 +70,9 @@ write produces independent versus shared element values. This is internal
 lifetime evidence, not a new PHP evaluation-order or exception contract.
 
 These pointer-only, non-concurrent storage types are never directly exposed to
-external consumers. The opt-in runtime facade below wraps them; codegen does not
-emit it yet. Generated arrays still use eager-copy `runtime.Array`, and selected
-`ScalarFrame` functions exclude them. Expression-level ownership planning
-(evaluation, result transfer, cleanup and lazy branches) remains necessary
-before a generated scope can actually own/release shared-array temporaries.
+external consumers. The runtime facade below wraps them. The first generated
+scope uses the expression-level ownership plan specified below; all other array
+scopes still use eager-copy `runtime.Array`. ScalarFrame remains scalar-only.
 
 ## Opt-in runtime boundary
 
@@ -114,10 +113,66 @@ Nested arrays, objects, callables, foreign host values, noncanonical/duplicate
 keys and stale index metadata remain outside this adapter. Existing Array APIs
 and their nested-value behavior are unchanged; this is not a drop-in replacement
 for every Array or function parameter. Runtime unit checks and a real external
-module test cover this boundary, not generated-code or native PHP equivalence.
+module test cover this boundary, not by themselves generated-code or native PHP
+equivalence. The generated integration has its own checks below.
 New callers must pin a runtime revision providing these APIs; old generated Go
 and IR 0.1 are unchanged. No new CLI, service operation, authentication or WebMCP
 surface is introduced; the existing local generation exclusion still applies.
+
+## First generated scope and expression ownership
+
+After normal semantic validation, codegen selects **nullary global functions
+with a straight-line body** that handles at least one flat array value. A
+separate sequential domain proof tracks each local as scalar, flat array or a
+scalar/flat union; every statement, including dead tails, must qualify.
+Pure scalar functions keep ScalarFrame. An unproven scope keeps the legacy map,
+not a runtime per-value fallback. No previously rejected PHP or IR is admitted.
+
+- Statements: assignment, one-level array write/append, scalar echo, return,
+  and discarded calls from the admitted pure helper list.
+- Expressions: exact scalar literals/constants, proved locals, flat array
+  literals with scalar elements, one-level index/isset, boolean/isset forms,
+  ternary, scalar arithmetic/concatenation, strict comparison and short-circuit
+  logic. Ternary unions may be stored/returned but are not exact-flat mutation
+  roots or scalar array elements. Existing semantic/type/key guards still apply.
+- Calls: the ScalarFrame pure-builtin allowlist with **scalar operands only**,
+  plus `count` of an exact-flat value. No interprocedural return assumptions.
+- Parameters, methods, arrows, if/loops/foreach, user/stateful/unlisted calls,
+  array-producing builtins, nested arrays, coalescing/path operations and
+  references remain on the existing path (or are rejected as before).
+
+Each selected function allocates a deterministic set of initially undefined
+`ValueSlot` locals and immediately defers their Close after arity/Execution
+guards. No array can enter from a host parameter: admitted arrays originate in
+canonical literals and same-scope values. There is no new general Frame or
+second ownership engine. Slots survive until function exit, not temporaries.
+
+| Use | Acquisition / consumption / cleanup |
+|---|---|
+| Assignment from a local | Snapshot the current value, then MoveTo the destination; self-assignment retains before release |
+| Assignment/return from ternary | Evaluate condition once; acquire a temporary in the selected arm only, recursively |
+| Other assignment/return producer | Evaluate existing legacy operands, then NewValueTemporary imports the proved scalar/flat result |
+| Assignment consumer | IIFE installs deferred Close immediately, then MoveTo consumes on success; failure releases within that operation |
+| Return consumer | IIFE installs deferred Close and Take exports a detached value before function-local teardown; existing ArrayReturn/BoolReturn/Clone ABI guards remain |
+| Ordinary operand read | Read exports a detached legacy value and releases its internal snapshot before the next operand; no live borrowed handle escapes |
+| Array mutation | Evaluate key then RHS once into detached locals, then ArrayWrite/ArrayAppend through the current owning slot; no Read/mutate/writeback |
+
+Go short-circuit operators and the existing expression closures keep lazy
+operands lazy. No local-mutating callback, reference, persistent location or
+owned operand spans an evaluation boundary in this lane. The IIFE guard ends at
+the operation, rather than accumulating live temporary owners until function
+return. This is a bounded lowering contract, not a universal PHP evaluation-order
+or destructor model. Array literal construction and normal operand exports still
+use legacy values; no performance improvement is claimed.
+
+`gohp.tooling.generated-owned-values` separates the native/generated fixture,
+selection/lowering/source-map/rejection checks and real external-module ABI
+consumer from the adapter's unit evidence. The fixture measures stdout/exit and
+quiet-success independently for each target, not hidden owner counts. Internal
+storage's existing lifetime tests remain the release-model evidence. Synthetic
+local allocation/Close is unmapped; operation IIFEs map to their PHP statements.
+New generated files must pin a runtime revision with ValueSlot/ValueTemporary;
+IR 0.1 and existing runtime APIs are unchanged.
 
 ## Synchronous writes through the owning Slot
 
@@ -191,13 +246,13 @@ PHP 8.3.36 native-only observations in #82 are unchanged; they are not new
 generated-reference or PHP 8.4 native-reference evidence.
 
 R1 remains partial: synchronous Slot-rooted writes, internal value temporaries
-and the opt-in runtime adapter are implemented, but persistent locations, general
-generated-frame/temporary integration, nested ownership and cyclic reclamation
-are unfinished. The next
-gate is an expression-level ownership plan and a proven closed scope for
-generated array temporaries, plus operation-specific locations across calls,
-before enabling array reference syntax or replacing runtime storage. There is
-no performance or application-acceptance claim.
+and the runtime adapter plus first straight-line generated scope are implemented.
+Control-flow/parameter/general-frame ownership, persistent locations across
+calls, nested ownership and cyclic reclamation remain unfinished. Broader
+generated scopes need explicit domain joins and lifetime proofs before admission;
+reference syntax needs the separate R2/R3 contracts. There is no performance or
+application-acceptance claim.
 
-The runtime APIs are additive; no compiler/parser/IR, CLI/capability/auth/WebMCP,
-target/oracle/CI, Gossip pin or deployment change. The local CLI's existing exclusion remains.
+The adapter APIs are additive; the generated integration changes compiler output
+only in its closed scope. No parser/IR, CLI/capability/auth/WebMCP, target/oracle/CI,
+Gossip pin or deployment change. The local CLI's existing exclusion remains.

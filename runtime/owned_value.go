@@ -8,7 +8,7 @@ import (
 // ValueSlot is an opt-in, value-only runtime boundary over canonical storage.
 // It accepts exact scalars and canonical flat scalar Arrays, not arbitrary PHP
 // values. Its zero value is open but undefined. Use by pointer, never copy or
-// access concurrently, and Close explicitly. Codegen does not select it yet.
+// access concurrently, and Close explicitly. Generated use needs a closed proof.
 // No internal handle, binding or PHP reference operation is exposed.
 type ValueSlot struct {
 	value  storage.Slot

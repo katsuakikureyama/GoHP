@@ -26,6 +26,8 @@ type generator struct {
 	execution bool
 	// Only closed scalar bodies with proven scalar entry values use owned storage.
 	scalarFrame bool
+	// First shared-value lane: proven nullary, straight-line flat-array scopes.
+	ownedValues bool
 }
 
 func name(s string) string { return strings.ToLower(s) }
@@ -184,8 +186,11 @@ func (g *generator) emit(s string, a ...any) {
 func (g *generator) fail(line int, msg string) { panic(fmt.Errorf("PHP004 line %d: %s", line, msg)) }
 func (g *generator) function(f ir.Function, c string) {
 	previousFrame := g.scalarFrame
+	previousOwned := g.ownedValues
 	g.scalarFrame = c == "" && scalarFrameParameters(f) && f.ReturnType != "array" && scalarFrameBody(f.Body)
-	defer func() { g.scalarFrame = previousFrame }()
+	ownedLocals, owned := ownedValueLocals(f)
+	g.ownedValues = c == "" && !g.scalarFrame && owned
+	defer func() { g.scalarFrame, g.ownedValues = previousFrame, previousOwned }()
 	if g.execution && c == "" {
 		g.emit("func F_%s(args ...any) any { return FContext_%s(&rt.Execution{}, args...) }\n", name(f.Name), name(f.Name))
 		g.emit("func FContext_%s(execution *rt.Execution, args ...any) any { rt.RequireExecution(execution)\n", name(f.Name))
@@ -204,6 +209,11 @@ func (g *generator) function(f ir.Function, c string) {
 	}
 	if g.scalarFrame {
 		g.emit("v:=rt.NewScalarFrame(); defer v.Close()\n")
+	} else if g.ownedValues {
+		g.emit("v:=map[string]*rt.ValueSlot{}; _=v\n")
+		for _, local := range ownedLocals {
+			g.emit("v[%q]=&rt.ValueSlot{}; defer v[%q].Close()\n", local, local)
+		}
 	} else {
 		g.emit("v:=map[string]any{}; _=v\n")
 	}
@@ -259,13 +269,16 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			if s.Name == "this" || s.Name == "GLOBALS" || strings.HasPrefix(s.Name, "_") {
 				g.fail(s.Line, "reserved/global variable unsupported")
 			}
-			e := g.expr(s.Expr, scope)
-			scope[s.Name] = true
-			if g.scalarFrame {
+			if g.ownedValues {
+				g.ownedValueAssignment(s.Name, s.Expr, scope)
+			} else if g.scalarFrame {
+				e := g.expr(s.Expr, scope)
 				g.emit("v.Write(%q,rt.Clone(%s))\n", s.Name, e)
 			} else {
+				e := g.expr(s.Expr, scope)
 				g.emit("v[%q]=rt.Clone(%s)\n", s.Name, e)
 			}
+			scope[s.Name] = true
 		case "assign_property":
 			// Semantic validation admits only a known generated class variable
 			// and one declared public property; no host/dynamic setter dispatch.
@@ -286,7 +299,11 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			base := g.expr(s.Target.Args[0], scope)
 			key := g.expr(s.Target.Args[1], scope)
 			value := g.expr(s.Expr, scope)
-			g.emit("v[%q]=rt.ArraySet(%s,%s,%s)\n", root, base, key, value)
+			if g.ownedValues {
+				g.emit("{ key := any(%s); value := any(%s); v[%q].ArrayWrite(key,value) }\n", key, value, root)
+			} else {
+				g.emit("v[%q]=rt.ArraySet(%s,%s,%s)\n", root, base, key, value)
+			}
 		case "assign_append":
 			root := s.Target.Text // Variable-only shape validated before generation.
 			if root == "this" || root == "GLOBALS" || strings.HasPrefix(root, "_") {
@@ -294,19 +311,29 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			}
 			base := g.expr(s.Target, scope)
 			value := g.expr(s.Expr, scope)
-			g.emit("v[%q]=rt.ArrayAppend(%s,%s)\n", root, base, value)
+			if g.ownedValues {
+				g.emit("{ value := any(%s); v[%q].ArrayAppend(value) }\n", value, root)
+			} else {
+				g.emit("v[%q]=rt.ArrayAppend(%s,%s)\n", root, base, value)
+			}
 		case "echo":
 			g.emit("rt.Echo(%s)\n", g.expr(s.Expr, scope))
 		case "return":
 			if !inFunc {
 				g.fail(s.Line, "top-level return unsupported")
 			}
-			if returnType == "array" {
-				g.emit("return rt.ArrayReturn(%s)\n", g.expr(s.Expr, scope))
-			} else if returnType == "bool" {
-				g.emit("return rt.BoolReturn(%s)\n", g.expr(s.Expr, scope))
+			var result string
+			if g.ownedValues {
+				result = g.ownedValueResult(s.Expr, scope)
 			} else {
-				g.emit("return rt.Clone(%s)\n", g.expr(s.Expr, scope))
+				result = g.expr(s.Expr, scope)
+			}
+			if returnType == "array" {
+				g.emit("return rt.ArrayReturn(%s)\n", result)
+			} else if returnType == "bool" {
+				g.emit("return rt.BoolReturn(%s)\n", result)
+			} else {
+				g.emit("return rt.Clone(%s)\n", result)
 			}
 		case "if":
 			g.emit("if rt.Bool(%s) {\n", g.expr(s.Expr, scope))
@@ -408,6 +435,9 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		}
 		if g.scalarFrame {
 			return "v.Read(" + strconv.Quote(e.Text) + ")"
+		}
+		if g.ownedValues {
+			return "v[" + strconv.Quote(e.Text) + "].Read()"
 		}
 		return "v[" + strconv.Quote(e.Text) + "]"
 	case "ternary":
