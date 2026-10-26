@@ -152,7 +152,7 @@ func lex(s string) ([]token, error) {
 		matched := false
 		// Keep multi-character operators longest-first so === is never split
 		// into the unsupported = token followed by ==.
-		for _, op := range []string{"===", "!==", "&&", "||", "=>", "->"} {
+		for _, op := range []string{"===", "!==", "&&", "||", "??", "=>", "->"} {
 			if strings.HasPrefix(s[i:], op) {
 				ts = append(ts, token{op, ln, "sym"})
 				i += len(op)
@@ -411,18 +411,21 @@ func isStrictComparison(t token) bool {
 
 func (p *parser) prec(t token) int {
 	if t.kind == "sym" && t.text == "." {
-		return 4
-	}
-	if t.kind == "sym" && t.text == "+" {
 		return 5
 	}
+	if t.kind == "sym" && t.text == "+" {
+		return 6
+	}
 	if isStrictComparison(t) {
-		return 3
+		return 4
 	}
 	if t.kind == "sym" && t.text == "&&" {
-		return 2
+		return 3
 	}
 	if t.kind == "sym" && t.text == "||" {
+		return 2
+	}
+	if t.kind == "sym" && t.text == "??" {
 		return 1
 	}
 	return 0
@@ -476,10 +479,10 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 			for {
 				base := p.pop()
 				if base.kind != "var" {
-					p.fail("isset requires a variable or one-level indexed variable")
+					p.fail("isset requires a variable or indexed variable")
 				}
 				address := ir.Expr{Kind: "isset_var", Line: t.line, Args: []ir.Expr{{Kind: "var", Text: base.text, Line: base.line}}}
-				if p.accept("[") {
+				for p.accept("[") {
 					key := p.pop()
 					keyExpr := ir.Expr{Kind: key.kind, Text: key.text, Line: key.line}
 					if key.kind == "sym" && key.text == "-" {
@@ -490,6 +493,9 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 					p.need("]")
 					address.Kind = "isset_index"
 					address.Args = append(address.Args, keyExpr)
+				}
+				if len(address.Args) > 2 {
+					address.Kind = "isset_path"
 				}
 				operands = append(operands, address)
 				if p.accept(")") {
@@ -535,7 +541,7 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 	case "sym":
 		switch t.text {
 		case "!":
-			e = ir.Expr{Kind: "not", Args: []ir.Expr{p.expr(6)}, Line: t.line}
+			e = ir.Expr{Kind: "not", Args: []ir.Expr{p.expr(7)}, Line: t.line}
 		case "-":
 			e = p.negativeInteger(t)
 		case "(":
@@ -544,7 +550,7 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 			if p.peek().kind == "id" && strings.EqualFold(p.peek().text, "bool") && p.pos+1 < len(p.ts) && p.ts[p.pos+1].text == ")" {
 				p.pop()
 				p.need(")")
-				e = ir.Expr{Kind: "bool_cast", Args: []ir.Expr{p.expr(6)}, Line: t.line}
+				e = ir.Expr{Kind: "bool_cast", Args: []ir.Expr{p.expr(7)}, Line: t.line}
 			} else {
 				e = p.expr(0)
 				p.need(")")
@@ -586,8 +592,16 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 			break
 		}
 		p.pop()
-		right := p.expr(q + 1)
-		e = ir.Expr{Kind: "binary", Text: op.text, Args: []ir.Expr{e, right}, Line: op.line}
+		rightMin := q + 1
+		if op.text == "??" {
+			rightMin = q // Right-associative, above full ternary and below ||.
+		}
+		right := p.expr(rightMin)
+		if op.text == "??" {
+			e = ir.Expr{Kind: "coalesce", Args: []ir.Expr{e, right}, Line: op.line}
+		} else {
+			e = ir.Expr{Kind: "binary", Text: op.text, Args: []ir.Expr{e, right}, Line: op.line}
+		}
 		if isStrictComparison(op) && isStrictComparison(p.peek()) {
 			p.fail("strict comparison is non-associative; use parentheses")
 		}

@@ -121,14 +121,13 @@ Nested targets, auto-vivification and references remain excluded.
 Bounded `empty($arrayVariable)` tests only a defined actual array's outer entry
 count, without inspecting values; undefined/scalar/index/property operands remain
 excluded. See the [empty boundary](docs/array-empty-boundary.md).
-One-level `isset($array[$key])` probes a defined array variable without reading
-a missing element. Missing/null entries return false; other stored values return
-true. Defined bare variables and a comma-separated list of defined bare/indexed
-addresses are also supported, evaluated left-to-right with short-circuiting.
-Literal negative integer keys are accepted with the same bounded decimal
-negation rules as array reads/writes. This is not general isset: undefined roots, nested indexes, properties,
-effectful/parenthesized addresses and key coercions are excluded. See the
-[array isset boundary](docs/array-isset-boundary.md).
+One-level `isset($array[$key])` retains its strict array/key guard without
+reading a missing element. Defined bare variables and a comma-separated list of
+defined bare/indexed addresses are evaluated left-to-right with short-circuiting.
+The separate bounded nested-path and `??` form accepts only a defined variable
+root plus literal/defined-variable keys, keeps normal reads strict, and does not
+support properties or undefined suppression. See the [array isset boundary](docs/array-isset-boundary.md)
+and [nested array-probe boundary](docs/nested-array-probes.md).
 Named global functions may declare `: array` or `: bool`; explicit returns and fallthrough
 are checked rather than silently dropping the declaration. Bool returns require
 actual bool values, without weak scalar coercion. Fixed positional `array`
@@ -177,6 +176,7 @@ See the [compatibility version policy](docs/compatibility.md#active-php-version-
 - [Combined conditional/array compiler boundary](docs/gossip-compiler-integration.md)
 - [Literal callback mapping and string quoting boundary](docs/array-map-boundary.md)
 - [One-level array assignment and lvalue boundary](docs/array-write-boundary.md)
+- [Nested array probes and null coalescing boundary](docs/nested-array-probes.md)
 - [Boolean validation subset](docs/boolean-boundary.md)
 - [String-only ASCII comparison](docs/strcasecmp-boundary.md)
 - [Combined charset and typed-array compiler](docs/charset-array-integration.md)

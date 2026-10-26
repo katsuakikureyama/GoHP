@@ -52,6 +52,13 @@ isset addresses — use the same local `gohp.cli.generate` capability. They add
 no browser/server/MCP operation, authentication route, external save, deployment
 or automatic Gossip adoption; WebMCP remains explicitly excluded.
 
+Bounded [nested array probes and null coalescing](nested-array-probes.md) are a
+separate candidate for the pure array/boolean paths in WordPress
+`wp_should_add_elements_class_name` (elements.php lines 33–97). They do not add
+an external resolver, class substitute, browser/service route, dependency or
+authentication path. Consumer adoption and a pinned unchanged-source comparison
+remain unverified; compiler/runtime tests alone do not certify that consumer.
+
 Gossip can invoke `gohp -in source.php -out candidate.go -php-version 8.3
 -report candidate.report.json` in an isolated build workspace. The command exits
 nonzero for unsupported syntax or semantic checks and produces no new Go output

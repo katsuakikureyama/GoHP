@@ -413,6 +413,24 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			return operands[1], nil
 		}
 		return valueType{kind: unknownKind}, nil
+	case "coalesce":
+		if err := require(2); err != nil {
+			return valueType{}, err
+		}
+		root, keys, ok := ir.ArrayAddressParts(expr.Args[0])
+		if expr.Text != "" {
+			return valueType{}, malformed(expr.Line, "coalesce requires a variable-rooted array address")
+		}
+		if !ok {
+			return valueType{}, unsupported(expr.Line, "coalesce requires a variable-rooted array address")
+		}
+		if err := v.arrayPath(root, keys, scope); err != nil {
+			return valueType{}, err
+		}
+		if _, err := v.expr(expr.Args[1], scope); err != nil {
+			return valueType{}, err
+		}
+		return valueType{kind: unknownKind}, nil
 	case "binary":
 		if err := require(2); err != nil {
 			return valueType{}, err
@@ -533,12 +551,20 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			return valueType{}, malformed(expr.Line, "multi isset requires at least two addresses")
 		}
 		for _, operand := range expr.Args {
-			if operand.Kind != "isset_var" && operand.Kind != "isset_index" {
+			if operand.Kind != "isset_var" && operand.Kind != "isset_index" && operand.Kind != "isset_path" {
 				return valueType{}, malformed(expr.Line, "multi isset requires variable addresses")
 			}
 			if _, err := v.expr(operand, scope); err != nil {
 				return valueType{}, err
 			}
+		}
+		return valueType{kind: boolKind}, nil
+	case "isset_path":
+		if expr.Text != "" || len(expr.Args) < 3 {
+			return valueType{}, malformed(expr.Line, "nested isset requires a root and at least two keys")
+		}
+		if err := v.arrayPath(expr.Args[0], expr.Args[1:], scope); err != nil {
+			return valueType{}, err
 		}
 		return valueType{kind: boolKind}, nil
 	case "isset_index":
@@ -918,6 +944,42 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 	default:
 		return valueType{}, malformed(expr.Line, "unsupported IR expression "+expr.Kind)
 	}
+}
+
+// arrayPath validates addresses without performing an ordinary eager index read.
+// Static validation still visits every defined key and the coalesce fallback.
+func (v validator) arrayPath(root ir.Expr, keys []ir.Expr, scope map[string]valueType) error {
+	if root.Kind != "var" {
+		return malformed(root.Line, "array path requires a variable root")
+	}
+	if _, ok := scope[root.Text]; !ok {
+		return unsupported(root.Line, "array path requires a defined variable")
+	}
+	base, err := v.expr(root, scope)
+	if err != nil {
+		return err
+	}
+	if len(keys) != 0 && base.kind != arrayKind && base.kind != nullKind && base.kind != unknownKind {
+		return unsupported(root.Line, "array path requires array or null")
+	}
+	for _, key := range keys {
+		if key.Kind != "int" && key.Kind != "string" && key.Kind != "var" {
+			return unsupported(key.Line, "array path key must be an integer/string literal or variable")
+		}
+		if key.Kind == "var" {
+			if _, ok := scope[key.Text]; !ok {
+				return unsupported(key.Line, "array path requires a defined key variable")
+			}
+		}
+		t, err := v.expr(key, scope)
+		if err != nil {
+			return err
+		}
+		if t.kind != intKind && t.kind != stringKind && t.kind != unknownKind {
+			return unsupported(key.Line, "array path key must be an integer or string")
+		}
+	}
+	return nil
 }
 
 func (v validator) exprs(exprs []ir.Expr, scope map[string]valueType) ([]valueType, error) {
