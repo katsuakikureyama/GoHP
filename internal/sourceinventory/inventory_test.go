@@ -44,7 +44,7 @@ func TestInventorySelectionAndFailure(t *testing.T) {
 		if string(source) != "plain text" {
 			t.Fatal("scan did not receive checked source bytes")
 		}
-		return tokenization{PHPVersion: "8.3.36", Tokens: []Token{{Kind: "T_INLINE_HTML", Bytes: len(source)}}}, nil
+		return tokenization{PHPVersion: "8.3.36", Tokens: []Token{{Kind: "T_INLINE_HTML", Bytes: len(source)}}, InternalFunctions: []string{"strlen"}, Extensions: []string{"Core"}, ZendExtensions: []string{}}, nil
 	}
 	r, err := inventory(context.Background(), manifest, root, "8.3", scan)
 	if err != nil {

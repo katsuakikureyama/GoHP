@@ -81,7 +81,7 @@ The [roadmap](docs/roadmap.md) prioritizes a fixed application corpus and explic
 denominators, an end-to-end reference milestone, and a small PHP/Go benchmark.
 Application coverage and performance comparisons are **not yet measured**.
 The first [WordPress source manifest](docs/application-corpus.md) fixes whole-file
-scope and supports [byte verification and lexical inventory](docs/application-corpus.md#lexical-inventory),
+scope and supports [byte verification, lexical inventory and candidate name evidence](docs/application-corpus.md#lexical-inventory),
 not application compatibility or resolved-call coverage.
 Earlier [Gossip source comparisons](docs/integration.md) retain their original pins;
 they do not certify current main or a complete WordPress application.

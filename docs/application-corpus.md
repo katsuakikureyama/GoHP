@@ -119,10 +119,12 @@ lexical observations even for invalid grammar; a successful inventory is not a
 syntax-validity result. Token names, not numeric identifiers, bind the protocol
 because [PHP token numbers can change across versions](https://www.php.net/manual/en/tokens.php).
 
-JSON result `gohp.corpus.lexical-inventory/v0.1` has `status: lexical-only`,
+JSON result `gohp.corpus.lexical-inventory/v0.2` has `status: lexical-only`,
 `compatibility: unverified`, selected `php_target`, observed `php_version`,
 SHA-256 of the embedded tokenizer, and the unchanged nested verification report
-binding the exact manifest and every selected file. Each source file records:
+binding the exact manifest and every selected file. v0.2 adds native name-set
+evidence and per-candidate name matches; the v0.1 lexical fields and their
+meaning are retained. Consumers must explicitly admit v0.2. Each source file records:
 
 - Path, SHA-256, byte/token totals and a sorted histogram of **all** native token
   kinds and bytes, including whitespace, comments and string data. Single-byte
@@ -146,6 +148,54 @@ binding the exact manifest and every selected file. Each source file records:
   dispatch and dependency resolution are not evaluated. No catalog-name join is
   used to create support claims. Sorting is frequency descending then byte spelling.
 
+### Candidate name evidence (not call resolution)
+
+The same trusted scanner process also observes
+[`get_defined_functions()['internal']`](https://www.php.net/manual/en/function.get-defined-functions.php)
+and [loaded extension names](https://www.php.net/manual/en/function.get-loaded-extensions.php).
+`native_environment` retains the byte-sorted, unique `internal_functions`,
+`extensions` and `zend_extensions` lists. Its `sha256` hashes Go's compact JSON
+encoding of `[internal_functions, extensions, zend_extensions]`, without a newline.
+The native version and these sets must remain identical across selected files;
+drift fails the entire report. These are the observed `php -n` process's names,
+not all functions/extensions PHP can provide, extension versions, or an
+application's production environment. No selected source is loaded to collect them.
+
+Each file's `candidate_name_evidence` preserves **every** original frequency
+entry in its existing order and adds these mutually exclusive categories:
+
+| Category | Name-only observation |
+|---|---|
+| `native-internal-name` | Matches an observed native internal function name only |
+| `selected-declaration-name` | Matches named declaration markers in the selected source files only |
+| `both-name-sources` | Both matches exist; no precedence or dispatch is inferred |
+| `unmatched-name` | Neither name source matches; it may need another file/extension or may not be a call |
+| `qualified-name-unresolved` | Contains a namespace separator; no prefix stripping, basename match or fallback attempted |
+
+Matching uses the base64-decoded bytes and **ASCII-only** case folding, never
+display text or Unicode folding. Raw spellings, counts and non-UTF-8 identities
+remain separate. `native_internal_match` and `selected_declaration_markers`
+make the two sources explicit; qualified candidates have neither lookup applied.
+Declaration matches span all selected source files, including methods, nested,
+conditional and namespaced declarations; they do not prove a callable function
+exists. Source roles, not notice/provenance files, supply these markers.
+
+`name_evidence_status: name-only-not-resolved` applies to all five categories.
+The [PHP namespace rules](https://www.php.net/manual/en/language.namespaces.rules.php),
+imports, runtime availability, attributes, first-class callable creation and
+dynamic dispatch are **not resolved**. Even an unqualified `strlen` can be an
+attribute name or refer to a namespaced declaration. No GoHP builtin/catalog
+support join is performed. `resolved_calls` / `semantic_units` stay null;
+all source bytes stay grammar-unparsed. Use frequencies to prioritize an AST
+and dependency investigation, not to label WordPress functions or supported calls.
+
+The internal sidecar protocol is now `gohp.php.tokens/v0.2`, requiring all three
+name lists; old/missing/unsorted/duplicate lists fail. Limits are 10,000 internal
+function names, 512 names per extension list and 1,024 bytes per name, within
+the existing total stdout bound. Names are nonempty UTF-8 with no ASCII controls.
+
+### Positions, limits and verification
+
 Positions are zero-based half-open byte offsets for the keyword or opening
 parenthesis and one-based LF-counted source lines. Name base64 preserves exact
 bytes; a display `name` is also emitted when valid UTF-8. Source bodies, comments
@@ -155,7 +205,7 @@ this tool is not a secret scanner. File results retain manifest source order.
 Limits in addition to the manifest limits: 250,000 tokens per file, 500,000 for
 the selection, 16 MiB stdout / 64 KiB stderr per tokenizer process and a shared
 30-second tokenizer deadline. A failed process, any stderr, wrong series/floor,
-changed PHP version between files, invalid token tape or exhausted limit fails
+changed PHP version/name environment between files, invalid token tape or exhausted limit fails
 the **entire** inventory. No file or token is silently dropped. CLI exit codes
 are 0 success/help, 2 usage, 1 pipeline/output failure; pipeline errors emit only
 generic diagnostics and no JSON. Output-device failures may leave partial bytes;
@@ -168,7 +218,8 @@ the WordPress selection; original-source measurements are separate observations.
 
 ### Initial lexical observation
 
-Measured separately with GoHP `d77fb01922af81aa51722470bcfc516080980004`
+Historical v0.1 reports, before candidate name evidence, measured separately
+with GoHP `d77fb01922af81aa51722470bcfc516080980004`
 (Go 1.23.0, Linux/arm64 binary built on Darwin/arm64) against the unchanged
 manifest SHA-256 `826e7dfa8c59975119042e39fbcf3c8ae753d47fa2dddd22ea8e484b47e891e2`.
 Read-only, network-disabled containers used the same PHP image digests as CI:
@@ -208,7 +259,8 @@ all flags precede the one root. Result is the versioned JSON above or a nonzero
 failure, never a save/publication state.
 
 `inspect`: verify and retain the full selection. `prepare`: execute only the
-trusted tokenizer on the retained buffers and construct lexical observations.
+trusted tokenizer on the retained buffers, observe its native name environment,
+and construct lexical observations plus explicit name-only evidence (v0.2).
 `save` / `commit`: **excluded**, no mutation/publication. Authorization is local
 read/execute permission; stdout/stderr and caller-retained run metadata provide
 local evidence, not an authenticated server audit. WebMCP, AI Assist, browser UI,

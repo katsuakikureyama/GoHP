@@ -19,10 +19,19 @@ foreach ($tokens as $token) {
     }
     $observed[] = ['kind' => $kind, 'bytes' => strlen($text)];
 }
+$internal = get_defined_functions()['internal'];
+$extensions = get_loaded_extensions();
+$zendExtensions = get_loaded_extensions(true);
+sort($internal, SORT_STRING);
+sort($extensions, SORT_STRING);
+sort($zendExtensions, SORT_STRING);
 echo json_encode([
-    'schema' => 'gohp.php.tokens/v0.1',
+    'schema' => 'gohp.php.tokens/v0.2',
     'php_version' => PHP_VERSION,
     'bytes' => strlen($source),
     'sha256' => hash('sha256', $source),
     'tokens' => $observed,
+    'internal_functions' => $internal,
+    'extensions' => $extensions,
+    'zend_extensions' => $zendExtensions,
 ], JSON_THROW_ON_ERROR);

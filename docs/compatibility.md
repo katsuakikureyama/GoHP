@@ -287,7 +287,8 @@ source/generated hashes and target, with status `generated`, never automatic PAS
 For pinned original source identity (not Composer metadata or PHP callsite
 coverage), see the separate [application corpus verifier](application-corpus.md).
 Its [lexical inventory](application-corpus.md#lexical-inventory) uses a selected
-native PHP tokenizer without executing source; candidate frequencies and all
+native PHP tokenizer without executing source; candidate frequencies, native
+environment/selected-declaration name evidence and all
 unclassified parentheses remain distinct from resolved calls or support ratios.
 
 ```sh
