@@ -76,7 +76,7 @@ storage locations, aliases and reference-aware array separation. Its native-PHP
 specification is not generated-Go evidence; references remain unsupported.
 The [first generated-frame integration](docs/generated-scalar-frames.md) now
 uses owned storage for closed scalar functions with no arguments or all exact
-scalar-typed arguments; other scopes keep
+scalar-typed arguments, including an explicit scalar-only builtin subset; other scopes keep
 their existing value semantics.
 Declared public properties now accept bounded [simple assignment](docs/public-property-write.md)
 through a statically known generated-class variable (including known aliases
