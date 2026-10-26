@@ -50,7 +50,7 @@ func scalarFrameParameters(function ir.Function) bool {
 
 func scalarFrameExpr(expr ir.Expr) bool {
 	switch expr.Kind {
-	case "int", "string", "bool", "null", "var":
+	case "int", "string", "bool", "null", "var", "version_constant":
 		// Definite assignment is still enforced by validation/codegen. Entry
 		// guards and the absence of non-scalar producers keep locals scalar.
 	case "bool_cast", "not", "ternary", "isset_var", "isset_multi":

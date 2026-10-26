@@ -13,7 +13,8 @@ parameters whose **entire body** stays in a proven scalar domain use the frame.
 The conservative classifier runs after normal
 semantic validation; it does not admit previously rejected source or IR.
 
-- Expressions: int/string/bool/null literals, defined locals, the existing
+- Expressions: int/string/bool/null literals, defined locals,
+  [target major/minor constants](target-version-constants.md), the existing
   scalar `+`, `-`, `.`, `===`, `!==`, `&&`, `||`, boolean cast/not, ternary and
   defined-variable `isset` (including multiple such operands).
 - Calls: only the explicit pure-builtin list `strlen`, `strtolower`, `strcasecmp`,

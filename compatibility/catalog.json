@@ -3,6 +3,22 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.constants.target-version",
+      "kind": "syntax",
+      "name": "Target-series version constants",
+      "implementation": "partial",
+      "contract": "Exact unqualified PHP_MAJOR_VERSION and PHP_MINOR_VERSION are integer expressions resolved from the selected target series, not the host or oracle minimum patch. Symbolic IR keeps target-dependent meaning through generation; function and constant namespaces remain distinct.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.version_constants","test":"TestDifferential/version_constants","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/version_constants.php","assertions":["stdout","exit","target-derived integer identity, arithmetic, branches, array values, functions, methods, arrows and separate function/constant names"]},
+        {"case_id":"unit.phpversion.constants","test":"TestVersionConstantsUseSelectedSeries","file":"internal/phpversion/constants_test.go","kind":"unit","assertions":["enabled series resolve independently; unknown targets and patch/platform constants reject"]},
+        {"case_id":"compiler.version_constants","test":"TestVersionConstantLowering","file":"internal/codegen/version_constant_test.go","kind":"compiler","assertions":["symbolic IR, source maps, target-specific lowering, scalar frames and retargeting without global state"]},
+        {"case_id":"negative.version_constants.source","test":"TestVersionConstantBoundaries","file":"internal/codegen/version_constant_test.go","kind":"negative","assertions":["case sensitivity, patch-dependent and unknown constants, unsupported syntax and literal-only contexts fail closed; function namespace remains separate"]},
+        {"case_id":"negative.version_constants.ir","test":"TestVersionConstantMalformedIR","file":"internal/codegen/version_constant_test.go","kind":"negative","assertions":["unknown names, extraneous operands/parameters and unadmitted target reject before output"]}
+      ],
+      "limitations": ["No PHP_VERSION, PHP_VERSION_ID, PHP_RELEASE_VERSION or PHP_EXTRA_VERSION; no patch semantics inferred from oracle floor", "No general constants, declarations, define/constant lookup, namespaces or qualified names", "Literal-only defaults, property initializers and restricted key positions retain their existing boundaries", "Native stdout difference is recorded separately from a target-local transpiler mismatch; no general exception/diagnostic/side-effect equivalence"]
+    },
+    {
       "id": "php.syntax.scalar-function-parameters",
       "kind": "syntax",
       "name": "Exact scalar global-function parameters",
