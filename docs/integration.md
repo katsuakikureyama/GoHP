@@ -35,6 +35,19 @@ separate `wp_render_elements_class_name` guard. Owned fixture composition is
 not unchanged-source evidence for that entire render function. It extends only
 WebMCP-excluded `gohp.cli.generate`; no Gossip repin, route/auth/deploy changes.
 
+[Gossip PR #39](https://github.com/katsuakikureyama/Gossip/pull/39), merged as
+`37be02cf71a5f9536b0b646e1ffaab3e1819ed6b`, adds a separate 24-case binary at exact
+GoHP #69 pin `731ef251ac907326f060aac5f1b5b994ac8615bb`: three unchanged original
+functions plus an owned data-holder class and composition driver exercise output
+serialization skip decisions followed by class-necessity decisions. The earlier
+26-original/334-case binary remains unchanged. This is not a 27-original/358-case
+combined PASS, nor a claim about registry, render hooks, CSS or HTML generation.
+
+[`str_starts_with`](str-starts-with-boundary.md) adds the byte-prefix dependency
+used later in the render caller. Owned token/guard tests do not certify its
+tokenizer, loop or HTML processor. The same WebMCP exclusion and no-repin boundary
+apply; no route/auth/deployment change is included.
+
 [`array_slice`](array-slice-boundary.md) adds positional selection with actual
 int/null/bool bounds to WebMCP-excluded `gohp.cli.generate`. No consumer adoption,
 route/auth/deployment change or Gossip pin/source modification is included.
