@@ -28,28 +28,38 @@ evidence. This roadmap does not add catalog statuses or a new CLI operation.
 
 ## Priorities and completion criteria
 
+Owner priority, 2026-10-27: **make a fixed Gossip source work on PHP 8.3 first**.
+The first executable gate is the complete original `WP_Block_Parser`, including
+Block/Frame and source-loading edges, not another selected helper. Gossip's
+[acceptance contract](https://github.com/katsuakikureyama/Gossip/blob/master/docs/php83-application-acceptance.md)
+owns the frozen source, scenarios and status. Application semantics remain PHP
+semantics, not WordPress-specific branches in GoHP.
+
 | Workstream | Current state | Next observable result / completion criterion |
 |---|---|---|
+| PHP 8.3 Gossip acceptance (first) | Full original parser not translated; selected-method results remain separate | G83-PARSER: all seven original methods plus Block/Frame and loading closure, native/generated behavior at exact pins; then bootstrap/hooks, DB, HTTP and standard user flows |
 | Documentation | README and compatibility tables reorganized; historical target claims distinguished | Keep the entry point, implementation limits and evidence links aligned in each affected change |
-| Application inventory | Whole-file identity, native-token/name evidence and top-six dependency triage available; grammar/name resolution and dependency closure unresolved, no percentage | Follow the observed hook/global/reference/callable prerequisites and AST/dependency investigation; retain unknown/unparsed content and separate selection identities |
-| Reference/value integration | R1 partial: internal ownership/storage, runtime value adapter and scalar-entry generated scopes with bounded if/while exist | Array/untyped parameter entry/loop invariant extensions, then locations across calls; PHP source → Go binary comparison of reference assignment/update/unset (R2), with rejected unsupported forms |
-| Performance baseline | Planned; no PHP/Go benchmark | Publish one reproducible, output-checked small workload per target, separating build, startup, execution and memory measurements |
-| Frontend adapter | Assessment only; no candidate installed | Audit/pin a candidate and demonstrate target-aware parsing, diagnostics/spans and supported-IR parity in shadow mode before replacement |
-| Application acceptance | Earlier bounded Gossip runs only | Translate an unchanged complete application unit and its actual dependency closure; compare behavior at exact application/compiler/oracle pins |
+| Application inventory | Earlier functions.php lexical/name evidence retained; no semantic coverage percentage | Work from the complete parser's actual calls and state mutations first; inventory bootstrap dependencies when that gate is next |
+| PHP values/references | R1 partial; existing ownership/runtime adapter and exact-scalar-entry scopes retained | Implement only locations, aliasing and mutation contracts needed by the selected application gate; no independent array/untyped-parameter or COW expansion queue |
+| Performance baseline | Deferred; no PHP/Go benchmark | After the first executable application unit, measure a reproducible output-checked workload; performance is not a substitute for correct application behavior |
+| Frontend adapter | Assessment only; no candidate installed | Revisit if removing measured parser/application syntax blockers justifies migration; preserve target-aware diagnostics and fail-closed semantics |
+| PHP versions | Existing 8.3/8.4 differential CI retained | Fix regressions in both; defer new minors and unrelated 8.4 feature expansion until the PHP 8.3 application gate advances |
 | Broader semantics | Captures, inheritance, exceptions and include/autoload remain unsupported | Select from measured application blockers; each needs a closed contract and native comparison before admission |
 | Licensing | Undecided | Owner selects terms after the existing dependency/contributor/provenance review; documentation cleanup does not select a license |
 
-Prefer changes that remove an observed application blocker or complete the
-reference model over an unranked sequence of unrelated builtins. A builtin
+Select changes that remove an observed blocker in the current application gate.
+Completing the storage model in isolation is no longer the next milestone. A builtin
 addition still needs its own bounded contract; frequency alone does not justify
-accepting unsupported argument types or call forms. Parser investigation and a
-small benchmark can proceed without blocking ownership work, but neither counts
-as application compatibility.
+accepting unsupported argument types or call forms. Pair each increment with the
+original-source callsite it enables and re-probe the complete unit after the
+affected boundary changes. Do not re-run unchanged successful configurations.
+Expected compiler rejection is a recorded blocker, never application PASS.
 
 ## First application inventory
 
-The **pinned WordPress core `wp-includes/functions.php`** is the first
-frequency/inventory candidate. Its [manifest and byte verifier](application-corpus.md)
+The **pinned WordPress core `wp-includes/functions.php`** remains the historical
+first frequency/inventory candidate, not the next executable acceptance gate.
+Its [manifest and byte verifier](application-corpus.md)
 fix the complete source-file selection, notice and version provenance; they do
 not parse, compile or execute it. Before publishing any ratio, complete the
 remaining inventory/run evidence:
@@ -112,6 +122,12 @@ this document changes none of them.
 
 ## Reference milestone
 
+The R0–R5 model remains the design constraint. Its next implementation slice is
+conditional on a demonstrated Gossip blocker, not an obligation to finish every
+storage optimization before running an application. In particular, the parser's
+property-held stack mutation and nested object identity must not be mistaken
+for a requirement to migrate every array to COW first.
+
 Use the existing [R0–R5 gates](reference-value-model.md#delivery-gates-and-status),
 not a second storage engine. R1 now has synchronous one-level mutations through
 the owning Slot, without a Read/copy/writeback temporary, and separately owned
@@ -123,7 +139,7 @@ persistent locations still need explicit contracts
 without changing PHP syntax acceptance. Internal unit results do not count as
 reference support.
 
-The first end-to-end R2 target is bounded scalar variable reference assignment,
+When an application blocker requires R2, its first end-to-end target is bounded scalar variable reference assignment,
 write-through, rebinding and unset. For each admitted PHP target, compare source
 programs and compiled Go for alias updates and surviving/recreated bindings;
 also reject unsupported locations, malformed IR and by-reference forms. Keep
@@ -135,7 +151,8 @@ reference specification as an 8.4 or generated-Go test.
 
 ## Performance baseline
 
-Begin with a repository-owned, bounded array-copy/read/write workload whose
+Deferred behind the first executable application unit. When resumed, begin with
+a repository-owned, bounded array-copy/read/write workload whose
 deterministic result is checked against each selected PHP oracle. Document input
 sizes and an operation count; avoid timing large stdout writes as computation.
 Keep this a separate measurement, not a correctness or speedup gate.
