@@ -77,8 +77,12 @@ exception or side-effect equivalence. Browse [CI runs](https://github.com/katsua
 and the [function/feature evidence](docs/compatibility-ledger.md); test counts are
 **not a PHP or WordPress compatibility percentage**.
 
-The [roadmap](docs/roadmap.md) prioritizes a fixed application corpus and explicit
-denominators, an end-to-end reference milestone, and a small PHP/Go benchmark.
+The [roadmap](docs/roadmap.md) now prioritizes **one pinned Gossip application on
+PHP 8.3**, beginning with the complete original WordPress block parser and its
+dependencies. Implement the PHP semantics blocking that unit before unrelated
+builtins, storage optimizations or new target expansion. Existing 8.4 checks
+remain regression coverage; they are not a second application delivery target.
+Gossip owns the [application acceptance gates](https://github.com/katsuakikureyama/Gossip/blob/master/docs/php83-application-acceptance.md).
 Application coverage and performance comparisons are **not yet measured**.
 The first [WordPress source manifest](docs/application-corpus.md) fixes whole-file
 scope and supports [byte verification, lexical inventory and candidate name evidence](docs/application-corpus.md#lexical-inventory),
@@ -111,6 +115,8 @@ separate decisions; this repository does not claim an OSS release license.
 
 PHP 8.x の版別互換性を検証しながら対応範囲を広げる、Goソース生成型の実験的トランスパイラです。
 現在は8.3／8.4の限定範囲を、それぞれ固定したPHPで独立検証します。
-参照・COWは内部基盤を開発中で、PHP参照構文や生成配列への統合は未対応です。
+当面は固定版GossipのPHP 8.3動作を最優先とし、原本ブロックパーサー全体から進めます。
+8.4の既存回帰検証は維持し、新版対応や性能最適化は後回しにします。
+参照・COWは内部基盤と限定的な生成連携までで、PHP参照構文は未対応です。
 WordPress全体はまだ動作せず、対応率・性能比較も未測定です。
 [対応表](docs/compatibility.md)と[到達目標](docs/roadmap.md)で実装済み・未完了を区別します。

@@ -151,15 +151,24 @@ Historical runs
 retain their original schema and applicability semantics. Output comparison
 classifies a case measured on only one target as `not-comparable`.
 
+Delivery priority updated by the owner, 2026-10-27: first deliver a fixed Gossip
+application on **PHP 8.3**, starting with its complete original block parser.
+The [roadmap](roadmap.md) and Gossip's
+[application acceptance contract](https://github.com/katsuakikureyama/Gossip/blob/master/docs/php83-application-acceptance.md)
+define this sequence. This narrows delivery, not the version-aware architecture.
+Keep existing 8.4 regression CI and evidence; do not disable that target or
+silently inherit 8.3 results. New minors and unrelated 8.4 expansion are deferred.
+
 Implement the direction in bounded increments:
 
-1. Extend target/configuration evidence and per-target expectations where the
-   current registry/report schema is insufficient.
-2. Extend 8.4 evidence from its independent CI row, then add another minor with
-   its own pinned oracle, relevant semantic differences, positive/negative
-   cases and CI job. Keep enabled targets as regression rows.
-3. Publish target-by-target results, then expand targets and observable behavior
-   using the same admission process. No specific new minor is selected here.
+1. Close PHP 8.3 semantic gaps demonstrated by the current Gossip acceptance
+   gate, recording exact application/compiler/oracle configuration and results.
+2. Preserve each enabled target's independent regression results while adding
+   shared semantics. Add evidence fields only where the claimed contract needs
+   them; evidence-framework expansion is not an application milestone.
+3. After application progress, revisit target expansion with a separate pinned
+   oracle, relevant semantic differences, positive/negative cases and CI job.
+   No specific new minor is selected here.
 
 An enabled target requires a coherent policy, frontend/runtime behavior,
 required corpus, pinned oracle and reporting path. A target being enabled is
