@@ -6,10 +6,11 @@ Repeated/embedded escapes and combinations with existing `\n`, `\t`, `\r`
 are supported. Decoding FF does not advance source line numbers; physical
 linefeeds still do. Existing IR string storage and Go quoting preserve the byte.
 
-This is a bounded extension, not full PHP string syntax. Other escapes such as
+This is a bounded extension, not full PHP string syntax. Other double-quoted escapes such as
 `\v`, `\e`, hexadecimal/octal/Unicode escapes, escaped dollars, unknown escapes,
 interpolation and heredoc/nowdoc remain outside the existing closed subset.
-Unsupported escapes fail closed, even where PHP would retain a literal backslash.
+Unsupported double-quoted escapes fail closed, even where PHP would retain a literal backslash.
+Single-quoted literals now follow the separate [backslash byte rules](single-quoted-backslashes.md).
 No tokenizer, string builtin, runtime or source-map format changes are needed.
 
 The owned differential fixture covers byte lengths, literal-vs-decoded identity,

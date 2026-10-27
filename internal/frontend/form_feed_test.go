@@ -37,8 +37,8 @@ func TestFormFeedLiteralIR(t *testing.T) {
 }
 
 func TestFormFeedEscapeBoundary(t *testing.T) {
-	// Other PHP escape forms remain outside this closed subset, not silently decoded.
-	for _, literal := range []string{`"\F"`, `"\v"`, `"\e"`, `"\x0c"`, `"\014"`, `"\u{c}"`, `"\$x"`, `"\q"`, `"\f$x"`, `'\F'`} {
+	// Other double-quoted escape forms remain outside this closed subset.
+	for _, literal := range []string{`"\F"`, `"\v"`, `"\e"`, `"\x0c"`, `"\014"`, `"\u{c}"`, `"\$x"`, `"\q"`, `"\f$x"`} {
 		t.Run(literal, func(t *testing.T) {
 			_, err := Parse("<?php echo "+literal+";", testTarget(t))
 			if err == nil || !strings.Contains(err.Error(), "PHP002") {
