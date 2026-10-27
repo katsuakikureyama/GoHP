@@ -171,7 +171,7 @@ func lex(s string) ([]token, error) {
 		if matched {
 			continue
 		}
-		if strings.ContainsRune("(){}[];,=+.-?:!", rune(c)) {
+		if strings.ContainsRune("(){}[];,=+.-?:!<>", rune(c)) {
 			ts = append(ts, token{string(c), ln, "sym"})
 			i++
 			continue
@@ -547,12 +547,19 @@ func isStrictComparison(t token) bool {
 	return t.kind == "sym" && (t.text == "===" || t.text == "!==")
 }
 
+func isRelationalComparison(t token) bool {
+	return t.kind == "sym" && (t.text == "<" || t.text == ">")
+}
+
 func (p *parser) prec(t token) int {
 	if t.kind == "sym" && t.text == "." {
-		return 5
+		return 6
 	}
 	if t.kind == "sym" && (t.text == "+" || t.text == "-") {
-		return 6
+		return 7
+	}
+	if isRelationalComparison(t) {
+		return 5
 	}
 	if isStrictComparison(t) {
 		return 4
@@ -685,7 +692,7 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 	case "sym":
 		switch t.text {
 		case "!":
-			e = ir.Expr{Kind: "not", Args: []ir.Expr{p.expr(7)}, Line: t.line}
+			e = ir.Expr{Kind: "not", Args: []ir.Expr{p.expr(8)}, Line: t.line}
 		case "-":
 			e = p.negativeInteger(t)
 		case "(":
@@ -698,7 +705,7 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 				}
 				p.pop()
 				p.need(")")
-				e = ir.Expr{Kind: kind, Args: []ir.Expr{p.expr(7)}, Line: t.line}
+				e = ir.Expr{Kind: kind, Args: []ir.Expr{p.expr(8)}, Line: t.line}
 			} else {
 				e = p.expr(0)
 				p.need(")")
@@ -752,6 +759,9 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 		}
 		if isStrictComparison(op) && isStrictComparison(p.peek()) {
 			p.fail("strict comparison is non-associative; use parentheses")
+		}
+		if isRelationalComparison(op) && isRelationalComparison(p.peek()) {
+			p.fail("relational comparison is non-associative; use parentheses")
 		}
 	}
 	if min == 0 && p.peek().kind == "sym" && p.peek().text == "?" {

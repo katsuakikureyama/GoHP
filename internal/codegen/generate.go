@@ -500,6 +500,10 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 			op = "Concat"
 		} else if e.Text == "-" {
 			op = "Subtract"
+		} else if e.Text == "<" {
+			op = "LessThan"
+		} else if e.Text == ">" {
+			op = "GreaterThan"
 		} else if e.Text != "+" {
 			g.fail(e.Line, "unsupported operator")
 		}

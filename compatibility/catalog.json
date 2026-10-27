@@ -3,6 +3,24 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.relational-int-null",
+      "kind": "syntax",
+      "name": "Strict relational operators on integer/null values",
+      "implementation": "partial",
+      "contract": "Less-than and greater-than compare actual int64 operands numerically without overflow; if either operand is null, compare the admitted values as booleans. Known other domains reject statically, unknowns are guarded at runtime. Preserve PHP precedence, same-group non-associativity and single evaluation.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.relational","test":"TestDifferential/relational","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/relational.php","assertions":["stdout","exit","integer/null matrix, extremes, precedence, loop count, declared properties and single evaluation"]},
+        {"case_id":"compiler.relational","test":"TestRelationalLowering","file":"internal/codegen/relational_test.go","kind":"compiler","assertions":["operator precedence, guarded lowering and source maps"]},
+        {"case_id":"negative.relational.source","test":"TestRelationalUnsupportedSource","file":"internal/codegen/relational_test.go","kind":"negative","assertions":["non-associative chains, unsupported domains/operators and undefined values reject"]},
+        {"case_id":"negative.relational.ir","test":"TestRelationalMalformedIR","file":"internal/codegen/relational_test.go","kind":"negative","assertions":["wrong arity, hidden parameters and unlisted operators reject before output"]},
+        {"case_id":"unit.relational","test":"TestRelationalIntNull","file":"runtime/relational_test.go","kind":"unit","assertions":["integer extremes, null/negative/zero/positive comparisons in both directions"]},
+        {"case_id":"negative.relational.domains","test":"TestRelationalRejectsOtherDomains","file":"runtime/relational_test.go","kind":"negative","assertions":["both operands checked including null opposite unsupported host domains"]},
+        {"case_id":"negative.relational.generated","test":"TestRelationalRuntimeTypeGuards","file":"tests/relational_runtime_test.go","kind":"negative","assertions":["generated dynamic string/bool/array operands fail at runtime"]}
+      ],
+      "limitations": ["No string/bool/float/array/object ordering, coercion, <=, >=, spaceship or general loose comparison", "New relational scopes use existing legacy storage; scalar-frame/owned-value optimizations are not expanded", "No full WordPress parser execution, list/switch/JSON/property mutation/loading closure claim", "Local developer CLI; WebMCP excluded, no service/auth/deployment change"]
+    },
+    {
       "id": "gohp.tooling.preg83-local-output",
       "kind": "tooling",
       "name": "Opt-in PHP 8.3 regex compiler boundary (not native compatibility)",

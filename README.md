@@ -71,6 +71,10 @@ and verify hashes before using artifacts. See the [publication contract](docs/in
 
 ## Progress and next milestones
 
+The [integer/null relational slice](docs/relational-int-null.md) addresses the
+fixed original parser's first measured `<`/`>` syntax blocker. It does not yet
+make the complete parser runnable; the application-first gate remains active.
+
 The harness compares PHP and compiled-Go stdout byte for byte, checks normal
 exits and a bounded quiet-stderr profile. It does not prove general warning,
 exception or side-effect equivalence. Browse [CI runs](https://github.com/katsuakikureyama/GoHP/actions)
