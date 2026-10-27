@@ -161,16 +161,30 @@
       "limitations": ["No PHP weak scalar conversions, strict_types syntax or TypeError equivalence", "Constructor contract only; global scalar parameters have a separate contract; no scalar-typed ordinary method/arrow parameters, typed/nonnull defaults or nullable/union/class/float/array/callable constructor types", "Original HTML support classes and processor/render adoption require separate evidence; owned fixture does not certify them"]
     },
     {
+      "id": "php.syntax.single-quoted-backslashes",
+      "kind": "syntax",
+      "name": "Single-quoted backslash byte semantics",
+      "implementation": "partial",
+      "contract": "Single-quoted literals decode only escaped backslash and single quote; every other backslash and following byte remains literal. Physical LF advances source lines, including after a backslash. No interpolation or double-quoted syntax expansion.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.single_quoted_backslashes","test":"TestDifferential/single_quoted_backslashes","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/single_quoted_backslashes.php","assertions":["stdout","exit","literal bytes, quote/backslash parity, physical newline, UTF8, function and array-key preservation"]},
+        {"case_id":"unit.frontend.single_quoted_backslashes","test":"TestSingleQuotedBackslashes","file":"internal/frontend/single_quoted_backslashes_test.go","kind":"unit","assertions":["exact IR bytes including NUL/invalidUTF8 and physical LF/CRLF source locations"]},
+        {"case_id":"negative.single_quoted_unterminated","test":"TestSingleQuotedUnterminated","file":"internal/frontend/single_quoted_backslashes_test.go","kind":"negative","assertions":["unterminated quote, trailing backslash and escaped final quote reject without panic"]}
+      ],
+      "limitations": ["No new double-quoted escapes, interpolation, heredoc or nowdoc", "String acceptance does not establish regex semantics or unchanged WordPress next_token execution; PHP8.4 regex remains excluded", "Developer-local CLI capability; WebMCP excluded, no service operation or authentication change"]
+    },
+    {
       "id": "php.syntax.form-feed-escape",
       "kind": "syntax",
       "name": "Bounded form-feed string escape",
       "implementation": "partial",
-      "contract": "Double-quoted backslash-f decodes to byte 0x0C; single-quoted and escaped-backslash forms retain literal bytes. Embedded/repeated escapes preserve string values and physical source-line accounting. Other escape/interpolation boundaries remain closed.",
+      "contract": "Double-quoted backslash-f decodes to byte 0x0C; single-quoted and escaped-backslash forms retain literal bytes. Embedded/repeated escapes preserve string values and physical source-line accounting. Other double-quoted escape/interpolation boundaries remain closed; single-quoted rules have a separate contract.",
       "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"diff.form_feed","test":"TestDifferential/form_feed","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/form_feed.php","assertions":["stdout","exit","decoded/literal lengths and identity, keys and argument/return preservation, whitespace tokenizer composition"]},
         {"case_id":"unit.frontend.form_feed","test":"TestFormFeedLiteralIR","file":"internal/frontend/form_feed_test.go","kind":"unit","assertions":["exact byte12 vs literal backslash-f, repeated/mixed escapes, physical vs decoded source-line tracking"]},
-        {"case_id":"negative.form_feed.boundary","test":"TestFormFeedEscapeBoundary","file":"internal/frontend/form_feed_test.go","kind":"negative","assertions":["other escapes/interpolation remain unsupported, unterminated literals reject without panic"]}
+        {"case_id":"negative.form_feed.boundary","test":"TestFormFeedEscapeBoundary","file":"internal/frontend/form_feed_test.go","kind":"negative","assertions":["other double-quoted escapes/interpolation remain unsupported, unterminated literals reject without panic"]}
       ],
       "limitations": ["Not general PHP string syntax: other unsupported escapes, interpolation and heredoc/nowdoc remain excluded", "Owned tokenizer fixture is not original WordPress render execution or consumer adoption; actual HTML processor remains unavailable"]
     },

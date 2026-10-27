@@ -82,28 +82,28 @@ func lex(s string) ([]token, error) {
 					if i >= len(s) {
 						break
 					}
+					// Single quotes decode only backslash and quote. Every other
+					// escaped byte remains literal, including a physical newline.
+					if quote == '\'' {
+						if s[i] != '\\' && s[i] != '\'' {
+							b.WriteByte('\\')
+						}
+						if s[i] == '\n' {
+							line++
+						}
+						b.WriteByte(s[i])
+						i++
+						continue
+					}
 					switch s[i] {
 					case '\\':
 						b.WriteByte('\\')
 					case '\'':
-						if quote == '\'' {
-							b.WriteByte('\'')
-						} else {
-							b.WriteString("\\'")
-						}
+						b.WriteString("\\'")
 					case '"':
-						if quote == '"' {
-							b.WriteByte('"')
-						} else {
-							b.WriteString("\\\"")
-						}
+						b.WriteByte('"')
 					case 'n', 't', 'r', 'f':
-						if quote == '\'' {
-							b.WriteByte('\\')
-							b.WriteByte(s[i])
-						} else {
-							b.WriteByte(map[byte]byte{'n': '\n', 't': '\t', 'r': '\r', 'f': '\f'}[s[i]])
-						}
+						b.WriteByte(map[byte]byte{'n': '\n', 't': '\t', 'r': '\r', 'f': '\f'}[s[i]])
 					default:
 						return nil, fmt.Errorf("PHP002 line %d: unsupported escape", ln)
 					}

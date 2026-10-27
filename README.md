@@ -93,6 +93,10 @@ connects a narrow `preg_match` statement to the PCRE2 adapter. It needs explicit
 compiler opt-in and a separately enabled native backend; ordinary CGO0 CI is
 not evidence of PCRE compatibility. PHP 8.4 and general output references remain excluded.
 
+[Single-quoted backslash handling](docs/single-quoted-backslashes.md) preserves
+literal regex/text bytes without rewriting PHP source spelling, for both targets.
+This is string syntax support, not full original WordPress parser execution.
+
 ## Scope and documentation
 
 - [Architecture](docs/architecture.md) and [PHP 8.x versioned design](docs/php8-versioned-compatibility.md)
