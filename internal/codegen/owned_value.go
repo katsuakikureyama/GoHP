@@ -15,17 +15,26 @@ const (
 	flatArrayValue
 )
 
-// ownedValueLocals proves a nullary global scope after semantic validation.
-// No host array, unlisted call result, alias or nested element can enter it.
+// ownedValueLocals proves a global scope after semantic validation. Parameters
+// must have exact scalar entry guards; no host array, unlisted call result,
+// alias or nested element can enter it.
 // Branches join conservatively; loops require a domain invariant at every write,
 // not just at their textual end. Unsupported scopes retain the legacy map.
 // This storage proof never broadens PHP admission or definite assignment.
 func ownedValueLocals(f ir.Function) ([]string, bool) {
-	if len(f.Params) != 0 {
+	if !scalarFrameParameters(f) {
 		return nil, false
 	}
 	proof := ownedValueProof{names: map[string]bool{}}
-	if !proof.body(f.Body, map[string]valueDomain{}, nil) || !proof.hasArray {
+	entry := map[string]valueDomain{}
+	for _, parameter := range f.Params {
+		// Include even read-only/unused parameters: the entry guard stores
+		// every argument before the body. An annotation constrains entry,
+		// not later local reassignment outside a loop invariant.
+		proof.names[parameter] = true
+		entry[parameter] = scalarValue
+	}
+	if !proof.body(f.Body, entry, nil) || !proof.hasArray {
 		return nil, false
 	}
 	names := make([]string, 0, len(proof.names))

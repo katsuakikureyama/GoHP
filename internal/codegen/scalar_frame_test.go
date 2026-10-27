@@ -23,7 +23,7 @@ func TestScalarFrameSelection(t *testing.T) {
 		{"fallthrough", `function selected() { $x = 1; }`, true, false},
 		{"scalar_parameters", `function selected(int $i, string $s, bool $b) { $copy = $i; $i = 'changed'; return $b ? $s : $i; }`, true, false},
 		{"mixed_parameters", `function selected(int $i, $other) { return $i; }`, false, false},
-		{"scalar_parameter_array_body", `function selected(int $i) { $i = []; return $i; }`, false, false},
+		{"scalar_parameter_array_body", `function selected(int $i) { $i = []; return $i; }`, false, true},
 		{"untyped_parameter", `function selected($x) { return $x; }`, false, false},
 		{"optional_parameter", `function selected($x = null) { return $x; }`, false, false},
 		{"array_parameter", `function selected(array $x) { return $x; }`, false, false},

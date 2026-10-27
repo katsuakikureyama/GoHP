@@ -26,9 +26,14 @@ entirely closed scalar body now qualifies for the existing
 before its first Write. The deferred Close is installed before initialization,
 so a later parameter failure also releases already initialized locals. Nullary
 selection remains valid, including the explicit pure-builtin subset documented
-there when every operand is scalar. Mixed/untyped parameters, unlisted calls, array/object producers,
+there when every operand is scalar. The separate
+[proved flat-array lane](owned-array-slot-values.md#first-generated-scope-and-expression-ownership)
+also accepts all-exact-scalar signatures, seeds scalar entry domains, and stores
+guarded arguments in preallocated ValueSlots. Local arrays and bounded if/while
+can then qualify; every slot's cleanup precedes the first parameter guard.
+Mixed non-scalar/untyped parameters, unlisted calls, nested/object producers,
 methods and arrows keep legacy maps; no caller-based or runtime guessing selects
-storage. General frame/shared-array ownership and PHP references remain unfinished.
+storage. General frame/array-parameter ownership and PHP references remain unfinished.
 
 ## Evidence and exclusions
 
