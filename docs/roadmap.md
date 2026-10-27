@@ -14,7 +14,7 @@ evidence. This roadmap does not add catalog statuses or a new CLI operation.
 - Functions, value arrays, simple classes and capture-free arrows generate Go.
   Internal scalar frames, shared scalar arrays, owned array-valued Slots,
   synchronous Slot-rooted array mutations, value temporaries and an opt-in
-  runtime value adapter plus nullary generated array scopes with bounded if/while
+  runtime value adapter plus scalar-entry generated array scopes with bounded if/while
   are implemented; PHP references and general shared-array integration are not.
 - [Gossip's earlier original-source comparisons](integration.md) are useful
   historical evidence at their recorded compiler/source pins. They are neither
@@ -32,7 +32,7 @@ evidence. This roadmap does not add catalog statuses or a new CLI operation.
 |---|---|---|
 | Documentation | README and compatibility tables reorganized; historical target claims distinguished | Keep the entry point, implementation limits and evidence links aligned in each affected change |
 | Application inventory | Whole-file identity, native-token/name evidence and top-six dependency triage available; grammar/name resolution and dependency closure unresolved, no percentage | Follow the observed hook/global/reference/callable prerequisites and AST/dependency investigation; retain unknown/unparsed content and separate selection identities |
-| Reference/value integration | R1 partial: internal ownership/storage, runtime value adapter and nullary generated scopes with bounded if/while exist | Parameter entry/loop invariant extensions, then locations across calls; PHP source → Go binary comparison of reference assignment/update/unset (R2), with rejected unsupported forms |
+| Reference/value integration | R1 partial: internal ownership/storage, runtime value adapter and scalar-entry generated scopes with bounded if/while exist | Array/untyped parameter entry/loop invariant extensions, then locations across calls; PHP source → Go binary comparison of reference assignment/update/unset (R2), with rejected unsupported forms |
 | Performance baseline | Planned; no PHP/Go benchmark | Publish one reproducible, output-checked small workload per target, separating build, startup, execution and memory measurements |
 | Frontend adapter | Assessment only; no candidate installed | Audit/pin a candidate and demonstrate target-aware parsing, diagnostics/spans and supported-IR parity in shadow mode before replacement |
 | Application acceptance | Earlier bounded Gossip runs only | Translate an unchanged complete application unit and its actual dependency closure; compare behavior at exact application/compiler/oracle pins |
@@ -117,8 +117,8 @@ not a second storage engine. R1 now has synchronous one-level mutations through
 the owning Slot, without a Read/copy/writeback temporary, and separately owned
 value snapshots with single consumption/release. A value-only runtime adapter
 now imports/exports canonical flat values without exposing storage handles. It
-is emitted in proved nullary scopes with if joins, domain-invariant while loops,
-expression-level cleanup and lazy selected-arm acquisition. Broader loop/parameter scopes and
+is emitted in proved nullary/all-exact-scalar-parameter scopes with if joins, domain-invariant while loops,
+expression-level cleanup and lazy selected-arm acquisition. Broader loop/array-parameter scopes and
 persistent locations still need explicit contracts
 without changing PHP syntax acceptance. Internal unit results do not count as
 reference support.

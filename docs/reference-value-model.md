@@ -1,6 +1,6 @@
 # Reference, value and assignment foundation
 
-Status: **design + native-oracle specification; scalar frames, shared scalar containers, owned Slots/temporaries, runtime adapter and bounded nullary generated array scopes (including if/while) implemented**.
+Status: **design + native-oracle specification; scalar frames, shared scalar containers, owned Slots/temporaries, runtime adapter and bounded scalar-entry generated array scopes (including if/while) implemented**.
 Baseline: main `565e65e6c9d8e211b06779739bfba76b07c4d92d` (#81).
 Target: PHP 8.3, oracle floor 8.3.36. Later series need separate policy and
 evidence; they must not inherit these results. No compiler/runtime/IR changes
@@ -17,7 +17,7 @@ and synchronous one-level mutations without a Read/copy/writeback temporary;
 Frame and element bindings remain scalar-only, including through aliases.
 Internal value temporaries now capture, transfer and release owned snapshots.
 An opt-in runtime ValueSlot/ValueTemporary facade converts canonical flat values
-without exposing storage types. Nullary generated scopes with proved if joins
+without exposing storage types. Nullary/all-exact-scalar-parameter scopes with proved if joins
 and domain-invariant while loops use operation-scoped temporaries, selected-arm snapshots and detached returns;
 the [ownership plan](owned-array-slot-values.md#first-generated-scope-and-expression-ownership)
 defines its proof and exclusions. This is not general generated-array migration.
@@ -153,13 +153,13 @@ substitute a custom Go hook engine for untested original `WP_Hook` behavior.
 | Stage | Deliverable / exit condition | Status |
 |---|---|---|
 | R0 | Design and executable PHP-only reference contracts; record exact native run separately | This change; GoHP reference support remains unsupported |
-| R1 | Internal slot/value ownership primitives and shared-array separation design implemented behind closed boundaries; existing no-reference behavior preserved | Partial: scalar frames/codegen, shared containers/key-index policy, owned Slots/mutations/temporaries, runtime adapter and nullary generated scopes with bounded if/while implemented; cross-domain loops, parameter/general-frame ownership, persistent locations and nested ownership pending |
+| R1 | Internal slot/value ownership primitives and shared-array separation design implemented behind closed boundaries; existing no-reference behavior preserved | Partial: scalar frames/codegen, shared containers/key-index policy, owned Slots/mutations/temporaries, runtime adapter and scalar-entry generated scopes with bounded if/while implemented; cross-domain loops, array/untyped parameter/general-frame ownership, persistent locations and nested ownership pending |
 | R2 | Bounded variable reference assignment/unset, explicit address IR and binding lifetime; source + malformed-IR negatives and PHP/Go comparisons | Not implemented |
 | R3 | Reference-bearing arrays, element/declared-property locations, copy-timing and lifetime cases; key order/next-index and existing copy isolation retained | Not implemented |
 | R4 | By-reference parameters/returns, reference foreach and closure captures, each with explicit bounded contracts and call-path evidence | Not implemented |
 | R5 | Generic dynamic callable forms and original application acceptance (full block parser, then hooks) | Not implemented; not implied by R0–R4 |
 
-Next bounded implementation: proved parameter entry domains and broader loop
+Next bounded implementation: array/untyped parameter entry domains and broader loop
 invariants, then operation-specific locations across calls. Build on
 the first expression-scoped lowering, shared scalar containers, value temporaries,
 synchronous Slot-rooted mutations and explicit Frame release. The synchronous

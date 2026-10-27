@@ -121,9 +121,10 @@ surface is introduced; the existing local generation exclusion still applies.
 
 ## First generated scope and expression ownership
 
-After normal semantic validation, codegen selects **nullary global functions
-with proved straight-line or bounded if/while control flow** that handle at least
-one flat array value. A separate domain proof tracks each local as scalar, flat array or a
+After normal semantic validation, codegen selects **global functions with no
+parameters or all exact int/string/bool parameters**, proved straight-line or
+bounded if/while control flow, and at least one flat array value. A separate
+domain proof tracks each local as scalar, flat array or a
 scalar/flat union; every statement, including dead tails, must qualify.
 Pure scalar functions keep ScalarFrame. An unproven scope keeps the legacy map,
 not a runtime per-value fallback. No previously rejected PHP or IR is admitted.
@@ -138,18 +139,31 @@ not a runtime per-value fallback. No previously rejected PHP or IR is admitted.
   roots or scalar array elements. Existing semantic/type/key guards still apply.
 - Calls: the ScalarFrame pure-builtin allowlist with **scalar operands only**,
   plus `count` of an exact-flat value. No interprocedural return assumptions.
-- Parameters, methods, arrows, foreach, user/stateful/unlisted calls,
+- Array/callable/untyped or mixed non-scalar parameters, methods, arrows, foreach, user/stateful/unlisted calls,
   array-producing builtins, nested arrays, coalescing/path operations and
   references remain on the existing path (or are rejected as before).
 
 Each selected function allocates a deterministic set of initially undefined
 `ValueSlot` locals and immediately defers their Close after arity/Execution
-guards. No array can enter from a host parameter: admitted arrays originate in
+guards. This includes every parameter, even unused/read-only ones. Parameter
+guards run in declaration order: `slot.Write(rt.ScalarParameter(args[i], type))`.
+All slot cleanup is registered before the first guard, so a later invalid
+argument also closes already initialized locals; no PHP body runs until all
+arguments pass. Entry scalars seed the domain proof. Annotations constrain entry,
+not subsequent local reassignment: a parameter can become a locally constructed
+flat array where the ordinary proof permits it. The host argument slice remains
+unchanged. There is no nullable/optional-typed extension or call-site specialization.
+
+No array can enter from a host parameter: admitted arrays originate in
 canonical literals and same-scope values. There is no new general Frame or
 second ownership engine. Slots survive until function exit, not temporaries.
+Array annotations alone do not prove a flat canonical value: nested values and
+host-edited index metadata remain valid on the existing array-parameter ABI.
+Such signatures stay wholly legacy even if their parameters are later overwritten.
 
 | Use | Acquisition / consumption / cleanup |
 |---|---|
+| Exact scalar parameter | Existing entry guard, then Write into its preallocated slot; no new parameter ABI or coercion |
 | Assignment from a local | Snapshot the current value, then MoveTo the destination; self-assignment retains before release |
 | Assignment/return from ternary | Evaluate condition once; acquire a temporary in the selected arm only, recursively |
 | Other assignment/return producer | Evaluate existing legacy operands, then NewValueTemporary imports the proved scalar/flat result |
@@ -191,7 +205,7 @@ environment validates the dead tail without rewriting the reachable transfer
 state; loop bounds still apply there. This cannot introduce source/IR admission
 or make a previously conditional/undefined local valid.
 
-Every assigned name, including branch/body-only locals, gets one function-owned
+Every parameter and assigned name, including branch/body-only locals, gets one function-owned
 slot before control flow begins. Repeated assignments replace/release its payload;
 no slot-defer is registered per iteration. Statement IIFEs consume/close each
 temporary before the next statement, continue or break. Conditions export detached
@@ -280,7 +294,8 @@ generated-reference or PHP 8.4 native-reference evidence.
 
 R1 remains partial: synchronous Slot-rooted writes, internal value temporaries
 and the runtime adapter plus straight-line and bounded if/while generated scopes
-are implemented. Cross-domain loop widening, parameter/general-frame ownership,
+are implemented, including exact scalar parameter entry. Cross-domain loop widening,
+array/untyped parameter and general-frame ownership,
 persistent locations across calls, nested ownership and cyclic reclamation remain
 unfinished. Broader generated scopes need explicit entry/lifetime proofs before admission;
 reference syntax needs the separate R2/R3 contracts. There is no performance or

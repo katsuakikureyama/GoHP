@@ -26,7 +26,7 @@ type generator struct {
 	execution bool
 	// Only closed scalar bodies with proven scalar entry values use owned storage.
 	scalarFrame bool
-	// Shared-value lane: proven nullary flat-array scopes and bounded control flow.
+	// Shared-value lane: scalar-guarded flat-array scopes and bounded control flow.
 	ownedValues bool
 }
 
@@ -235,6 +235,10 @@ func (g *generator) function(f ir.Function, c string) {
 			// Selection proves a scalar annotation for every parameter; the
 			// runtime entry guard runs before storing the value or entering PHP.
 			g.emit("v.Write(%q,rt.ScalarParameter(args[%d],%q))\n", n, i, f.ParamTypes[i])
+		} else if g.ownedValues {
+			// The same exact scalar entry proof excludes host arrays. All slot
+			// cleanup is already registered if this or a later guard panics.
+			g.emit("v[%q].Write(rt.ScalarParameter(args[%d],%q))\n", n, i, f.ParamTypes[i])
 		} else if len(f.ParamTypes) != 0 && f.ParamTypes[i] == "array" {
 			g.emit("v[%q]=rt.ArrayParameter(args[%d])\n", n, i)
 		} else if len(f.ParamTypes) != 0 && f.ParamTypes[i] == "callable" {
