@@ -746,6 +746,13 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			return valueType{}, err
 		}
 		switch expr.Text {
+		case "<", ">":
+			for _, operand := range []valueType{left, right} {
+				if operand.kind != intKind && operand.kind != nullKind && operand.kind != unknownKind {
+					return valueType{}, unsupported(expr.Line, "relational comparison requires int or null operands")
+				}
+			}
+			return valueType{kind: boolKind}, nil
 		case "-":
 			if (left.kind != intKind && left.kind != unknownKind) || (right.kind != intKind && right.kind != unknownKind) {
 				return valueType{}, unsupported(expr.Line, "subtraction requires int operands")

@@ -30,6 +30,11 @@ current contracts and their evidence boundaries.
 
 ## Built-in functions
 
+The additional [relational slice](relational-int-null.md) admits `<` and `>`
+for actual integers/null only, with PHP null-to-boolean comparison rules and
+non-associative precedence. It does not admit general mixed-type ordering or
+make the unchanged full WordPress parser executable.
+
 Every entry below is partial: its linked boundary fixes arity, types, evaluation
 and evidence. Other builtins fail closed.
 
