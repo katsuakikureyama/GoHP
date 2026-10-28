@@ -26,7 +26,8 @@ func (g *generator) nestedProperty(s ir.Stmt, scope map[string]bool) {
 	if s.Kind == "assign_nested_property_concat" {
 		operation = "Concat"
 	}
-	// Resolve before RHS evaluation. Retain the final object even when RHS
-	// replaces a prefix property; read its current final value after the RHS.
-	g.emit("{ target := rt.ResolveNestedProperty(%s,%s); value := any(%s); target.%s(value) }\n", g.expr(root, scope), strings.Join(path, ","), g.expr(s.Expr, scope), operation)
+	// In this named-chain source form PHP evaluates RHS before fetching the
+	// writable property path, including concat and append. Resolve after any
+	// RHS prefix replacement, then update that final owner once.
+	g.emit("{ value := any(%s); target := rt.ResolveNestedProperty(%s,%s); target.%s(value) }\n", g.expr(s.Expr, scope), g.expr(root, scope), strings.Join(path, ","), operation)
 }

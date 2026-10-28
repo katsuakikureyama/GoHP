@@ -115,10 +115,26 @@ $concat_order = $frame->block->text;
 $frame->block->items[] = nested_append_mutate($frame);
 $before_replace = $frame->block;
 
-// Resolve the old Block as target first; the RHS method replaces Frame::block.
+// Writable chains are fetched after RHS, which replaces Frame::block.
 $replacement = new NestedBlock();
 $replacement->text = 'replacement-original';
 $frame->block->text = $frame->replace_block($replacement);
+
+$concat_old = new NestedBlock();
+$concat_old->text = 'concat-old';
+$concat_new = new NestedBlock();
+$concat_new->text = 'concat-new';
+$concat_frame = new NestedFrame();
+$concat_frame->block = $concat_old;
+$concat_frame->block->text .= $concat_frame->replace_block($concat_new);
+
+$append_old = new NestedBlock();
+$append_old->items = [];
+$append_new = new NestedBlock();
+$append_new->items = [];
+$append_frame = new NestedFrame();
+$append_frame->block = $append_old;
+$append_frame->block->items[] = $append_frame->replace_block($append_new);
 
 $flags = '';
 if ($was_null) {
@@ -139,3 +155,4 @@ echo 'inner:' . (is_null($before_replace->innerContent[0]) ? 'null' : 'wrong') .
 echo 'items:' . $before_replace->items[0] . ':' . $before_replace->items[1] . ':' . $before_replace->items[2] . ':' . $before_replace->items[3] . ':' . $before_replace->items[4] . "\n";
 echo 'order:' . $before_replace->text . ':' . $frame->block->text . "\n";
 echo 'updates:' . $concat_order . ':' . $before_replace->items[5] . ':' . $before_replace->items[6] . ':' . $from_array->block->text . "\n";
+echo 'replace-updates:' . $concat_old->text . ':' . $concat_new->text . ':' . count($append_old->items) . ':' . $append_new->items[0] . "\n";

@@ -16,7 +16,7 @@ PHP bytes -> frontend lexer/parser -> versioned semantic subset IR
 `internal/ir` is independent of syntax tokens and contains expressions, statements,
 functions and classes. IR version is `0.1`; reject incompatible IR versions.
 Named nested-property update statements reuse chained `property` Target nodes
-and an RHS Expr. Lowering resolves a guarded final owner before RHS evaluation,
+and an RHS Expr. Lowering evaluates RHS before resolving a guarded final owner,
 then writes through the existing declared-property protocol. This additive IR
 0.1 contract uses synchronous runtime targets and legacy value storage; see
 [nested updates](public-property-write.md#named-nested-property-updates).

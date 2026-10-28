@@ -32,7 +32,7 @@ func ResolveNestedProperty(value any, path ...string) NestedProperty {
 		owner = propertyObject(owner.Get(name))
 	}
 	name := path[len(path)-1]
-	owner.Get(name) // Check the declared final property before RHS evaluation.
+	owner.Get(name) // Check the declared final property before publication.
 	return NestedProperty{owner: owner, name: name}
 }
 

@@ -77,7 +77,7 @@ func TestParserOutputUnsupportedSource(t *testing.T) {
 		"append_unknown_receiver": `function f($o) { $o->items[] = 1; }`,
 		"append_missing_property": `class C {} $c=new C(); $c->items[]=1;`,
 		"append_nested":           `class C { public $items; } $c=new C(); $c->items[0][]=1;`,
-		"append_chained":          `class C { public $items; } $c=new C(); $c->items->next[]=1;`,
+		"append_chained_missing":  `class C { public $items; } $c=new C(); $c->missing->next[]=1;`,
 		"cast_nonsimple_factory":  `class C { public function make($x) { if ($x) { return new C(); } return new C(); } } $c=new C(); $a=(array)$c->make(true);`,
 		"cast_foreign_receiver":   `class C { public function make() { return new C(); } } function f($o) { return (array)$o->make(); }`,
 		"cast_passthrough":        `class C { public function make($x) { return $x; } } $c=new C(); $a=(array)$c->make(new C());`,

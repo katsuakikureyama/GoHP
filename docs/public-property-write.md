@@ -54,8 +54,9 @@ rooted in a defined bare local. Known object and unknown roots are admitted;
 known scalar/array/callable roots reject. Every runtime receiver must implement
 the nonnull Object/Get/Set protocol, and each accessed property must be declared.
 
-Resolve the final owner and verify the final property before evaluating RHS
-once. Keep that owner even if RHS replaces an intermediate property. Concat
+For these named chains, evaluate RHS once before resolving the writable path.
+If RHS replaces an intermediate property, update the replacement object's final
+property. Verify that property exists, then publish once. Concat
 and append read the owner's current final value after RHS evaluation. Concat
 requires actual strings on both sides; append requires an actual array slot.
 Assignment preserves detached array values and shared object identifiers. Paths
@@ -66,7 +67,7 @@ IR uses `assign_nested_property`, `assign_nested_property_concat` or
 `assign_nested_property_append` with a chain of `property` nodes in `Target`
 and the RHS in `Expr`. The lexer recognizes `.=` as one adjacent token; `. =`
 is rejected. Root/property metadata and unrelated payloads are validated. Code
-generation resolves a synchronous `runtime.NestedProperty` and uses its explicit
+generation evaluates RHS, resolves a synchronous `runtime.NestedProperty` and uses its explicit
 operation. This does not expose PHP reference bindings or migrate array storage;
 these scopes stay on the legacy path. Existing one-property unknown-receiver
 rejection remains in force.

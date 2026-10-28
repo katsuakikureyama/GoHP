@@ -17,6 +17,9 @@ func TestNestedPropertyLowering(t *testing.T) {
 		t.Fatal(err)
 	}
 	code := string(out)
+	if strings.Index(code, "value := any(execution.Strtok(") > strings.Index(code, "target := rt.ResolveNestedProperty(") {
+		t.Fatal("RHS must precede writable-path resolution")
+	}
 	for _, want := range []string{`rt.ResolveNestedProperty(v["frame"], "block", "text")`, `execution.Strtok(`, `target.Concat(value)`, `target.Append(value)`, `target.Assign(value)`} {
 		if !strings.Contains(code, want) {
 			t.Fatalf("missing %s in %s", want, out)
