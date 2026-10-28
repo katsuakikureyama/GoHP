@@ -267,6 +267,8 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 	for _, s := range ss {
 		g.emit("// gohp:begin %d\n", s.Line)
 		switch s.Kind {
+		case "switch":
+			g.stringSwitch(s, scope, inFunc, returnType)
 		case "list_assign":
 			// ListValues evaluates/validates the entire positional snapshot
 			// before replacing any local, including an alias of the RHS.

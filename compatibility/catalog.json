@@ -3,6 +3,24 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.nonnumeric-string-switch",
+      "kind": "syntax",
+      "name": "Switch dispatch on nonnumeric strings",
+      "implementation": "partial",
+      "contract": "Braced switch evaluates one actual nonnumeric string selector, matches literal nonnumeric string cases by bytes, selects first duplicate or default, and preserves source-order fallthrough. Bare break exits nearest loop/switch. Existing locals written in clauses are conservatively widened; clause-only bindings do not escape.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.string_switch","test":"TestDifferential/string_switch","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/string_switch.php","assertions":["stdout","exit","default position/miss, empty and duplicate labels, fallthrough, byte matching, once-only selector, nested loops/switches, conditional returns and Execution state"]},
+        {"case_id":"compiler.string_switch","test":"TestStringSwitchLowering","file":"internal/codegen/string_switch_test.go","kind":"compiler","assertions":["canonical IR, first duplicate dispatch, dead-tail suppression, source maps and legacy storage"]},
+        {"case_id":"negative.string_switch.source","test":"TestStringSwitchUnsupportedSource","file":"internal/codegen/string_switch_test.go","kind":"negative","assertions":["numeric/nonstring selectors, dynamic labels, syntax/transfer levels, duplicate defaults, escaped bindings and stale class facts reject"]},
+        {"case_id":"negative.string_switch.ir","test":"TestStringSwitchMalformedIR","file":"internal/codegen/string_switch_test.go","kind":"negative","assertions":["hidden switch/clause payloads and malformed labels reject before generation"]},
+        {"case_id":"negative.string_switch.preg_null","test":"TestStringSwitchInvalidatesPregNull","file":"internal/codegen/string_switch_test.go","kind":"negative","assertions":["switch writes invalidate direct-null output proof"]},
+        {"case_id":"unit.string_switch.domain","test":"TestSwitchStringDomain","file":"runtime/string_switch_test.go","kind":"unit","assertions":["actual nonnumeric string bytes retained; PHP8 numeric grammar and foreign domains rejected"]},
+        {"case_id":"negative.string_switch.generated","test":"TestStringSwitchRuntimeGuards","file":"tests/string_switch_runtime_test.go","kind":"negative","assertions":["generated unknown selectors reject nonstring/numeric actuals"]}
+      ],
+      "limitations": ["No numeric/scalar loose comparison, dynamic case expressions, alternate syntax, numeric transfer levels or switch-target continue warning emulation", "Literal numeric strings reject statically; derived/parameter numeric strings reject at runtime", "Case-only locals and cross-case-only initialization remain excluded; storage optimizations unchanged", "Does not establish full original parser execution or consumer adoption; existing developer CLI with WebMCP excluded"]
+    },
+    {
       "id": "php.syntax.positional-list-assignment",
       "kind": "syntax",
       "name": "Positional list assignment to bare locals",

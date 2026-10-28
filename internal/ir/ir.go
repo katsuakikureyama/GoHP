@@ -17,8 +17,11 @@ type Expr struct {
 	Params     []string // Only arrow expressions: fixed, untyped, capture-free parameters.
 }
 type Stmt struct {
-	// continue and break target the nearest foreach/while and have no payload.
+	// Bare break targets the nearest loop/switch; continue requires a loop.
+	// Both transfers have no payload or explicit level.
 	// while uses Expr (condition) and Body only.
+	// switch uses Expr (selector) and Body of case/default clauses. A case has
+	// one literal string Expr; default has none. Both have statement Body only.
 	// call_stmt uses Expr only: direct call or bare-variable method/invoke.
 	// list_assign uses Expr (RHS) and Target=list with nonempty bare-var Args.
 	// Targets are positional locals, not general addresses or references.
