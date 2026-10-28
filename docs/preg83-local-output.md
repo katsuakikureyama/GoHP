@@ -24,10 +24,19 @@ function match_word(string $subject, int $offset): array {
 The five explicit arguments are mandatory. The pattern is a literal slash-delimited
 `/s` string; subject is a string literal or statically string bare local; offset
 is an integer literal (including negative) or statically integer bare local.
+Subject and offset also accept **named property reads rooted in a defined bare
+local**, including `$this->document` / `$this->offset` in a method and named
+chains such as `$holder->source->document`. Existing property-read validation
+checks known classes and declared prefixes; runtime getters check deeper values.
+Mutable untyped properties do not acquire a permanent type from their default:
+`PregMatch83Local` requires an actual string subject and `int64` offset before
+calling the engine. Bare untyped locals remain rejected. No coercion, magic
+getter, array/index path, dynamic name, method/call or arithmetic input is added.
 Ordinary PHP string escape restrictions of this frontend still apply.
 Only `PREG_OFFSET_CAPTURE` is admitted, not a numeric/general flag expression.
 Output must be a previously directly `null`-initialized bare local, distinct
-from the return local. Neither destination can appear among input reads.
+from the return local. Neither destination can be the root of any input read,
+even when the input reads a property rather than the bare local itself.
 Reinitializing output to literal null permits a subsequent call.
 
 Calls must be direct assignment statements at the root of a program, function
@@ -51,11 +60,15 @@ arrays never enter scalar frames or canonical flat-array `ValueSlot` storage.
 No raw pointer, address IR or implicit value-as-output argument is introduced.
 This is a temporary detached-value adapter boundary, not canonical nested COW.
 
-Generated code evaluates each pure input once, calls `Execution.PregMatch83Local`,
+Generated code snapshots subject then offset once, calls `Execution.PregMatch83Local`,
 then deep-clones completed captures into the output local before assigning the
 distinct scalar result. B2 completes the result and updates execution error
 state before either local is published. No user code can observe the intervening
 steps in this closed subset; this does not establish general PHP evaluation order.
+Property reads reuse the generated public getter protocol; arbitrary host-supplied
+getters with user side effects are outside this PHP-source contract. Inputs are
+values, never output addresses. Guards or getter failures do not publish captures
+or the return local and are not PHP warning/exception equivalence.
 The return retains `int64(1)`, `int64(0)` or `false`; its static type is unknown
 because the existing IR has no union type. Existing downstream actual-type
 guards still apply; implicit conversion to a declared bool is not promised.
@@ -97,6 +110,10 @@ Measured local result: [2026-10-27 evidence](evidence/preg83-b3-2026-10-27.md),
 including failed setup attempts, corrected configuration, exact source identities
 and eleven typed native/generated observations. This is Darwin ARM64 enabled-backend
 evidence; standard Linux CGO0 CI is a separate regression gate.
+The separate [named-property input measurement](evidence/preg83-property-inputs-2026-10-29.md)
+records fifteen typed observations at its own clean compiler/fixture revision,
+including the new property rows and a retained setup failure. It does not repin
+the earlier result or certify full original parser execution.
 
 The compiler flag is a developer-local source-generation option. UI / WebMCP /
 MCP capability is **excluded**: no server operation, browser call, authentication

@@ -287,8 +287,12 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			// scalar-frame and flat owned-value lanes for the entire scope.
 			g.serial++
 			result := fmt.Sprintf("preg%d", g.serial)
+			// Snapshot both value inputs, in source order, before the runtime
+			// guard/engine call or either output-local publication.
+			g.emit("%sSubject := %s\n", result, g.expr(s.Expr.Args[1], scope))
+			g.emit("%sOffset := %s\n", result, g.expr(s.Expr.Args[2], scope))
 			g.emit("%s := execution.PregMatch83Local(%s,%s,%s)\n", result,
-				g.expr(s.Expr.Args[0], scope), g.expr(s.Expr.Args[1], scope), g.expr(s.Expr.Args[2], scope))
+				g.expr(s.Expr.Args[0], scope), result+"Subject", result+"Offset")
 			g.emit("v[%q]=rt.Clone(%s.Matches)\n", s.Target.Text, result)
 			g.emit("v[%q]=%s.Return\n", s.Name, result)
 			scope[s.Target.Text], scope[s.Name] = true, true

@@ -549,9 +549,9 @@ func (p *parser) preg83Pattern() ir.Expr {
 func (p *parser) preg83Subject() ir.Expr {
 	t := p.pop()
 	if t.kind != "var" && t.kind != "string" {
-		p.fail("preg_match subject requires a bare string variable or literal")
+		p.fail("preg_match subject requires a string literal, typed local or named property read")
 	}
-	return ir.Expr{Kind: t.kind, Text: t.text, Line: t.line}
+	return p.preg83PropertyInput(t)
 }
 
 func (p *parser) preg83Offset() ir.Expr {
@@ -560,9 +560,21 @@ func (p *parser) preg83Offset() ir.Expr {
 		return p.negativeInteger(t)
 	}
 	if t.kind != "var" && t.kind != "int" {
-		p.fail("preg_match offset requires a bare integer variable or literal")
+		p.fail("preg_match offset requires an integer literal, typed local or named property read")
 	}
-	return ir.Expr{Kind: t.kind, Text: t.text, Line: t.line}
+	return p.preg83PropertyInput(t)
+}
+
+// Do not use the general expression parser here: regex inputs admit only
+// named reads rooted in a bare local, not calls, indices or other effects.
+func (p *parser) preg83PropertyInput(t token) ir.Expr {
+	e := ir.Expr{Kind: t.kind, Text: t.text, Line: t.line}
+	if t.kind == "var" {
+		for p.accept("->") {
+			e = ir.Expr{Kind: "property", Text: p.name("id"), Line: t.line, Args: []ir.Expr{e}}
+		}
+	}
+	return e
 }
 
 // Keep assignment parsing (including [] append targets) unchanged. Standalone

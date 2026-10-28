@@ -30,6 +30,8 @@ type Stmt struct {
 	// preg_match_local: Name is the return local, Target the bare output local,
 	// Expr a canonical preg_match call with pattern/subject/offset only. This
 	// statement encodes fixed PREG_OFFSET_CAPTURE; it is not a reference API.
+	// Subject/offset may be literal, typed bare local or named property chain
+	// rooted in a bare local. Property input types are checked at runtime.
 	Kind, Name string
 	Line       int
 	Expr       Expr
