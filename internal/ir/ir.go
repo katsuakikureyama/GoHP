@@ -23,6 +23,8 @@ type Stmt struct {
 	// switch uses Expr (selector) and Body of case/default clauses. A case has
 	// one literal string Expr; default has none. Both have statement Body only.
 	// call_stmt uses Expr only: direct call or bare-variable method/invoke.
+	// assign_nested_property[_append/_concat] uses Target=2+ named property
+	// nodes rooted in a bare local, Expr=RHS. This is not a PHP reference cell.
 	// list_assign uses Expr (RHS) and Target=list with nonempty bare-var Args.
 	// Targets are positional locals, not general addresses or references.
 	// preg_match_local: Name is the return local, Target the bare output local,

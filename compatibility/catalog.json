@@ -3,6 +3,24 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.nested-property-update",
+      "kind": "syntax",
+      "name": "Guarded named nested-property updates",
+      "implementation": "partial",
+      "contract": "Two or more named properties rooted in a defined bare local support assignment, string-only concatenating assignment and array append. Resolve the final declared-property owner once before RHS evaluation, retain object identity, evaluate RHS once and read the final value after RHS for updates. Ordinary array value copies are preserved.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.nested_property","test":"TestDifferential/nested_property","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/nested_property.php","assertions":["stdout","exit","shared object identity through arrays/list, value copies, nested updates, once-only RHS, receiver replacement and RHS slot mutation"]},
+        {"case_id":"compiler.nested_property","test":"TestNestedPropertyLowering","file":"internal/codegen/nested_property_test.go","kind":"compiler","assertions":["receiver before RHS, explicit operations, source maps, Execution and legacy storage"]},
+        {"case_id":"negative.nested_property.source","test":"TestNestedPropertyUnsupportedSource","file":"internal/codegen/nested_property_test.go","kind":"negative","assertions":["one-property unknown receiver remains rejected; malformed operators, nonstring concat, indexed/effectful/dynamic targets and undefined/global roots reject"]},
+        {"case_id":"negative.nested_property.ir","test":"TestNestedPropertyMalformedIR","file":"internal/codegen/nested_property_test.go","kind":"negative","assertions":["target depth, metadata, root and statement payload validated before output"]},
+        {"case_id":"unit.nested_property.identity","test":"TestNestedPropertyIdentityAndCopies","file":"runtime/nested_property_test.go","kind":"unit","assertions":["resolved owner retained after prefix replacement, current final value, detached arrays and shared object values"]},
+        {"case_id":"negative.nested_property.runtime","test":"TestNestedPropertyRejectsInvalidTargets","file":"runtime/nested_property_test.go","kind":"negative","assertions":["nil/nonobject/intermediate/missing/zero targets and wrong update domains reject without publication"]},
+        {"case_id":"negative.nested_property.generated","test":"TestNestedPropertyRuntimeGuards","file":"tests/nested_property_runtime_test.go","kind":"negative","assertions":["generated dynamic root/intermediate, append and concat guards stop unsupported execution"]}
+      ],
+      "limitations": ["Only named property chains rooted in bare locals; no array-element/property-index destinations, dynamic names or effectful receivers", "Every intermediate must implement the nonnull object/get/set protocol; final property declared; no autovivification, magic/typed/nonpublic properties", "Concat requires actual strings, append requires actual array; no warning/coercion/general reference/COW equivalence", "Existing single-property known-class admission remains; local CLI WebMCP excluded, no service/auth/deployment change"]
+    },
+    {
       "id": "php.syntax.nonnumeric-string-switch",
       "kind": "syntax",
       "name": "Switch dispatch on nonnumeric strings",

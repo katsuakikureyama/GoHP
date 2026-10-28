@@ -115,6 +115,10 @@ This is string syntax support, not full original WordPress parser execution.
 
 ## Scope and documentation
 
+[Named nested-property updates](docs/public-property-write.md#named-nested-property-updates)
+support the parser's object-identity-preserving assignments, string concatenation
+and array appends. Full parser execution still needs the remaining dependencies.
+
 - [Architecture](docs/architecture.md) and [PHP 8.x versioned design](docs/php8-versioned-compatibility.md)
 - [Compatibility tables and exclusions](docs/compatibility.md)
 - [Roadmap and completion criteria](docs/roadmap.md)

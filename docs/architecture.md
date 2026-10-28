@@ -15,6 +15,11 @@ PHP bytes -> frontend lexer/parser -> versioned semantic subset IR
 `internal/frontend` owns tokens, source lines and PHP-version precedence.
 `internal/ir` is independent of syntax tokens and contains expressions, statements,
 functions and classes. IR version is `0.1`; reject incompatible IR versions.
+Named nested-property update statements reuse chained `property` Target nodes
+and an RHS Expr. Lowering resolves a guarded final owner before RHS evaluation,
+then writes through the existing declared-property protocol. This additive IR
+0.1 contract uses synchronous runtime targets and legacy value storage; see
+[nested updates](public-property-write.md#named-nested-property-updates).
 `internal/semantic` validates IR shape and rejects statically known type/operation
 mismatches before generation. `internal/codegen` performs the remaining
 name/arity/scope checks and lowers IR into direct Go calls, loops and structs.
