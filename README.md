@@ -105,7 +105,8 @@ Earlier [Gossip source comparisons](docs/integration.md) retain their original p
 they do not certify current main or a complete WordPress application.
 
 The optional [PHP 8.3 regex local-output experiment](docs/preg83-local-output.md)
-connects a narrow `preg_match` statement to the PCRE2 adapter. It needs explicit
+connects a narrow `preg_match` statement to the PCRE2 adapter. Named property
+subject/offset reads use actual string/integer guards. It needs explicit
 compiler opt-in and a separately enabled native backend; ordinary CGO0 CI is
 not evidence of PCRE compatibility. PHP 8.4 and general output references remain excluded.
 

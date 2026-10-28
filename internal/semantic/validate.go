@@ -595,8 +595,8 @@ func widenWhileWrites(stmts []ir.Stmt, scope map[string]valueType) {
 
 // pregMatchLocal validates the fixed experimental statement representation.
 // It is intentionally stricter than the B2 Go API: source inputs are literal
-// or known typed bare locals, the writable output is a pre-existing null local,
-// and no expression can alias either destination during evaluation.
+// or known typed bare locals or guarded named property reads. The writable
+// output is a pre-existing null local and no input root aliases a destination.
 func (v validator) pregMatchLocal(stmt ir.Stmt, scope map[string]valueType) error {
 	if v.target != "8.3" || v.regexProfile != ir.Preg83Profile {
 		return unsupported(stmt.Line, "preg_match local output requires the PHP 8.3 experimental PCRE2 profile")
@@ -614,17 +614,20 @@ func (v validator) pregMatchLocal(stmt ir.Stmt, scope map[string]valueType) erro
 	}
 	pattern, subject, offset := stmt.Expr.Args[0], stmt.Expr.Args[1], stmt.Expr.Args[2]
 	for _, input := range []ir.Expr{pattern, subject, offset} {
-		if input.Args != nil || input.Params != nil {
-			return malformed(stmt.Line, "preg_match inputs cannot carry hidden operands or parameters")
+		if err := preg83InputMetadata(input); err != nil {
+			return err
 		}
 	}
 	if !preg83LiteralPattern(pattern) {
 		return unsupported(stmt.Line, "preg_match requires a literal /.../s pattern")
 	}
 	if !preg83InputForm(subject, "string") || !preg83InputForm(offset, "int") {
-		return unsupported(stmt.Line, "preg_match requires bare string subject and integer offset values")
+		return unsupported(stmt.Line, "preg_match requires literal, typed-local or named-property subject and offset values")
 	}
 	for _, input := range []ir.Expr{subject, offset} {
+		for input.Kind == "property" {
+			input = input.Args[0]
+		}
 		if input.Kind == "var" && (input.Text == stmt.Name || input.Text == target.Text) {
 			return unsupported(stmt.Line, "preg_match inputs must not alias result or output locals")
 		}
@@ -636,15 +639,15 @@ func (v validator) pregMatchLocal(stmt ir.Stmt, scope map[string]valueType) erro
 	if err != nil {
 		return err
 	}
-	if subjectType.kind != stringKind {
-		return unsupported(stmt.Line, "preg_match subject requires a statically string local or literal")
+	if subjectType.kind != stringKind && !(subject.Kind == "property" && subjectType.kind == unknownKind) {
+		return unsupported(stmt.Line, "preg_match subject requires a string value; only property reads may have an unknown domain")
 	}
 	offsetType, err := v.expr(offset, scope)
 	if err != nil {
 		return err
 	}
-	if offsetType.kind != intKind {
-		return unsupported(stmt.Line, "preg_match offset requires a statically integer local or literal")
+	if offsetType.kind != intKind && !(offset.Kind == "property" && offsetType.kind == unknownKind) {
+		return unsupported(stmt.Line, "preg_match offset requires an integer value; only property reads may have an unknown domain")
 	}
 	// The engine's return is int(0|1)|false. The existing type model has no
 	// union representation, so preserve downstream runtime guards.
@@ -663,6 +666,12 @@ func preg83LiteralPattern(expr ir.Expr) bool {
 }
 
 func preg83InputForm(expr ir.Expr, kind string) bool {
+	if expr.Kind == "property" {
+		for expr.Kind == "property" {
+			expr = expr.Args[0] // Metadata was checked before input admission.
+		}
+		return expr.Kind == "var"
+	}
 	if expr.Args != nil || expr.Params != nil {
 		return false
 	}

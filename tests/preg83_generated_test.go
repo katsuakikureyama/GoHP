@@ -154,6 +154,10 @@ func init() {
     add(&rows,"binary_subject",F_preg83_binary_subject())
     add(&rows,"utf8_byte_offset",F_preg83_utf8_byte_offset())
     add(&rows,"lookahead_possessive",F_preg83_lookahead_possessive())
+    add(&rows,"property_this",F_preg83_property_this())
+    add(&rows,"property_nested_utf8",F_preg83_property_nested_utf8())
+    add(&rows,"property_mutation",F_preg83_property_mutation())
+    add(&rows,"property_capture_copy",F_preg83_property_capture_copy())
     add(&rows,"failure",F_preg83_failure())
     add(&rows,"shared_execution",F_preg83_shared_execution())
 
@@ -198,7 +202,7 @@ if (PHP_VERSION !== '8.3.36' || PHP_INT_SIZE !== 8 || setlocale(LC_CTYPE, 'C') !
     throw new RuntimeException('requires pinned PHP8.3.36 64-bit C locale CLI');
 }
 $observations = [];
-foreach (['basic', 'nomatch', 'named_unmatched', 'negative_offset', 'middle_capture', 'capture_copy', 'binary_subject', 'utf8_byte_offset', 'lookahead_possessive', 'failure', 'shared_execution'] as $name) {
+foreach (['basic', 'nomatch', 'named_unmatched', 'negative_offset', 'middle_capture', 'capture_copy', 'binary_subject', 'utf8_byte_offset', 'lookahead_possessive', 'property_this', 'property_nested_utf8', 'property_mutation', 'property_capture_copy', 'failure', 'shared_execution'] as $name) {
     $function = 'preg83_' . $name;
     $value = $name === 'middle_capture' ? $function('zac', -2) : $function();
     if ($name === 'failure' && ($value['result'] !== false || $value['error'] !== 2)) throw new RuntimeException('expected backtrack failure');

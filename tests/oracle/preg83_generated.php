@@ -62,6 +62,71 @@ function preg83_lookahead_possessive() {
     return ['result' => $result, 'matches' => $matches, 'error' => preg_last_error()];
 }
 
+// Named property inputs are deliberately covered here rather than against a
+// WordPress source file. The compiler admits only pure, named chains; the
+// observer below reports scalars and arrays, never the generated objects.
+class Preg83PropertyInput {
+    public $subject = null;
+    public $offset = null;
+}
+
+class Preg83PropertyHolder {
+    public $input = null;
+}
+
+class Preg83PropertyReader {
+    public $subject = null;
+    public $offset = null;
+
+    public function scan() {
+        $matches = null;
+        $result = preg_match('/(a)(b)/s', $this->subject, $matches, PREG_OFFSET_CAPTURE, $this->offset);
+        return ['result' => $result, 'matches' => $matches, 'error' => preg_last_error(), 'subject' => $this->subject, 'offset' => $this->offset];
+    }
+}
+
+function preg83_property_this() {
+    $reader = new Preg83PropertyReader();
+    $reader->subject = 'zab';
+    $reader->offset = 1;
+    return $reader->scan();
+}
+
+function preg83_property_nested_utf8() {
+    $input = new Preg83PropertyInput();
+    $holder = new Preg83PropertyHolder();
+    $holder->input = $input;
+    $holder->input->subject = '雪a';
+    $holder->input->offset = -1;
+    $matches = null;
+    $result = preg_match('/a/s', $holder->input->subject, $matches, PREG_OFFSET_CAPTURE, $holder->input->offset);
+    return ['result' => $result, 'matches' => $matches, 'error' => preg_last_error(), 'subject' => $holder->input->subject, 'offset' => $holder->input->offset];
+}
+
+function preg83_property_mutation() {
+    $input = new Preg83PropertyInput();
+    $first_matches = null;
+    $input->subject = 'zab';
+    $input->offset = 1;
+    $first = preg_match('/(a)(b)/s', $input->subject, $first_matches, PREG_OFFSET_CAPTURE, $input->offset);
+    $second_matches = null;
+    $input->subject = 'xxa';
+    $input->offset = -1;
+    $second = preg_match('/a/s', $input->subject, $second_matches, PREG_OFFSET_CAPTURE, $input->offset);
+    return ['first' => $first, 'first_matches' => $first_matches, 'second' => $second, 'second_matches' => $second_matches, 'error' => preg_last_error(), 'subject' => $input->subject, 'offset' => $input->offset];
+}
+
+function preg83_property_capture_copy() {
+    $input = new Preg83PropertyInput();
+    $input->subject = 'a';
+    $input->offset = 0;
+    $matches = null;
+    $result = preg_match('/(?<letter>a)/s', $input->subject, $matches, PREG_OFFSET_CAPTURE, $input->offset);
+    $saved = $matches;
+    $matches[0] = ['changed', 0];
+    return ['saved' => $saved, 'changed' => $matches, 'result' => $result, 'error' => preg_last_error(), 'subject' => $input->subject, 'offset' => $input->offset];
+}
+
 function preg83_failure() {
     $subject = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!';
     $matches = null;
@@ -93,7 +158,9 @@ function preg83_shared_execution() {
     $from_arrow = preg83_invoke_reader($reader);
     $probe = new ErrorProbe();
     $from_method = $probe->read_error();
-    $reset = preg83_nomatch();
+    // This successful named-property input call resets the same Execution's
+    // measured error state after the backtrack failure.
+    $reset = preg83_property_this();
     return [
         'failure' => $failed,
         'arrow_error' => $from_arrow,
