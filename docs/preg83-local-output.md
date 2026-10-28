@@ -110,6 +110,10 @@ Measured local result: [2026-10-27 evidence](evidence/preg83-b3-2026-10-27.md),
 including failed setup attempts, corrected configuration, exact source identities
 and eleven typed native/generated observations. This is Darwin ARM64 enabled-backend
 evidence; standard Linux CGO0 CI is a separate regression gate.
+The separate [named-property input measurement](evidence/preg83-property-inputs-2026-10-29.md)
+records fifteen typed observations at its own clean compiler/fixture revision,
+including the new property rows and a retained setup failure. It does not repin
+the earlier result or certify full original parser execution.
 
 The compiler flag is a developer-local source-generation option. UI / WebMCP /
 MCP capability is **excluded**: no server operation, browser call, authentication
