@@ -346,6 +346,35 @@ func (p *parser) block() []ir.Stmt {
 func (p *parser) stmt() ir.Stmt {
 	s := ir.Stmt{Line: p.peek().line}
 	switch {
+	case p.peek().kind == "id" && strings.EqualFold(p.peek().text, "switch"):
+		p.pop()
+		s.Kind = "switch"
+		p.need("(")
+		s.Expr = p.expr(0)
+		p.need(")")
+		p.need("{")
+		for !p.accept("}") {
+			label := p.pop()
+			clause := ir.Stmt{Kind: strings.ToLower(label.text), Line: label.line}
+			if label.kind != "id" || (clause.Kind != "case" && clause.Kind != "default") {
+				p.fail("switch requires case or default")
+			}
+			if clause.Kind == "case" {
+				value := p.pop()
+				if value.kind != "string" {
+					p.fail("switch case requires a literal string")
+				}
+				clause.Expr = ir.Expr{Kind: "string", Text: value.text, Line: value.line}
+			}
+			p.need(":")
+			for p.peek().text != "}" && !(p.peek().kind == "id" && (strings.EqualFold(p.peek().text, "case") || strings.EqualFold(p.peek().text, "default"))) {
+				if p.peek().kind == "eof" {
+					p.fail("unterminated switch")
+				}
+				clause.Body = append(clause.Body, p.stmt())
+			}
+			s.Body = append(s.Body, clause)
+		}
 	case p.peek().kind == "id" && strings.EqualFold(p.peek().text, "list"):
 		p.pop()
 		s.Kind = "list_assign"

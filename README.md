@@ -71,6 +71,10 @@ and verify hashes before using artifacts. See the [publication contract](docs/in
 
 ## Progress and next milestones
 
+[Nonnumeric string switches](docs/string-switch.md) add token-name dispatch,
+fallthrough and nearest-switch break for the fixed parser gate. Numeric/mixed
+comparisons and the remaining whole-parser dependencies are still excluded.
+
 The [positional list slice](docs/positional-list-assignment.md) adds bounded
 multi-local array unpacking for the fixed parser gate. General destructuring,
 missing-key warning semantics and the complete parser remain unsupported.

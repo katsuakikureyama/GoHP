@@ -30,6 +30,10 @@ current contracts and their evidence boundaries.
 
 ## Built-in functions
 
+[Nonnumeric string switch](string-switch.md) supports literal labels, optional
+default, first matching duplicate, fallthrough and nearest break. Numeric values,
+dynamic labels and switch-target continue are outside its admitted domain.
+
 [Positional list assignment](positional-list-assignment.md) admits a nonempty
 bare-local target list and actual-array RHS with all numeric keys present.
 This statement is not general destructuring, reference binding or warning handling.

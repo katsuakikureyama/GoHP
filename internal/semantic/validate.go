@@ -9,6 +9,7 @@ import (
 	"github.com/katsuakikureyama/GoHP/internal/ir"
 	"github.com/katsuakikureyama/GoHP/internal/phpversion"
 	"github.com/katsuakikureyama/GoHP/internal/sprintfsubset"
+	"github.com/katsuakikureyama/GoHP/internal/switchstring"
 )
 
 type kind uint8
@@ -138,7 +139,7 @@ func Validate(p ir.Program) error {
 			}
 		}
 	}
-	return v.stmts(p.Body, map[string]valueType{}, "", false)
+	return v.stmts(p.Body, map[string]valueType{}, "", "")
 }
 
 // preg_match_local deliberately has no control-flow join contract. It may live
@@ -213,6 +214,9 @@ func (v validator) function(f ir.Function, class string) error {
 	if class == "" && strings.EqualFold(f.Name, "list") {
 		return unsupported(f.Line, "list is a reserved language construct")
 	}
+	if class == "" && (strings.EqualFold(f.Name, "switch") || strings.EqualFold(f.Name, "case") || strings.EqualFold(f.Name, "default")) {
+		return unsupported(f.Line, "reserved switch language construct")
+	}
 	if f.ReturnType != "" && f.ReturnType != "array" && f.ReturnType != "bool" {
 		return malformed(f.Line, "unsupported IR return type")
 	}
@@ -248,15 +252,57 @@ func (v validator) function(f ir.Function, class string) error {
 			}
 		}
 	}
-	return v.stmts(f.Body, scope, f.ReturnType, false)
+	return v.stmts(f.Body, scope, f.ReturnType, "")
 }
 
-func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType string, inLoop bool) error {
+// control is the nearest breakable construct: empty, loop or switch. PHP's
+// switch-target continue emits a warning, outside the quiet supported lane.
+func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType string, control string) error {
 	for _, stmt := range stmts {
 		if stmt.Kind != "if" && stmt.ElseBody != nil {
 			return malformed(stmt.Line, "else body requires an if statement")
 		}
 		switch stmt.Kind {
+		case "switch":
+			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || !emptyExpr(stmt.Target) {
+				return malformed(stmt.Line, "switch requires only selector and clauses")
+			}
+			t, err := v.expr(stmt.Expr, scope)
+			if err != nil {
+				return err
+			}
+			if t.kind != stringKind && t.kind != unknownKind || (stmt.Expr.Kind == "string" && !switchstring.Admitted(stmt.Expr.Text)) {
+				return unsupported(stmt.Line, "switch requires a nonnumeric string")
+			}
+			entry := cloneScope(scope)
+			// Any earlier clause can fall through. Lose entry type facts for
+			// existing locals written anywhere, including dead tails/loops.
+			widenWhileWrites(stmt.Body, entry)
+			seenDefault := false
+			for _, clause := range stmt.Body {
+				if clause.Name != "" || clause.Key != "" || clause.Value != "" || !emptyExpr(clause.Target) || clause.ElseBody != nil {
+					return malformed(clause.Line, "switch clause contains hidden payload")
+				}
+				switch clause.Kind {
+				case "case":
+					if clause.Expr.Kind != "string" || clause.Expr.Args != nil || clause.Expr.Params != nil || !switchstring.Admitted(clause.Expr.Text) {
+						return unsupported(clause.Line, "switch case requires a nonnumeric literal string")
+					}
+				case "default":
+					if seenDefault || !emptyExpr(clause.Expr) {
+						return malformed(clause.Line, "switch requires at most one payload-free default")
+					}
+					seenDefault = true
+				default:
+					return malformed(clause.Line, "switch body requires case/default clauses")
+				}
+				if err := v.stmts(clause.Body, cloneScope(entry), returnType, "switch"); err != nil {
+					return err
+				}
+			}
+			for local := range scope {
+				scope[local] = entry[local]
+			}
 		case "list_assign":
 			target := stmt.Target
 			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || stmt.Body != nil ||
@@ -304,8 +350,11 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || stmt.Body != nil || !emptyExpr(stmt.Expr) || !emptyExpr(stmt.Target) {
 				return malformed(stmt.Line, stmt.Kind+" must have no payload")
 			}
-			if !inLoop {
+			if control == "" {
 				return unsupported(stmt.Line, stmt.Kind+" requires an enclosing foreach or while")
+			}
+			if stmt.Kind == "continue" && control == "switch" {
+				return unsupported(stmt.Line, "continue targeting switch is outside quiet subset")
 			}
 			// Still validate dead statements, without letting dead assignments
 			// overwrite the type state at the reachable loop transfer.
@@ -432,7 +481,7 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 			if !isBoolDomain(condition) {
 				return unsupported(stmt.Line, "while condition requires a supported value")
 			}
-			if err := v.stmts(stmt.Body, cloneScope(loop), returnType, true); err != nil {
+			if err := v.stmts(stmt.Body, cloneScope(loop), returnType, "loop"); err != nil {
 				return err
 			}
 			// Zero iterations, continue and early break are possible. Do not use
@@ -456,7 +505,7 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 			if stmt.Key != "" {
 				inner[stmt.Key] = valueType{kind: unknownKind}
 			}
-			if err := v.stmts(stmt.Body, inner, returnType, true); err != nil {
+			if err := v.stmts(stmt.Body, inner, returnType, "loop"); err != nil {
 				return err
 			}
 			// A foreach body may not execute. Existing variables changed inside it
@@ -476,11 +525,11 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 				return unsupported(stmt.Line, "if condition requires a supported value")
 			}
 			inner := cloneScope(scope)
-			if err := v.stmts(stmt.Body, inner, returnType, inLoop); err != nil {
+			if err := v.stmts(stmt.Body, inner, returnType, control); err != nil {
 				return err
 			}
 			other := cloneScope(scope)
-			if err := v.stmts(stmt.ElseBody, other, returnType, inLoop); err != nil {
+			if err := v.stmts(stmt.ElseBody, other, returnType, control); err != nil {
 				return err
 			}
 			// Validate both arms from the pre-if scope. Branch-only bindings do
