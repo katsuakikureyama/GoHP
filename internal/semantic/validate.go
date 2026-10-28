@@ -210,6 +210,9 @@ func (v validator) function(f ir.Function, class string) error {
 	if strings.EqualFold(f.Name, "fn") {
 		return unsupported(f.Line, "fn is reserved for arrow expressions")
 	}
+	if class == "" && strings.EqualFold(f.Name, "list") {
+		return unsupported(f.Line, "list is a reserved language construct")
+	}
 	if f.ReturnType != "" && f.ReturnType != "array" && f.ReturnType != "bool" {
 		return malformed(f.Line, "unsupported IR return type")
 	}
@@ -254,6 +257,30 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 			return malformed(stmt.Line, "else body requires an if statement")
 		}
 		switch stmt.Kind {
+		case "list_assign":
+			target := stmt.Target
+			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || stmt.Body != nil ||
+				target.Kind != "list" || target.Text != "" || target.Params != nil || len(target.Args) == 0 {
+				return malformed(stmt.Line, "list assignment requires positional local targets")
+			}
+			for _, local := range target.Args {
+				if local.Kind != "var" || !validName(local.Text) || local.Args != nil || local.Params != nil ||
+					local.Text == "this" || local.Text == "GLOBALS" || strings.HasPrefix(local.Text, "_") {
+					return unsupported(stmt.Line, "list assignment requires nonreserved bare locals")
+				}
+			}
+			// Read in the original scope: targets cannot initialize their RHS.
+			t, err := v.expr(stmt.Expr, scope)
+			if err != nil {
+				return err
+			}
+			if t.kind != arrayKind && t.kind != unknownKind {
+				return unsupported(stmt.Line, "list assignment requires array")
+			}
+			for _, local := range target.Args {
+				// Also invalidate prior class knowledge and direct-null facts.
+				scope[local.Text] = valueType{kind: unknownKind}
+			}
 		case "call_stmt":
 			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || stmt.Body != nil || !emptyExpr(stmt.Target) {
 				return malformed(stmt.Line, "call statement requires only a call expression")
@@ -483,6 +510,12 @@ func widenWhileWrites(stmts []ir.Stmt, scope map[string]valueType) {
 	}
 	for _, stmt := range stmts {
 		switch stmt.Kind {
+		case "list_assign":
+			for _, local := range stmt.Target.Args {
+				if local.Kind == "var" {
+					mark(local.Text)
+				}
+			}
 		case "assign":
 			mark(stmt.Name)
 		case "preg_match_local":

@@ -30,6 +30,10 @@ current contracts and their evidence boundaries.
 
 ## Built-in functions
 
+[Positional list assignment](positional-list-assignment.md) admits a nonempty
+bare-local target list and actual-array RHS with all numeric keys present.
+This statement is not general destructuring, reference binding or warning handling.
+
 The additional [relational slice](relational-int-null.md) admits `<` and `>`
 for actual integers/null only, with PHP null-to-boolean comparison rules and
 non-associative precedence. It does not admit general mixed-type ordering or

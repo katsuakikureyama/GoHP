@@ -71,6 +71,10 @@ and verify hashes before using artifacts. See the [publication contract](docs/in
 
 ## Progress and next milestones
 
+The [positional list slice](docs/positional-list-assignment.md) adds bounded
+multi-local array unpacking for the fixed parser gate. General destructuring,
+missing-key warning semantics and the complete parser remain unsupported.
+
 The [integer/null relational slice](docs/relational-int-null.md) addresses the
 fixed original parser's first measured `<`/`>` syntax blocker. It does not yet
 make the complete parser runnable; the application-first gate remains active.
