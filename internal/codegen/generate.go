@@ -267,6 +267,16 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 	for _, s := range ss {
 		g.emit("// gohp:begin %d\n", s.Line)
 		switch s.Kind {
+		case "list_assign":
+			// ListValues evaluates/validates the entire positional snapshot
+			// before replacing any local, including an alias of the RHS.
+			g.serial++
+			values := fmt.Sprintf("list%d", g.serial)
+			g.emit("%s := rt.ListValues(%s,%d)\n", values, g.expr(s.Expr, scope), len(s.Target.Args))
+			for i, local := range s.Target.Args {
+				g.emit("v[%q]=%s[%d]\n", local.Text, values, i)
+				scope[local.Text] = true
+			}
 		case "preg_match_local":
 			// Semantic validation proves a straight-line, initialized-null bare
 			// output local and pure, non-aliasing inputs. This statement excludes

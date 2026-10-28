@@ -20,6 +20,8 @@ type Stmt struct {
 	// continue and break target the nearest foreach/while and have no payload.
 	// while uses Expr (condition) and Body only.
 	// call_stmt uses Expr only: direct call or bare-variable method/invoke.
+	// list_assign uses Expr (RHS) and Target=list with nonempty bare-var Args.
+	// Targets are positional locals, not general addresses or references.
 	// preg_match_local: Name is the return local, Target the bare output local,
 	// Expr a canonical preg_match call with pattern/subject/offset only. This
 	// statement encodes fixed PREG_OFFSET_CAPTURE; it is not a reference API.

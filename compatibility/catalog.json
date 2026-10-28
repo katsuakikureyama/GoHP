@@ -3,6 +3,25 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.positional-list-assignment",
+      "kind": "syntax",
+      "name": "Positional list assignment to bare locals",
+      "implementation": "partial",
+      "contract": "Statement-only nonempty list of bare locals: evaluate an actual-array RHS once, require numeric keys zero through target count minus one, clone selected values before publishing locals left to right. Duplicate targets retain the last value; RHS aliases and nested array copies preserve value semantics. Unknown destinations clear prior type/direct-null facts; loops widen writes.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.list_assignment","test":"TestDifferential/list_assignment","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/list_assignment.php","assertions":["stdout","exit","positional keys, null, nested array copies, duplicate targets, source alias, once-only RHS, functions/methods and control flow"]},
+        {"case_id":"compiler.list_assignment","test":"TestListAssignmentLowering","file":"internal/codegen/list_assignment_test.go","kind":"compiler","assertions":["canonical target IR, snapshot before ordered writes, source map, legacy lane and Execution propagation"]},
+        {"case_id":"negative.list_assignment.source","test":"TestListAssignmentUnsupportedSource","file":"internal/codegen/list_assignment_test.go","kind":"negative","assertions":["unsupported target forms/domains, reserved/undefined variables, branch scope and stale object facts reject"]},
+        {"case_id":"negative.list_assignment.ir","test":"TestListAssignmentMalformedIR","file":"internal/codegen/list_assignment_test.go","kind":"negative","assertions":["hidden payload, missing RHS/targets and malformed target metadata fail before output"]},
+        {"case_id":"negative.list_assignment.preg_null","test":"TestListAssignmentInvalidatesPregNull","file":"internal/codegen/list_assignment_test.go","kind":"negative","assertions":["list writes cannot retain direct-null proof for experimental regex output"]},
+        {"case_id":"unit.list_assignment.values","test":"TestListValuesSelectsNumericKeysAndCopiesArrays","file":"runtime/list_assignment_test.go","kind":"unit","assertions":["numeric-key selection, nested copies, null and shared object identity"]},
+        {"case_id":"negative.list_assignment.values","test":"TestListValuesRejectsOutsideBoundedDomain","file":"runtime/list_assignment_test.go","kind":"negative","assertions":["nonarray, empty targets and absent numeric keys rejected before returning values"]},
+        {"case_id":"negative.list_assignment.generated","test":"TestListAssignmentRuntimeGuards","file":"tests/list_assignment_runtime_test.go","kind":"negative","assertions":["generated unknown RHS types and missing keys fail explicitly"]}
+      ],
+      "limitations": ["No holes/trailing commas, keyed/nested/bracket destructuring, references or property/index destinations", "No scalar unpacking, ArrayAccess or missing-key warning/null equivalence; unsupported runtime inputs panic before destination writes", "No list expression result or assignment chaining; all list scopes retain legacy map storage", "No full original parser, switch, JSON, stack mutation or source-loading claim; existing developer CLI capability with WebMCP excluded"]
+    },
+    {
       "id": "php.syntax.relational-int-null",
       "kind": "syntax",
       "name": "Strict relational operators on integer/null values",

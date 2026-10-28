@@ -346,6 +346,23 @@ func (p *parser) block() []ir.Stmt {
 func (p *parser) stmt() ir.Stmt {
 	s := ir.Stmt{Line: p.peek().line}
 	switch {
+	case p.peek().kind == "id" && strings.EqualFold(p.peek().text, "list"):
+		p.pop()
+		s.Kind = "list_assign"
+		s.Target = ir.Expr{Kind: "list", Line: s.Line}
+		p.need("(")
+		for {
+			line := p.peek().line
+			name := p.name("var") // Nonempty, no holes, keyed or nested forms.
+			s.Target.Args = append(s.Target.Args, ir.Expr{Kind: "var", Text: name, Line: line})
+			if p.accept(")") {
+				break
+			}
+			p.need(",")
+		}
+		p.need("=")
+		s.Expr = p.expr(0)
+		p.need(";")
 	case p.peek().kind == "id" && (strings.EqualFold(p.peek().text, "continue") || strings.EqualFold(p.peek().text, "break")):
 		s.Kind = strings.ToLower(p.pop().text)
 		p.need(";") // Only bare loop transfers; no explicit level.
