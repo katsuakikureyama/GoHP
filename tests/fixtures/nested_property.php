@@ -107,8 +107,8 @@ while ($iteration < 2) {
     $iteration = $iteration + 1;
 }
 
-// Resolve the target first, then let the RHS mutate that same object. The
-// outer assignment wins for text, while the RHS append remains observable.
+// RHS mutates the same object before the outer write. The outer assignment
+// wins for text, while the RHS append remains observable.
 $frame->block->text = mutate_old_child($frame);
 $frame->block->text .= nested_concat_mutate($frame);
 $concat_order = $frame->block->text;
