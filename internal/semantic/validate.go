@@ -263,6 +263,10 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 			return malformed(stmt.Line, "else body requires an if statement")
 		}
 		switch stmt.Kind {
+		case "assign_nested_property", "assign_nested_property_append", "assign_nested_property_concat":
+			if err := v.nestedProperty(stmt, scope); err != nil {
+				return err
+			}
 		case "switch":
 			if stmt.Name != "" || stmt.Key != "" || stmt.Value != "" || !emptyExpr(stmt.Target) {
 				return malformed(stmt.Line, "switch requires only selector and clauses")

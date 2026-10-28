@@ -29,7 +29,7 @@ aliases observe the same property update. This follows the bounded application
 of PHP's [object identifier semantics](https://www.php.net/manual/en/language.oop5.references.php),
 not PHP `&` references or a claim of general object/reference equivalence.
 
-Dynamic properties/names, nested/chained/effectful receivers, property-array
+For the single-property form, dynamic properties/names, nested/chained/effectful receivers, property-array
 indexed writes, compound/assignment expressions, references, general constructors,
 inheritance, typed/private/static properties and general warning/exception
 behavior remain excluded. Runtime-only direct setter misuse is not a PHP input
@@ -44,3 +44,38 @@ after writes. Gossip adoption requires a separate exact compiler/source pin.
 Capability `gohp.cli.generate` remains WebMCP-excluded (local developer compiler,
 not a browser/service operation); route/auth/deployment are unchanged. No new
 production target or dependency is introduced.
+
+## Named nested-property updates
+
+The parser's Frame/Block updates use a separate closed form:
+`$frame->block->text = $value;`, `$frame->block->text .= $string;` and
+`$frame->block->items[] = $value;`. Two or more literal property names must be
+rooted in a defined bare local. Known object and unknown roots are admitted;
+known scalar/array/callable roots reject. Every runtime receiver must implement
+the nonnull Object/Get/Set protocol, and each accessed property must be declared.
+
+For these named chains, evaluate RHS once before resolving the writable path.
+If RHS replaces an intermediate property, update the replacement object's final
+property. Verify that property exists, then publish once. Concat
+and append read the owner's current final value after RHS evaluation. Concat
+requires actual strings on both sides; append requires an actual array slot.
+Assignment preserves detached array values and shared object identifiers. Paths
+through copied arrays are not supported. Missing/null/scalar intermediates and
+dynamic properties fail; no property or array is automatically created.
+
+IR uses `assign_nested_property`, `assign_nested_property_concat` or
+`assign_nested_property_append` with a chain of `property` nodes in `Target`
+and the RHS in `Expr`. The lexer recognizes `.=` as one adjacent token; `. =`
+is rejected. Root/property metadata and unrelated payloads are validated. Code
+generation evaluates RHS, resolves a synchronous `runtime.NestedProperty` and uses its explicit
+operation. This does not expose PHP reference bindings or migrate array storage;
+these scopes stay on the legacy path. Existing one-property unknown-receiver
+rejection remains in force.
+
+The owned `nested_property.php` fixture and catalog
+`php.syntax.nested-property-update` track object identity through arrays/list,
+copies, aliases, multiple path depths and RHS mutation/order. Evidence remains
+per target. Typed/magic/nonpublic properties, array-index targets, effectful or
+dynamic path steps, coercing concat, null-array append and general exceptions
+remain outside this contract. Source parser integration and remaining stack/
+regex/JSON/loading dependencies require their own complete-unit results.

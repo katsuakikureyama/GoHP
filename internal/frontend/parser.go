@@ -160,7 +160,7 @@ func lex(s string) ([]token, error) {
 		matched := false
 		// Keep multi-character operators longest-first so === is never split
 		// into the unsupported = token followed by ==.
-		for _, op := range []string{"===", "!==", "&&", "||", "??", "=>", "->", "--"} {
+		for _, op := range []string{"===", "!==", "&&", "||", "??", "=>", "->", "--", ".="} {
 			if strings.HasPrefix(s[i:], op) {
 				ts = append(ts, token{op, ln, "sym"})
 				i += len(op)
@@ -444,11 +444,25 @@ func (p *parser) stmt() ir.Stmt {
 			s.Target = ir.Expr{Kind: "property", Text: property, Line: s.Line,
 				Args: []ir.Expr{{Kind: "var", Text: s.Name, Line: s.Line}}}
 			s.Name = ""
+			nested := false
+			for p.accept("->") {
+				nested = true
+				s.Target = ir.Expr{Kind: "property", Text: p.name("id"), Line: s.Line, Args: []ir.Expr{s.Target}}
+			}
+			if nested {
+				s.Kind = "assign_nested_property"
+			}
 			if p.accept("[") {
 				p.need("]")
 				s.Kind = "assign_property_append"
+				if nested {
+					s.Kind = "assign_nested_property_append"
+				}
 			}
-			if p.peek().kind != "sym" || p.peek().text != "=" {
+			if nested && s.Kind != "assign_nested_property_append" && p.accept(".=") {
+				s.Kind = "assign_nested_property_concat"
+			}
+			if s.Kind != "assign_nested_property_concat" && (p.peek().kind != "sym" || p.peek().text != "=") {
 				p.fail("property assignment requires one declared property and =")
 			}
 		} else if p.peek().kind == "sym" && p.peek().text == "[" {
@@ -472,7 +486,9 @@ func (p *parser) stmt() ir.Stmt {
 		if (s.Kind == "assign_index" || s.Kind == "assign_append") && (p.peek().kind != "sym" || p.peek().text != "=") {
 			p.fail("array assignment requires one level and =")
 		}
-		p.need("=")
+		if s.Kind != "assign_nested_property_concat" {
+			p.need("=")
+		}
 		if s.Kind == "assign" && p.experimentalPCRE2 && p.startsPregMatchLocal() {
 			s = p.pregMatchLocal(s)
 		} else {

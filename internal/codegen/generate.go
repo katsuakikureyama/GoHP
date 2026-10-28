@@ -267,6 +267,8 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 	for _, s := range ss {
 		g.emit("// gohp:begin %d\n", s.Line)
 		switch s.Kind {
+		case "assign_nested_property", "assign_nested_property_append", "assign_nested_property_concat":
+			g.nestedProperty(s, scope)
 		case "switch":
 			g.stringSwitch(s, scope, inFunc, returnType)
 		case "list_assign":

@@ -68,6 +68,7 @@ and evidence. Other builtins fail closed.
 | Area | Generated-code support | Boundary |
 |---|---|---|
 | Classes and properties | Public scalar/null defaults and implicit null; bounded public constructors (including trailing untyped null defaults and exact scalar parameters); property reads, methods, declared assignment and known-object `(array)` snapshots | No dynamic properties, inheritance, typed/non-null defaults, weak scalar conversion, nonpublic/static members or general casts. See [constructors/snapshots](block-data-constructor.md), [constructor scalars](scalar-constructor-boundary.md), and [property writes](public-property-write.md). |
+| Nested property updates | Named chains rooted in bare locals, with `=`, actual-string `.=` and actual-array `[] =`; guarded final-owner identity and value copies | Two or more properties; nonnull declared object paths only. No array-index paths, dynamic/effectful steps or autovivification. See [nested updates](public-property-write.md#named-nested-property-updates). |
 | Arrows and callable values | Capture-free arrows, generated-arrow `callable` arguments and variable invocation | No anonymous `function`, captures, string/method callables or typed arrows. See [arrow callables](arrow-callable-boundary.md); `array_map` has its separate [literal callback contract](array-map-boundary.md). |
 
 ## Application and extension exclusions
