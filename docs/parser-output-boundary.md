@@ -13,9 +13,11 @@ WordPress adoption; Gossip separately pins the compiler and compares the source.
   source line and dead-tail validation. It is admitted only where an untyped
   value return was already admitted; top-level, typed array/bool and constructors
   still reject it. No new void/never/error semantics.
-- A declared public property of a statically known generated bare-variable
-  receiver may use []=RHS. New assign_property_append IR has the same property
-  target shape as assign_property. Receiver and RHS evaluate once; after RHS,
+- A declared public property of a defined bare-variable receiver may use []=RHS.
+  Known generated classes retain static slot checks; unknown inferred locals
+  use the [explicit object/declared-slot guard](public-property-write.md).
+  The assign_property_append IR has the same property
+  target shape as assign_property. RHS evaluates once before resolving the receiver; after RHS,
   the current property is read, existing ArrayAppend appends and Set writes its
   value copy. Thus RHS changes to that same slot are retained. The actual slot
   must be an array at append time: null/bool/scalar autovivification is excluded.

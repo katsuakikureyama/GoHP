@@ -34,12 +34,12 @@ func TestClassParameterLowering(t *testing.T) {
 	if strings.Contains(text, "NewScalarFrame") || strings.Contains(text, "rt.ValueSlot") {
 		t.Fatal("class scopes must remain legacy storage")
 	}
-	if strings.Index(text, ".(*C_item)") > strings.Index(text, `.Set("value", "global")`) {
+	if strings.Index(text, ".(*C_item)") > strings.Index(text, `value := any("global")`) {
 		t.Fatal("guard must precede body")
 	}
 	found := false
 	for i, line := range strings.Split(text, "\n") {
-		if strings.Contains(line, `.Set("value", "global")`) {
+		if strings.Contains(line, `value := any("global")`) {
 			if got, ok := mapping.PHPLine(i + 1); !ok || got != 4 {
 				t.Fatalf("map %d %v", got, ok)
 			}

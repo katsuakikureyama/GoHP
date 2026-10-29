@@ -45,6 +45,7 @@ func TestWhileTypeState(t *testing.T) {
 		"$a = []; while (false) { foreach ([false] as $a) { break; } } echo $a;",
 		"$a = []; while (false) { if (false) { $a = false; continue; } $a = []; } echo $a;",
 		"class X { public $v = null; } $o = new X(); $i = 0; while ($i !== 1) { $o->v = $i; $i = $i + 1; } echo $o->v;",
+		"class X { public $v = null; } $o = new X(); while (false) { $o->v = 1; $o = false; }",
 	} {
 		p, err := frontend.Parse("<?php "+source, testTarget(t))
 		if err != nil {
@@ -73,7 +74,7 @@ func TestWhileUnsupportedSource(t *testing.T) {
 		"dead_bad":                  "while (false) { break; echo count(false); }",
 		"dead_undefined":            "while (false) { continue; echo $missing; }",
 		"redeclare":                 "function WhIlE() { return 1; }",
-		"loop_carried_class":        "class X { public $v = null; } $o = new X(); while (false) { $o->v = 1; $o = false; }",
+		"loop_known_scalar":         "class X { public $v = null; } $o = new X(); while (false) { $o = false; $o->v = 1; }",
 	} {
 		t.Run(name, func(t *testing.T) {
 			p, err := frontend.Parse("<?php "+source, testTarget(t))

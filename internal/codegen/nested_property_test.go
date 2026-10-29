@@ -39,7 +39,7 @@ func TestNestedPropertyLowering(t *testing.T) {
 
 func TestNestedPropertyUnsupportedSource(t *testing.T) {
 	for _, source := range []string{
-		`function f($a){$a->text='x';}`, `function f($a){$a->text.='x';}`,
+		`function f($a){$a->text.='x';}`,
 		`function f($a){$a->child->text . = 'x';}`,
 		`function f($a){$a->child->text += 1;}`, `function f($a){$a->child->text .= 1;}`,
 		`function f($a){$a->child->items[0]='x';}`, `function f($a){$a->child[0]->text='x';}`,

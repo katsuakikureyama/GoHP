@@ -36,11 +36,11 @@ $r = new Record(1, 'x', false);`, testTarget(t))
 			t.Fatalf("guard for %s: %s", annotation, s)
 		}
 	}
-	if !strings.Contains(s, "rt.NullDefaultArgs(args, 3, 4)") || strings.Index(s, "rt.ScalarParameter") > strings.Index(s, `.Set("value"`) {
+	if !strings.Contains(s, "rt.NullDefaultArgs(args, 3, 4)") || strings.Index(s, "rt.ScalarParameter") > strings.Index(s, `rt.ResolveProperty(v["this"], "value")`) {
 		t.Fatalf("entry guards missing or late: %s", s)
 	}
 	for i, line := range strings.Split(s, "\n") {
-		if strings.Contains(line, `.Set("value"`) {
+		if strings.Contains(line, `rt.ResolveProperty(v["this"], "value")`) {
 			if got, ok := mapping.PHPLine(i + 1); !ok || got != 5 {
 				t.Fatalf("constructor map: %d %v", got, ok)
 			}

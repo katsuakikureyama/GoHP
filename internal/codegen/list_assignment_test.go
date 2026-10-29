@@ -61,8 +61,6 @@ func TestListAssignmentUnsupportedSource(t *testing.T) {
 		`list($a)=1;`, `list($a)=true;`, `class C {} list($a)=new C();`, `echo list($a)=[1];`,
 		`function LiSt() { return []; }`, `if(true){list($a)=[1];} echo $a;`,
 		`while(false){list($a)=[1];} echo $a;`, `if(false){list($a)=[unknown()];}`,
-		`class C {public $x;} $c=new C(); list($c)=[1]; $c->x=2;`,
-		`class C {public $x;} $c=new C(); while(false){$c->x=2; list($c)=[1];}`,
 	} {
 		p, err := frontend.Parse("<?php "+source, testTarget(t))
 		var out []byte

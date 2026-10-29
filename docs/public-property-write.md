@@ -1,18 +1,24 @@
 # Declared public-property assignment
 
 The closed source form `$holder->property = $value;` is now a statement. Its
-receiver must be a defined bare variable statically known to hold a declared
-generated class, including a known alias or `$this` in a method. The property
-name is a literal, case-sensitive, declared public untyped property. Unknown
-function-parameter receivers, scalars, arrays and generated arrows are rejected
-before output; an `is_object` guard does not add type narrowing.
+receiver must be a defined bare variable with a known generated class or unknown
+inferred type, including untyped parameters and values extracted from arrays.
+The property name is a literal, case-sensitive, declared public untyped property.
+Known scalars, arrays, null and generated arrows reject before output; unknown
+values need an explicit runtime object/declared-slot guard. An `is_object` guard
+does not add type narrowing. Known classes still reject absent properties.
 
 IR uses `assign_property` with an explicit `property(variable)` target. Target
-shape/metadata and unrelated statement payloads fail closed. A generated setter
-dispatches only declared names, clones the supported RHS value once and rejects
-unknown names. Source code cannot invoke that Go implementation method. The RHS
-is an ordinary supported expression and runs once. No dynamic host setter or
-new runtime object admission is added.
+shape/metadata and unrelated statement payloads fail closed. Codegen evaluates
+the ordinary supported RHS once, then uses `runtime.ResolveProperty` to resolve
+the receiver/slot and publish through its synchronous Assign/Append operation.
+The runtime requires nonnil `PropertyObject` (`Object`/`PHPObject`, Get, Set) and
+checks the final declared name with Get before publication. Generated getters
+and setters reject unknown names and preserve array-copy boundaries. Source PHP
+cannot invoke those Go implementation methods. Setter-only and unmarked
+getter/setter hosts reject; a host explicitly implementing the full protocol
+opts in, exactly as for existing nested paths. This structural protocol is not
+an unforgeable generated-class certificate or a hostile-host security boundary.
 
 All generated public properties are untyped mutable slots: a null/scalar default
 is not a permanent inferred type. Reads retain declaration checks but become
@@ -20,7 +26,7 @@ unknown so existing operation guards check the actual value after writes,
 alias changes and method calls. No optimistic branch/alias-sensitive narrowing.
 Classes have scalar/null literal or implicit-null defaults. The later
 [constructor boundary](block-data-constructor.md) permits fixed untyped public
-constructors; this does not broaden unknown-receiver property assignment.
+constructors; constructor admission and this guarded write contract are separate.
 
 Arrays use the existing recursive value-copy convention at both setter and
 getter boundaries; writing the original or a read-back array does not change
@@ -32,8 +38,12 @@ not PHP `&` references or a claim of general object/reference equivalence.
 For the single-property form, dynamic properties/names, nested/chained/effectful receivers, property-array
 indexed writes, compound/assignment expressions, references, general constructors,
 inheritance, typed/private/static properties and general warning/exception
-behavior remain excluded. Runtime-only direct setter misuse is not a PHP input
-contract. A later [bounded property append](parser-output-boundary.md) admits only a declared bare-variable receiver and an actual array slot, not general nested writes.
+behavior remain excluded. Direct single-property `.=` remains excluded.
+Runtime-only direct setter misuse is not a PHP input contract.
+[Bounded property append](parser-output-boundary.md) also accepts a defined
+unknown bare-local receiver, but requires a declared actual-array slot after RHS
+evaluation; it never creates an array from null. Missing/nonobject targets reject
+explicitly after RHS; this is not PHP exception/warning equivalence.
 
 The owned differential fixture checks nested array independence, known object
 aliases, `$this`, case sensitivity, once-only RHS, value type transitions and
@@ -69,8 +79,8 @@ and the RHS in `Expr`. The lexer recognizes `.=` as one adjacent token; `. =`
 is rejected. Root/property metadata and unrelated payloads are validated. Code
 generation evaluates RHS, resolves a synchronous `runtime.NestedProperty` and uses its explicit
 operation. This does not expose PHP reference bindings or migrate array storage;
-these scopes stay on the legacy path. Existing one-property unknown-receiver
-rejection remains in force.
+these scopes stay on the legacy path. Direct unknown-receiver writes use the
+separate one-name ResolveProperty entry without relaxing the 2+ nested-path API.
 
 The owned `nested_property.php` fixture and catalog
 `php.syntax.nested-property-update` track object identity through arrays/list,
@@ -79,3 +89,15 @@ per target. Typed/magic/nonpublic properties, array-index targets, effectful or
 dynamic path steps, coercing concat, null-array append and general exceptions
 remain outside this contract. Source parser integration and remaining stack/
 regex/JSON/loading dependencies require their own complete-unit results.
+
+The real `unknown_property_write.php` fixture covers array-extracted objects,
+untyped parameters, aliases, falsy slots, nested value copies, branch/loop-widened
+locals and same-slot RHS-reset append ordering. Generated external-ABI checks
+cover typed nil, scalar/array/partial protocol/missing-slot rejection, one RHS
+before guard, no later write after failure and explicit full-protocol host opt-in.
+Results remain per exact compiler commit/target; no full original parser PASS is
+implied. The measured complete-source blocker before this increment was209,
+`$stack_top->prev_offset` after array_pop, not a missing ordinary include mode.
+The [new complete-source probe and focused evidence](evidence/unknown-property-write-2026-10-29.md)
+pass that write and next reject string `empty($html)` at354. Full original
+generation/execution and application acceptance remain blocked.
