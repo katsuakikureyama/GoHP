@@ -41,6 +41,28 @@ semantic diagnostics and generated maps/reports is still pending. There is no
 bundle compile mode, driver admission, original-closure compiler probe or
 supported PHP `require_once` row. The full parser remains blocked.
 
+## L0-a local evidence (2026-10-29)
+
+At clean code `7866633f168ecd12a0fb8783c92b749b61c2d803`, cached
+Go1.23.0 Darwin/arm64, CGO0, offline and the existing task-shared GOCACHE:
+
+```sh
+env GOTOOLCHAIN=local GOPROXY=off GOSUMDB=off GOWORK=off CGO_ENABLED=0 \
+  GOCACHE=/private/tmp/gohp-go-cache \
+  /Users/kureyamayuri/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.23.0.darwin-arm64/bin/go \
+  test -count=1 ./internal/frontend ./internal/corpus ./internal/sourceclosure \
+  ./cmd/gohp-corpus-verify ./cmd/gohp-corpus-inventory ./internal/compat
+```
+
+All six packages PASS once: frontend0.458s, corpus0.379s, sourceclosure0.672s,
+corpus-verify0.817s, corpus-inventory0.994s, compat0.956s. This evidence-only
+addition does not change tested code or configuration. Nine new tooling checks
+are catalogued; unit metadata exercises both target labels, not native PHP
+loading. No generated closure, native loading comparison or new original-source
+probe was run. Prior source-only rejection remains the recorded application
+blocker. Existing independent PHP8.3/PHP8.4 CI remains required for regression;
+its results do not promote L1/L2 or G83-PARSER to PASS.
+
 ## Measured starting point
 
 [GoHP PR126](https://github.com/katsuakikureyama/GoHP/pull/126), integrated at
