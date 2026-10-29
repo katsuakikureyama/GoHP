@@ -59,7 +59,7 @@ func TestArrayIssetStrictSourceFormsFailClosed(t *testing.T) {
 		src  string
 	}{
 		{"no_arguments", "<?php $items = []; echo isset();"},
-		{"property", "<?php class Item { public $value = null; } $item = new Item(); echo isset($item->value);"},
+		{"property_index", "<?php class Item { public $value = null; } $item = new Item(); echo isset($item->value['key']);"},
 		{"string_offset", "<?php echo isset('text'[0]);"},
 		{"parenthesized_operand", "<?php $items = []; echo isset(($items)['key']);"},
 		{"parenthesized_key", "<?php $items = []; $key = 'key'; echo isset($items[($key)]);"},

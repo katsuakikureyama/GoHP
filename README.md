@@ -71,6 +71,10 @@ and verify hashes before using artifacts. See the [publication contract](docs/in
 
 ## Progress and next milestones
 
+[Property `isset`](docs/property-isset.md) probes named paths without throwing
+on missing/null slots or confusing nonnull falsy values with absence. Ordinary
+property reads remain strict; dynamic/magic property semantics are not implied.
+
 [Declared class parameters](docs/declared-class-parameters.md) add exact nonnull
 object entry guards to functions, public methods and constructors. Object
 identity is preserved; inheritance and nullable/union annotations remain excluded.

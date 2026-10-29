@@ -20,6 +20,11 @@ and an RHS Expr. Lowering evaluates RHS before resolving a guarded final owner,
 then writes through the existing declared-property protocol. This additive IR
 0.1 contract uses synchronous runtime targets and legacy value storage; see
 [nested updates](public-property-write.md#named-nested-property-updates).
+Named-property `isset` uses separate flat `isset_property(root, name...)` IR,
+not eager `property` reads. Generated classes expose nonthrowing raw
+`PHPPropertyLookup`; `rt.PropertyIsset` walks only reached slots without copies
+and multi-address Go `&&` retains short circuit. These scopes use legacy storage;
+ordinary `Get` still rejects missing properties. See [property isset](property-isset.md).
 The opt-in PHP8.3 `preg_match_local` statement also accepts named `property`
 chains as subject/offset values. All nodes and bare-local roots are validated;
 codegen snapshots subject then offset before runtime type guards and detached

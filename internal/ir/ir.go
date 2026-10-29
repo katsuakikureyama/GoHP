@@ -9,6 +9,8 @@ const Version = "0.1"
 const Preg83Profile = "pcre2-php83-v1"
 
 type Expr struct {
+	// isset_property: Args are a defined bare root variable followed by one or
+	// more literal identifier strings, not ordinary eager property-read nodes.
 	// version_constant retains the exact predefined name in Text, no Args or
 	// Params; its integer value is resolved against Program.PHPVersion.
 	Kind, Text string
