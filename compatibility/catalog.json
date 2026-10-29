@@ -3,6 +3,26 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.array-push",
+      "kind": "builtin",
+      "name": "Bounded array_push on an existing local or direct public property",
+      "implementation": "partial",
+      "contract": "Standalone array_push or its whole RHS assigned to a bare local captures an existing local/direct named property target, snapshots explicit values left-to-right once, then appends to the current actual array and returns its int count. Zero values still checks the array. Existing PHP8.3 next-integer metadata, value copies and object identifiers are retained; a result alias is assigned last.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.array_push","test":"TestDifferential/array_push","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_push.php","assertions":["stdout","exit","zero/multiple counts, string/negative/sparse keys, self/value copies and child identity, known/unknown property targets, RHS replacement/repair, argument order and constructor/method frame pushes"]},
+        {"case_id":"compiler.array_push","test":"TestArrayPushLoweringAndSourceMap","file":"internal/codegen/array_push_test.go","kind":"compiler","assertions":["dedicated address statement, result local, once-only left-to-right snapshots, property owner before values/current array after values, maps and legacy storage routing"]},
+        {"case_id":"negative.array_push.source","test":"TestArrayPushUnsupportedSource","file":"internal/codegen/array_push_test.go","kind":"negative","assertions":["known nonarrays, undefined/reserved/non-address/unsupported targets, embedded expressions, named/unpacked/reference arguments and redeclaration reject"]},
+        {"case_id":"negative.array_push.ir","test":"TestArrayPushMalformedIR","file":"internal/codegen/array_push_test.go","kind":"negative","assertions":["canonical value-only call payload and direct target shape, result/source scope and hidden metadata fail before output; generic value-call bypass rejects"]},
+        {"case_id":"unit.runtime.array_push.local","test":"TestArrayPushLocalValues","file":"runtime/array_push_test.go","kind":"unit","assertions":["existing root mutation, zero/multiple counts, normalized next keys, nested copies, self snapshots and object identifiers"]},
+        {"case_id":"unit.runtime.array_push.property","test":"TestArrayPushPropertyValues","file":"runtime/array_push_test.go","kind":"unit","assertions":["captured owner with current post-argument property, zero-value no publication and per-value append order"]},
+        {"case_id":"negative.runtime.array_push","test":"TestArrayPushRejectsInvalidDomains","file":"runtime/array_push_test.go","kind":"negative","assertions":["undefined/nonarray domains reject, no autovivification, overflow retains only successful prior appends without later publication"]},
+        {"case_id":"compiler.array_push.fixture","test":"TestArrayPushFixture","file":"tests/array_push_runtime_test.go","kind":"compiler","assertions":["committed owned native fixture lowers on each active label without local PHP"]},
+        {"case_id":"compiler.array_push.host","test":"TestArrayPushHostEntry","file":"tests/array_push_runtime_test.go","kind":"compiler","assertions":["generated property address before payload, actual-array guard after payload, count/result-alias/loop mutation, independent caller arrays and explicit host opt-in"]}
+      ],
+      "limitations": ["Statement-only: standalone call or whole RHS assigned to a nonreserved bare local. No echo/return/condition/nested-call/arrow-body or property-result assignment forms", "Target must already exist: bare local or one declared named public property rooted in a defined bare local. No literals, calls, array indices, nested/dynamic properties, autovivification or general PHP by-reference arguments", "Actual arrays only; null/scalar/object/Closure inputs reject. No named/unpacked/reference value arguments, array_pop or general exception/diagnostic equivalence", "Values evaluate completely before mutation; each successful append publishes, with no rollback after a later overflow. Direct full PropertyObject hosts explicitly opt in, not as provenance or authorization", "New IR statement is additive to0.1; no new storage lane, report schema, original-parser adoption, resource/auth route or deployment. Local generation remains WebMCP-excluded"]
+    },
+    {
       "id": "php.syntax.static-declaration-closure",
       "kind": "syntax",
       "name": "Opt-in checked static require_once declaration closure",

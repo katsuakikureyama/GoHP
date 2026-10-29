@@ -69,7 +69,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		if n == "substr" || n == "gettype" {
 			g.fail(f.Line, "reserved function "+n)
 		}
-		if n == "array_key_first" || n == "array_key_last" || n == "array_reverse" || n == "array_merge" || n == "array_slice" {
+		if n == "array_key_first" || n == "array_key_last" || n == "array_reverse" || n == "array_merge" || n == "array_slice" || n == "array_push" {
 			g.fail(f.Line, "reserved function "+n)
 		}
 		if n == "empty" || n == "continue" || n == "break" || n == "while" {
@@ -312,6 +312,8 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			g.emit("// gohp:begin %d\n", s.Line)
 		}
 		switch s.Kind {
+		case "array_push":
+			g.arrayPush(s, scope)
 		case "assign_nested_property", "assign_nested_property_append", "assign_nested_property_concat":
 			g.nestedProperty(s, scope)
 		case "switch":
