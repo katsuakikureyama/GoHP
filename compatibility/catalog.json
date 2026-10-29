@@ -3,6 +3,24 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.empty-string-variable",
+      "kind": "syntax",
+      "name": "empty on defined string/array locals",
+      "implementation": "partial",
+      "contract": "Case-insensitive empty of one defined bare local admits actual byte strings and arrays. Only empty string or exactly string0 is empty; arrays retain outer-count semantics. Known wrong domains reject, unknowns use exact actual-domain guards; no weak conversion or undefined-address suppression. Source empty_value is additive; legacy raw empty_array/ArrayEmpty remain strictarray.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.empty_string_values","test":"TestDifferential/empty_string_values","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/empty_string_values.php","assertions":["stdout","exit","exact zero/empty bytes, whitespace/UTF8/NUL, substr-derived HTML, arrays, typed/unknown/callback calls, nested/lazy bool and caller preservation"]},
+        {"case_id":"compiler.empty_string","test":"TestEmptyStringLowering","file":"internal/codegen/empty_string_test.go","kind":"compiler","assertions":["variable-only empty_value, actual bool boundary, legacy storage and original file/line map"]},
+        {"case_id":"negative.empty_string.ir","test":"TestEmptyStringMalformedIR","file":"internal/codegen/empty_string_test.go","kind":"negative","assertions":["wrong arity, hidden metadata, nonvariable and malformed variable operands reject before output"]},
+        {"case_id":"compiler.empty_string.legacy_ir","test":"TestEmptyStringPreservesLegacyRawArrayIR","file":"internal/codegen/empty_string_test.go","kind":"compiler","assertions":["old raw array-only IR still emits ArrayEmpty and rejects known strings"]},
+        {"case_id":"unit.empty_value.domain","test":"TestEmptyValueStringAndArrayDomain","file":"runtime/empty_value_test.go","kind":"unit","assertions":["only exact empty/string0 are empty, arbitrary bytes have no normalization, array outer-count preserved"]},
+        {"case_id":"negative.empty_value.domain","test":"TestEmptyValueRejectsOtherActualDomains","file":"runtime/empty_value_test.go","kind":"negative","assertions":["null/bool/integer/float/object/callable/foreign Go domains reject explicitly"]},
+        {"case_id":"compiler.empty_string.host","test":"TestEmptyStringHostEntry","file":"tests/empty_string_runtime_test.go","kind":"compiler","assertions":["generated external ABI accepts strings/arrays, rejects unsupported actual types, preserves typed guards/lazy evaluation/input and invalid-byte semantics"]}
+      ],
+      "limitations": ["Not general PHP empty: defined bare variable only; no undefined-variable suppression, literal/expression/index/property operands or other scalar domains", "No scalar conversion, numeric-string normalization, PHP TypeError/warning/exception equivalence or control-flow narrowing", "Raw empty_array and runtime.ArrayEmpty remain strictarray; new scopes keep legacy storage", "Original full parser acceptance requires separate unchanged-closure probe/native evidence; existing local CLI capability WebMCP excluded, no original/pin/auth/deployment change"]
+    },
+    {
       "id": "php.syntax.static-declaration-closure",
       "kind": "syntax",
       "name": "Opt-in checked static require_once declaration closure",
@@ -650,13 +668,13 @@
       "checks": [
         {"case_id":"diff.array_empty","test":"TestDifferential/array_empty","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_empty.php","assertions":["stdout","exit","empty versus nonempty falsy/nested values, typed and dynamic calls, bool result, callbacks, lazy guards and caller preservation"]},
         {"case_id":"compiler.array_empty","test":"TestArrayEmptyLoweringAndSourceMap","file":"internal/codegen/array_empty_test.go","kind":"compiler","assertions":["dedicated variable-only IR, guarded bool return and source map"]},
-        {"case_id":"negative.array_empty.source","test":"TestArrayEmptyUnsupportedSource","file":"internal/codegen/array_empty_test.go","kind":"negative","assertions":["undefined/scalar/expression/index/property operands, wrong arity, redeclaration and bool-as-array rejected before generation"]},
+        {"case_id":"negative.array_empty.source","test":"TestArrayEmptyUnsupportedSource","file":"internal/codegen/array_empty_test.go","kind":"negative","assertions":["undefined/nonstring-scalar/expression/index/property operands, wrong arity, redeclaration and bool-as-array rejected before generation"]},
         {"case_id":"negative.array_empty.ir","test":"TestArrayEmptyMalformedIR","file":"internal/codegen/array_empty_test.go","kind":"negative","assertions":["generic empty calls and noncanonical dedicated IR rejected"]},
         {"case_id":"unit.runtime.array_empty","test":"TestArrayEmptyOuterCountAndPreservation","file":"runtime/array_empty_test.go","kind":"unit","assertions":["only outer count determines result; nested values and index metadata unchanged"]},
         {"case_id":"negative.array_empty.domain","test":"TestArrayEmptyRejectsNonArrays","file":"runtime/array_empty_test.go","kind":"negative","assertions":["runtime rejects nonarrays rather than accepting general PHP empty domain"]},
-        {"case_id":"negative.array_empty.runtime","test":"TestArrayEmptyRuntimeGuards","file":"tests/array_empty_runtime_test.go","kind":"negative","assertions":["compiled unknown null/bool/string/integer values and arrow path cannot bypass array guard"]}
+        {"case_id":"negative.array_empty.runtime","test":"TestArrayEmptyRuntimeGuards","file":"tests/array_empty_runtime_test.go","kind":"negative","assertions":["compiled unknown null/bool/integer values and arrow path cannot bypass source array-or-string guard"]}
       ],
-      "limitations": ["Not general PHP empty: no undefined-variable suppression, scalar/object operands, array-element/property probes or arbitrary expressions", "No named arguments or callable lookup for this language construct", "Runtime rejection is not PHP warning/exception equivalence", "Gossip original-source adoption needs separate pin and evidence; array_key_last has its own bounded contract"]
+      "limitations": ["Array behavior only in this entry; source string admission has its own measured entry; raw empty_array/ArrayEmpty remain strictarray", "Not general PHP empty: no undefined-variable suppression, nonstring scalar/object operands, array-element/property probes or arbitrary expressions", "No named arguments or callable lookup for this language construct", "Runtime rejection is not PHP warning/exception equivalence", "Gossip original-source adoption needs separate pin and evidence; array_key_last has its own bounded contract"]
     },
     {
       "id": "php.builtin.is_null",

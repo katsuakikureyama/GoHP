@@ -71,6 +71,10 @@ and verify hashes before using artifacts. See the [publication contract](docs/in
 
 ## Progress and next milestones
 
+[Bounded `empty`](docs/array-empty-boundary.md) now covers actual strings as well
+as arrays in defined bare locals. Only `''` and `'0'` are empty strings; general
+undefined-address suppression and other scalar domains remain excluded.
+
 [Static declaration closures](docs/static-source-loading.md) now connect checked
 files and once-only edges to file-aware IR, diagnostics and Go generation.
 Explicit manifest/root/entry mode is required; ordinary `-in` retains its subset.

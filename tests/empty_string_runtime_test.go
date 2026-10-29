@@ -30,7 +30,7 @@ function empty_lazy_host($value, bool $skip): bool { return $skip || empty($valu
 		t.Fatal(err)
 	}
 	for _, function := range []string{"empty_host", "empty_typed_host", "empty_lazy_host"} {
-		body := generatedFunctionBody(t, generated, "FContext_"+function)
+		body := generatedFunctionBody(t, generated, "F_"+function)
 		if !strings.Contains(body, "rt.EmptyValue(") {
 			t.Fatalf("%s did not lower through the bounded runtime guard:\n%s", function, body)
 		}

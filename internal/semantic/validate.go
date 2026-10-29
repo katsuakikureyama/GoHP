@@ -957,22 +957,25 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			return valueType{}, unsupported(expr.Line, "boolean cast requires a supported value")
 		}
 		return valueType{kind: boolKind}, nil
-	case "empty_array":
+	case "empty_array", "empty_value":
 		if err := require(1); err != nil {
 			return valueType{}, err
 		}
 		base := expr.Args[0]
 		if expr.Text != "" || base.Kind != "var" {
-			return valueType{}, malformed(expr.Line, "empty requires a single array variable")
+			return valueType{}, malformed(expr.Line, "empty requires a single bare variable")
 		}
 		if _, ok := scope[base.Text]; !ok {
-			return valueType{}, unsupported(expr.Line, "empty requires an existing array variable")
+			return valueType{}, unsupported(expr.Line, "empty requires an existing bare variable")
 		}
 		baseType, err := v.expr(base, scope)
 		if err != nil {
 			return valueType{}, err
 		}
-		if baseType.kind != arrayKind && baseType.kind != unknownKind {
+		if baseType.kind != arrayKind && baseType.kind != unknownKind && !(expr.Kind == "empty_value" && baseType.kind == stringKind) {
+			if expr.Kind == "empty_value" {
+				return valueType{}, unsupported(expr.Line, "empty requires an array or string")
+			}
 			return valueType{}, unsupported(expr.Line, "empty requires an array")
 		}
 		return valueType{kind: boolKind}, nil
@@ -1092,7 +1095,7 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		return valueType{kind: unknownKind}, nil
 	case "call":
 		if strings.EqualFold(expr.Text, "empty") {
-			return valueType{}, malformed(expr.Line, "empty must use the empty_array language construct")
+			return valueType{}, malformed(expr.Line, "empty must use a variable language construct")
 		}
 		if strings.EqualFold(expr.Text, "isset") {
 			return valueType{}, malformed(expr.Line, "isset must use an address language construct")

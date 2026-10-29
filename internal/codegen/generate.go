@@ -606,6 +606,8 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		return "(" + strings.Join(operands, " && ") + ")"
 	case "empty_array":
 		return "rt.ArrayEmpty(" + args(e.Args) + ")"
+	case "empty_value":
+		return "rt.EmptyValue(" + args(e.Args) + ")"
 	case "call":
 		n := name(e.Text)
 		if n == "preg_last_error" {
