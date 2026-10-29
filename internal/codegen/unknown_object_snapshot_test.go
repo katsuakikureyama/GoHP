@@ -36,10 +36,10 @@ $returned = (array)forward($block);
 	}
 	text := string(generated)
 	for fragment, wantLine := range map[string]int{
-		`return rt.ArrayReturn(rt.ObjectToArray(v["value"]))`:                                          3,
-		`v["copy"] = rt.Clone(rt.ObjectToArray((v["top"]).(interface{Get(string) any}).Get("block")))`: 13,
-		`return rt.ObjectToArray(v["value"])`:                                                          14,
-		`v["returned"] = rt.Clone(rt.ObjectToArray(F_forward(v["block"])))`:                            16,
+		`return rt.ArrayReturn(rt.ObjectToArray(v["value"]))`:                                            3,
+		`v["copy"] = rt.Clone(rt.ObjectToArray((v["top"]).(interface{ Get(string) any }).Get("block")))`: 13,
+		`return rt.ObjectToArray(v["value"])`:                                                            14,
+		`v["returned"] = rt.Clone(rt.ObjectToArray(F_forward(v["block"])))`:                              16,
 	} {
 		if strings.Count(text, fragment) != 1 {
 			t.Fatalf("expected one %q:\n%s", fragment, generated)
