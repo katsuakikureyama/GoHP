@@ -69,6 +69,18 @@ Only the corrected old source-negative group, new positive routing test and
 changed catalog need local revalidation; prior PASS/probe are reused. The exact
 correction commit/result and new automatic CI are recorded with PR134.
 
+Clean correction `7581f6e6560d84b1e2d643bf61ac84bf95a579e9`, tree
+`fbf20d4f6f7ab5da2a28f21926b56885fca938e1`, same cached/offline settings:
+
+```sh
+go test -count=1 -run '^(TestParserOutputUnsupportedSource|TestUnknownObjectSnapshotMethodResults)$' ./internal/codegen
+go test -count=1 ./internal/compat
+```
+
+PASS0.236/0.278s once. Old source-negative group and new positive routing group
+are consistent with the extended contract. No production/fixture change,
+successful broader suite or original probe rerun.
+
 ## One unchanged complete-original closure probe
 
 At clean `8cc58c4` with the same cached/offline configuration, use unchanged
