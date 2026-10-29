@@ -22,19 +22,31 @@ This closed extension targets simple data classes such as WordPress's unchanged
   a constructor retain the old zero-argument-only boundary; PHP's more permissive
   ignored-argument behavior is not implemented. Unknown/dynamic classes, named/
   unpacked/reference arguments remain excluded.
-- `(array)` accepts only a statically known generated class expression, including
-  a direct `new`. It evaluates that expression once and snapshots all public
+- `(array)` accepts a statically known generated class expression, including
+  a direct `new`, or an inferred-unknown expression checked by the same runtime
+  public-property-object guard. This includes untyped parameters/returns,
+  mutable property reads and array extraction; it does not infer their classes.
+  It evaluates that expression once and snapshots all public
   properties in declaration order, retaining null. Nested arrays detach through
-  NewArray; object identifiers remain shared. No scalar/array/Closure/unknown
-  operand casts, dynamic properties or private/protected key mangling.
+  NewArray; object identifiers remain shared. Known nonobject operands and
+  undefined reads reject statically; unknown actual null/scalar/array/Closure or
+  invalid object protocols reject at runtime. No general PHP casts, dynamic
+  properties or private/protected key mangling. These domain failures are
+  subset rejection, not PHP warning/exception equivalence.
 
 The frontend normalizes implicit defaults to canonical null, keeps constructor
 arguments on `new`, and emits `object_array_cast` IR. Validation admits the
-declared class/arity and explicit cast shape before generation. Generated New
+declared class/arity and explicit cast shape before generation. Unknown casts
+do not skip ordinary operand validation or create suppressed undefined reads.
+Generated New
 functions call the constructor internally; its statements retain source maps.
 Generated `PHPProperties` returns a fresh ordered runtime.Array via NewArray.
 Runtime ObjectToArray accepts only a valid public-property-object marker and
 calls its snapshot once. Source cannot invoke these Go implementation methods.
+Foreign host code explicitly implementing the complete structural
+PublicPropertyObject protocol opts into the same existing ABI; the marker is
+not an unforgeable generated-class provenance or authorization check. Partial
+protocols, false markers and typed-nil generated objects reject before snapshot.
 
 These boundaries follow the admitted subset of PHP's [constructor contract](https://www.php.net/manual/en/language.oop5.decon.php)
 and [default arguments](https://www.php.net/manual/en/functions.arguments.php#functions.arguments.default),
@@ -48,6 +60,13 @@ effects, implicit null, fresh instances, nested array copies, snapshot keys/
 independence and shared object identifiers. Native evidence compares stdout and
 normal exits with admitted PHP8.3.36, not stderr/exceptions/other side effects.
 Gossip must separately pin and compare original source before claiming adoption.
+
+Owned `unknown_object_array.php` extends observations to inferred-unknown paths,
+including a popped frame's block, without rewriting an original parser.
+Generated host-entry tests check once-only operand/snapshot ordering and prevent
+following statements after invalid actual domains. The complete-original probe
+and native results are recorded in [guarded-cast evidence](evidence/guarded-object-array-2026-10-29.md);
+admitting a cast does not establish complete parser execution or G83-PARSER.
 
 `constructor_null_defaults.php` additionally observes omitted/explicit null/zero,
 all-optional zero arguments, case-insensitive names, argument-before-body order,
