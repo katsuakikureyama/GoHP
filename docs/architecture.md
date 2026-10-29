@@ -47,10 +47,14 @@ coercions. No call-site return-type inference, typed method support or
 path-completeness analysis is implied. Existing IR version `0.1` is retained.
 
 The additive `Function.ParamTypes` is empty for all-untyped parameters; otherwise
-it aligns exactly with `Params` and contains canonical `""`, `"array"`, `"callable"`, `"int"`, `"string"` or `"bool"`.
+it aligns exactly with `Params` and contains canonical `""`, `"array"`, `"callable"`, `"int"`, `"string"`, `"bool"` or `"class:lowername"`.
 [Exact scalar global parameters](scalar-function-parameters.md) use entry guards;
-public constructors separately admit scalar annotations. Ordinary typed methods
-and typed arrows remain excluded.
+public constructors separately admit scalar annotations.
+[Declared class parameters](declared-class-parameters.md) also cover ordinary
+public methods: resolve the complete declared class set, seed entry object facts,
+and assert exact nonnil generated pointers before the body. They preserve object
+identity and use legacy storage; later local reassignment is allowed. Primitive
+ordinary-method annotations and typed arrows remain excluded.
 All signatures are validated before any body/call is checked. Array parameters
 start with array scope type; known non-array direct arguments are rejected and
 unknown arguments use `rt.ArrayParameter` before the function body. The guard

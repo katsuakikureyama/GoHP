@@ -43,7 +43,7 @@ type Stmt struct {
 type Function struct {
 	Name               string
 	Params             []string
-	ParamTypes         []string // Aligned with Params: global array/callable/int/string/bool; constructor int/string/bool; "" untyped.
+	ParamTypes         []string // Aligned: global array/callable/int/string/bool; constructor scalars; class:lowername in any function/method; "" untyped.
 	OptionalNullParams int      // Number of trailing, untyped parameters defaulting to null.
 	Body               []Stmt
 	Line               int
