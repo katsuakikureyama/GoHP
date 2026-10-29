@@ -38,6 +38,7 @@ semantics, not WordPress-specific branches in GoHP.
 | Workstream | Current state | Next observable result / completion criterion |
 |---|---|---|
 | PHP 8.3 Gossip acceptance (first) | Full original parser not translated; selected-method results remain separate | G83-PARSER: all seven original methods plus Block/Frame and loading closure, native/generated behavior at exact pins; then bootstrap/hooks, DB, HTTP and standard user flows |
+| Static source closure (next measured blocker) | PR126 passes property isset384; original require_once403 rejects. [Loading contract](static-source-loading.md) is design only | Checked per-file declaration graph and file-aware provenance, then owned multi-file native comparison, then one unchanged three-file parser probe; no concatenation or general include/autoload claim |
 | Documentation | README and compatibility tables reorganized; historical target claims distinguished | Keep the entry point, implementation limits and evidence links aligned in each affected change |
 | Application inventory | Earlier functions.php lexical/name evidence retained; no semantic coverage percentage | Work from the complete parser's actual calls and state mutations first; inventory bootstrap dependencies when that gate is next |
 | PHP values/references | R1 partial; existing ownership/runtime adapter and exact-scalar-entry scopes retained | Implement only locations, aliasing and mutation contracts needed by the selected application gate; no independent array/untyped-parameter or COW expansion queue |
@@ -54,6 +55,13 @@ accepting unsupported argument types or call forms. Pair each increment with the
 original-source callsite it enables and re-probe the complete unit after the
 affected boundary changes. Do not re-run unchanged successful configurations.
 Expected compiler rejection is a recorded blocker, never application PASS.
+
+The next loading slice is limited to the complete original parser's two static
+`require_once __DIR__ ...` edges and declaration-only dependencies. Its
+[L0–L2 delivery gates](static-source-loading.md#delivery-gates--all-pending)
+separate graph/provenance infrastructure, measured closure behavior and original
+source admission. All remain pending; loading does not complete the parser's
+remaining stack/object/tokenizer/JSON requirements.
 
 ## First application inventory
 

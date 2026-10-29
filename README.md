@@ -71,6 +71,10 @@ and verify hashes before using artifacts. See the [publication contract](docs/in
 
 ## Progress and next milestones
 
+Next is [static source loading](docs/static-source-loading.md) for the original
+parser's two dependency files. This is a design-only plan; `require_once` is
+still unsupported and the complete parser is not yet runnable.
+
 [Property `isset`](docs/property-isset.md) probes named paths without throwing
 on missing/null slots or confusing nonnull falsy values with absence. Ordinary
 property reads remain strict; dynamic/magic property semantics are not implied.
