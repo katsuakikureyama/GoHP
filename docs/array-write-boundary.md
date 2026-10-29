@@ -108,7 +108,8 @@ compatibility. Future nested writes/references require a separate lvalue design.
 Native fixtures use PHP 8.3 >=8.3.36 and compare stdout/normal exits. The
 [PHP array reference](https://www.php.net/manual/en/language.types.array.php)
 describes the broader native behavior; this contract is deliberately narrower.
-No original WordPress helper or Gossip compiler pin is changed or validated.
+No original WordPress helper or Gossip compiler pin is changed; a source-
+admission probe does not certify original native execution or adoption.
 
 This remains the WebMCP-excluded local `gohp.cli.generate` capability: simulated
 PHP value writes introduce no service resource operation, authentication route,
