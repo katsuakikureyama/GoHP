@@ -71,6 +71,10 @@ and verify hashes before using artifacts. See the [publication contract](docs/in
 
 ## Progress and next milestones
 
+[File-aware location infrastructure](docs/file-aware-locations.md) retains
+original source IDs in internal diagnostics and v0.2 statement maps while
+preserving legacy single-file behavior. It is not executable loading support.
+
 Internal [static source graph inspection](docs/static-source-loading.md) now
 records checked files and once-only dependency edges. It does not compile a
 multi-file bundle: `require_once` is still unsupported and the complete parser

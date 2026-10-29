@@ -310,7 +310,8 @@ func (p *parser) function(method bool) ir.Function {
 	return f
 }
 func (p *parser) class() ir.Class {
-	c := ir.Class{Name: p.name("id")}
+	line := p.peek().line
+	c := ir.Class{Name: p.name("id"), Line: line}
 	p.need("{")
 	for !p.accept("}") {
 		p.need("public")

@@ -19,6 +19,7 @@ type Expr struct {
 	Params     []string // Only arrow expressions: fixed, untyped, capture-free parameters.
 }
 type Stmt struct {
+	SourceID string // Optional nested inheritance; required on located top-level statements.
 	// Bare break targets the nearest loop/switch; continue requires a loop.
 	// Both transfers have no payload or explicit level.
 	// while uses Expr (condition) and Body only.
@@ -43,6 +44,7 @@ type Stmt struct {
 	Key, Value string
 }
 type Function struct {
+	SourceID           string // Original source identity; methods may inherit their class identity.
 	Name               string
 	Params             []string
 	ParamTypes         []string // Aligned: global array/callable/int/string/bool; constructor scalars; class:lowername in any function/method; "" untyped.
@@ -56,11 +58,14 @@ type Property struct {
 	Value Expr
 }
 type Class struct {
+	SourceID   string
+	Line       int
 	Name       string
 	Properties []Property
 	Methods    []Function
 }
 type Program struct {
+	Sources             []SourceFile // Empty for legacy line-only IR; metadata is not checked-buffer authority.
 	Version, PHPVersion string
 	// RegexProfile is empty unless the frontend was explicitly asked to admit
 	// the experimental PHP 8.3 local-output preg_match form.

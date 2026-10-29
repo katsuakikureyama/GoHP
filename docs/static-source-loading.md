@@ -2,8 +2,10 @@
 
 Status: **L0-a graph inspection implemented; executable loading is unsupported**.
 The internal inspector parses checked declaration modules and records explicit
-loading edges, but returns no executable IR or generated Go. No new CLI flag,
-single-file grammar or build/source-map schema is added. The tooling catalog
+loading edges, but returns no executable IR or generated Go. The separate
+[L0-b infrastructure](file-aware-locations.md) adds located IR diagnostics and
+optional v0.2 statement maps, not a closure compiler. No new CLI flag,
+single-file load grammar or build-report schema is added. The tooling catalog
 records graph contract checks, not PHP loading compatibility. Gossip's fixed
 PHP 8.3 application remains the first goal, not general include/autoload.
 
@@ -34,10 +36,11 @@ byte-verified but not parsed. A failure returns no partial module or graph.
 The internal `gohp.source-closure/v0.1` report has `graph-checked` status and
 `compatibility: unverified`; its source hashes, edge locations and target/profile
 are not an executable build report or a compatibility verdict. Ordinary
-`ParseWithOptions`, `ir.Program`, source maps and CLI reports are unchanged.
+`ParseWithOptions`, legacy line-only IR/maps and CLI reports retain their behavior.
 
-L0 remains partial: carrying file-aware locations through executable IR,
-semantic diagnostics and generated maps/reports is still pending. There is no
+L0 remains partial: file identities now survive internal parsed IR, semantic/
+codegen diagnostics and generated v0.2 maps, but graph-to-executable lowering
+and bundle reports/publication are still pending. There is no
 bundle compile mode, driver admission, original-closure compiler probe or
 supported PHP `require_once` row. The full parser remains blocked.
 
@@ -174,19 +177,19 @@ execution-owned contract and native measurements.
    extract methods, concatenate PHP strings or run a source preprocessor.
    The dependency graph remains part of provenance even when no runtime load
    instruction is needed. A failed dependency leaves no new output/report.
-4. **File-aware locations and reports.** Current
-   [`ir.Program`](../internal/ir/ir.go) carries no source-file identity;
-   [`SourceMap`](../internal/codegen/sourcemap.go) maps only PHP line numbers,
-   and the CLI report has a single input/hash. A multi-file implementation
-   must first retain file identity on source locations through semantic
-   diagnostics and codegen. Never relabel a dependency's line as the entry's
+4. **File-aware locations and reports.** The additive L0-b
+   [`ir.Program`](../internal/ir/ir.go) source table and scope identities plus
+   [`SourceMap`](../internal/codegen/sourcemap.go) v0.2 retain original file/line
+   metadata internally. Legacy CLI reports still have a single input/hash;
+   graph-to-program lowering and the bundle report remain pending.
+   Never relabel a dependency's line as the entry's
    line or present synthetic concatenation lines as original locations.
-   The proposed bundle report/source map use new versioned schemas (candidate
-   names `gohp.build/v0.2` and `gohp.sourcemap/v0.2`), with source IDs, relative
+   The proposed bundle report uses candidate `gohp.build/v0.2`; implemented
+   located statement maps use `gohp.sourcemap/v0.2`, with source IDs, relative
    paths, exact hashes/sizes, manifest identity, ordered edges and entry ID.
    Define a file-and-line lookup; the existing line-only `PHPLine` helper is
-   not a complete multi-file location API. Preserve legacy single-file v0.1
-   reports and their tests. No schema is changed by this design document.
+   not a complete multi-file location API and refuses v0.2 maps. PHPLocation
+   returns both file and line. Preserve legacy single-file v0.1 reports/tests.
 5. **Publication and capabilities.** A future explicit bundle input mode may
    extend the local `gohp.cli.generate` capability. It must document its exact
    input schema, read scope, validation/prepare and fresh artifact publication
@@ -205,7 +208,7 @@ discovery are outside the initial profile. Reject, do not approximate them.
 
 | Slice | Required observable result | Status |
 |---|---|---|
-| L0: source identity and module graph | Closed per-file parser, verified buffers, deterministic edges/once identity and file-aware diagnostics/report/map; reject unresolved/raw load nodes | **Partial**: L0-a inspection/report implemented; executable file-aware IR/semantic diagnostics/generated maps/reports pending |
+| L0: source identity and module graph | Closed per-file parser, verified buffers, deterministic edges/once identity and file-aware diagnostics/report/map; reject unresolved/raw load nodes | **Partial**: L0-a graph inspection and L0-b located IR/diagnostics/maps implemented; graph-to-program closure, bundle report/publication pending |
 | L1: bounded declaration closure | One owned multi-file fixture compiled and built; behavior independently compared with pinned PHP8.3; duplicate/diamond loads resolve once; all unsupported forms fail closed | Not implemented |
 | L2: original three-file admission | One probe of the unchanged complete parser plus both dependencies through the real loader; retain all hashes and the first real frontend/semantic blocker | Not run |
 | G83-PARSER | All original methods and complete dependencies built/executed with the declared native comparisons and state/error observations | Blocked; loading is only one dependency |
