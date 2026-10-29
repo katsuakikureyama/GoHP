@@ -34,14 +34,20 @@ capture publication. No address/reference IR or storage lane is added; see the
 mismatches before generation. `internal/codegen` performs the remaining
 name/arity/scope checks and lowers IR into direct Go calls, loops and structs.
 `runtime` guards values that remain dynamic and implements supported operations.
+[Located IR](file-aware-locations.md) adds a source table and inherited file
+identities on declaration/body scopes. The optional ParseSource adapter and
+v0.2 statement maps retain original file/line diagnostics without concatenation;
+legacy Parse, v0.1 maps and CLI reports remain unchanged. This infrastructure
+does not connect graph discovery to executable loading or bundle publication.
 The CLI is the initial versioned adapter boundary, not a public Go API promise.
 No WordPress hooks or special compiler behavior exist in the core.
 
 The [static source-loading contract](static-source-loading.md) now has an
 internal checked declaration-graph inspector, with file-aware syntax diagnostics,
 source hashes and explicit once-only edges. It returns metadata only, not an
-executable Program. Multi-file IR/semantic diagnostics/generated maps and loading
-admission remain pending. Single-file parsing/IR/codegen are unchanged;
+executable Program. Located IR/diagnostics/maps exist separately; executable
+closure lowering, bundle reports/publication and loading admission remain pending.
+Legacy single-file parsing/IR/codegen retain their behavior;
 include/require/autoload remain unsupported.
 
 Programs using [strtok](strtok-boundary.md) explicitly thread `rt.Execution`

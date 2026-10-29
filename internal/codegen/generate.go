@@ -13,13 +13,15 @@ import (
 )
 
 type generator struct {
-	p       ir.Program
-	b       strings.Builder
-	funcs   map[string]int
-	minimum map[string]int
-	classes map[string]bool
-	methods map[string]bool
-	serial  int
+	p             ir.Program
+	b             strings.Builder
+	funcs         map[string]int
+	minimum       map[string]int
+	classes       map[string]bool
+	methods       map[string]bool
+	serial        int
+	sourceID      string
+	sourceIndices map[string]int
 	// Dead tails are still traversed for codegen-only validation, not emitted.
 	suppress bool
 	// Emit execution-aware calls only for programs containing stateful builtins.
@@ -56,8 +58,13 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	if err := semantic.Validate(p); err != nil {
 		return nil, SourceMap{}, err
 	}
+	g.sourceIndices = map[string]int{}
+	for i, source := range p.Sources {
+		g.sourceIndices[source.ID] = i + 1
+	}
 	g.execution = usesExecution(p)
 	for _, f := range p.Functions {
+		g.sourceID = f.SourceID
 		n := name(f.Name)
 		if n == "substr" || n == "gettype" {
 			g.fail(f.Line, "reserved function "+n)
@@ -78,9 +85,14 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		g.minimum[n] = len(f.Params) - f.OptionalNullParams
 	}
 	for _, c := range p.Classes {
+		g.sourceID = c.SourceID
 		n := name(c.Name)
 		if g.classes[n] {
-			g.fail(1, "duplicate class "+n)
+			line := 1
+			if c.SourceID != "" {
+				line = c.Line
+			}
+			g.fail(line, "duplicate class "+n)
 		}
 		g.classes[n] = true
 		seen := map[string]bool{}
@@ -100,7 +112,11 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		props := map[string]bool{}
 		for _, v := range c.Properties {
 			if props[v.Name] {
-				g.fail(1, "duplicate property")
+				line := 1
+				if c.SourceID != "" {
+					line = v.Value.Line
+				}
+				g.fail(line, "duplicate property")
 			}
 			props[v.Name] = true
 		}
@@ -111,9 +127,11 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	}
 	g.emit("package main\nimport rt %q\nvar _ = rt.Clone\n", "github.com/katsuakikureyama/GoHP/runtime")
 	for _, f := range p.Functions {
+		g.sourceID = f.SourceID
 		g.function(f, "")
 	}
 	for _, c := range p.Classes {
+		g.sourceID = c.SourceID
 		hasConstructor := false
 		for _, method := range c.Methods {
 			if strings.EqualFold(method.Name, "__construct") {
@@ -171,6 +189,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 			g.function(f, c.Name)
 		}
 	}
+	g.sourceID = ""
 	g.emit("func main(){ v:=map[string]any{}; _=v\n")
 	if g.execution {
 		g.emit("execution := &rt.Execution{}; _=execution\n")
@@ -181,7 +200,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	if err != nil {
 		return nil, SourceMap{}, err
 	}
-	sourceMap, err = mapStatements(out)
+	sourceMap, err = mapStatements(out, p.Sources...)
 	if err != nil {
 		return nil, SourceMap{}, err
 	}
@@ -192,8 +211,15 @@ func (g *generator) emit(s string, a ...any) {
 		fmt.Fprintf(&g.b, s, a...)
 	}
 }
-func (g *generator) fail(line int, msg string) { panic(fmt.Errorf("PHP004 line %d: %s", line, msg)) }
+func (g *generator) fail(line int, msg string) {
+	panic(ir.WithSource(fmt.Errorf("PHP004 line %d: %s", line, msg), g.sourceID))
+}
 func (g *generator) function(f ir.Function, c string) {
+	previousSource := g.sourceID
+	if f.SourceID != "" {
+		g.sourceID = f.SourceID
+	}
+	defer func() { g.sourceID = previousSource }()
 	previousFrame := g.scalarFrame
 	previousOwned := g.ownedValues
 	g.scalarFrame = c == "" && scalarFrameParameters(f) && f.ReturnType != "array" && scalarFrameBody(f.Body)
@@ -274,9 +300,17 @@ func (g *generator) function(f ir.Function, c string) {
 }
 func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, returnType string) {
 	previous := g.suppress
-	defer func() { g.suppress = previous }()
+	previousSource := g.sourceID
+	defer func() { g.suppress = previous; g.sourceID = previousSource }()
 	for _, s := range ss {
-		g.emit("// gohp:begin %d\n", s.Line)
+		if s.SourceID != "" {
+			g.sourceID = s.SourceID
+		}
+		if len(g.p.Sources) != 0 {
+			g.emit("// gohp:begin %d %d\n", s.Line, g.sourceIndices[g.sourceID])
+		} else {
+			g.emit("// gohp:begin %d\n", s.Line)
+		}
 		switch s.Kind {
 		case "assign_nested_property", "assign_nested_property_append", "assign_nested_property_concat":
 			g.nestedProperty(s, scope)

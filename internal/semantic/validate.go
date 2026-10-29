@@ -54,7 +54,12 @@ type validator struct {
 
 // Validate rejects malformed IR and operations that are statically outside the
 // supported PHP subset. Unknown dynamic values remain guarded by the runtime.
-func Validate(p ir.Program) error {
+func Validate(p ir.Program) (err error) {
+	sourceID := ""
+	defer func() { err = ir.WithSource(err, sourceID) }()
+	if err := ir.ValidateSources(p); err != nil {
+		return err
+	}
 	if err := phpversion.ValidateTarget(p.PHPVersion); err != nil {
 		return fmt.Errorf("PHP003: %w", err)
 	}
@@ -71,6 +76,7 @@ func Validate(p ir.Program) error {
 	// Collect before validating bodies so literal callbacks can refer forward
 	// or back to their own declaration without dynamic callable resolution.
 	for _, f := range p.Functions {
+		sourceID = f.SourceID
 		if phpversion.ReservedFunction(p.PHPVersion, f.Name) {
 			return unsupported(f.Line, "function name reserved in PHP "+p.PHPVersion+": "+f.Name)
 		}
@@ -83,11 +89,16 @@ func Validate(p ir.Program) error {
 		v.returns[strings.ToLower(f.Name)] = f.ReturnType
 	}
 	for _, c := range p.Classes {
+		sourceID = c.SourceID
+		classLine := 1
+		if c.SourceID != "" {
+			classLine = c.Line
+		}
 		if phpversion.DeprecatedClassName(p.PHPVersion, c.Name) {
-			return unsupported(1, "deprecated class name outside PHP "+p.PHPVersion+" subset: "+c.Name)
+			return unsupported(classLine, "deprecated class name outside PHP "+p.PHPVersion+" subset: "+c.Name)
 		}
 		if !validName(c.Name) {
-			return malformed(1, "invalid class name")
+			return malformed(classLine, "invalid class name")
 		}
 		info := classInfo{properties: map[string]valueType{}, methods: map[string]int{}, methodMinimum: map[string]int{}, methodParameters: map[string][]string{}, methodNewReturn: map[string]string{}}
 		for _, property := range c.Properties {
@@ -118,11 +129,13 @@ func Validate(p ir.Program) error {
 		v.classes[strings.ToLower(c.Name)] = info
 	}
 	for _, f := range p.Functions {
+		sourceID = f.SourceID
 		if err := v.function(f, ""); err != nil {
 			return err
 		}
 	}
 	for _, c := range p.Classes {
+		sourceID = c.SourceID
 		for _, property := range c.Properties {
 			if property.Value.Kind != "int" && property.Value.Kind != "string" && property.Value.Kind != "bool" && property.Value.Kind != "null" {
 				return unsupported(property.Value.Line, "property defaults must be scalar literals")
@@ -141,6 +154,7 @@ func Validate(p ir.Program) error {
 			}
 		}
 	}
+	sourceID = ""
 	return v.stmts(p.Body, map[string]valueType{}, "", "")
 }
 
@@ -148,32 +162,35 @@ func Validate(p ir.Program) error {
 // in a top-level function/method body, but not in a nested statement body.
 // Scan before ordinary validation so malformed nested raw IR also fails closed.
 func (v validator) preg83Placement(p ir.Program) error {
-	var scan func([]ir.Stmt, bool) error
-	scan = func(stmts []ir.Stmt, nested bool) error {
+	var scan func([]ir.Stmt, bool, string) error
+	scan = func(stmts []ir.Stmt, nested bool, sourceID string) error {
 		for _, stmt := range stmts {
-			if stmt.Kind == "preg_match_local" && nested {
-				return unsupported(stmt.Line, "preg_match local output requires a straight-line scope")
+			if stmt.SourceID != "" {
+				sourceID = stmt.SourceID
 			}
-			if err := scan(stmt.Body, true); err != nil {
+			if stmt.Kind == "preg_match_local" && nested {
+				return ir.WithSource(unsupported(stmt.Line, "preg_match local output requires a straight-line scope"), sourceID)
+			}
+			if err := scan(stmt.Body, true, sourceID); err != nil {
 				return err
 			}
-			if err := scan(stmt.ElseBody, true); err != nil {
+			if err := scan(stmt.ElseBody, true, sourceID); err != nil {
 				return err
 			}
 		}
 		return nil
 	}
-	if err := scan(p.Body, false); err != nil {
+	if err := scan(p.Body, false, ""); err != nil {
 		return err
 	}
 	for _, f := range p.Functions {
-		if err := scan(f.Body, false); err != nil {
+		if err := scan(f.Body, false, f.SourceID); err != nil {
 			return err
 		}
 	}
 	for _, c := range p.Classes {
 		for _, f := range c.Methods {
-			if err := scan(f.Body, false); err != nil {
+			if err := scan(f.Body, false, c.SourceID); err != nil {
 				return err
 			}
 		}
@@ -266,8 +283,13 @@ func (v validator) function(f ir.Function, class string) error {
 
 // control is the nearest breakable construct: empty, loop or switch. PHP's
 // switch-target continue emits a warning, outside the quiet supported lane.
-func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType string, control string) error {
+func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType string, control string) (err error) {
+	sourceID := ""
+	defer func() { err = ir.WithSource(err, sourceID) }()
 	for _, stmt := range stmts {
+		if stmt.SourceID != "" {
+			sourceID = stmt.SourceID
+		}
 		if stmt.Kind != "if" && stmt.ElseBody != nil {
 			return malformed(stmt.Line, "else body requires an if statement")
 		}
