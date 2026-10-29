@@ -34,7 +34,7 @@ go test -count=1 -run '^TestUnknownObjectSnapshotLoweringAndSourceMap$' ./intern
 ```
 
 PASS0.208s; earlier successful ranges reused, not manually rerun.
-Six new catalog checks cover owned native differential comparison, unknown
+The initial six catalog checks cover owned native differential comparison, unknown
 parameter/property/return/arrow lowering with maps, source negatives, strict
 raw IR shape, committed fixture lowering and external generated-entry ABI.
 The host check observes one effectful receiver/getter/snapshot, generated
@@ -49,6 +49,25 @@ array_pop was removed before any test execution; this is an owned isolated
 feature fixture, not a rewrite or substitute of the original parser. General
 exceptions, side effects and stderr equivalence remain unmeasured. Independent
 native PHP8.3/8.4 evidence belongs to the exact candidate CI, not local lowering.
+
+### Initial automatic CI failure and limited correction
+
+Head `4d3514a1bbee137bee5831fee2bda091d7780901`, tree
+`e363f0795ea475f72f23c1ffb87c8c4718dd8482`, push40887469673 and
+PR40887478076 attempt1 failed both targets. Saved push artifacts12902958815
+(8.3)/12904195113(8.4) read once. Each raw go-test stream has only three leaf
+failures, all old `TestParserOutputUnsupportedSource` expectations:
+cast_nonsimple_factory, cast_foreign_receiver and cast_passthrough. Those
+inferred-unknown method results now correctly reach the same snapshot guard.
+The aggregate compatibility run is failed/incomplete, not a success even where
+individual observations passed. No infrastructure rerun or failure relabeling.
+
+Move these three cases to affirmative `TestUnknownObjectSnapshotMethodResults`
+and register a seventh catalog check, leaving all unrelated negatives intact.
+Production/fixture/runtime/CLI settings and original-probe inputs are unchanged.
+Only the corrected old source-negative group, new positive routing test and
+changed catalog need local revalidation; prior PASS/probe are reused. The exact
+correction commit/result and new automatic CI are recorded with PR134.
 
 ## One unchanged complete-original closure probe
 

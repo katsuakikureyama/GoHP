@@ -54,6 +54,27 @@ $returned = (array)forward($block);
 	}
 }
 
+// These previously rejected unknown-return cases now use the same snapshot
+// guard. Accepting them does not infer a factory's result class or trust it.
+func TestUnknownObjectSnapshotMethodResults(t *testing.T) {
+	for name, source := range map[string]string{
+		"conditional_factory":     `class C { public function make($x) { if ($x) { return new C(); } return new C(); } } $c=new C(); $a=(array)$c->make(true);`,
+		"untyped_method_receiver": `class C { public function make() { return new C(); } } function f($o) { return (array)$o->make(); }`,
+		"passthrough":             `class C { public function make($x) { return $x; } } $c=new C(); $a=(array)$c->make(new C());`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			p, err := frontend.Parse("<?php "+source, testTarget(t))
+			if err != nil {
+				t.Fatal(err)
+			}
+			output, err := Generate(p)
+			if err != nil || strings.Count(string(output), "rt.ObjectToArray(") != 1 {
+				t.Fatalf("unknown method result must use one actual-domain guard: %v\n%s", err, output)
+			}
+		})
+	}
+}
+
 func TestUnknownObjectSnapshotBoundaries(t *testing.T) {
 	for name, source := range map[string]string{
 		"null":             "echo (array)null;",
