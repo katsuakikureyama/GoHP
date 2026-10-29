@@ -151,6 +151,11 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 			g.emit("case %q: return rt.Clone(self.P_%s)\n", v.Name, v.Name)
 		}
 		g.emit("}; panic(\"undefined property\") }\n")
+		g.emit("func (self *C_%s) PHPPropertyLookup(k string) (any,bool) { switch k {", name(c.Name))
+		for _, property := range c.Properties {
+			g.emit("case %q: return self.P_%s,true\n", property.Name, property.Name)
+		}
+		g.emit("}; return nil,false }\n")
 		g.emit("func (self *C_%s) Set(k string, value any) { switch k {", name(c.Name))
 		for _, v := range c.Properties {
 			g.emit("case %q: self.P_%s = rt.Clone(value); return\n", v.Name, v.Name)
@@ -558,6 +563,8 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		return "rt.ArrayPathIsset(" + args(e.Args) + ")"
 	case "isset_var":
 		return "rt.IssetValue(" + args(e.Args) + ")"
+	case "isset_property":
+		return "rt.PropertyIsset(" + args(e.Args) + ")"
 	case "isset_multi":
 		var operands []string
 		for _, operand := range e.Args {

@@ -710,7 +710,18 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 					p.fail("isset requires a variable or indexed variable")
 				}
 				address := ir.Expr{Kind: "isset_var", Line: t.line, Args: []ir.Expr{{Kind: "var", Text: base.text, Line: base.line}}}
-				for p.accept("[") {
+				if p.accept("->") {
+					address.Kind = "isset_property"
+					for {
+						property := p.peek()
+						name := p.name("id")
+						address.Args = append(address.Args, ir.Expr{Kind: "string", Text: name, Line: property.line})
+						if !p.accept("->") {
+							break
+						}
+					}
+				}
+				for address.Kind != "isset_property" && p.accept("[") {
 					key := p.pop()
 					keyExpr := ir.Expr{Kind: key.kind, Text: key.text, Line: key.line}
 					if key.kind == "sym" && key.text == "-" {
@@ -722,7 +733,7 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 					address.Kind = "isset_index"
 					address.Args = append(address.Args, keyExpr)
 				}
-				if len(address.Args) > 2 {
+				if address.Kind != "isset_property" && len(address.Args) > 2 {
 					address.Kind = "isset_path"
 				}
 				operands = append(operands, address)

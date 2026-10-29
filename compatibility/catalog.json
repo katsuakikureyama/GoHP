@@ -3,6 +3,24 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.property-isset",
+      "kind": "syntax",
+      "name": "Quiet named-property isset paths",
+      "implementation": "partial",
+      "contract": "isset on a defined bare-local root followed by named properties probes each reached slot once using a nonthrowing generated-property lookup. Missing/null and supported nonobject roots/intermediates are false; nonnull falsy final values are set. Mixed multi-address and logical expressions preserve left-to-right short circuit. Ordinary property Get remains strict; no value copy or mutation is introduced.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.property_isset","test":"TestDifferential/property_isset","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/property_isset.php","assertions":["stdout","exit","declared/missing/null/falsy slots, nonobject roots/intermediates, shared objects, this methods and mixed/logical short circuit"]},
+        {"case_id":"compiler.property_isset","test":"TestPropertyIssetLowering","file":"internal/codegen/property_isset_test.go","kind":"compiler","assertions":["flat validated property address, raw lookup protocol, legacy storage, mixed short circuit and source maps"]},
+        {"case_id":"negative.property_isset.source","test":"TestPropertyIssetUnsupportedSource","file":"internal/codegen/property_isset_test.go","kind":"negative","assertions":["undefined/conditional roots, dynamic/effectful/indexed/mixed paths, callable roots and ordinary missing property reads remain rejected"]},
+        {"case_id":"negative.property_isset.ir","test":"TestPropertyIssetMalformedIR","file":"internal/codegen/property_isset_test.go","kind":"negative","assertions":["arity, root/node kinds, literal identifier names and all hidden metadata validated before output"]},
+        {"case_id":"unit.property_isset.path","test":"TestPropertyIssetQuietPath","file":"runtime/property_isset_test.go","kind":"unit","assertions":["one lookup per reached slot, absent/null/nonobject early stop, nonnull falsy values and typed nil"]},
+        {"case_id":"negative.property_isset.host","test":"TestPropertyIssetRejectsForeignHostValues","file":"runtime/property_isset_test.go","kind":"negative","assertions":["unsupported host values and empty path fail explicitly without trusting ordinary getters"]},
+        {"case_id":"compiler.property_isset.host","test":"TestPropertyIssetHostEntry","file":"tests/property_isset_runtime_test.go","kind":"compiler","assertions":["generated external ABI uses lookup-only protocol, exact reached-slot count, short circuit, quiet supported nonobjects/typed nil and foreign-protocol rejection"]}
+      ],
+      "limitations": ["Defined bare locals and named properties only; no undefined-variable suppression, dynamic names, array/property mixed paths, effectful receivers or property coalescing", "Only public untyped generated-property semantics; no magic/inherited/typed/static property or PHP exception equivalence", "Nil/int64/string/bool/Array nonobjects are quiet false; unsupported host domains require the explicit lookup protocol or reject", "No full original parser execution or consumer repin; existing local developer CLI capability, WebMCP excluded, no route/auth/deployment change"]
+    },
+    {
       "id": "php.syntax.declared-class-parameters",
       "kind": "syntax",
       "name": "Nonnullable declared generated-class parameters",

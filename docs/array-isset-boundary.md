@@ -21,7 +21,7 @@ Boolean use in `if`, `&&`, ternary and function arguments uses existing semantic
 
 In addition, `isset($value)` accepts one already-defined bare variable and
 returns false only for null. `isset($first, $second, ...)` accepts two or more
-defined bare or one-level indexed addresses. The generated `&&` chain preserves
+defined bare, indexed or separately admitted named-property addresses. The generated `&&` chain preserves
 left-to-right short-circuiting, so a later runtime guard is not evaluated when
 an earlier address is null/missing. A bare-variable address is represented as
 `isset_var`; two-or-more addresses are represented as `isset_multi`. This does
@@ -39,9 +39,13 @@ above is unchanged. See the complete [nested probe and coalescing contract](nest
 
 ## Deliberate exclusions
 
+Named-property paths have a separate [property isset contract](property-isset.md),
+including quiet nonobject/missing/null behavior. They do not extend the array
+root/key or mixed array/property address rules described here.
+
 This is not general PHP isset: undefined addresses, nested indexes outside the
-documented `isset_path` form, object
-properties, string offsets, effectful root/key expressions, parenthesized
+documented `isset_path` form, mixed array/property paths, string offsets,
+effectful root/key expressions, parenthesized
 operands/keys, references or bool/null/float key coercions remain excluded.
 Indexed roots still must be actual arrays; bare probes do not make undefined
 variables legal. Direct IR calls named isset and global function redeclarations

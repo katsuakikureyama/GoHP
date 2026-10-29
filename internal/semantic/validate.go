@@ -964,12 +964,37 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			return valueType{}, err
 		}
 		return valueType{kind: boolKind}, nil
+	case "isset_property":
+		if expr.Text != "" || len(expr.Args) < 2 {
+			return valueType{}, malformed(expr.Line, "property isset requires a root and named path")
+		}
+		base := expr.Args[0]
+		if base.Kind != "var" || base.Args != nil || base.Params != nil || !validName(base.Text) {
+			return valueType{}, malformed(expr.Line, "property isset requires a bare local root")
+		}
+		if _, defined := scope[base.Text]; !defined {
+			return valueType{}, unsupported(expr.Line, "property isset requires a defined local root")
+		}
+		if _, err := v.expr(base, scope); err != nil {
+			return valueType{}, err
+		}
+		if scope[base.Text].kind == callableKind {
+			return valueType{}, unsupported(expr.Line, "property isset on callable values unsupported")
+		}
+		for _, property := range expr.Args[1:] {
+			if property.Kind != "string" || !validName(property.Text) || property.Args != nil || property.Params != nil {
+				return valueType{}, malformed(expr.Line, "property isset requires literal identifier names")
+			}
+		}
+		// Do not validate through ordinary property reads: even a known missing
+		// property must yield false without invoking its throwing Get boundary.
+		return valueType{kind: boolKind}, nil
 	case "isset_multi":
 		if expr.Text != "" || len(expr.Args) < 2 {
 			return valueType{}, malformed(expr.Line, "multi isset requires at least two addresses")
 		}
 		for _, operand := range expr.Args {
-			if operand.Kind != "isset_var" && operand.Kind != "isset_index" && operand.Kind != "isset_path" {
+			if operand.Kind != "isset_var" && operand.Kind != "isset_index" && operand.Kind != "isset_path" && operand.Kind != "isset_property" {
 				return valueType{}, malformed(expr.Line, "multi isset requires variable addresses")
 			}
 			if _, err := v.expr(operand, scope); err != nil {
