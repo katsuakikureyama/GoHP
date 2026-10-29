@@ -6,6 +6,11 @@ include/autoload or executable dependency initialization. Gossip's fixed PHP 8.3
 application remains the first goal. Native results for the owned multi-file
 fixture are established separately by each candidate/target CI run.
 
+The [current complete-original probe](evidence/static-declaration-closure-2026-10-29.md)
+passes both original load edges and reaches semantic rejection of an unknown
+object receiver write at209. It produces no parser Go/report and is not
+G83-PARSER acceptance.
+
 ## Compile a checked closure
 
 Use one explicit input mode, never both:
@@ -238,7 +243,7 @@ discovery are outside the initial profile. Reject, do not approximate them.
 |---|---|---|
 | L0: source identity and module graph | Closed per-file parser, verified buffers, deterministic edges/once identity and file-aware diagnostics/report/map; reject unresolved/raw load nodes | Implemented for explicit static-declaration mode, including CLI/v0.2 reports and fresh publication |
 | L1: bounded declaration closure | One owned multi-file fixture compiled and built; behavior independently compared with pinned PHP8.3; duplicate/diamond loads resolve once; all unsupported forms fail closed | Implementation and real-file native fixture registered; exact results belong to each candidate/target CI run |
-| L2: original three-file admission | One probe of the unchanged complete parser plus both dependencies through the real loader; retain all hashes and the first real frontend/semantic blocker | Not run |
+| L2: original three-file admission | One probe of the unchanged complete parser plus both dependencies through the real loader; retain all hashes and the first real frontend/semantic blocker | Recorded: all three parse; semantic PHP004 at entry209, no artifacts; full unit remains blocked |
 | G83-PARSER | All original methods and complete dependencies built/executed with the declared native comparisons and state/error observations | Blocked; loading is only one dependency |
 
 L0 and L1 may ship together when locations and executable evidence are ready;
