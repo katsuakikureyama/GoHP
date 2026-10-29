@@ -86,9 +86,13 @@ $empty_snapshot = (array) return_unknown($empty);
 
 // Each cast owns nested arrays, while child objects retain their identity.
 $first = snapshot_parameter($block);
-$first['payload']['nested'] = ['value' => 'first-mutated'];
+$first_payload = $first['payload'];
+$first_payload['nested'] = ['value' => 'first-mutated'];
+$first['payload'] = $first_payload;
 $second = (array) return_unknown($block);
-$second['payload']['nested'] = ['value' => 'second-mutated'];
+$second_payload = $second['payload'];
+$second_payload['nested'] = ['value' => 'second-mutated'];
+$second['payload'] = $second_payload;
 $third = (array) $stack_top->block;
 $child->name = 'child-mutated';
 $after_child_mutation = (array) $block;

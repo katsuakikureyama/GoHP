@@ -56,7 +56,7 @@ function snapshot($value, Trace $trace) {
 	dir := t.TempDir()
 	files := map[string][]byte{
 		"main.go": generated,
-		"go.mod":  []byte(fmt.Sprintf("module example.invalid/object-array-consumer\n\ngo 1.23\n\nrequire github.com/katsuakikureyama/GoHP v0.0.0\nreplace github.com/katsuakikureyama/GoHP => %q\n", root)),
+		"go.mod":  []byte(fmt.Sprintf("module example.invalid/object-array-consumer\n\ngo 1.23.0\n\nrequire github.com/katsuakikureyama/GoHP v0.0.0\nreplace github.com/katsuakikureyama/GoHP => %q\n", root)),
 		"consumer_test.go": []byte(`package main
 
 import (
@@ -131,6 +131,7 @@ func TestConsumer(t *testing.T) {
 	}
 	cmd := exec.Command("go", "test", "-count=1", "./...")
 	cmd.Dir = dir
+	cmd.Env = append(os.Environ(), "GOWORK=off", "GOPROXY=off", "GOSUMDB=off", "GOFLAGS=-mod=mod")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("generated consumer: %v\n%s", err, output)
 	}
