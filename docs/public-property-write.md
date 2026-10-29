@@ -2,7 +2,7 @@
 
 The closed source form `$holder->property = $value;` is now a statement. Its
 receiver must be a defined bare variable statically known to hold a declared
-generated class, including a known alias or `$this` in a method. The property
+generated class, including a known alias, a named-class parameter or `$this` in a method. The property
 name is a literal, case-sensitive, declared public untyped property. Unknown
 function-parameter receivers, scalars, arrays and generated arrows are rejected
 before output; an `is_object` guard does not add type narrowing.

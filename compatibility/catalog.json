@@ -3,6 +3,23 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.named-class-parameters",
+      "kind": "syntax",
+      "name": "Nonnull named generated-class parameters",
+      "implementation": "partial",
+      "contract": "Bare named class parameters on global functions/public methods/constructors resolve against declared generated classes, retain case-insensitive class identity and are guarded by exact nonnil concrete pointers before body entry. Object identity is preserved; known invalid call arguments reject statically and unknown arguments remain guarded.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.named_class_parameter","test":"TestDifferential/named_class_parameter","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/named_class_parameter.php","assertions":["stdout","exit","global/method/constructor identity, mutation, forward/case-insensitive annotation, local rebinding, array copies and Execution sharing"]},
+        {"case_id":"compiler.named_class_parameter","test":"TestNamedClassParameterLowering","file":"internal/codegen/class_parameter_test.go","kind":"compiler","assertions":["canonical class-tagged IR, exact nonnil concrete entry guard before body, known-class scope, source maps and legacy storage"]},
+        {"case_id":"negative.named_class_parameter.source","test":"TestNamedClassParameterUnsupportedSource","file":"internal/codegen/class_parameter_test.go","kind":"negative","assertions":["unknown classes, wrong known argument classes/domains, stale class facts, nullable/default/union/reference/method primitive expansion reject before output"]},
+        {"case_id":"negative.named_class_parameter.ir","test":"TestNamedClassParameterMalformedIR","file":"internal/codegen/class_parameter_test.go","kind":"negative","assertions":["noncanonical tags/names, relative/builtin types and typed-null defaults reject"]},
+        {"case_id":"negative.named_class_parameter.generated","test":"TestNamedClassParameterRuntimeGuards","file":"tests/named_class_parameter_runtime_test.go","kind":"negative","assertions":["unknown actual class/null/scalar/array arguments reject before unused or overwritten parameter bodies"]},
+        {"case_id":"compiler.named_class_parameter.external","test":"TestNamedClassParameterExternalABI","file":"tests/named_class_parameter_external_test.go","kind":"compiler","assertions":["typed nil and structural host lookalikes reject; later invalid parameter precedes body; caller pointer/slice identity, method/constructor and Execution entries retained"]}
+      ],
+      "limitations": ["Declared generated bare class names only; no autoload, namespace, inheritance/interface, self/parent/static, nullable/union/intersection or typed defaults", "No typed returns/properties/arrows or ordinary scalar/array/callable method expansion", "Entry annotation does not freeze later local bindings; no general references or COW/storage migration", "Explicit Go guard failures are not PHP TypeError/diagnostic equivalence; local developer CLI WebMCP excluded, no route/auth/deployment change"]
+    },
+    {
       "id": "php.syntax.nested-property-update",
       "kind": "syntax",
       "name": "Guarded named nested-property updates",

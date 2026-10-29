@@ -264,6 +264,7 @@ func (p *parser) function(method bool) ir.Function {
 			paramType := ""
 			if p.peek().kind == "id" {
 				annotation := p.pop()
+				paramType = strings.ToLower(annotation.text)
 				switch strings.ToLower(annotation.text) {
 				case "array", "callable":
 				case "int", "string", "bool":
@@ -271,9 +272,12 @@ func (p *parser) function(method bool) ir.Function {
 						p.fail("scalar parameter declarations require a global function or public constructor")
 					}
 				default:
-					p.fail("unsupported parameter declaration")
+					paramType = ir.ClassParameterPrefix + paramType
+					if _, ok := ir.ClassParameterName(paramType); !ok {
+						p.fail("unsupported parameter declaration")
+					}
 				}
-				paramType, typed = strings.ToLower(annotation.text), true
+				typed = true
 			}
 			f.Params = append(f.Params, p.name("var"))
 			paramTypes = append(paramTypes, paramType)

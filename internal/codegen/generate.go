@@ -243,6 +243,11 @@ func (g *generator) function(f ir.Function, c string) {
 			g.emit("v[%q]=rt.ArrayParameter(args[%d])\n", n, i)
 		} else if len(f.ParamTypes) != 0 && f.ParamTypes[i] == "callable" {
 			g.emit("v[%q]=rt.CallableParameter(args[%d])\n", n, i)
+		} else if len(f.ParamTypes) != 0 && strings.HasPrefix(f.ParamTypes[i], ir.ClassParameterPrefix) {
+			class, _ := ir.ClassParameterName(f.ParamTypes[i]) // Already validated and declared.
+			// Concrete generated pointers preserve PHP object identity. Neither
+			// a structural host lookalike nor a typed nil may enter the body.
+			g.emit("{ object, ok := args[%d].(*C_%s); if !ok || object == nil { panic(%q) }; v[%q]=object }\n", i, class, "class parameter requires "+class, n)
 		} else if len(f.ParamTypes) != 0 && f.ParamTypes[i] != "" {
 			g.emit("v[%q]=rt.ScalarParameter(args[%d],%q)\n", n, i, f.ParamTypes[i])
 		} else {

@@ -50,7 +50,7 @@ not arbitrary diagnostic equality or reference/destructor behavior.
 [PHP type declarations](https://www.php.net/manual/en/language.types.declarations.php)
 permit scalar coercion by default. This deliberately narrower exact-value subset
 does **not** implement that coercion or `strict_types` syntax. Typed defaults,
-nullable/union/intersection/float/class types, typed ordinary methods/arrows,
+nullable/union/intersection/float types, primitive typed ordinary methods/arrows,
 references, variadics and named arguments remain excluded. Runtime failure is
 not PHP TypeError text, catchability or invalid-call side-effect equivalence.
 Existing array/bool return declarations and the separate

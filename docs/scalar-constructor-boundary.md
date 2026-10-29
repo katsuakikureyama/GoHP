@@ -3,7 +3,7 @@
 Public `__construct` may use `int`, `string` and `bool` parameter annotations,
 case-insensitively, mixed with untyped parameters. An optional trailing suffix
 of **untyped** `= null` parameters retains the existing min/max arity contract.
-Typed defaults (including implicit-null forms), nullable/union/class/float types,
+Typed defaults (including implicit-null forms), nullable/union/float types,
 array/callable constructor annotations, nonpublic constructors, return annotations,
 direct constructor re-entry and other magic methods remain excluded.
 

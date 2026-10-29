@@ -35,6 +35,7 @@ type classInfo struct {
 	properties       map[string]valueType
 	methods          map[string]int
 	methodMinimum    map[string]int
+	methodParameters map[string][]string
 	methodNewReturn  map[string]string // Only a sole "return new DeclaredClass(...)" body.
 	constructorArity int               // Zero also describes a class without a constructor.
 	constructorMin   int
@@ -88,7 +89,7 @@ func Validate(p ir.Program) error {
 		if !validName(c.Name) {
 			return malformed(1, "invalid class name")
 		}
-		info := classInfo{properties: map[string]valueType{}, methods: map[string]int{}, methodMinimum: map[string]int{}, methodNewReturn: map[string]string{}}
+		info := classInfo{properties: map[string]valueType{}, methods: map[string]int{}, methodMinimum: map[string]int{}, methodParameters: map[string][]string{}, methodNewReturn: map[string]string{}}
 		for _, property := range c.Properties {
 			if !validName(property.Name) {
 				return malformed(property.Value.Line, "invalid property name")
@@ -104,6 +105,7 @@ func Validate(p ir.Program) error {
 			}
 			info.methods[strings.ToLower(method.Name)] = len(method.Params)
 			info.methodMinimum[strings.ToLower(method.Name)] = len(method.Params) - method.OptionalNullParams
+			info.methodParameters[strings.ToLower(method.Name)] = method.ParamTypes
 			if len(method.Body) == 1 && method.Body[0].Kind == "return" && method.Body[0].Expr.Kind == "new" {
 				info.methodNewReturn[strings.ToLower(method.Name)] = strings.ToLower(method.Body[0].Expr.Text)
 			}
@@ -189,10 +191,11 @@ func validateParameterTypes(f ir.Function, method bool) error {
 	constructor := method && strings.EqualFold(f.Name, "__construct")
 	for _, annotation := range f.ParamTypes {
 		scalar := annotation == "int" || annotation == "string" || annotation == "bool"
-		if annotation != "" && annotation != "array" && annotation != "callable" && !scalar {
+		_, namedClass := ir.ClassParameterName(annotation)
+		if annotation != "" && annotation != "array" && annotation != "callable" && !scalar && !namedClass {
 			return malformed(f.Line, "unsupported IR parameter type")
 		}
-		if annotation != "" && method && !(constructor && scalar) {
+		if annotation != "" && method && !namedClass && !(constructor && scalar) {
 			return unsupported(f.Line, "scalar parameter types require a public constructor; other typed methods are unsupported")
 		}
 	}
@@ -242,6 +245,12 @@ func (v validator) function(f ir.Function, class string) error {
 			scope[param] = valueType{kind: callableKind}
 		}
 		if len(f.ParamTypes) != 0 {
+			if name, namedClass := ir.ClassParameterName(f.ParamTypes[i]); namedClass {
+				if _, declared := v.classes[name]; !declared {
+					return unsupported(f.Line, "class parameter requires a declared generated class: "+name)
+				}
+				scope[param] = valueType{kind: objectKind, class: name}
+			}
 			switch f.ParamTypes[i] {
 			case "int":
 				scope[param] = valueType{kind: intKind}
@@ -1370,6 +1379,9 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 				if i >= len(args) {
 					break
 				}
+				if err := classParameterArgument(annotation, args[i], expr.Line); err != nil {
+					return valueType{}, err
+				}
 				if annotation == "array" && args[i].kind != arrayKind && args[i].kind != unknownKind {
 					return valueType{}, unsupported(expr.Line, "array parameter requires an array argument")
 				}
@@ -1400,6 +1412,12 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		for i, annotation := range info.constructorTypes {
 			if i >= len(args) {
 				break
+			}
+			if _, namedClass := ir.ClassParameterName(annotation); namedClass {
+				if err := classParameterArgument(annotation, args[i], expr.Line); err != nil {
+					return valueType{}, err
+				}
+				continue
 			}
 			want := map[string]kind{"int": intKind, "string": stringKind, "bool": boolKind}[annotation]
 			if annotation != "" && args[i].kind != unknownKind && args[i].kind != want {
@@ -1462,7 +1480,8 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		if err != nil {
 			return valueType{}, err
 		}
-		if _, err := v.exprs(expr.Args[1:], scope); err != nil {
+		args, err := v.exprs(expr.Args[1:], scope)
+		if err != nil {
 			return valueType{}, err
 		}
 		if receiver.kind != objectKind && receiver.kind != unknownKind {
@@ -1476,6 +1495,14 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 				}
 				if len(expr.Args)-1 > arity || len(expr.Args)-1 < info.methodMinimum[strings.ToLower(expr.Text)] {
 					return valueType{}, unsupported(expr.Line, "unsupported argument count for "+receiver.class+"::"+expr.Text)
+				}
+				for i, annotation := range info.methodParameters[strings.ToLower(expr.Text)] {
+					if i >= len(args) {
+						break
+					}
+					if err := classParameterArgument(annotation, args[i], expr.Line); err != nil {
+						return valueType{}, err
+					}
 				}
 				if class, ok := info.methodNewReturn[strings.ToLower(expr.Text)]; ok {
 					if _, declared := v.classes[class]; declared {

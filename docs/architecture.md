@@ -43,14 +43,17 @@ The optional `Function.ReturnType` admits canonical empty/untyped, `array` or
 `bool` on named global functions. Validation propagates that context through
 all conditional and foreach bodies; code generation guards explicit returns
 and fallthrough. The bool boundary admits actual bool only, not weak scalar
-coercions. No call-site return-type inference, typed method support or
+coercions. No call-site return-type inference, typed method return support or
 path-completeness analysis is implied. Existing IR version `0.1` is retained.
 
 The additive `Function.ParamTypes` is empty for all-untyped parameters; otherwise
-it aligns exactly with `Params` and contains canonical `""`, `"array"`, `"callable"`, `"int"`, `"string"` or `"bool"`.
+it aligns exactly with `Params` and contains canonical `""`, `"array"`, `"callable"`, `"int"`, `"string"`, `"bool"` or `"class:<lowercase-name>"`.
 [Exact scalar global parameters](scalar-function-parameters.md) use entry guards;
-public constructors separately admit scalar annotations. Ordinary typed methods
-and typed arrows remain excluded.
+public constructors separately admit scalar annotations. [Named generated-class
+parameters](block-data-constructor.md#named-class-parameters) also apply to public
+methods/constructors: declared-class scope facts and exact nonnil pointer entry
+guards preserve object identity. Ordinary primitive typed methods and typed
+arrows remain excluded. Class-parameter scopes retain legacy storage.
 All signatures are validated before any body/call is checked. Array parameters
 start with array scope type; known non-array direct arguments are rejected and
 unknown arguments use `rt.ArrayParameter` before the function body. The guard
