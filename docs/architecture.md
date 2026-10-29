@@ -37,10 +37,12 @@ name/arity/scope checks and lowers IR into direct Go calls, loops and structs.
 The CLI is the initial versioned adapter boundary, not a public Go API promise.
 No WordPress hooks or special compiler behavior exist in the core.
 
-The next [static source-loading contract](static-source-loading.md) is design
-only: checked declaration modules and explicit loading edges, with file-aware
-diagnostics/provenance before any multi-file admission. Single-file parsing and
-IR/codegen remain unchanged; include/require/autoload are still unsupported.
+The [static source-loading contract](static-source-loading.md) now has an
+internal checked declaration-graph inspector, with file-aware syntax diagnostics,
+source hashes and explicit once-only edges. It returns metadata only, not an
+executable Program. Multi-file IR/semantic diagnostics/generated maps and loading
+admission remain pending. Single-file parsing/IR/codegen are unchanged;
+include/require/autoload remain unsupported.
 
 Programs using [strtok](strtok-boundary.md) explicitly thread `rt.Execution`
 through generated functions, constructors, methods and callback calls. Existing

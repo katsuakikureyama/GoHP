@@ -2514,6 +2514,26 @@
       "limitations": ["No upstream authenticity, license decision or dependency closure", "No PHP parsing, callsite/function inventory, compiler or application execution; no compatibility percentage", "Requires private non-concurrently-mutated source root; not a filesystem sandbox"]
     },
     {
+      "id": "gohp.tooling.static-source-graph",
+      "kind": "tooling",
+      "name": "Checked declaration-only static source graph inspection",
+      "implementation": "partial",
+      "contract": "Inspects complete declaration module syntax and explicit trailing require_once edges over verified source buffers. Retains original file/line identities, hashes, target/profile, deterministic DFS and reused edges; returns no executable IR. Graph-checked is not generated or PHP-compatible loading.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"unit.static_module.syntax","test":"TestInspectModule","file":"internal/frontend/module_test.go","kind":"unit","assertions":["complete declaration bodies and trailing directives parsed with original file/line/order and target/profile metadata"]},
+        {"case_id":"unit.static_module.exclusions","test":"TestInspectModuleRejectsUnsupported","file":"internal/frontend/module_test.go","kind":"unit","assertions":["effects, hidden local loading, dynamic/conditional forms, token spoofing and alias/traversal suffixes reject without partial module"]},
+        {"case_id":"unit.static_module.isolation","test":"TestInspectModuleLocationsAndIsolation","file":"internal/frontend/module_test.go","kind":"unit","assertions":["distinct source IDs retained at identical line numbers; single-file Parse still rejects loads; unsupported target/profile/identity fails"]},
+        {"case_id":"unit.static_module.aliases","test":"TestLoadSourcesNoAliases","file":"internal/corpus/source_alias_test.go","kind":"unit","assertions":["strict module selection rejects file/directory symlinks and selected hardlink aliases without changing legacy source verification"]},
+        {"case_id":"unit.source_graph.discovery","test":"TestInspectGraph","file":"internal/sourceclosure/closure_test.go","kind":"unit","assertions":["nested containing-directory resolution, repeated/diamond DFS edges, original locations/hashes, manifest identity and unreached sources stay explicit"]},
+        {"case_id":"unit.source_graph.exclusions","test":"TestInspectGraphRejectsEdges","file":"internal/sourceclosure/closure_test.go","kind":"unit","assertions":["unlisted/cyclic/dynamic/conditional/local/effectful/nonterminal loads reject with source identity and no partial graph"]},
+        {"case_id":"unit.source_graph.collisions","test":"TestInspectGraphRejectsCollisions","file":"internal/sourceclosure/closure_test.go","kind":"unit","assertions":["same-kind case-insensitive declarations collide; equal bytes at distinct paths are not deduplicated; class/function names remain separate"]},
+        {"case_id":"unit.source_graph.byte_binding","test":"TestInspectGraphRejectsManifestDrift","file":"internal/sourceclosure/closure_test.go","kind":"unit","assertions":["all source/notice/provenance bytes verify before discovery; failures return zero report"]},
+        {"case_id":"unit.source_graph.policy","test":"TestInspectGraphTargetProfile","file":"internal/sourceclosure/closure_test.go","kind":"unit","assertions":["enabled/selected target and PHP83-only regex profile enforced, without native compatibility inference"]}
+      ],
+      "limitations": ["L0-a internal inspection only: no bundle CLI, executable IR, semantic admission, generated source map/build report or native comparison", "Not PHP require_once/include/autoload support or original-parser acceptance; no runtime initialization or cycles", "Unreached sources remain byte-verified but unparsed; compatibility unverified and no support percentage", "Private immutable source root required; selected alias rejection is not a hostile-filesystem sandbox"]
+    },
+    {
       "id": "gohp.tooling.corpus-lexical-inventory",
       "kind": "tooling",
       "name": "Native-token whole-source lexical inventory",
