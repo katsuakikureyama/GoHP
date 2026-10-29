@@ -294,6 +294,10 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 			return malformed(stmt.Line, "else body requires an if statement")
 		}
 		switch stmt.Kind {
+		case "array_push":
+			if err := v.arrayPush(stmt, scope); err != nil {
+				return err
+			}
 		case "assign_nested_property", "assign_nested_property_append", "assign_nested_property_concat":
 			if err := v.nestedProperty(stmt, scope); err != nil {
 				return err
@@ -608,6 +612,11 @@ func widenWhileWrites(stmts []ir.Stmt, scope map[string]valueType) {
 		case "assign":
 			mark(stmt.Name)
 		case "preg_match_local":
+			mark(stmt.Name)
+			if stmt.Target.Kind == "var" {
+				mark(stmt.Target.Text)
+			}
+		case "array_push":
 			mark(stmt.Name)
 			if stmt.Target.Kind == "var" {
 				mark(stmt.Target.Text)
@@ -1094,6 +1103,9 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		}
 		return valueType{kind: unknownKind}, nil
 	case "call":
+		if strings.EqualFold(expr.Text, "array_push") {
+			return valueType{}, unsupported(expr.Line, "array_push requires a standalone call or bare result assignment")
+		}
 		if strings.EqualFold(expr.Text, "empty") {
 			return valueType{}, malformed(expr.Line, "empty must use a dedicated variable language construct")
 		}

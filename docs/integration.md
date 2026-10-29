@@ -188,6 +188,13 @@ developer-only source translation, with no browser/server operation or auth rout
 Capability/WebMCP scope: `gohp.cli.generate` is explicitly **excluded** from browser
 WebMCP exposure because it is a local compiler writing caller-owned build files.
 
+Bounded [array_push](array-write-boundary.md#bounded-array_push-calls) adds only
+simulated PHP local/direct-property mutation and a count-result local inside
+that same excluded generation capability. No service resource, CLI input schema,
+auth route, browser operation or auto-submit is added. The result remains
+generated/unverified with fresh/report-last artifact publication; no original
+parser adoption, external send or deployment is implied by an admitted push.
+
 The same local capability now has two exclusive input schemas: legacy
 `{in, php_version, experimental_pcre2?}` or bundle
 `{manifest, source_root, entry, php_version, experimental_pcre2?}`. Bundle paths

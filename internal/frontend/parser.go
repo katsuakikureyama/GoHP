@@ -500,6 +500,16 @@ func (p *parser) stmt() ir.Stmt {
 		}
 		p.need(";")
 	}
+	// Keep the writable first argument out of the ordinary value-call path.
+	// Only standalone calls and a whole RHS assigned to a bare local enter
+	// this bounded form; embedded calls remain fail-closed in semantic checks.
+	if (s.Kind == "assign" || s.Kind == "call_stmt") && s.Expr.Kind == "call" &&
+		strings.EqualFold(s.Expr.Text, "array_push") && len(s.Expr.Args) != 0 {
+		s.Kind = "array_push"
+		s.Target = s.Expr.Args[0]
+		s.Expr.Text = "array_push"
+		s.Expr.Args = s.Expr.Args[1:]
+	}
 	return s
 }
 

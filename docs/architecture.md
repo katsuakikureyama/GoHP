@@ -141,6 +141,13 @@ actual PublicPropertyObject guard. No general scalar/array/null casts or new
 class inference is implied. It does not include inheritance or dynamic properties; see the
 [class inventory](compatibility.md#objects-and-callables).
 
+Bounded [array_push statements](array-write-boundary.md#bounded-array_push-calls)
+carry a local/direct-property address separately from value arguments. The
+property owner is captured before ordered value snapshots; actual array access
+and mutation occur afterward, followed by the optional count result binding.
+This is not a generic mutating expression, PHP reference cell or new storage
+lane. Original stack/parser execution still needs independent full-unit proof.
+
 The canonical internal Slot/cell engine now owns scalar values and bounded
 scalar-element array handles, with explicit copy/read/release, synchronous
 Slot-rooted mutations and internal value snapshots with single consumption/release.
