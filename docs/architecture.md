@@ -148,6 +148,14 @@ and mutation occur afterward, followed by the optional count result binding.
 This is not a generic mutating expression, PHP reference cell or new storage
 lane. Original stack/parser execution still needs independent full-unit proof.
 
+Bounded [array_pop statements](array-write-boundary.md#bounded-array_pop-calls)
+use the same restricted local/direct-property address domain without payload
+arguments. They publish a detached array minus its last insertion entry, then
+bind a mixed element/null result. Copies retain PHP8.3 predecessor-only next-key
+rewind and saturated maximum-key occupancy. Empty arrays return null without
+publication. This is not a general delete, embedded mutation or reference model;
+the existing scalar/owned proofs continue to exclude the new statement.
+
 The canonical internal Slot/cell engine now owns scalar values and bounded
 scalar-element array handles, with explicit copy/read/release, synchronous
 Slot-rooted mutations and internal value snapshots with single consumption/release.

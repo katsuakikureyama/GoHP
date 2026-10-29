@@ -195,6 +195,13 @@ auth route, browser operation or auto-submit is added. The result remains
 generated/unverified with fresh/report-last artifact publication; no original
 parser adoption, external send or deployment is implied by an admitted push.
 
+Bounded [array_pop](array-write-boundary.md#bounded-array_pop-calls) likewise
+changes only simulated local/direct-property array state and a mixed result
+inside `gohp.cli.generate`. WebMCP remains explicitly excluded: no new browser/
+server operation, input schema, resource permission, auth route, auto-submit or
+deployment. Generation is not original-parser compatibility or application
+acceptance; the existing fresh/report-last publication contract is unchanged.
+
 The same local capability now has two exclusive input schemas: legacy
 `{in, php_version, experimental_pcre2?}` or bundle
 `{manifest, source_root, entry, php_version, experimental_pcre2?}`. Bundle paths

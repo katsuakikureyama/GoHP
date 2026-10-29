@@ -510,6 +510,13 @@ func (p *parser) stmt() ir.Stmt {
 		s.Expr.Text = "array_push"
 		s.Expr.Args = s.Expr.Args[1:]
 	}
+	if (s.Kind == "assign" || s.Kind == "call_stmt") && s.Expr.Kind == "call" &&
+		strings.EqualFold(s.Expr.Text, "array_pop") && len(s.Expr.Args) == 1 {
+		s.Kind = "array_pop"
+		s.Target = s.Expr.Args[0]
+		s.Expr.Text = "array_pop"
+		s.Expr.Args = nil
+	}
 	return s
 }
 

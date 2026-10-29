@@ -294,6 +294,10 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 			return malformed(stmt.Line, "else body requires an if statement")
 		}
 		switch stmt.Kind {
+		case "array_pop":
+			if err := v.arrayPop(stmt, scope); err != nil {
+				return err
+			}
 		case "array_push":
 			if err := v.arrayPush(stmt, scope); err != nil {
 				return err
@@ -616,7 +620,7 @@ func widenWhileWrites(stmts []ir.Stmt, scope map[string]valueType) {
 			if stmt.Target.Kind == "var" {
 				mark(stmt.Target.Text)
 			}
-		case "array_push":
+		case "array_push", "array_pop":
 			mark(stmt.Name)
 			if stmt.Target.Kind == "var" {
 				mark(stmt.Target.Text)
@@ -1103,6 +1107,9 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		}
 		return valueType{kind: unknownKind}, nil
 	case "call":
+		if strings.EqualFold(expr.Text, "array_pop") {
+			return valueType{}, unsupported(expr.Line, "array_pop requires a standalone call or bare result assignment with one target")
+		}
 		if strings.EqualFold(expr.Text, "array_push") {
 			return valueType{}, unsupported(expr.Line, "array_push requires a standalone call or bare result assignment")
 		}

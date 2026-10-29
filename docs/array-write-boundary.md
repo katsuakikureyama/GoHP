@@ -1,4 +1,4 @@
-# Bounded array writes and array_push
+# Bounded array writes, array_push and array_pop
 
 ## Lvalue design
 
@@ -95,6 +95,49 @@ implementation. Exact commands, candidate-specific native fixtures and the
 unchanged original-source probe belong in the
 [array-push evidence](evidence/array-push-2026-10-29.md).
 These observations do not certify complete original stack/parser execution.
+
+## Bounded array_pop calls
+
+`array_pop($target);` or `$value = array_pop($target);` takes exactly one
+existing bare local or direct declared named property of a defined bare local.
+The frontend emits an additive IR0.1 `array_pop` statement: Target carries that
+address, Name is an optional bare result local, and Expr is canonical
+call/array_pop with nil Args/Params. No writable argument enters the generic
+value-call path. Hidden metadata, generic calls, bad arity, undefined/known
+non-array roots and unsupported targets reject before output.
+
+Generated code captures a declared property owner/name once and synchronously
+reads the current array. `ArrayPopLocal` or `NestedProperty.Pop` removes the
+last **insertion** entry, not the highest numeric key, and returns its value.
+Empty arrays return null without publishing a replacement. Nonempty results
+clone remaining/returned nested arrays and publish the shorter array before
+binding the mixed result; child object identifiers are preserved. A result
+alias such as `$items = array_pop($items);` replaces that binding last.
+Function-local arrays remain copies while shared property-owning objects mutate.
+
+Numeric keys are never renumbered. The shared index policy rewinds only when
+the removed numeric key immediately precedes the current next key; string
+tails do not rewind it, and emptying an array does not reconstruct it from
+remaining entries. Negative keys retain PHP8.3 behavior. Rewinding to the
+minimum-int sentinel resumes automatic insertion at0. The maximum index is
+saturated: popping MAX frees MAX itself, while popping MAX-1 after MAX leaves
+MAX occupied; an intervening append at MAX-1 must not overwrite MAX on the next
+append. Occupancy and next-key state travel with array copies.
+
+This statement uses only the guarded legacy map lane. Loop/switch widening
+tracks both the local target and optional result. Embedded echo/return/condition/
+argument/arrow calls, non-bare result destinations, indexed/nested/dynamic/
+effectful targets, references, named/unpacked arguments, autovivification and
+builtin redeclaration remain rejected. PHP's internal array-pointer API,
+general unset/delete and exception/diagnostic equivalence are not modeled.
+
+The [PHP array_pop manual](https://www.php.net/manual/en/function.array-pop.php)
+and fixed [PHP8.3.36 implementation](https://github.com/php/php-src/blob/php-8.3.36/ext/standard/array.c)
+define the successful contract. A single network-disabled fixed-image
+diagnostic established sparse/negative/minimum/maximum/out-of-order/string-tail
+next-key observations. No PHP implementation code is copied. Owned-fixture
+comparisons and unchanged-original admission remain separate evidence, not
+full stack/parser or application acceptance.
 
 ## Other excluded forms
 
