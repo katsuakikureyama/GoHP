@@ -78,7 +78,7 @@ and evidence. Other builtins fail closed.
 | Area | Status / boundary |
 |---|---|
 | References, exceptions and warnings | PHP references are unsupported; warnings/exceptions are not modeled. Runtime failures are nonzero failures, never functional PASS. |
-| Source loading and dependencies | `include` / `require` / autoload / namespaces are unsupported. Composer has no resolver/package support; metadata inspection never executes Composer hooks. |
+| Source loading and dependencies | Explicit [static declaration closure](static-source-loading.md) admits fixed top-level `require_once __DIR__` edges over a checked manifest; dependencies have no top-level effects. General `include` / `require` / autoload / namespaces remain unsupported. Composer has no resolver/package support; metadata inspection never executes hooks. |
 | Database and extensions | `mysqli`, PDO, SQLite, `mbstring`, `iconv`, cURL, GD, XML, general PCRE and serialization are unsupported. The [optional PCRE2 bridge](optional-pcre2-bridge.md) and [PHP8.3 adapter](preg83-value-wrapper.md) have a separately opt-in [bounded local-output compiler experiment](preg83-local-output.md), not default or PHP8.4 `preg_*` support. Do not assume a Go library is PHP-equivalent. |
 | WordPress applications | WordPress, plugins and themes are not runnable; adoption needs an independent adapter and pinned oracle. |
 

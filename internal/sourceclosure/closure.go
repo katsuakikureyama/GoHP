@@ -1,5 +1,5 @@
-// Package sourceclosure inspects a bounded graph of checked declaration modules.
-// It is not an executable loader, compiler entry point or PHP compatibility test.
+// Package sourceclosure resolves a bounded graph of checked declaration modules.
+// It does not implement dynamic PHP include/autoload or runtime initialization.
 package sourceclosure
 
 import (
@@ -9,6 +9,7 @@ import (
 
 	"github.com/katsuakikureyama/GoHP/internal/corpus"
 	"github.com/katsuakikureyama/GoHP/internal/frontend"
+	"github.com/katsuakikureyama/GoHP/internal/ir"
 	"github.com/katsuakikureyama/GoHP/internal/phpversion"
 )
 
@@ -47,22 +48,35 @@ type Report struct {
 // buffers reachable from entry. It never reopens source paths after verification.
 // All errors return a zero report; no executable IR or generated artifact escapes.
 func Inspect(manifestPath, sourceRoot, entry, version string, options frontend.Options) (Report, error) {
+	report, _, err := resolve(manifestPath, sourceRoot, entry, version, options, false)
+	return report, err
+}
+
+// Assemble resolves every load using the same verified buffers and returns
+// original-file declarations plus the entry driver body. Unresolved load nodes
+// never escape on success. Semantic/codegen checks remain required afterward.
+func Assemble(manifestPath, sourceRoot, entry, version string, options frontend.Options) (ir.Program, Report, error) {
+	report, program, err := resolve(manifestPath, sourceRoot, entry, version, options, true)
+	return program, report, err
+}
+
+func resolve(manifestPath, sourceRoot, entry, version string, options frontend.Options, assemble bool) (Report, ir.Program, error) {
 	if err := phpversion.ValidateTarget(version); err != nil {
-		return Report{}, err
+		return Report{}, ir.Program{}, err
 	}
 	if options.ExperimentalPCRE2 && version != "8.3" {
-		return Report{}, fmt.Errorf("experimental regex profile requires PHP 8.3")
+		return Report{}, ir.Program{}, fmt.Errorf("experimental regex profile requires PHP 8.3")
 	}
 	verified, sources, err := corpus.LoadSourcesNoAliases(manifestPath, sourceRoot)
 	if err != nil {
-		return Report{}, err
+		return Report{}, ir.Program{}, err
 	}
 	selectedTarget := false
 	for _, target := range verified.Manifest.PHPTargets {
 		selectedTarget = selectedTarget || target == version
 	}
 	if !selectedTarget {
-		return Report{}, fmt.Errorf("PHP target %q is not selected by the manifest", version)
+		return Report{}, ir.Program{}, fmt.Errorf("PHP target %q is not selected by the manifest", version)
 	}
 	byID := make(map[string]corpus.Source, len(sources))
 	metadata := make(map[string]corpus.ManifestFile, len(sources))
@@ -75,7 +89,7 @@ func Inspect(manifestPath, sourceRoot, entry, version string, options frontend.O
 		}
 	}
 	if _, exists := byID[entry]; !exists {
-		return Report{}, fmt.Errorf("entry %q is not a selected source", entry)
+		return Report{}, ir.Program{}, fmt.Errorf("entry %q is not a selected source", entry)
 	}
 	report := Report{Schema: "gohp.source-closure/v0.1", Status: "graph-checked",
 		PHPTarget: version, ManifestSHA256: verified.ManifestSHA256, Entry: entry,
@@ -87,11 +101,26 @@ func Inspect(manifestPath, sourceRoot, entry, version string, options frontend.O
 		line int
 	}
 	declarations := map[string]definition{}
+	program := ir.Program{Version: ir.Version, PHPVersion: version}
 	var visit func(string) error
 	visit = func(id string) error {
-		module, err := frontend.InspectModule(id, string(byID[id].Bytes), version, options)
+		parsed, err := frontend.ParseStaticModule(id, string(byID[id].Bytes), version, options, assemble && id == entry)
 		if err != nil {
 			return err
+		}
+		module := parsed.Inspection
+		if assemble {
+			program.Sources = append(program.Sources, parsed.Program.Sources...)
+			program.Functions = append(program.Functions, parsed.Program.Functions...)
+			program.Classes = append(program.Classes, parsed.Program.Classes...)
+			program.RegexProfile = parsed.Program.RegexProfile
+			if id == entry {
+				for _, statement := range parsed.Program.Body {
+					if statement.Kind != frontend.StaticRequireOnce {
+						program.Body = append(program.Body, statement)
+					}
+				}
+			}
 		}
 		states[id] = 1
 		file := metadata[id]
@@ -128,12 +157,15 @@ func Inspect(manifestPath, sourceRoot, entry, version string, options frontend.O
 		return nil
 	}
 	if err := visit(entry); err != nil {
-		return Report{}, err
+		return Report{}, ir.Program{}, err
 	}
 	for _, source := range sources {
 		if states[source.Path] == 0 {
 			report.Unreached = append(report.Unreached, source.Path)
 		}
 	}
-	return report, nil
+	if !assemble {
+		program = ir.Program{}
+	}
+	return report, program, nil
 }

@@ -37,18 +37,19 @@ name/arity/scope checks and lowers IR into direct Go calls, loops and structs.
 [Located IR](file-aware-locations.md) adds a source table and inherited file
 identities on declaration/body scopes. The optional ParseSource adapter and
 v0.2 statement maps retain original file/line diagnostics without concatenation;
-legacy Parse, v0.1 maps and CLI reports remain unchanged. This infrastructure
-does not connect graph discovery to executable loading or bundle publication.
+legacy Parse, v0.1 maps and single-file CLI reports remain unchanged.
 The CLI is the initial versioned adapter boundary, not a public Go API promise.
 No WordPress hooks or special compiler behavior exist in the core.
 
-The [static source-loading contract](static-source-loading.md) now has an
-internal checked declaration-graph inspector, with file-aware syntax diagnostics,
-source hashes and explicit once-only edges. It returns metadata only, not an
-executable Program. Located IR/diagnostics/maps exist separately; executable
-closure lowering, bundle reports/publication and loading admission remain pending.
-Legacy single-file parsing/IR/codegen retain their behavior;
-include/require/autoload remain unsupported.
+The [static source-loading contract](static-source-loading.md) connects the
+checked graph to complete original-file declarations and an entry body through
+`sourceclosure.Assemble`. A shared filesystem-free module parser retains
+unresolved load statements, which semantic/codegen admission rejects until every
+edge is checked and resolved. No PHP string concatenation or source rewriting
+occurs. Dependencies are declaration-only; execution begins after the entry's
+load section. Explicit bundle CLI mode writes v0.2 source/build provenance using
+the existing fresh publication contract. Inspect still returns metadata only;
+legacy single-file behavior and general include/autoload exclusions remain.
 
 Programs using [strtok](strtok-boundary.md) explicitly thread `rt.Execution`
 through generated functions, constructors, methods and callback calls. Existing

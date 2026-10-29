@@ -1,0 +1,53 @@
+{
+  "schema": "gohp.corpus.manifest/v0.1",
+  "id": "fixture-static-declaration-closure",
+  "upstream": {
+    "repository": "gohp/fixtures",
+    "revision": "0000000000000000000000000000000000000000",
+    "version": "static-declaration-closure-v1"
+  },
+  "selection": {
+    "unit": "whole-file",
+    "exclusions": "fixture-only corpus; dynamic loading, autoloading, and executable dependency modules are excluded",
+    "dependencies": "unresolved"
+  },
+  "php_targets": ["8.3", "8.4"],
+  "files": [
+    {
+      "path": "entry.php",
+      "role": "source",
+      "bytes": 695,
+      "sha256": "044cfc3fa6f98c015f584a3a75a91c9d6a5f2d5215887f4e9e3c45638d5154ab"
+    },
+    {
+      "path": "lib/first.php",
+      "role": "source",
+      "bytes": 165,
+      "sha256": "1e5d5fc879080e1c435eede60475c1eee581452ecbc8811b019944b323fa15fd"
+    },
+    {
+      "path": "lib/second.php",
+      "role": "source",
+      "bytes": 121,
+      "sha256": "c2bfb49937f0479b22abf857f38e484a3f9e517849006bc65994094a9433fbec"
+    },
+    {
+      "path": "lib/nested/shared.php",
+      "role": "source",
+      "bytes": 289,
+      "sha256": "27f2debf9547bec8618ded8c698baf0fdc83706c64586ad041eafac3c86d91bf"
+    },
+    {
+      "path": "NOTICE",
+      "role": "notice",
+      "bytes": 127,
+      "sha256": "bdf794675c2e9b447a9a6fd97d8f2bebfafd6080ae72c6d3920dbb42cb6ad4d7"
+    },
+    {
+      "path": "PROVENANCE",
+      "role": "provenance",
+      "bytes": 107,
+      "sha256": "465679e5946df7c174dddc38137851d4c8116d0ea17aca216c540d1d23ba9636"
+    }
+  ]
+}
