@@ -54,15 +54,18 @@ foreach ($box->items as $item) { echo $item; }
 		`case "label":`,
 		`self.P_label = rt.Clone(value)`,
 		`panic("undefined property assignment")`,
-		`(v["this"]).(interface{ Set(string, any) }).Set("items", v["value"])`,
-		`(v["alias"]).(interface{ Set(string, any) }).Set("label", F_marker("after"))`,
+		`value := any(v["value"])`,
+		`target := rt.ResolveProperty(v["this"], "items")`,
+		`value := any(F_marker("after"))`,
+		`target := rt.ResolveProperty(v["alias"], "label")`,
+		`target.Assign(value)`,
 		`rt.Count((v["box"]).(interface{ Get(string) any }).Get("items"))`,
 	} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("property write lowering missing %q:\n%s", want, generated)
 		}
 	}
-	if strings.Count(text, `.Set("label", F_marker("after"))`) != 1 {
+	if strings.Count(text, `value := any(F_marker("after"))`) != 1 {
 		t.Fatalf("property-write RHS must be evaluated once:\n%s", generated)
 	}
 	if got := strings.Count(text, `rt.Entries((v["box"]).(interface{ Get(string) any }).Get("items"))`); got != 2 {
@@ -74,7 +77,7 @@ foreach ($box->items as $item) { echo $item; }
 		t.Fatalf("method write must precede the post-method property read:\n%s", generated)
 	}
 	for line, generatedLine := range strings.Split(text, "\n") {
-		if strings.Contains(generatedLine, `.Set("items", rt.NewArray(`) {
+		if strings.Contains(generatedLine, `target := rt.ResolveProperty(v["box"], "items")`) {
 			if got, ok := sourceMap.PHPLine(line + 1); !ok || got != 14 {
 				t.Fatalf("property write maps to PHP line %d, %v; want 14", got, ok)
 			}
@@ -87,10 +90,11 @@ foreach ($box->items as $item) { echo $item; }
 func TestPublicPropertyWriteBoundaries(t *testing.T) {
 	for name, source := range map[string]string{
 		"undefined_receiver":        `$box->value = 'after';`,
-		"unknown_parameter":         `class Box { public $value = null; } function replace($box) { $box->value = 'after'; }`,
-		"foreign_call_result":       `class Box { public $value = null; } function build() { return new Box(); } $box = build(); $box->value = 'after';`,
 		"scalar_receiver":           `$box = 1; $box->value = 'after';`,
+		"array_receiver":            `$box = []; $box->value = 'after';`,
+		"null_receiver":             `$box = null; $box->value = 'after';`,
 		"callable_receiver":         `$box = fn() => null; $box->value = 'after';`,
+		"global_receiver":           `$GLOBALS->value = 'after';`,
 		"undeclared_property":       `class Box { public $value = null; } $box = new Box(); $box->missing = 'after';`,
 		"dynamic_property":          `class Box { public $value = null; } $box = new Box(); $name = 'value'; $box->$name = 'after';`,
 		"nested_undeclared_prefix":  `class Box { public $value = null; } $box = new Box(); $box->missing->next = 'after';`,
@@ -150,7 +154,7 @@ func TestPublicPropertyWriteMalformedIR(t *testing.T) {
 		{"value_payload", ir.Stmt{Kind: "assign_property", Value: "value", Line: 2, Target: validTarget, Expr: validValue}, true, "IR002"},
 		{"body_payload", ir.Stmt{Kind: "assign_property", Line: 2, Target: validTarget, Expr: validValue, Body: []ir.Stmt{}}, true, "IR002"},
 		{"else_payload", ir.Stmt{Kind: "assign_property", Line: 2, Target: validTarget, Expr: validValue, ElseBody: []ir.Stmt{}}, true, "IR002"},
-		{"unknown_receiver", valid, false, "PHP004"},
+		{"undefined_receiver", valid, false, "PHP004"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := Generate(program(tt.stmt, tt.withBox))

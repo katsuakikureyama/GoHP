@@ -361,18 +361,17 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 				g.emit("v[%q]=rt.Clone(%s)\n", s.Name, e)
 			}
 			scope[s.Name] = true
-		case "assign_property":
-			// Semantic validation admits only a known generated class variable
-			// and one declared public property; no host/dynamic setter dispatch.
+		case "assign_property", "assign_property_append":
+			// Unknown locals use the same explicit writable-object protocol as
+			// nested paths. Evaluate RHS once before resolving/checking the slot;
+			// append reads the current property only after RHS side effects.
 			receiver := g.expr(s.Target.Args[0], scope)
 			value := g.expr(s.Expr, scope)
-			g.emit("(%s).(interface{Set(string,any)}).Set(%q,%s)\n", receiver, s.Target.Text, value)
-		case "assign_property_append":
-			// Resolve the receiver once, evaluate RHS once, then append to the
-			// current property value (RHS may have changed that same slot).
-			receiver := g.expr(s.Target.Args[0], scope)
-			value := g.expr(s.Expr, scope)
-			g.emit("{ target := (%s).(interface{Get(string) any; Set(string,any)}); value := %s; target.Set(%q,rt.ArrayAppend(target.Get(%q),value)) }\n", receiver, value, s.Target.Text, s.Target.Text)
+			operation := "Assign"
+			if s.Kind == "assign_property_append" {
+				operation = "Append"
+			}
+			g.emit("{ value := any(%s); target := rt.ResolveProperty(%s,%q); target.%s(value) }\n", value, receiver, s.Target.Text, operation)
 		case "assign_index":
 			root := s.Target.Args[0].Text // Shape validated before generation.
 			if root == "this" || root == "GLOBALS" || strings.HasPrefix(root, "_") {

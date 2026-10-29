@@ -421,15 +421,20 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 				return malformed(stmt.Line, "property assignment requires a bare variable receiver")
 			}
 			receiver, exists := scope[base.Text]
-			if !exists || receiver.kind != objectKind {
-				return unsupported(stmt.Line, "property assignment requires a known generated class variable")
+			if !exists || receiver.kind != objectKind && receiver.kind != unknownKind {
+				return unsupported(stmt.Line, "property assignment requires a defined object or unknown local")
 			}
-			info, exists := v.classes[receiver.class]
-			if !exists {
-				return unsupported(stmt.Line, "property assignment requires a declared generated class")
+			if base.Text == "GLOBALS" || strings.HasPrefix(base.Text, "_") {
+				return unsupported(stmt.Line, "global property roots unsupported")
 			}
-			if _, exists := info.properties[target.Text]; !exists {
-				return unsupported(stmt.Line, "property assignment requires a declared public property")
+			if receiver.kind == objectKind {
+				info, exists := v.classes[receiver.class]
+				if !exists {
+					return unsupported(stmt.Line, "property assignment requires a declared generated class")
+				}
+				if _, exists := info.properties[target.Text]; !exists {
+					return unsupported(stmt.Line, "property assignment requires a declared public property")
+				}
 			}
 			if _, err := v.expr(base, scope); err != nil {
 				return err

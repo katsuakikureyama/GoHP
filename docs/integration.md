@@ -197,6 +197,14 @@ operation or browser/MCP route; WebMCP remains excluded, no auto-submit or auth
 change. Partial/mixed modes reject before loading. General include/autoload is
 outside the [bounded closure contract](static-source-loading.md).
 
+[Guarded direct property writes](public-property-write.md) extend only simulated
+PHP value operations inside this same excluded `gohp.cli.generate` capability.
+Defined unknown locals require explicit runtime object/declared-slot checks,
+with fresh artifact preparation/publication and generated/unverified result
+unchanged. Full PropertyObject hosts explicitly opt in as for nested paths;
+the protocol is not a generated-only provenance or authorization certificate.
+No new resource/schema, UI/server/MCP route, auth mode or auto-submit is added.
+
 Bundle reports use `gohp.build/v0.2` and file-aware source-map v0.2. They bind the
 entry, exact manifest hash, full compiled-source table, ordered loading graph,
 unreached selection, profile and generated hash. Legacy single-file reports stay

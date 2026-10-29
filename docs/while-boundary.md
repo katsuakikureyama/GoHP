@@ -26,8 +26,9 @@ force. This is conservative validation, not path-sensitive type inference.
 New body-only bindings cannot be used in the condition or after the loop.
 Property writes do not replace their receiver; mutable reads already have
 unknown type. A receiver variable reassigned within the loop loses its known
-class at body entry, so bounded property assignment may require a fresh known
-class assignment before use. Existing foreach snapshots and array copying are
+class at body entry. Direct/nested named property writes then require the
+explicit runtime object/declared-slot guard; known wrong kinds still reject.
+This does not restore method/cast type inference. Existing foreach snapshots and array copying are
 unchanged.
 
 ## Limits and evidence

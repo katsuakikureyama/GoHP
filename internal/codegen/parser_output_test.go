@@ -46,14 +46,14 @@ $short = substr('abcd', 1);
 		t.Fatal(err)
 	}
 	text := string(out)
-	for _, want := range []string{"args = rt.NullDefaultArgs(args, 1, 3)", `rt.Substr("abcd", int64(1), nil)`, `rt.ArrayAppend(target.Get("output"), value)`, "rt.ObjectToArray("} {
+	for _, want := range []string{"args = rt.NullDefaultArgs(args, 1, 3)", `rt.Substr("abcd", int64(1), nil)`, `target := rt.ResolveProperty(v["this"], "output")`, `target.Append(value)`, "rt.ObjectToArray("} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("missing %q:\n%s", want, out)
 		}
 	}
 	found := false
 	for line, generated := range strings.Split(text, "\n") {
-		if strings.Contains(generated, `target.Set("output",`) {
+		if strings.Contains(generated, `target := rt.ResolveProperty(v["this"], "output")`) {
 			found = true
 			if got, ok := mapping.PHPLine(line + 1); !ok || got != 8 {
 				t.Fatalf("append map = %d,%v; want8", got, ok)
@@ -74,7 +74,6 @@ func TestParserOutputUnsupportedSource(t *testing.T) {
 		"bare_top_return":         `return;`,
 		"bare_typed_return":       `function f(): array { return; }`,
 		"bare_constructor_return": `class C { public function __construct() { return; } }`,
-		"append_unknown_receiver": `function f($o) { $o->items[] = 1; }`,
 		"append_missing_property": `class C {} $c=new C(); $c->items[]=1;`,
 		"append_nested":           `class C { public $items; } $c=new C(); $c->items[0][]=1;`,
 		"append_chained_missing":  `class C { public $items; } $c=new C(); $c->missing->next[]=1;`,

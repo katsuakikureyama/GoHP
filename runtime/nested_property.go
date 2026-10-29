@@ -8,8 +8,9 @@ type PropertyObject interface {
 	Set(string, any)
 }
 
-// NestedProperty keeps the final owner/name, never a copied container or a
-// reference to the root variable. It is used synchronously by generated code.
+// NestedProperty keeps the final owner/name for a direct or nested property,
+// never a copied container or a reference to the root variable. Generated code
+// uses it synchronously.
 type NestedProperty struct {
 	owner PropertyObject
 	name  string
@@ -21,6 +22,15 @@ func propertyObject(value any) PropertyObject {
 		panic("nested property requires object")
 	}
 	return object
+}
+
+// ResolveProperty checks one declared property without admitting dynamic slot
+// creation, nil/scalar receivers or setter-only foreign hosts. Generated code
+// evaluates the RHS before resolving the writable location.
+func ResolveProperty(value any, name string) NestedProperty {
+	owner := propertyObject(value)
+	owner.Get(name)
+	return NestedProperty{owner: owner, name: name}
 }
 
 func ResolveNestedProperty(value any, path ...string) NestedProperty {
