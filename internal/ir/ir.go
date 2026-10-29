@@ -9,6 +9,8 @@ const Version = "0.1"
 const Preg83Profile = "pcre2-php83-v1"
 
 type Expr struct {
+	// empty_var: one defined bare var, no Text/Params; actual array or string.
+	// Legacy empty_array remains array-only; generic empty calls are invalid.
 	// isset_property: Args are a defined bare root variable followed by one or
 	// more literal identifier strings, not ordinary eager property-read nodes.
 	// version_constant retains the exact predefined name in Text, no Args or

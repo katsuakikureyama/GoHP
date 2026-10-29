@@ -15,6 +15,10 @@ PHP bytes -> frontend lexer/parser -> versioned semantic subset IR
 `internal/frontend` owns tokens, source lines and PHP-version precedence.
 `internal/ir` is independent of syntax tokens and contains expressions, statements,
 functions and classes. IR version is `0.1`; reject incompatible IR versions.
+Defined-local `empty` emits additive `empty_var` for actual array/string domains,
+with explicit runtime guards for unknown values. Legacy raw `empty_array` and
+ArrayEmpty remain array-only; this is not suppressed undefined-address probing
+or general scalar truthiness. See the [bounded empty contract](array-empty-boundary.md).
 Named nested-property update statements reuse chained `property` Target nodes
 and an RHS Expr. Lowering evaluates RHS before resolving a guarded final owner,
 then writes through the existing declared-property protocol. This additive IR
