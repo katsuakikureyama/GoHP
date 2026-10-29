@@ -28,9 +28,9 @@ while (false) {
 }
 $alias = ['alias'];
 $alias = array_pop($alias);
-function local_lane() { $items = ['local']; $value = array_pop($items); return $value; }
+function local_lane() { $items = ['local']; $laneValue = array_pop($items); return $laneValue; }
 function frame_read($items) { $frame = array_pop($items); return $frame->name; }
-function bool_result($items): bool { $value = array_pop($items); return $value; }
+function bool_result($items): bool { $boolValue = array_pop($items); return $boolValue; }
 `
 	p, err := frontend.Parse(source, testTarget(t))
 	if err != nil {
