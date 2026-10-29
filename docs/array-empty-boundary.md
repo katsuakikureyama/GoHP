@@ -47,9 +47,11 @@ Gossip's measured complete-original blocker before this increment is354,
 isolated source-admission advance does not establish full parser generation,
 execution or G83-PARSER acceptance; other stack/snapshot/tokenizer/JSON domains
 still need their own complete-unit evidence.
-The [new probe and focused checks](evidence/string-empty-2026-10-29.md) pass354
-and next reject an unknown-class object-to-array snapshot at394. No original
-parser artifact or full application PASS is produced.
+The [string-empty probe and focused checks](evidence/string-empty-2026-10-29.md)
+pass354 and historically next reject an unknown-class object-to-array snapshot
+at394. The later [guarded snapshot increment](evidence/guarded-object-array-2026-10-29.md)
+passes that semantic gate and next rejects unsupported array_push at165 in
+codegen. Neither produces an original parser artifact or full application PASS.
 
 Capability `gohp.cli.generate` remains WebMCP-excluded local developer tooling.
 No new server operation, route, authentication, dependency, release or deployment.
