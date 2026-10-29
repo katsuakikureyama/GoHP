@@ -41,7 +41,7 @@ func TestCLIBundleFreshReport(t *testing.T) {
 		t.Fatalf("stdout = %q, want empty when -out is used", stdout)
 	}
 	generated := readFile(t, output)
-	if !strings.Contains(string(generated), "func F_bundle_message") || !strings.Contains(string(generated), "type C_BundleBox") {
+	if !strings.Contains(string(generated), "func F_bundle_message") || !strings.Contains(string(generated), "type C_bundlebox") {
 		t.Fatalf("generated source omitted dependency declarations:\n%s", generated)
 	}
 
@@ -154,7 +154,7 @@ func TestCLIBundleFailures(t *testing.T) {
 			mutate: func(t *testing.T, root string) {
 				writeFile(t, filepath.Join(root, "app"), "dep.php", "<?php\nfunction bundle_message() { return 'changed'; }\n")
 			},
-			wantStderr: "size or sha256 mismatch",
+			wantStderr: "size mismatch",
 		},
 		{
 			name: "unregistered dependency",

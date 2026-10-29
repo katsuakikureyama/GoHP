@@ -9,7 +9,7 @@
   "selection": {
     "unit": "whole-file",
     "exclusions": "fixture-only corpus; dynamic loading, autoloading, and executable dependency modules are excluded",
-    "dependencies": "entry.php and each declaration module are selected as an explicit static require_once closure"
+    "dependencies": "unresolved"
   },
   "php_targets": ["8.3", "8.4"],
   "files": [
