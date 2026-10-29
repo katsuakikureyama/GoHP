@@ -71,6 +71,10 @@ and verify hashes before using artifacts. See the [publication contract](docs/in
 
 ## Progress and next milestones
 
+[Declared class parameters](docs/declared-class-parameters.md) add exact nonnull
+object entry guards to functions, public methods and constructors. Object
+identity is preserved; inheritance and nullable/union annotations remain excluded.
+
 [Nonnumeric string switches](docs/string-switch.md) add token-name dispatch,
 fallthrough and nearest-switch break for the fixed parser gate. Numeric/mixed
 comparisons and the remaining whole-parser dependencies are still excluded.

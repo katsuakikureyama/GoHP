@@ -3,6 +3,22 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.declared-class-parameters",
+      "kind": "syntax",
+      "name": "Nonnullable declared generated-class parameters",
+      "implementation": "partial",
+      "contract": "Bare declared class names on global functions, public methods and constructors normalize case-insensitively to class:lowername. Known wrong arguments reject statically; every invocation guards exact nonnil generated-class pointers before the PHP body. Object identity and local reassignment are preserved; mixed existing parameters and untyped trailing null defaults retain their contracts.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.class_parameters","test":"TestDifferential/class_parameters","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/class_parameters.php","assertions":["stdout","exit","forward and case-insensitive class annotations, global/method/constructor identity and mutation, scalar composition, literal callbacks, local reassignment and Execution"]},
+        {"case_id":"compiler.class_parameters","test":"TestClassParameterLowering","file":"internal/codegen/class_parameter_test.go","kind":"compiler","assertions":["canonical class metadata, exact nonnull entry guards, legacy storage, known property writes and source maps"]},
+        {"case_id":"negative.class_parameters.source","test":"TestClassParameterUnsupportedSource","file":"internal/codegen/class_parameter_test.go","kind":"negative","assertions":["undeclared or unsupported annotations/defaults, known mismatched global/method/constructor arguments and invalidated object facts reject"]},
+        {"case_id":"negative.class_parameters.ir","test":"TestClassParameterMalformedIR","file":"internal/codegen/class_parameter_test.go","kind":"negative","assertions":["empty, noncanonical, malformed, builtin and undeclared class annotations reject before output"]},
+        {"case_id":"compiler.class_parameters.host","test":"TestDeclaredClassParameterHostEntry","file":"tests/class_parameter_runtime_test.go","kind":"compiler","assertions":["external generated ABI rejects nil, typed nil, foreign objects/classes and other actual domains before body, preserving identity, reassignment, arity, constructor scalars and Execution"]}
+      ],
+      "limitations": ["Only exact declared generated classes; no inheritance/interfaces, aliases, namespaced names, self/parent/static, nullable/union/reference parameters or typed defaults", "Primitive ordinary-method annotations remain excluded; no weak conversion or PHP TypeError equivalence", "No property typing or general return inference; original whole-parser acceptance requires separate evidence", "Existing local developer CLI capability; WebMCP excluded, no service/auth/deployment change"]
+    },
+    {
       "id": "php.syntax.nested-property-update",
       "kind": "syntax",
       "name": "Guarded named nested-property updates",
@@ -235,7 +251,7 @@
         {"case_id":"unit.scalar_parameter.domain","test":"TestScalarParameterExactDomain","file":"runtime/scalar_parameter_test.go","kind":"unit","assertions":["exact int64/string/bool preservation, foreign values and all other domains reject without coercion"]},
         {"case_id":"negative.scalar_constructor.runtime","test":"TestScalarConstructorRuntimeGuards","file":"tests/scalar_constructor_runtime_test.go","kind":"negative","assertions":["dynamic mismatches fail before body, contextual entry retains guard, reassignment preserves downstream guards"]}
       ],
-      "limitations": ["No PHP weak scalar conversions, strict_types syntax or TypeError equivalence", "Constructor contract only; global scalar parameters have a separate contract; no scalar-typed ordinary method/arrow parameters, typed/nonnull defaults or nullable/union/class/float/array/callable constructor types", "Original HTML support classes and processor/render adoption require separate evidence; owned fixture does not certify them"]
+      "limitations": ["No PHP weak scalar conversions, strict_types syntax or TypeError equivalence", "Constructor scalar contract only; global scalars and declared class parameters have separate contracts; no scalar-typed ordinary method/arrow parameters, typed/nonnull defaults or nullable/union/float/array/callable constructor types", "Original HTML support classes and processor/render adoption require separate evidence; owned fixture does not certify them"]
     },
     {
       "id": "php.syntax.single-quoted-backslashes",

@@ -243,6 +243,12 @@ func (g *generator) function(f ir.Function, c string) {
 			g.emit("v[%q]=rt.ArrayParameter(args[%d])\n", n, i)
 		} else if len(f.ParamTypes) != 0 && f.ParamTypes[i] == "callable" {
 			g.emit("v[%q]=rt.CallableParameter(args[%d])\n", n, i)
+		} else if len(f.ParamTypes) != 0 && strings.HasPrefix(f.ParamTypes[i], "class:") {
+			class := strings.TrimPrefix(f.ParamTypes[i], "class:")
+			g.serial++
+			g.emit("classArg%d,classOK%d:=args[%d].(*C_%s)\n", g.serial, g.serial, i, class)
+			g.emit("if !classOK%d || classArg%d==nil { panic(%q) }\n", g.serial, g.serial, "class parameter requires "+class+" object")
+			g.emit("v[%q]=classArg%d\n", n, g.serial)
 		} else if len(f.ParamTypes) != 0 && f.ParamTypes[i] != "" {
 			g.emit("v[%q]=rt.ScalarParameter(args[%d],%q)\n", n, i, f.ParamTypes[i])
 		} else {
