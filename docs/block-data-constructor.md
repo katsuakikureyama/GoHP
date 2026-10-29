@@ -22,10 +22,16 @@ This closed extension targets simple data classes such as WordPress's unchanged
   a constructor retain the old zero-argument-only boundary; PHP's more permissive
   ignored-argument behavior is not implemented. Unknown/dynamic classes, named/
   unpacked/reference arguments remain excluded.
-- `(array)` accepts only a statically known generated class expression, including
-  a direct `new`. It evaluates that expression once and snapshots all public
+- `(array)` accepts a statically known generated class expression (including
+  direct `new`) or an inferred-unknown expression whose actual value satisfies
+  the guarded public-property snapshot protocol. Defined untyped parameters,
+  ordinary function returns, indexed stack elements and named property reads
+  can reach this guard; undefined or conditionally-only locals still reject.
+  It evaluates the expression once and snapshots all public
   properties in declaration order, retaining null. Nested arrays detach through
-  NewArray; object identifiers remain shared. No scalar/array/Closure/unknown
+  NewArray; object identifiers remain shared. Known scalar/array/Closure/null
+  operands reject statically, and unsupported actual values reject at runtime.
+  No general scalar/array/Closure
   operand casts, dynamic properties or private/protected key mangling.
 
 The frontend normalizes implicit defaults to canonical null, keeps constructor
@@ -35,6 +41,14 @@ functions call the constructor internally; its statements retain source maps.
 Generated `PHPProperties` returns a fresh ordered runtime.Array via NewArray.
 Runtime ObjectToArray accepts only a valid public-property-object marker and
 calls its snapshot once. Source cannot invoke these Go implementation methods.
+This reuses the existing `object_array_cast` IR and direct `rt.ObjectToArray`
+lowering without new reflection, storage paths or class-return inference.
+An external Go host may explicitly implement `PublicPropertyObject`: this is
+protocol opt-in, not proof of generated provenance. Its `PHPObject` must report
+false for typed nil and its `PHPProperties` must return a fresh ordered NewArray
+snapshot honoring the same copy/identity contract. Marker-only/getter-only or
+snapshot-only lookalikes do not qualify. Runtime panics are boundary failures,
+not PHP-compatible cast exceptions or generic coercion.
 
 These boundaries follow the admitted subset of PHP's [constructor contract](https://www.php.net/manual/en/language.oop5.decon.php)
 and [default arguments](https://www.php.net/manual/en/functions.arguments.php#functions.arguments.default),
@@ -48,6 +62,14 @@ effects, implicit null, fresh instances, nested array copies, snapshot keys/
 independence and shared object identifiers. Native evidence compares stdout and
 normal exits with admitted PHP8.3.36, not stderr/exceptions/other side effects.
 Gossip must separately pin and compare original source before claiming adoption.
+
+Owned `unknown_object_snapshot.php` separately exercises the inferred-unknown
+path, including an indexed-frame property shape. `array_pop` is still a separate
+unimplemented builtin; this owned fixture does not claim stack mutation.
+Its native result is distinct
+from complete original-parser generation or execution; see the per-change
+evidence and consumer application gate. Existing known-object fixture evidence
+does not certify the new operand scope.
 
 `constructor_null_defaults.php` additionally observes omitted/explicit null/zero,
 all-optional zero arguments, case-insensitive names, argument-before-body order,

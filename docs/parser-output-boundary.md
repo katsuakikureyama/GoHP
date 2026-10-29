@@ -25,8 +25,10 @@ WordPress adoption; Gossip separately pins the compiler and compares the source.
 - Only a known class method whose entire body is one unconditional return of
   new DeclaredClass(args...) contributes a known object-return class. The body
   is still fully validated, including constructor arity and arguments. This
-  enables the existing guarded public-object (array) snapshot, not a general
-  unknown-value cast, subclass/type inference or arbitrary factory analysis.
+  enables the existing guarded public-object (array) snapshot without runtime
+  class inference. The [separate unknown-expression snapshot admission](block-data-constructor.md)
+  now uses the same actual-value guard; it does not expand factory inference,
+  permit general casts, or add subclass analysis.
   Multi-statement/conditional/passthrough/global functions remain unknown.
 - substr accepts an actual string, actual int64 offset, and optional int64|null
   length (two/three source arguments). It slices bytes, clamps negative/outside

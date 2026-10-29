@@ -135,8 +135,11 @@ PHP references or production copy-on-write optimization. Object identity remains
 pointer identity. Class methods are real generated Go methods; interface assertions
 provide method dispatch, not an AST/opcode evaluator. The bounded class contract
 includes public scalar/null defaults, declared property reads/writes, constructors
-with exact scalar parameters or trailing untyped null defaults, and known-object
-array snapshots. It does not include inheritance or dynamic properties; see the
+with exact scalar parameters or trailing untyped null defaults, and public-object
+array snapshots on known or runtime-guarded inferred-unknown expressions.
+The existing object_array_cast directly calls ObjectToArray once; explicit host
+snapshot-protocol opt-in is not generated provenance. It adds no general cast,
+class inference or owned-storage path. It does not include inheritance or dynamic properties; see the
 [class inventory](compatibility.md#objects-and-callables).
 
 The canonical internal Slot/cell engine now owns scalar values and bounded

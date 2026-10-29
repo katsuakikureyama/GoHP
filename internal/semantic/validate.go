@@ -1491,8 +1491,8 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		if err != nil {
 			return valueType{}, err
 		}
-		if _, exists := v.classes[receiver.class]; receiver.kind != objectKind || !exists {
-			return valueType{}, unsupported(expr.Line, "array cast requires a known generated class")
+		if _, exists := v.classes[receiver.class]; receiver.kind != unknownKind && (receiver.kind != objectKind || !exists) {
+			return valueType{}, unsupported(expr.Line, "array cast requires a generated public-property object")
 		}
 		return valueType{kind: arrayKind}, nil
 	case "property":

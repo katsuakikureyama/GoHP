@@ -71,6 +71,10 @@ and verify hashes before using artifacts. See the [publication contract](docs/in
 
 ## Progress and next milestones
 
+[Public-object array snapshots](docs/block-data-constructor.md) accept known
+classes or inferred-unknown expressions through the existing runtime guard.
+This is not general `(array)` casting or complete original-parser execution.
+
 [Static declaration closures](docs/static-source-loading.md) now connect checked
 files and once-only edges to file-aware IR, diagnostics and Go generation.
 Explicit manifest/root/entry mode is required; ordinary `-in` retains its subset.

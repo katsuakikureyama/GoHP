@@ -4,6 +4,13 @@ For the current compiler scope and next application acceptance criteria, see the
 [compatibility tables](compatibility.md) and [roadmap](roadmap.md). Consumer runs
 below are historical, pin-specific observations, not current-main certification.
 
+[Public-object snapshots](block-data-constructor.md) now allow inferred-unknown
+operands through the existing explicit runtime snapshot protocol, without a
+general cast or generated-provenance promise. This remains the local
+`gohp.cli.generate` operation, WebMCP **excluded**: developer source translation,
+not a browser/service resource operation. No input schema, route, authentication,
+publication/report contract or consumer pin changes.
+
 [Standalone call statements](call-statement-boundary.md) now express the
 render caller's discarded-result method call without a dummy assignment.
 The [source dependency audit](render-dependencies.md) records resolved
