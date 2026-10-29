@@ -11,6 +11,15 @@ import (
 	"github.com/katsuakikureyama/GoHP/internal/frontend"
 )
 
+func TestUnknownPropertyWriteControlFlowRuntimeGuards(t *testing.T) {
+	checkArrayRuntimeGuards(t, []arrayRuntimeCase{
+		{"list_overwrites_class", "<?php class C {public $x;} $c=new C(); list($c)=[1]; $c->x=2;", "nested property requires object"},
+		{"list_loop_carried", "<?php class C {public $x;} $c=new C(); $i=0; while($i<2){$c->x=2; list($c)=[1]; $i=$i+1;}", "nested property requires object"},
+		{"switch_fallthrough", "<?php class C {public $x;} $c=new C(); switch('x'){case 'x':$c=1; case 'y':$c->x=2;}", "nested property requires object"},
+		{"switch_exit", "<?php class C {public $x;} $c=new C(); switch('x'){default:$c=1;} $c->x=2;", "nested property requires object"},
+	})
+}
+
 // Exercise the generated external ABI once, including typed nil and protocol
 // lookalikes that PHP source cannot construct. Invalid domains are explicit
 // rejections, not a claim of PHP exception or warning equivalence.

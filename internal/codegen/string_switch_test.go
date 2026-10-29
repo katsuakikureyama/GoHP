@@ -41,8 +41,6 @@ func TestStringSwitchUnsupportedSource(t *testing.T) {
 		`switch('x'){case 'x':continue;}`, `while(false){switch('x'){default:if(true){continue;}}}`,
 		`switch('x'){default:break 1;}`, `switch('x'){default:continue 2;}`, `case 'x':echo 1;`,
 		`switch('x'){default:$new=1;} echo $new;`,
-		`class C{public $x;} $c=new C(); switch('x'){case 'x':$c=1; case 'y':$c->x=2;}`,
-		`class C{public $x;} $c=new C(); switch('x'){default:$c=1;} $c->x=2;`,
 		`function SwItCh(){}`, `function CaSe(){}`, `function DeFaUlT(){}`,
 		`switch('x'){default:break; echo unknown();}`,
 	} {

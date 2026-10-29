@@ -38,7 +38,7 @@ $three = new Frame(2, 3, 0, 0);
 		t.Fatalf("missing runtime min/max guard: %s", out)
 	}
 	for line, generated := range strings.Split(text, "\n") {
-		if strings.Contains(generated, `.Set("offset",`) {
+		if strings.Contains(generated, `rt.ResolveProperty(v["this"], "offset")`) {
 			if got, ok := mapping.PHPLine(line + 1); !ok || got != 6 {
 				t.Fatalf("constructor statement mapping = %d, %v; want 6", got, ok)
 			}
