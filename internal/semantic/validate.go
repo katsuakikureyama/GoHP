@@ -957,23 +957,26 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			return valueType{}, unsupported(expr.Line, "boolean cast requires a supported value")
 		}
 		return valueType{kind: boolKind}, nil
-	case "empty_array":
+	case "empty_array", "empty_var":
 		if err := require(1); err != nil {
 			return valueType{}, err
 		}
 		base := expr.Args[0]
-		if expr.Text != "" || base.Kind != "var" {
-			return valueType{}, malformed(expr.Line, "empty requires a single array variable")
+		if expr.Text != "" || base.Kind != "var" || !validName(base.Text) || base.Args != nil || base.Params != nil {
+			return valueType{}, malformed(expr.Line, "empty requires a single defined variable")
 		}
 		if _, ok := scope[base.Text]; !ok {
-			return valueType{}, unsupported(expr.Line, "empty requires an existing array variable")
+			return valueType{}, unsupported(expr.Line, "empty requires an existing variable")
 		}
 		baseType, err := v.expr(base, scope)
 		if err != nil {
 			return valueType{}, err
 		}
-		if baseType.kind != arrayKind && baseType.kind != unknownKind {
-			return valueType{}, unsupported(expr.Line, "empty requires an array")
+		if baseType.kind != arrayKind && baseType.kind != unknownKind && (expr.Kind != "empty_var" || baseType.kind != stringKind) {
+			if expr.Kind == "empty_array" {
+				return valueType{}, unsupported(expr.Line, "empty requires an array")
+			}
+			return valueType{}, unsupported(expr.Line, "empty requires an array or string")
 		}
 		return valueType{kind: boolKind}, nil
 	case "isset_var":
@@ -1092,7 +1095,7 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		return valueType{kind: unknownKind}, nil
 	case "call":
 		if strings.EqualFold(expr.Text, "empty") {
-			return valueType{}, malformed(expr.Line, "empty must use the empty_array language construct")
+			return valueType{}, malformed(expr.Line, "empty must use a dedicated variable language construct")
 		}
 		if strings.EqualFold(expr.Text, "isset") {
 			return valueType{}, malformed(expr.Line, "isset must use an address language construct")

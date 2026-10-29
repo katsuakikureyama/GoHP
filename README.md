@@ -130,6 +130,10 @@ This is string syntax support, not full original WordPress parser execution.
 
 ## Scope and documentation
 
+[Defined-variable `empty`](docs/array-empty-boundary.md) accepts arrays and
+strings, including PHP's special `"0"` case; undefined addresses and other scalar
+domains remain excluded.
+
 [Named nested-property updates](docs/public-property-write.md#named-nested-property-updates)
 support the parser's object-identity-preserving assignments, string concatenation
 and array appends. [Direct property writes](docs/public-property-write.md) also

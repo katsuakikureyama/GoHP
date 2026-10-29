@@ -14,7 +14,7 @@ func TestArrayEmptyLoweringAndSourceMap(t *testing.T) {
 		t.Fatal(err)
 	}
 	expr := p.Functions[0].Body[0].Expr
-	if expr.Kind != "empty_array" || expr.Text != "" || len(expr.Args) != 1 || expr.Args[0].Kind != "var" {
+	if expr.Kind != "empty_var" || expr.Text != "" || len(expr.Args) != 1 || expr.Args[0].Kind != "var" {
 		t.Fatalf("empty was not preserved as a variable-only construct: %#v", expr)
 	}
 	out, mapping, err := GenerateWithMap(p)
@@ -22,7 +22,7 @@ func TestArrayEmptyLoweringAndSourceMap(t *testing.T) {
 		t.Fatal(err)
 	}
 	for line, text := range strings.Split(string(out), "\n") {
-		if strings.Contains(text, `return rt.BoolReturn(rt.ArrayEmpty(v["a"]))`) {
+		if strings.Contains(text, `return rt.BoolReturn(rt.VariableEmpty(v["a"]))`) {
 			if got, ok := mapping.PHPLine(line + 1); !ok || got != 2 {
 				t.Fatalf("empty return mapping = %d, %v; want 2", got, ok)
 			}
@@ -46,7 +46,6 @@ func TestArrayEmptyUnsupportedSource(t *testing.T) {
 		"null":          "$a = null; echo empty($a);",
 		"bool":          "$a = false; echo empty($a);",
 		"integer":       "$a = 0; echo empty($a);",
-		"string":        "$a = ''; echo empty($a);",
 		"object":        "class X {} $a = new X(); echo empty($a);",
 		"callable":      "$a = fn() => []; echo empty($a);",
 		"redeclare":     "function EmPtY($a) { return $a; }",

@@ -111,9 +111,14 @@ or add a service/authentication route.
 same WebMCP-excluded local generation capability. It does not repin Gossip or
 certify original array_last functions; no service/authentication route is added.
 
-Bounded [array-variable empty](array-empty-boundary.md) is part of local
+Bounded [array/string-variable empty](array-empty-boundary.md) is part of local
 `gohp.cli.generate`, still WebMCP-excluded. It adds no route/authentication or
 server operation; Gossip original-source pins and evidence remain separate.
+The string-domain extension keeps this stable excluded capability and both CLI
+input schemas unchanged. Preparation guards actual array/string locals and
+rejects other domains; fresh publication and generated/unverified result remain
+unchanged. No undefined-address suppression, browser/MCP operation, resource,
+auth mode or automatic submission is added.
 
 The `_wp_array_get` prerequisites — trailing untyped null defaults and bounded
 isset addresses — use the same local `gohp.cli.generate` capability. They add
