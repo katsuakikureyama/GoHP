@@ -1,13 +1,43 @@
 # Static source loading — first implementation contract
 
-Status: **L0-a graph inspection implemented; executable loading is unsupported**.
-The internal inspector parses checked declaration modules and records explicit
-loading edges, but returns no executable IR or generated Go. The separate
-[L0-b infrastructure](file-aware-locations.md) adds located IR diagnostics and
-optional v0.2 statement maps, not a closure compiler. No new CLI flag,
-single-file load grammar or build-report schema is added. The tooling catalog
-records graph contract checks, not PHP loading compatibility. Gossip's fixed
-PHP 8.3 application remains the first goal, not general include/autoload.
+Status: **opt-in static declaration closure implemented**. Checked source graphs
+connect to complete original-file IR, diagnostics and Go generation, not runtime
+include/autoload or executable dependency initialization. Gossip's fixed PHP 8.3
+application remains the first goal. Native results for the owned multi-file
+fixture are established separately by each candidate/target CI run.
+
+## Compile a checked closure
+
+Use one explicit input mode, never both:
+
+```sh
+go run ./cmd/gohp -manifest tests/fixtures/static_declaration_closure/manifest.json \
+  -source-root tests/fixtures/static_declaration_closure -entry entry.php \
+  -php-version 8.3 -out FRESH.go -report FRESH.report.json
+```
+
+All three bundle flags are required. Ordinary `-in` retains its existing grammar
+and v0.1 report. No PHP is rewritten, extracted or concatenated.
+`sourceclosure.Assemble` consumes checked buffers once and resolves every edge
+before returning located declarations plus the entry body. Source hashes cover
+complete original files, including load directives. `frontend.ParseStaticModule`
+retains unresolved `static_require_once` nodes, which semantic/codegen admission
+rejects if resolution has not occurred. Dependencies remain declaration-only;
+the entry may execute after its load section. Declarations must precede loads;
+later, conditional and local loads reject.
+
+Bundle `gohp.build/v0.2` reports contain exact manifest SHA, entry, closure profile,
+source IDs/hashes/sizes, ordered graph edges/unreached files, generated hash,
+target/profile and v0.2 statement map. They do not use scalar legacy
+`input`/`source_sha256` fields to impersonate a whole closure. Status `generated`
+and compatibility `not established by compilation` remain distinct from PASS.
+Fresh distinct paths, report-last and failure cleanup remain unchanged under
+the [local capability/publication contract](integration.md).
+
+For a multi-file differential fixture, the exact manifest hash is its fixture
+identity and binds every selected source/notice/provenance byte. Native PHP
+executes the real entry file and require edges; Go uses the assembled original
+declarations. This is not an extraction/concatenation test or consumer repin.
 
 ## Implemented inspection slice (L0-a)
 
@@ -24,7 +54,7 @@ runtime discovery or a hostile-filesystem sandbox.
 complete function/class bodies and trailing directives using the existing
 closed parser; declarations and edges retain their original file/line identity.
 Only declaration-only entries/dependencies are admitted here. Executable drivers
-are deferred to L1. Parenthesized local include/require syntax is also rejected,
+are admitted only by the separate Assemble path. Parenthesized local include/require syntax is also rejected,
 including inside nested/arrow expressions; it must not hide as an ordinary call.
 No semantic validation, codegen or native PHP execution occurs.
 
@@ -38,11 +68,9 @@ The internal `gohp.source-closure/v0.1` report has `graph-checked` status and
 are not an executable build report or a compatibility verdict. Ordinary
 `ParseWithOptions`, legacy line-only IR/maps and CLI reports retain their behavior.
 
-L0 remains partial: file identities now survive internal parsed IR, semantic/
-codegen diagnostics and generated v0.2 maps, but graph-to-executable lowering
-and bundle reports/publication are still pending. There is no
-bundle compile mode, driver admission, original-closure compiler probe or
-supported PHP `require_once` row. The full parser remains blocked.
+Inspect still returns metadata only. The separate Assemble/CLI path owns
+executable declaration closure and bundle reports; it does not convert an
+inspection verdict into compatibility PASS. The full parser remains blocked.
 
 ## L0-a local evidence (2026-10-29)
 
@@ -180,20 +208,20 @@ execution-owned contract and native measurements.
 4. **File-aware locations and reports.** The additive L0-b
    [`ir.Program`](../internal/ir/ir.go) source table and scope identities plus
    [`SourceMap`](../internal/codegen/sourcemap.go) v0.2 retain original file/line
-   metadata internally. Legacy CLI reports still have a single input/hash;
-   graph-to-program lowering and the bundle report remain pending.
+   metadata internally. Legacy CLI reports retain a single input/hash;
+   the explicit closure mode publishes its own v0.2 bundle report.
    Never relabel a dependency's line as the entry's
    line or present synthetic concatenation lines as original locations.
-   The proposed bundle report uses candidate `gohp.build/v0.2`; implemented
+   The bundle report uses `gohp.build/v0.2`; implemented
    located statement maps use `gohp.sourcemap/v0.2`, with source IDs, relative
    paths, exact hashes/sizes, manifest identity, ordered edges and entry ID.
    Define a file-and-line lookup; the existing line-only `PHPLine` helper is
    not a complete multi-file location API and refuses v0.2 maps. PHPLocation
    returns both file and line. Preserve legacy single-file v0.1 reports/tests.
-5. **Publication and capabilities.** A future explicit bundle input mode may
-   extend the local `gohp.cli.generate` capability. It must document its exact
+5. **Publication and capabilities.** The explicit bundle input mode extends
+   the local `gohp.cli.generate` capability. Its exact
    input schema, read scope, validation/prepare and fresh artifact publication
-   stages in the [integration contract](integration.md). Keep report-last,
+   stages are documented in the [integration contract](integration.md). Keep report-last,
    fresh/distinct destinations, no overwrite and failure cleanup semantics.
    The report must continue to distinguish generated from compatibility PASS.
    WebMCP stays explicitly excluded as local developer tooling; do not add a
@@ -208,8 +236,8 @@ discovery are outside the initial profile. Reject, do not approximate them.
 
 | Slice | Required observable result | Status |
 |---|---|---|
-| L0: source identity and module graph | Closed per-file parser, verified buffers, deterministic edges/once identity and file-aware diagnostics/report/map; reject unresolved/raw load nodes | **Partial**: L0-a graph inspection and L0-b located IR/diagnostics/maps implemented; graph-to-program closure, bundle report/publication pending |
-| L1: bounded declaration closure | One owned multi-file fixture compiled and built; behavior independently compared with pinned PHP8.3; duplicate/diamond loads resolve once; all unsupported forms fail closed | Not implemented |
+| L0: source identity and module graph | Closed per-file parser, verified buffers, deterministic edges/once identity and file-aware diagnostics/report/map; reject unresolved/raw load nodes | Implemented for explicit static-declaration mode, including CLI/v0.2 reports and fresh publication |
+| L1: bounded declaration closure | One owned multi-file fixture compiled and built; behavior independently compared with pinned PHP8.3; duplicate/diamond loads resolve once; all unsupported forms fail closed | Implementation and real-file native fixture registered; exact results belong to each candidate/target CI run |
 | L2: original three-file admission | One probe of the unchanged complete parser plus both dependencies through the real loader; retain all hashes and the first real frontend/semantic blocker | Not run |
 | G83-PARSER | All original methods and complete dependencies built/executed with the declared native comparisons and state/error observations | Blocked; loading is only one dependency |
 

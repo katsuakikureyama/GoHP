@@ -182,6 +182,26 @@ developer-only source translation, with no browser/server operation or auth rout
 
 Capability/WebMCP scope: `gohp.cli.generate` is explicitly **excluded** from browser
 WebMCP exposure because it is a local compiler writing caller-owned build files.
+
+The same local capability now has two exclusive input schemas: legacy
+`{in, php_version, experimental_pcre2?}` or bundle
+`{manifest, source_root, entry, php_version, experimental_pcre2?}`. Bundle paths
+are explicit caller-owned local resources, with a private immutable source root.
+Inspect/prepare reads and validates every selected source/notice/provenance byte,
+resolves static declarations and performs semantic/codegen checks in memory.
+Save/commit publishes only fresh caller-specified `out` and optional `report`,
+using the existing report-last/no-overwrite/failure-cleanup contract. No artifact
+is published for a failed closure. The result remains generated/unverified,
+never saved-as-compatible, deployed or externally sent. This is not a new server
+operation or browser/MCP route; WebMCP remains excluded, no auto-submit or auth
+change. Partial/mixed modes reject before loading. General include/autoload is
+outside the [bounded closure contract](static-source-loading.md).
+
+Bundle reports use `gohp.build/v0.2` and file-aware source-map v0.2. They bind the
+entry, exact manifest hash, full compiled-source table, ordered loading graph,
+unreached selection, profile and generated hash. Legacy single-file reports stay
+v0.1; consumers must not treat one scalar input hash as a bundle identity.
+
 The [one-level PHP array assignment and append](array-write-boundary.md) extension remains
 within this excluded generation capability. Its writes concern simulated local
 PHP values, not service resources; no UI operation, route, authentication,

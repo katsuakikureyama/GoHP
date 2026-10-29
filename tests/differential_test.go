@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -17,7 +18,9 @@ import (
 	"github.com/katsuakikureyama/GoHP/internal/codegen"
 	"github.com/katsuakikureyama/GoHP/internal/compat"
 	"github.com/katsuakikureyama/GoHP/internal/frontend"
+	"github.com/katsuakikureyama/GoHP/internal/ir"
 	"github.com/katsuakikureyama/GoHP/internal/phpversion"
+	"github.com/katsuakikureyama/GoHP/internal/sourceclosure"
 )
 
 const (
@@ -45,6 +48,67 @@ type capturedCommand struct {
 	err         error
 	observation *compat.StderrObservation
 	output      *compat.ProcessOutput
+}
+
+// differentialInput keeps the legacy one-file fixture contract while allowing
+// a catalog case to bind a checked static declaration closure by its manifest.
+// The native oracle always executes a real entry file; it never sees a
+// synthesized concatenation or wrapper.
+type differentialInput struct {
+	nativeFile    string
+	fixtureSHA256 string
+	program       ir.Program
+	sourceClosure bool
+}
+
+func loadDifferentialInput(fixture, target string) (differentialInput, error) {
+	if strings.HasSuffix(fixture, ".php") {
+		file := filepath.Join("..", filepath.FromSlash(fixture))
+		src, err := os.ReadFile(file)
+		if err != nil {
+			return differentialInput{}, err
+		}
+		input := differentialInput{nativeFile: file, fixtureSHA256: sha256Hex(src)}
+		program, err := frontend.Parse(string(src), target)
+		if err != nil {
+			return input, err
+		}
+		input.program = program
+		return input, nil
+	}
+	if strings.HasSuffix(fixture, "/manifest.json") {
+		manifest := filepath.Join("..", filepath.FromSlash(fixture))
+		manifestBytes, err := os.ReadFile(manifest)
+		if err != nil {
+			return differentialInput{}, err
+		}
+		root := filepath.Dir(manifest)
+		input := differentialInput{
+			nativeFile:    filepath.Join(root, "entry.php"),
+			fixtureSHA256: sha256Hex(manifestBytes),
+			sourceClosure: true,
+		}
+		program, report, err := sourceclosure.Assemble(manifest, root, "entry.php", target, frontend.Options{})
+		if err != nil {
+			return input, err
+		}
+		if report.ManifestSHA256 != input.fixtureSHA256 || len(program.Sources) == 0 {
+			return input, fmt.Errorf("static fixture lost checked manifest or source metadata")
+		}
+		input.program = program
+		return input, nil
+	}
+	return differentialInput{}, fmt.Errorf("unsupported differential fixture %q", fixture)
+}
+
+func validateClosureSourceMap(input differentialInput, sourceMap codegen.SourceMap) error {
+	if !input.sourceClosure {
+		return nil
+	}
+	if sourceMap.Schema != "gohp.sourcemap/v0.2" || sourceMap.Precision != "statement-start-file-line" || len(sourceMap.Mappings) == 0 || !reflect.DeepEqual(sourceMap.Sources, input.program.Sources) {
+		return fmt.Errorf("static fixture lost source-aware v0.2 map")
+	}
+	return nil
 }
 
 // captureCommand retains separate streams without logging their contents.
@@ -126,12 +190,12 @@ func TestDifferential(t *testing.T) {
 	}
 	for _, testCase := range cases {
 		fixture := strings.TrimPrefix(testCase.Test, "TestDifferential/")
-		if fixture == testCase.Test || strings.Contains(fixture, "/") || testCase.Package != "github.com/katsuakikureyama/GoHP/tests" || testCase.Fixture != "tests/fixtures/"+fixture+".php" {
+		legacyFixture := "tests/fixtures/" + fixture + ".php"
+		closureFixture := "tests/fixtures/" + fixture + "/manifest.json"
+		if fixture == testCase.Test || strings.Contains(fixture, "/") || testCase.Package != "github.com/katsuakikureyama/GoHP/tests" || (testCase.Fixture != legacyFixture && testCase.Fixture != closureFixture) {
 			t.Fatalf("unsupported differential harness identity: %+v", testCase)
 		}
 		t.Run(fixture, func(t *testing.T) {
-			file := filepath.Join("fixtures", fixture+".php")
-			phpArgs := quietFixturePHPArgs(fixture, file)
 			evidence := differentialEvidence{
 				CaseID:     testCase.ID,
 				PHPTarget:  target,
@@ -153,19 +217,19 @@ func TestDifferential(t *testing.T) {
 				}
 				t.Logf("GOHP_CASE %s", encoded)
 			}()
-			src, e := os.ReadFile(file)
-			if e != nil {
-				t.Fatal(e)
-			}
-			evidence.FixtureSHA256 = sha256Hex(src)
-			p, e := frontend.Parse(string(src), target)
+			input, e := loadDifferentialInput(testCase.Fixture, target)
+			evidence.FixtureSHA256 = input.fixtureSHA256
 			if e != nil {
 				evidence.Phases["parse"] = phaseFail
 				t.Fatal(e)
 			}
 			evidence.Phases["parse"] = phasePass
-			generated, e := codegen.Generate(p)
+			generated, sourceMap, e := codegen.GenerateWithMap(input.program)
 			if e != nil {
+				evidence.Phases["codegen"] = phaseFail
+				t.Fatal(e)
+			}
+			if e := validateClosureSourceMap(input, sourceMap); e != nil {
 				evidence.Phases["codegen"] = phaseFail
 				t.Fatal(e)
 			}
@@ -183,7 +247,7 @@ func TestDifferential(t *testing.T) {
 				t.Fatalf("build: %v\n%s\n%s", e, o, generated)
 			}
 			evidence.Phases["go-build"] = phasePass
-			phpRun := captureCommand(exec.Command(php, phpArgs...))
+			phpRun := captureCommand(exec.Command(php, quietFixturePHPArgs(fixture, input.nativeFile)...))
 			evidence.Diagnostics.PHP = phpRun.observation
 			evidence.Outputs.PHP = phpRun.output
 			native := exec.Command(binary)

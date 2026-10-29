@@ -1,10 +1,9 @@
 # File-aware source locations (L0-b infrastructure)
 
-This internal infrastructure supports the planned checked-source closure. It
-does **not** implement executable `require_once`, connect graph inspection to
-codegen, or add bundle CLI/build-report/publication support. L0 remains partial;
-L1 native multi-file comparison and L2 unchanged original-closure admission
-remain pending in the [loading contract](static-source-loading.md).
+This infrastructure is now used by the checked
+[static declaration closure](static-source-loading.md), its explicit bundle CLI
+and v0.2 build reports. Location metadata alone is not verified loading or native
+compatibility evidence. Complete original-parser admission remains separate.
 
 `frontend.ParseSource(sourceID, bytes, target, options)` uses the existing
 filesystem-free single-file grammar and hashes exactly those original bytes.

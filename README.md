@@ -21,7 +21,7 @@ function lists live in the linked tables; actual results are per-run evidence.
 | [Values and types](docs/compatibility.md#values-and-types) | int64, byte strings, bool, null and ordered arrays with detached value copies |
 | [Objects and callables](docs/compatibility.md#objects-and-callables) | Simple public classes and capture-free arrows; no inheritance or captured closures |
 
-PHP reference syntax, include/autoload, PHP-compatible exceptions and extension
+PHP reference syntax, general include/autoload, PHP-compatible exceptions and extension
 APIs remain unsupported. Internal shared-array/ownership primitives exist, but
 **are not generated-array COW or PHP-reference support**.
 See [implementation stages](docs/reference-value-model.md#delivery-gates-and-status).
@@ -71,14 +71,11 @@ and verify hashes before using artifacts. See the [publication contract](docs/in
 
 ## Progress and next milestones
 
-[File-aware location infrastructure](docs/file-aware-locations.md) retains
-original source IDs in internal diagnostics and v0.2 statement maps while
-preserving legacy single-file behavior. It is not executable loading support.
-
-Internal [static source graph inspection](docs/static-source-loading.md) now
-records checked files and once-only dependency edges. It does not compile a
-multi-file bundle: `require_once` is still unsupported and the complete parser
-is not yet runnable.
+[Static declaration closures](docs/static-source-loading.md) now connect checked
+files and once-only edges to file-aware IR, diagnostics and Go generation.
+Explicit manifest/root/entry mode is required; ordinary `-in` retains its subset.
+General loading and the complete parser remain unsupported. New bundle
+reports/maps are v0.2; legacy reports remain v0.1.
 
 [Property `isset`](docs/property-isset.md) probes named paths without throwing
 on missing/null slots or confusing nonnull falsy values with absence. Ordinary

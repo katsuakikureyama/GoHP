@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"path"
 	"strings"
@@ -25,7 +26,7 @@ type ModuleRequire struct {
 }
 
 // ModuleInspection deliberately exposes no ir.Program: load directives cannot
-// disappear into a seemingly executable program before closure lowering exists.
+// disappear into a seemingly executable program through inspection alone.
 // Method/function bodies are parsed, but semantic admission is not established.
 type ModuleInspection struct {
 	SourceID     string              `json:"source_id"`
@@ -39,6 +40,32 @@ type ModuleInspection struct {
 // require_once directives. It never reads files, executes PHP or returns IR.
 // Ordinary Parse/ParseWithOptions retain their existing single-file grammar.
 func InspectModule(sourceID, src, version string, options Options) (out ModuleInspection, err error) {
+	out, _, err = parseStaticModule(sourceID, src, version, options, false)
+	return out, err
+}
+
+// StaticRequireOnce is an unresolved frontend-only statement. Semantic/codegen
+// admission deliberately rejects it. Only the checked closure resolver may
+// replace these top-level edges after verifying the complete source graph.
+const StaticRequireOnce = "static_require_once"
+
+type ParsedModule struct {
+	Inspection ModuleInspection
+	Program    ir.Program
+}
+
+// ParseStaticModule retains original-file IR and explicit unresolved load nodes.
+// entry permits a driver body after its leading load section; dependencies are
+// declaration-only. This filesystem-free adapter alone is not a loaded program.
+func ParseStaticModule(sourceID, src, version string, options Options, entry bool) (ParsedModule, error) {
+	inspection, program, err := parseStaticModule(sourceID, src, version, options, entry)
+	if err != nil {
+		return ParsedModule{}, err
+	}
+	return ParsedModule{Inspection: inspection, Program: program}, nil
+}
+
+func parseStaticModule(sourceID, src, version string, options Options, entry bool) (out ModuleInspection, program ir.Program, err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			if e, ok := recovered.(error); ok {
@@ -49,21 +76,22 @@ func InspectModule(sourceID, src, version string, options Options) (out ModuleIn
 		}
 		if err != nil {
 			out = ModuleInspection{}
-			err = fmt.Errorf("%s: %w", sourceID, err)
+			program = ir.Program{}
+			err = ir.WithSource(err, sourceID)
 		}
 	}()
 	if !modulePath(sourceID) {
-		return out, fmt.Errorf("PHP003: module source ID must be a canonical relative slash path")
+		return out, program, fmt.Errorf("PHP003: module source ID must be a canonical relative slash path")
 	}
 	if err := phpversion.ValidateTarget(version); err != nil {
-		return out, fmt.Errorf("PHP003: %w", err)
+		return out, program, fmt.Errorf("PHP003: %w", err)
 	}
 	if options.ExperimentalPCRE2 && version != "8.3" {
-		return out, fmt.Errorf("PHP003: experimental regex profile requires PHP 8.3")
+		return out, program, fmt.Errorf("PHP003: experimental regex profile requires PHP 8.3")
 	}
 	ts, err := lex(src)
 	if err != nil {
-		return out, err
+		return out, program, err
 	}
 	p := &parser{ts: ts, version: version, experimentalPCRE2: options.ExperimentalPCRE2}
 	out = ModuleInspection{SourceID: sourceID, PHPVersion: version,
@@ -71,11 +99,17 @@ func InspectModule(sourceID, src, version string, options Options) (out ModuleIn
 	if options.ExperimentalPCRE2 {
 		out.RegexProfile = ir.Preg83Profile
 	}
+	program = ir.Program{Version: ir.Version, PHPVersion: version, RegexProfile: out.RegexProfile,
+		Sources: []ir.SourceFile{{ID: sourceID, Bytes: int64(len(src)), SHA256: fmt.Sprintf("%x", sha256.Sum256([]byte(src)))}}}
 	loadsStarted := false
+	bodyStarted := false
 	for p.peek().kind != "eof" {
 		line := p.peek().line
 		switch {
 		case p.accept("require_once"):
+			if bodyStarted {
+				p.fail("static require_once must precede executable entry statements")
+			}
 			loadsStarted = true
 			p.need("__DIR__")
 			p.need(".")
@@ -85,31 +119,45 @@ func InspectModule(sourceID, src, version string, options Options) (out ModuleIn
 			}
 			p.need(";")
 			out.Requires = append(out.Requires, ModuleRequire{Line: line, Suffix: suffix.text})
+			program.Body = append(program.Body, ir.Stmt{Kind: StaticRequireOnce, Name: suffix.text, Line: line, SourceID: sourceID})
 		case p.accept("function"):
-			if loadsStarted {
+			if loadsStarted || bodyStarted {
 				p.fail("module declarations must precede trailing require_once directives")
 			}
 			f := p.function(false)
 			if err := rejectLocalModuleLoads(f.Body); err != nil {
-				return out, err
+				return out, program, err
 			}
+			f.SourceID = sourceID
+			program.Functions = append(program.Functions, f)
 			out.Declarations = append(out.Declarations, ModuleDeclaration{Kind: "function", Name: f.Name, Line: line})
 		case p.accept("class"):
-			if loadsStarted {
+			if loadsStarted || bodyStarted {
 				p.fail("module declarations must precede trailing require_once directives")
 			}
 			c := p.class()
 			for _, method := range c.Methods {
 				if err := rejectLocalModuleLoads(method.Body); err != nil {
-					return out, err
+					return out, program, err
 				}
 			}
+			c.SourceID = sourceID
+			program.Classes = append(program.Classes, c)
 			out.Declarations = append(out.Declarations, ModuleDeclaration{Kind: "class", Name: c.Name, Line: line})
 		default:
-			p.fail("static modules admit only declarations and trailing require_once directives")
+			if !entry {
+				p.fail("static modules admit only declarations and trailing require_once directives")
+			}
+			bodyStarted = true
+			statement := p.stmt()
+			if err := rejectLocalModuleLoads([]ir.Stmt{statement}); err != nil {
+				return out, program, err
+			}
+			statement.SourceID = sourceID
+			program.Body = append(program.Body, statement)
 		}
 	}
-	return out, nil
+	return out, program, nil
 }
 
 // The existing expression parser can represent parenthesized include/require
