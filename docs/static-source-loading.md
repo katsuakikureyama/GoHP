@@ -1,9 +1,67 @@
 # Static source loading — first implementation contract
 
-Status: **design only; loading is not implemented or supported**. No new CLI
-flag, filesystem access, IR admission or compatibility-catalog PASS is added by
-this document. This is the next bounded implementation plan for Gossip's fixed
-PHP 8.3 application, not a general PHP include/autoload design.
+Status: **L0-a graph inspection implemented; executable loading is unsupported**.
+The internal inspector parses checked declaration modules and records explicit
+loading edges, but returns no executable IR or generated Go. No new CLI flag,
+single-file grammar or build/source-map schema is added. The tooling catalog
+records graph contract checks, not PHP loading compatibility. Gossip's fixed
+PHP 8.3 application remains the first goal, not general include/autoload.
+
+## Implemented inspection slice (L0-a)
+
+[`sourceclosure.Inspect`](../internal/sourceclosure/closure.go) accepts a corpus
+manifest, private source root, explicit entry path, PHP target and frontend
+options. It uses additive `corpus.LoadSourcesNoAliases` to verify the entire
+manifest before graph discovery, preserving the existing `LoadSources`/`Verify`
+contracts. Selected paths traversing symlinks, or selected files sharing the same
+file identity, reject. The root itself may resolve through a symlink. This is
+checked-buffer inspection under the existing immutable-root assumption, not
+runtime discovery or a hostile-filesystem sandbox.
+
+`frontend.InspectModule` consumes strings without filesystem access. It parses
+complete function/class bodies and trailing directives using the existing
+closed parser; declarations and edges retain their original file/line identity.
+Only declaration-only entries/dependencies are admitted here. Executable drivers
+are deferred to L1. Parenthesized local include/require syntax is also rejected,
+including inside nested/arrow expressions; it must not hide as an ordinary call.
+No semantic validation, codegen or native PHP execution occurs.
+
+Graph traversal is deterministic source-order DFS. Repeated/diamond edges are
+retained and marked reused; canonical root-relative IDs, not content hashes,
+identify modules. Cycles, unlisted targets and case-insensitive same-kind
+declaration collisions reject. Unreached source entries stay explicit and are
+byte-verified but not parsed. A failure returns no partial module or graph.
+The internal `gohp.source-closure/v0.1` report has `graph-checked` status and
+`compatibility: unverified`; its source hashes, edge locations and target/profile
+are not an executable build report or a compatibility verdict. Ordinary
+`ParseWithOptions`, `ir.Program`, source maps and CLI reports are unchanged.
+
+L0 remains partial: carrying file-aware locations through executable IR,
+semantic diagnostics and generated maps/reports is still pending. There is no
+bundle compile mode, driver admission, original-closure compiler probe or
+supported PHP `require_once` row. The full parser remains blocked.
+
+## L0-a local evidence (2026-10-29)
+
+At clean code `7866633f168ecd12a0fb8783c92b749b61c2d803`, cached
+Go1.23.0 Darwin/arm64, CGO0, offline and the existing task-shared GOCACHE:
+
+```sh
+env GOTOOLCHAIN=local GOPROXY=off GOSUMDB=off GOWORK=off CGO_ENABLED=0 \
+  GOCACHE=/private/tmp/gohp-go-cache \
+  /Users/kureyamayuri/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.23.0.darwin-arm64/bin/go \
+  test -count=1 ./internal/frontend ./internal/corpus ./internal/sourceclosure \
+  ./cmd/gohp-corpus-verify ./cmd/gohp-corpus-inventory ./internal/compat
+```
+
+All six packages PASS once: frontend0.458s, corpus0.379s, sourceclosure0.672s,
+corpus-verify0.817s, corpus-inventory0.994s, compat0.956s. This evidence-only
+addition does not change tested code or configuration. Nine new tooling checks
+are catalogued; unit metadata exercises both target labels, not native PHP
+loading. No generated closure, native loading comparison or new original-source
+probe was run. Prior source-only rejection remains the recorded application
+blocker. Existing independent PHP8.3/PHP8.4 CI remains required for regression;
+its results do not promote L1/L2 or G83-PARSER to PASS.
 
 ## Measured starting point
 
@@ -88,7 +146,7 @@ execution-owned contract and native measurements.
 
 1. **Checked source buffers.** Extend the existing manifest/checked-buffer
    boundary rather than inventing an unbounded filesystem reader.
-   [`corpus.LoadSources`](../internal/corpus/corpus.go) already validates every
+   [`corpus.LoadSourcesNoAliases`](../internal/corpus/corpus.go) validates every
    selected whole file before returning retained source bytes. It is not a
    compiler or dependency resolver today. Keep provenance/notices and compile
    entry/edge selection explicit; do not repurpose historical inventory
@@ -143,11 +201,11 @@ components, symlink/hardlink aliases, stream/network wrappers, dynamic expressio
 require return values, `include`, ordinary `require`, autoload and runtime file
 discovery are outside the initial profile. Reject, do not approximate them.
 
-## Delivery gates — all pending
+## Delivery gates
 
 | Slice | Required observable result | Status |
 |---|---|---|
-| L0: source identity and module graph | Closed per-file parser, verified buffers, deterministic edges/once identity and file-aware diagnostics/report/map; reject unresolved/raw load nodes | Not implemented |
+| L0: source identity and module graph | Closed per-file parser, verified buffers, deterministic edges/once identity and file-aware diagnostics/report/map; reject unresolved/raw load nodes | **Partial**: L0-a inspection/report implemented; executable file-aware IR/semantic diagnostics/generated maps/reports pending |
 | L1: bounded declaration closure | One owned multi-file fixture compiled and built; behavior independently compared with pinned PHP8.3; duplicate/diamond loads resolve once; all unsupported forms fail closed | Not implemented |
 | L2: original three-file admission | One probe of the unchanged complete parser plus both dependencies through the real loader; retain all hashes and the first real frontend/semantic blocker | Not run |
 | G83-PARSER | All original methods and complete dependencies built/executed with the declared native comparisons and state/error observations | Blocked; loading is only one dependency |
@@ -182,10 +240,11 @@ and reuse PASS. Record exact commit/tree, manifest/driver/source hashes, target,
 oracle digest/configuration, commands and failures/unmeasured phases. Then probe
 the original closure once and record the next real blocker, not an artificial
 PASS. Remaining stack/object/snapshot/tokenizer/JSON requirements stay open even
-if loading succeeds. No successful compiler/native tests or original probe are
-rerun for this design-only change.
+if loading succeeds. L0-a adds focused unit/tooling checks, not a new native
+loading result. Existing successful native tests and the original source-only
+probe are reused without rerunning unchanged boundaries.
 
 Use the existing task-shared build cache, temporary test-owned output directories
 and one worktree per change. Remove a clean merged worktree after integration;
-preserve unmerged work and durable evidence. This plan does not create binaries,
-new dependency caches, Docker images, a consumer repin or deployment changes.
+preserve unmerged work and durable evidence. The inspector adds no persistent
+binaries, dependency caches, Docker images, consumer repin or deployment changes.

@@ -90,7 +90,7 @@ type TargetMeasurement struct {
 // beneath sourceRoot. The caller is responsible for supplying a private root
 // that is not mutated concurrently; Verify performs no writes.
 func Verify(manifestPath, sourceRoot string) (Report, error) {
-	report, _, err := load(manifestPath, sourceRoot, false)
+	report, _, err := load(manifestPath, sourceRoot, false, false)
 	return report, err
 }
 
@@ -104,10 +104,19 @@ type Source struct {
 // LoadSources returns all checked source buffers only after the entire manifest
 // selection passes. Consumers must use these buffers, not reopen source paths.
 func LoadSources(manifestPath, sourceRoot string) (Report, []Source, error) {
-	return load(manifestPath, sourceRoot, true)
+	return load(manifestPath, sourceRoot, true, false)
 }
 
-func load(manifestPath, sourceRoot string, retain bool) (Report, []Source, error) {
+// LoadSourcesNoAliases adds the static-module profile's identity restriction:
+// selected paths cannot traverse symlinks or refer to the same regular file.
+// The root itself may resolve through symlinks (for example macOS /tmp).
+// Like LoadSources, callers must supply a private, non-mutating source root
+// and consume the returned checked buffers rather than reopen source paths.
+func LoadSourcesNoAliases(manifestPath, sourceRoot string) (Report, []Source, error) {
+	return load(manifestPath, sourceRoot, true, true)
+}
+
+func load(manifestPath, sourceRoot string, retain, rejectAliases bool) (Report, []Source, error) {
 	manifestBytes, err := readRegular(manifestPath, maxManifestBytes)
 	if err != nil {
 		return Report{}, nil, fmt.Errorf("manifest: %w", err)
@@ -124,10 +133,15 @@ func load(manifestPath, sourceRoot string, retain bool) (Report, []Source, error
 	var sourceBytes int64
 	var sourceCount int
 	var sources []Source
+	var identities []os.FileInfo
+	var identityPaths []string
 	for _, entry := range manifest.Files {
 		resolved, err := resolveSelected(root, entry.Path)
 		if err != nil {
 			return Report{}, nil, fmt.Errorf("%s: %w", entry.Path, err)
+		}
+		if rejectAliases && resolved != filepath.Join(root, filepath.FromSlash(entry.Path)) {
+			return Report{}, nil, fmt.Errorf("%s: selected path traverses a symlink alias", entry.Path)
 		}
 		info, err := os.Stat(resolved)
 		if err != nil {
@@ -135,6 +149,15 @@ func load(manifestPath, sourceRoot string, retain bool) (Report, []Source, error
 		}
 		if !info.Mode().IsRegular() {
 			return Report{}, nil, fmt.Errorf("%s: selected file is not regular", entry.Path)
+		}
+		if rejectAliases {
+			for i, previous := range identities {
+				if os.SameFile(previous, info) {
+					return Report{}, nil, fmt.Errorf("%s: selected file aliases %s", entry.Path, identityPaths[i])
+				}
+			}
+			identities = append(identities, info)
+			identityPaths = append(identityPaths, entry.Path)
 		}
 		if info.Size() != entry.Bytes {
 			return Report{}, nil, fmt.Errorf("%s: size mismatch: got %d, want %d", entry.Path, info.Size(), entry.Bytes)
