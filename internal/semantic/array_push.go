@@ -20,8 +20,11 @@ func (v validator) arrayPush(stmt ir.Stmt, scope map[string]valueType) error {
 	case "var":
 		base = target
 	case "property":
-		if !validName(target.Text) || target.Params != nil || len(target.Args) != 1 || target.Args[0].Kind != "var" {
+		if !validName(target.Text) || target.Params != nil || len(target.Args) != 1 {
 			return malformed(stmt.Line, "array_push requires a direct named property target")
+		}
+		if target.Args[0].Kind != "var" {
+			return unsupported(stmt.Line, "array_push property requires a bare local receiver")
 		}
 		base = target.Args[0]
 	default:
@@ -32,6 +35,9 @@ func (v validator) arrayPush(stmt ir.Stmt, scope map[string]valueType) error {
 	}
 	if base.Text == "GLOBALS" || strings.HasPrefix(base.Text, "_") || (target.Kind == "var" && base.Text == "this") {
 		return unsupported(stmt.Line, "array_push requires a nonreserved target")
+	}
+	if _, exists := scope[base.Text]; !exists {
+		return unsupported(stmt.Line, "array_push requires an existing target root")
 	}
 	t, err := v.expr(target, scope)
 	if err != nil {
