@@ -29,24 +29,45 @@ func Normalize(value any) any {
 // Index tracks automatic integer keys independently of string entries. It is
 // a value: copying an array container must copy this state as well. A zero
 // Index is uninitialized, so Next starts at zero but the first explicit negative
-// key establishes its own successor. No deletion/reset policy is provided.
+// key establishes its own successor. Pop handles only a removed integer tail;
+// it is not a general deletion/reset policy.
 type Index struct {
 	next        int64
 	initialized bool
-	blocked     bool
+	blocked     bool // MaxInt64 is occupied, even if Pop rewinds next below it.
 }
 
 // Observe records an inserted integer key; lower/replacement keys never rewind
-// the sequence. MaxInt64 can be stored, but later automatic insertion rejects.
+// the sequence. MaxInt64 can be stored; insertion at that key rejects while
+// it remains occupied. Pop may make a lower predecessor available first.
 func (index *Index) Observe(key int64) {
-	if index.blocked || (index.initialized && key < index.next) {
+	if index.initialized && key < index.next {
 		return
 	}
 	index.initialized = true
 	if key == math.MaxInt64 {
+		index.next = key
 		index.blocked = true
 	} else {
 		index.next = key + 1
+	}
+}
+
+// Pop observes the integer key of an entry just removed by array_pop. Only
+// the immediate predecessor rewinds next; string tails never call this method.
+// MaxInt64 uses a saturated next value plus occupancy, not an overflowing +1.
+func (index *Index) Pop(key int64) {
+	if key == math.MaxInt64 {
+		index.blocked = false
+		return
+	}
+	if index.initialized && key+1 == index.next {
+		if key == math.MinInt64 {
+			// PHP's minimum next-index sentinel resumes automatic keys at 0.
+			*index = Index{}
+		} else {
+			index.next = key
+		}
 	}
 }
 
@@ -55,7 +76,7 @@ func (index *Index) Observe(key int64) {
 // Overflow rejection preserves the existing runtime error, not PHP exception
 // or diagnostic equivalence.
 func (index Index) Next() int64 {
-	if index.blocked {
+	if index.blocked && index.next == math.MaxInt64 {
 		panic("array key overflow unsupported")
 	}
 	return index.next

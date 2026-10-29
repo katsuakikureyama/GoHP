@@ -32,6 +32,8 @@ type Stmt struct {
 	// Expr is canonical call/array_push with only the value arguments (possibly
 	// none); Name is an optional bare result local. Not a general reference API
 	// or value expression; the target address precedes payload evaluation.
+	// array_pop: same bounded Target/optional Name, with canonical call/array_pop
+	// Expr and nil Args/Params. Mixed element/null result is assigned last.
 	// assign_nested_property[_append/_concat] uses Target=2+ named property
 	// nodes rooted in a bare local, Expr=RHS. This is not a PHP reference cell.
 	// list_assign uses Expr (RHS) and Target=list with nonempty bare-var Args.

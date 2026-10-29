@@ -3,6 +3,27 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.builtin.array-pop",
+      "kind": "builtin",
+      "name": "Bounded array_pop on an existing local or direct public property",
+      "implementation": "partial",
+      "contract": "Standalone array_pop or its whole RHS assigned to a bare local captures an existing local/direct named-property array location, removes the last insertion entry, then binds its mixed value or null for empty. Remaining and returned arrays detach while child objects retain identity. Numeric tail removal rewinds only the immediate next-index predecessor, including PHP8.3 negative/minimum-sentinel and saturated maximum occupancy rules; result aliases bind last.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.array_pop","test":"TestDifferential/array_pop","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/array_pop.php","assertions":["stdout","exit","last insertion, empty/null/falsy values, next keys, detached arrays and shared frame identity, local copies/property stack mutation and result aliases"]},
+        {"case_id":"compiler.array_pop","test":"TestArrayPopLoweringAndSourceMap","file":"internal/codegen/array_pop_test.go","kind":"compiler","assertions":["canonical address-only statement, result last, local/property lowering and source maps, unknown result and conservative legacy storage/widening"]},
+        {"case_id":"negative.array_pop.source","test":"TestArrayPopUnsupportedSource","file":"internal/codegen/array_pop_test.go","kind":"negative","assertions":["undefined/reserved/nonarray/unsupported targets, bad arity, embedded calls, result destinations, named/unpacked/reference arguments and redeclaration reject"]},
+        {"case_id":"negative.array_pop.ir","test":"TestArrayPopMalformedIR","file":"internal/codegen/array_pop_test.go","kind":"negative","assertions":["canonical nil argument payload and direct target shape, hidden metadata and generic call bypass reject before output"]},
+        {"case_id":"unit.runtime.array_pop.local","test":"TestArrayPopLocalValues","file":"runtime/array_pop_test.go","kind":"unit","assertions":["last entry removal, null on empty, remaining/returned nested copies, child identity, caller copies and next-index state"]},
+        {"case_id":"unit.runtime.array_pop.property","test":"TestArrayPopPropertyValues","file":"runtime/array_pop_test.go","kind":"unit","assertions":["captured declared owner rereads current slot, one nonempty publication and no empty publication"]},
+        {"case_id":"negative.runtime.array_pop","test":"TestArrayPopRejectsInvalidDomains","file":"runtime/array_pop_test.go","kind":"negative","assertions":["existing actual arrays only, invalid owner/slot/domain rejects without mutation or continuation"]},
+        {"case_id":"unit.array_pop.index","test":"TestArrayPopIndex","file":"internal/arraykey/pop_test.go","kind":"unit","assertions":["predecessor-only rewind, negative/minimum sentinel, independent copied index, maximum occupancy retained below saturated next"]},
+        {"case_id":"compiler.array_pop.fixture","test":"TestArrayPopFixture","file":"tests/array_pop_runtime_test.go","kind":"compiler","assertions":["owned native fixture lowers for both existing labels without local PHP"]},
+        {"case_id":"compiler.array_pop.host","test":"TestArrayPopHostEntry","file":"tests/array_pop_runtime_test.go","kind":"compiler","assertions":["generated runtime guards, caller array independence, declared property mutation, null/alias/loop behavior and explicit structural host opt-in"]}
+      ],
+      "limitations": ["Statement-only standalone or complete RHS to a nonreserved bare local; no generic embedded mutation or property/index result", "Exactly one existing bare-local or direct named declared-property target; no indexed/nested/dynamic/effectful target, references, named/unpacked arguments or autovivification", "Actual arrays only; no PHP warning/exception equivalence, internal array pointer API, general unset/delete or interpreter fallback", "Legacy map lane only; full PropertyObject hosts explicitly opt in, not as provenance or authorization. Additive IR0.1, no new storage/report/version lane", "Owned fixture is not original parser execution or application acceptance; local gohp.cli.generate remains WebMCP-excluded, with no resource/auth/route/deployment change"]
+    },
+    {
       "id": "php.builtin.array-push",
       "kind": "builtin",
       "name": "Bounded array_push on an existing local or direct public property",
@@ -20,7 +41,7 @@
         {"case_id":"compiler.array_push.fixture","test":"TestArrayPushFixture","file":"tests/array_push_runtime_test.go","kind":"compiler","assertions":["committed owned native fixture lowers on each active label without local PHP"]},
         {"case_id":"compiler.array_push.host","test":"TestArrayPushHostEntry","file":"tests/array_push_runtime_test.go","kind":"compiler","assertions":["generated property address before payload, actual-array guard after payload, count/result-alias/loop mutation, independent caller arrays and explicit host opt-in"]}
       ],
-      "limitations": ["Statement-only: standalone call or whole RHS assigned to a nonreserved bare local. No echo/return/condition/nested-call/arrow-body or property-result assignment forms", "Target must already exist: bare local or one declared named public property rooted in a defined bare local. No literals, calls, array indices, nested/dynamic properties, autovivification or general PHP by-reference arguments", "Actual arrays only; null/scalar/object/Closure inputs reject. No named/unpacked/reference value arguments, array_pop or general exception/diagnostic equivalence", "Values evaluate completely before mutation; each successful append publishes, with no rollback after a later overflow. Direct full PropertyObject hosts explicitly opt in, not as provenance or authorization", "New IR statement is additive to0.1; no new storage lane, report schema, original-parser adoption, resource/auth route or deployment. Local generation remains WebMCP-excluded"]
+      "limitations": ["Statement-only: standalone call or whole RHS assigned to a nonreserved bare local. No echo/return/condition/nested-call/arrow-body or property-result assignment forms", "Target must already exist: bare local or one declared named public property rooted in a defined bare local. No literals, calls, array indices, nested/dynamic properties, autovivification or general PHP by-reference arguments", "Actual arrays only; null/scalar/object/Closure inputs reject. No named/unpacked/reference value arguments or general exception/diagnostic equivalence; bounded pop has its separate feature entry", "Values evaluate completely before mutation; each successful append publishes, with no rollback after a later overflow. Direct full PropertyObject hosts explicitly opt in, not as provenance or authorization", "New IR statement is additive to0.1; no new storage lane, report schema, original-parser adoption, resource/auth route or deployment. Local generation remains WebMCP-excluded"]
     },
     {
       "id": "php.syntax.static-declaration-closure",

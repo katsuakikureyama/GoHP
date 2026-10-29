@@ -27,7 +27,8 @@ func propertyObject(value any) PropertyObject {
 // ResolveProperty checks one declared property without admitting dynamic slot
 // creation, nil/scalar receivers or setter-only foreign hosts. Generated code
 // resolves it after the RHS for assignment/append, but before value arguments
-// for array_push. Push reads the actual array only after those arguments.
+// for array_push/pop. Push reads the actual array only after its arguments;
+// Pop has no value arguments and reads the captured slot synchronously.
 func ResolveProperty(value any, name string) NestedProperty {
 	owner := propertyObject(value)
 	owner.Get(name)
