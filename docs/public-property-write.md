@@ -98,3 +98,6 @@ before guard, no later write after failure and explicit full-protocol host opt-i
 Results remain per exact compiler commit/target; no full original parser PASS is
 implied. The measured complete-source blocker before this increment was209,
 `$stack_top->prev_offset` after array_pop, not a missing ordinary include mode.
+The [new complete-source probe and focused evidence](evidence/unknown-property-write-2026-10-29.md)
+pass that write and next reject string `empty($html)` at354. Full original
+generation/execution and application acceptance remain blocked.
