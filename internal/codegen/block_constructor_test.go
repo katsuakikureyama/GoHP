@@ -107,7 +107,7 @@ func TestBlockDataConstructorBoundaries(t *testing.T) {
 		"other_magic_method":           `class Box { public function __clone() {} }`,
 		"direct_constructor_reentry":   `class Box { public function __construct() {} } $box = new Box(); $box->__construct();`,
 		"inheritance":                  `class Child extends ParentBox {}`,
-		"cast_unknown_parameter":       `function copy($value) { $array = (array)$value; }`,
+		"cast_undefined_variable":      `$array = (array)$missing;`,
 		"cast_array":                   `$value = []; $array = (array)$value;`,
 		"cast_scalar":                  `$value = 'text'; $array = (array)$value;`,
 		"cast_callable":                `$value = fn($item) => $item; $array = (array)$value;`,

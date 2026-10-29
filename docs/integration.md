@@ -210,6 +210,14 @@ unchanged. Full PropertyObject hosts explicitly opt in as for nested paths;
 the protocol is not a generated-only provenance or authorization certificate.
 No new resource/schema, UI/server/MCP route, auth mode or auto-submit is added.
 
+[Guarded public-object snapshots](block-data-constructor.md) extend the same
+WebMCP-excluded `gohp.cli.generate` capability to inferred-unknown cast operands.
+The existing actual PublicPropertyObject protocol is required at runtime;
+complete host implementations explicitly opt in, not as provenance or auth.
+This adds no resource/input schema, route, auth mode, auto-submit or deployment.
+Fresh/report-last publication and generated/unverified result remain unchanged;
+an admitted snapshot is not complete-parser or original-source certification.
+
 Bundle reports use `gohp.build/v0.2` and file-aware source-map v0.2. They bind the
 entry, exact manifest hash, full compiled-source table, ordered loading graph,
 unreached selection, profile and generated hash. Legacy single-file reports stay

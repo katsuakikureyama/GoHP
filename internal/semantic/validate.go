@@ -1491,8 +1491,13 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 		if err != nil {
 			return valueType{}, err
 		}
-		if _, exists := v.classes[receiver.class]; receiver.kind != objectKind || !exists {
-			return valueType{}, unsupported(expr.Line, "array cast requires a known generated class")
+		// Mutable property reads, array extraction and untyped returns can lose
+		// the precise class. Keep the existing ObjectToArray actual-value guard
+		// on these paths; this is not PHP's generic scalar/array/null cast.
+		if receiver.kind != unknownKind {
+			if _, exists := v.classes[receiver.class]; receiver.kind != objectKind || !exists {
+				return valueType{}, unsupported(expr.Line, "array cast requires a generated public-property object")
+			}
 		}
 		return valueType{kind: arrayKind}, nil
 	case "property":
