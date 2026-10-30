@@ -131,6 +131,10 @@ connects a narrow `preg_match` statement to the PCRE2 adapter. Named property
 subject/offset reads use actual string/integer guards. It needs explicit
 compiler opt-in and a separately enabled native backend; ordinary CGO0 CI is
 not evidence of PCRE compatibility. PHP 8.4 and general output references remain excluded.
+The separately named `pcre2-php83-match1-v1` profile requires an additional
+explicit compiler option and selects a fixed match1 entry; it preserves the
+default match100000 profile. Its profile identity is retained in IR/report,
+and native resource observations remain distinct from default-CGO0 tooling.
 
 [Single-quoted backslash handling](docs/single-quoted-backslashes.md) preserves
 literal regex/text bytes without rewriting PHP source spelling, for both targets.

@@ -211,8 +211,8 @@ deployment. Generation is not original-parser compatibility or application
 acceptance; the existing fresh/report-last publication contract is unchanged.
 
 The same local capability now has two exclusive input schemas: legacy
-`{in, php_version, experimental_pcre2?}` or bundle
-`{manifest, source_root, entry, php_version, experimental_pcre2?}`. Bundle paths
+`{in, php_version, experimental_pcre2?, experimental_pcre2_profile?}` or bundle
+`{manifest, source_root, entry, php_version, experimental_pcre2?, experimental_pcre2_profile?}`. Bundle paths
 are explicit caller-owned local resources, with a private immutable source root.
 Inspect/prepare reads and validates every selected source/notice/provenance byte,
 resolves static declarations and performs semantic/codegen checks in memory.
@@ -223,6 +223,15 @@ never saved-as-compatible, deployed or externally sent. This is not a new server
 operation or browser/MCP route; WebMCP remains excluded, no auto-submit or auth
 change. Partial/mixed modes reject before loading. General include/autoload is
 outside the [bounded closure contract](static-source-loading.md).
+
+`experimental_pcre2_profile` is an optional closed enum: `pcre2-php83-v1`
+or `pcre2-php83-match1-v1`, requiring `experimental_pcre2=true` and PHP8.3.
+Omission preserves the old default. Inspect/prepare rejects unknown/missing
+opt-in/foreign-target profiles before source loading and records the selected
+identity in IR/report; save/commit retains fresh report-last publication.
+This extends the same `gohp.cli.generate` input contract, not a new service or
+browser capability. Result remains generated/unverified; WebMCP excluded,
+no auth/route/auto-submit/deployment or mutable budget operation is added.
 
 [Guarded direct property writes](public-property-write.md) extend only simulated
 PHP value operations inside this same excluded `gohp.cli.generate` capability.

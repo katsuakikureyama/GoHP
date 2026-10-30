@@ -343,7 +343,11 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			// guard/engine call or either output-local publication.
 			g.emit("%sSubject := %s\n", result, g.expr(s.Expr.Args[1], scope))
 			g.emit("%sOffset := %s\n", result, g.expr(s.Expr.Args[2], scope))
-			g.emit("%s := execution.PregMatch83Local(%s,%s,%s)\n", result,
+			method := "PregMatch83Local"
+			if g.p.RegexProfile == ir.Preg83Match1Profile {
+				method = "PregMatch83LocalMatch1"
+			}
+			g.emit("%s := execution.%s(%s,%s,%s)\n", result, method,
 				g.expr(s.Expr.Args[0], scope), result+"Subject", result+"Offset")
 			g.emit("v[%q]=rt.Clone(%s.Matches)\n", s.Target.Text, result)
 			g.emit("v[%q]=%s.Return\n", s.Name, result)

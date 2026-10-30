@@ -8,6 +8,14 @@ const Version = "0.1"
 // fallback or a claim that arbitrary PHP PCRE calls are supported.
 const Preg83Profile = "pcre2-php83-v1"
 
+// Preg83Match1Profile is a separate, explicit low-match-budget experiment.
+// It never changes the default profile's fixed runtime entry or limits.
+const Preg83Match1Profile = "pcre2-php83-match1-v1"
+
+func IsPreg83Profile(profile string) bool {
+	return profile == Preg83Profile || profile == Preg83Match1Profile
+}
+
 type Expr struct {
 	// empty_var: one defined bare var, no Text/Params; actual array or string.
 	// Legacy empty_array remains array-only; generic empty calls are invalid.

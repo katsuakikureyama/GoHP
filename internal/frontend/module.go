@@ -86,8 +86,9 @@ func parseStaticModule(sourceID, src, version string, options Options, entry boo
 	if err := phpversion.ValidateTarget(version); err != nil {
 		return out, program, fmt.Errorf("PHP003: %w", err)
 	}
-	if options.ExperimentalPCRE2 && version != "8.3" {
-		return out, program, fmt.Errorf("PHP003: experimental regex profile requires PHP 8.3")
+	profile, err := options.RegexProfile(version)
+	if err != nil {
+		return out, program, err
 	}
 	ts, err := lex(src)
 	if err != nil {
@@ -96,9 +97,7 @@ func parseStaticModule(sourceID, src, version string, options Options, entry boo
 	p := &parser{ts: ts, version: version, experimentalPCRE2: options.ExperimentalPCRE2}
 	out = ModuleInspection{SourceID: sourceID, PHPVersion: version,
 		Declarations: []ModuleDeclaration{}, Requires: []ModuleRequire{}}
-	if options.ExperimentalPCRE2 {
-		out.RegexProfile = ir.Preg83Profile
-	}
+	out.RegexProfile = profile
 	program = ir.Program{Version: ir.Version, PHPVersion: version, RegexProfile: out.RegexProfile,
 		Sources: []ir.SourceFile{{ID: sourceID, Bytes: int64(len(src)), SHA256: fmt.Sprintf("%x", sha256.Sum256([]byte(src)))}}}
 	loadsStarted := false

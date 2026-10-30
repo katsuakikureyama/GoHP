@@ -63,7 +63,7 @@ func Validate(p ir.Program) (err error) {
 	if err := phpversion.ValidateTarget(p.PHPVersion); err != nil {
 		return fmt.Errorf("PHP003: %w", err)
 	}
-	if p.RegexProfile != "" && p.RegexProfile != ir.Preg83Profile {
+	if p.RegexProfile != "" && !ir.IsPreg83Profile(p.RegexProfile) {
 		return malformed(1, "unknown regex profile")
 	}
 	if p.RegexProfile != "" && p.PHPVersion != "8.3" {
@@ -647,7 +647,7 @@ func widenWhileWrites(stmts []ir.Stmt, scope map[string]valueType) {
 // or known typed bare locals or guarded named property reads. The writable
 // output is a pre-existing null local and no input root aliases a destination.
 func (v validator) pregMatchLocal(stmt ir.Stmt, scope map[string]valueType) error {
-	if v.target != "8.3" || v.regexProfile != ir.Preg83Profile {
+	if v.target != "8.3" || !ir.IsPreg83Profile(v.regexProfile) {
 		return unsupported(stmt.Line, "preg_match local output requires the PHP 8.3 experimental PCRE2 profile")
 	}
 	target := stmt.Target
@@ -1130,7 +1130,7 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			return valueType{}, unsupported(expr.Line, "preg_match is only admitted as experimental local-output syntax")
 		}
 		if strings.EqualFold(expr.Text, "preg_last_error") {
-			if v.target != "8.3" || v.regexProfile != ir.Preg83Profile {
+			if v.target != "8.3" || !ir.IsPreg83Profile(v.regexProfile) {
 				return valueType{}, unsupported(expr.Line, "preg_last_error requires the PHP 8.3 experimental PCRE2 profile")
 			}
 			if len(args) != 0 {

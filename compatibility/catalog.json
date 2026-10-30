@@ -205,7 +205,7 @@
       "kind": "tooling",
       "name": "Opt-in PHP 8.3 regex compiler boundary (not native compatibility)",
       "implementation": "partial",
-      "contract": "Default-CGO0 checks for an explicit PHP8.3-only local-output profile: source and IR admission, shared Execution lowering, publication, runtime guards and unavailable-backend failure. These tooling checks may execute under either active ledger target but do not establish PHP regex support for either target.",
+      "contract": "Default-CGO0 checks for explicitly selected PHP8.3-only local-output profiles: unchanged pcre2-php83-v1/match100000 or separate pcre2-php83-match1-v1/match1. Source/IR/profile admission, shared Execution lowering, publication, runtime guards and unavailable-backend failure only. Tooling checks may execute under either ledger target but do not establish PHP regex support for either target.",
       "php_targets": ["8.3", "8.4"],
       "checks": [
         {"case_id":"compiler.preg83.lowering","test":"TestPreg83CompilerLowering","file":"internal/codegen/preg83_test.go","kind":"compiler","assertions":["explicit local-output IR lowers to detached capture publication and shared Execution with source maps"]},
@@ -218,9 +218,17 @@
         {"case_id":"negative.preg83.profile","test":"TestPreg83CompilerProfileGate","file":"internal/codegen/preg83_test.go","kind":"negative","assertions":["default, PHP8.4 and unknown profiles cannot admit experimental regex calls"]},
         {"case_id":"compiler.preg83.cli","test":"TestPreg83CLIProfileAndPublication","file":"cmd/gohp/preg83_test.go","kind":"compiler","assertions":["profile recorded in fresh provenance; rejected source creates no output/report"]},
         {"case_id":"negative.preg83.local_inputs","test":"TestPreg83LocalRejectsUnmeasuredInputs","file":"runtime/preg83_local_test.go","kind":"negative","assertions":["actual-type and bounded-input failures are explicit and preserve prior error state"]},
-        {"case_id":"negative.preg83.disabled_generated","test":"TestPreg83GeneratedDisabledBackend","file":"tests/preg83_disabled_test.go","kind":"negative","assertions":["actual generated CGO0 program stops explicitly without fabricated PHP false or subsequent publication"]}
+        {"case_id":"negative.preg83.disabled_generated","test":"TestPreg83GeneratedDisabledBackend","file":"tests/preg83_disabled_test.go","kind":"negative","assertions":["actual generated CGO0 program stops explicitly without fabricated PHP false or subsequent publication"]},
+        {"case_id":"compiler.preg83.match1_lowering","test":"TestPreg83Match1CompilerLowering","file":"internal/codegen/preg83_match1_test.go","kind":"compiler","assertions":["explicit distinct profile selects match1 runtime entry and preserves default dispatch/source maps"]},
+        {"case_id":"negative.preg83.match1_profile","test":"TestPreg83Match1ProfileGates","file":"internal/codegen/preg83_match1_test.go","kind":"negative","assertions":["missing opt-in, unknown profiles, PHP8.4 and forged IR reject before generation"]},
+        {"case_id":"compiler.preg83.match1_cli","test":"TestPreg83Match1CLIProfileAndPublication","file":"cmd/gohp/preg83_match1_test.go","kind":"compiler","assertions":["explicit match1/default profile provenance and fresh publication; rejected flags produce no artifacts"]},
+        {"case_id":"compiler.preg83.match1_closure","test":"TestAssembleMatch1Profile","file":"internal/sourceclosure/match1_profile_test.go","kind":"compiler","assertions":["profile identity propagates through original-file static closure and report"]},
+        {"case_id":"negative.preg83.match1_closure","test":"TestRejectMatch1OptionsBeforeLoading","file":"internal/sourceclosure/match1_profile_test.go","kind":"negative","assertions":["invalid opt-in/profile/target rejected before manifest loading"]},
+        {"case_id":"negative.preg83.match1_inputs","test":"TestPreg83LocalMatch1RejectsUnmeasuredInputsWithoutStateChange","file":"runtime/preg83_match1_local_test.go","kind":"negative","assertions":["actual input types reject and preserve prior execution error state"]},
+        {"case_id":"negative.preg83.match1_execution","test":"TestPreg83LocalMatch1RequiresExecution","file":"runtime/preg83_match1_local_test.go","kind":"negative","assertions":["nil execution cannot select or run a resource profile"]},
+        {"case_id":"negative.preg83.match1_unavailable","test":"TestPreg83LocalMatch1UnavailablePreservesState","file":"runtime/preg83_match1_disabled_test.go","kind":"negative","assertions":["missing native backend fails explicitly and preserves prior error state"]}
       ],
-      "limitations": ["No native PCRE differential claim from default tooling checks", "Enabled PHP8.3 native comparison is separately opt-in; PHP8.4 profile, general references and WordPress parser execution remain excluded", "Nested captures use the legacy detached-value map lane, not canonical ValueSlot storage"]
+      "limitations": ["No native PCRE differential claim from default tooling checks", "Enabled PHP8.3 native comparison is separately opt-in; PHP8.4 profile, general references and WordPress parser execution remain excluded", "Named fixed budgets only; no mutable execution/global budget, arbitrary limits, wider subjects or new error mapping", "Nested captures use the legacy detached-value map lane, not canonical ValueSlot storage"]
     },
     {
       "id": "php.builtin.array_all",
