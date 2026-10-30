@@ -253,6 +253,22 @@ atomicity. They are not native-PHP differential evidence or full request
 isolation. The PHP-only reference specification and original native hook
 baseline are unchanged and are not relabeled by these tests.
 
+Initial implementation checks at clean commit
+`7ab0f8d8a64e4cdeafaebe798147ecbdd638654e`
+(tree `9a434dd21cc4e7f745a8afeb13b75afbef65e82a`): cached Go1.23.0,
+darwin/arm64, `CGO_ENABLED=0`, `GOHP_PHP_TARGET=8.3`, offline dependencies and
+the existing shared Go cache. One affected runtime invocation passed (0.227s):
+
+```sh
+go test -count=1 ./runtime -run '^(TestScalarRequest.*|TestScalarFrame.*|TestStrtok.*|TestContextualCallable.*|TestJSONAssociativeExecutionIsolationAndGuards|TestPreg83RequiresExecutionWithoutOptionalBackend)$'
+```
+
+The four new unit checks and existing affected scalar/context guard checks
+passed. No native PHP, Docker, generated program or tagged PCRE2 execution was
+performed by this invocation. Five changed Markdown files/163 relative links,
+the new anchor, catalog JSON/four test mappings and diff checks passed.
+Later documentation-only recording does not change the tested runtime tree.
+
 No new CLI operation, resource route or capability is exposed. These are
 developer runtime primitives, excluded from WebMCP; the existing local
 `gohp.cli.generate` exclusion continues to apply without input changes.
