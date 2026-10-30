@@ -1,9 +1,9 @@
 # Reference, value and assignment foundation
 
-Status: **design + native-oracle specification; scalar frames, shared scalar containers, owned Slots/temporaries, runtime adapter and bounded scalar-entry generated array scopes (including if/while) implemented**.
+Status: **design + native-oracle specification; scalar frames, shared scalar containers, owned Slots/temporaries, runtime adapter, bounded scalar-entry generated array scopes (including if/while) and scalar request-global host bindings implemented**.
 Original design baseline: main `565e65e6c9d8e211b06779739bfba76b07c4d92d` (#81).
 Request/location design review: main `c8d21776d0ca46ed9b42fb66363d10765d9721d2`
-(#139), with no new runtime or source admission in this documentation change.
+(#139); design-only consolidation #141 did not add runtime or source admission.
 Target: PHP 8.3, oracle floor 8.3.36. Later series need separate policy and
 evidence; they must not inherit these results. No compiler/runtime/IR changes
 were introduced by the original design or its PHP-only specification. The first
@@ -25,9 +25,11 @@ the [ownership plan](owned-array-slot-values.md#first-generated-scope-and-expres
 defines its proof and exclusions. This is not general generated-array migration.
 
 The 2026-10-30 request/location design below does not implement `global`,
-`$GLOBALS`, static storage, PHP references, interfaces or visibility. Current
-`Execution` owns strtok/JSON/PCRE state, not a PHP symbol table or HTTP request
-manager. Existing object-pointer identity is distinct from variable aliasing.
+`$GLOBALS`, static storage, PHP references, interfaces or visibility. The later
+[scalar request-global host ABI](#scalar-request-global-host-abi) adds guarded
+scalar bindings and Close to `Execution`, alongside strtok/JSON/PCRE state.
+It is not a general PHP symbol table or HTTP request manager. Existing
+object-pointer identity is distinct from variable aliasing.
 
 ## Decision
 
@@ -108,7 +110,8 @@ generated hook execution/comparison remains **not-run**. That native driver
 clears globals between workflows; it does not prove request isolation.
 
 Use the existing Slot/Frame foundation. The following owner roles and location
-operations are a design contract, not new public Go types or admitted syntax.
+operations are a design contract, not general public Location types or admitted
+syntax. The bounded scalar host implementation is documented separately below.
 Internal Frame aliases can outlive their frame through separately owned scalar
 cells; this is not a request-lifetime guard. Slot unset permits reuse, Frame
 close rejects later frame operations, and the value-only runtime adapters have
@@ -176,7 +179,7 @@ release/invalidation. Request teardown must release owned roots and make stale
 request-bound access fail without clearing another Execution. Existing host
 property protocols do not establish request ownership: the future adapter must
 define a checked transfer/ownership boundary before accepting cross-context
-objects or callbacks. There is no such runtime guarantee today. Pooling,
+objects or callbacks. The scalar host ABI does not provide that guarantee. Pooling,
 cross-request closures, cycles and PHP destructor order remain separate gates.
 
 Keep operation-specific evaluation order from the existing property-append
@@ -190,8 +193,8 @@ Before source admission, require these observable checks within R2–R5:
 
 | Check family | Required evidence | Current status |
 |---|---|---|
-| Global import versus value copy | Cross-call writes, missing import/null, local shadowing, alias rebinding and unset/recreated names agree with fixed PHP8.3 | Planned; no global syntax/runtime-table support |
-| Two request contexts | Interleave A/B with the same global/static/hook names; closing A cannot change B, and stale A-bound access cannot become B access | Planned; Go isolation tests plus explicit PHP request-boundary reference still required |
+| Global import versus value copy | Cross-call writes, missing import/null, local shadowing, alias rebinding and unset/recreated names agree with fixed PHP8.3 | Scalar host binding unit checks only; source admission and PHP/Go comparison still planned |
+| Two request contexts | Interleave A/B with the same global/static/hook names; closing A cannot change B, and stale A-bound access cannot become B access | Scalar host globals/imports/Close have Go unit checks; static/hook ownership, explicit PHP request-boundary reference and application isolation still planned |
 | Arrays and properties | Value-copy isolation, shared object identity, alias-bearing array separation timing and RHS replacement stay correct at admitted locations | Existing bounded value behavior only; persistent mixed-domain references not implemented |
 | Original hooks | Reuse the immutable eight-workflow native record, then compare generated events, results, counters and private/public state at matching pins | Native reference recorded; generated comparison not-run |
 | Request lifecycle | Define initialization, errors/cleanup and host entry/exit ownership before an HTTP acceptance claim | Planned; HTTP/bootstrap acceptance not established |
@@ -204,6 +207,55 @@ array/reference/callable contracts measured before being called compatible.
 The existing eager-copy lane remains until that migration is proven. These
 design rows do not add tests, change catalog implementation statuses or borrow
 the PHP-only reference as generated-Go evidence.
+
+### Scalar request-global host ABI
+
+This first request-state implementation reuses `storage.Frame` and `Slot`.
+It adds no source syntax, IR, compiler selection or generated entry behavior.
+`global`, `$GLOBALS`, statics and general PHP references remain unsupported.
+Only null, bool, int64 and byte strings are accepted; arrays, objects, callables
+and foreign Go values reject before storage changes. This cannot hold the
+array-valued WordPress hook table.
+
+| Host operation | Contract |
+|---|---|
+| `Execution.ReadScalarGlobal(name)` | Returns `(value, present)`; missing and present null differ, and lookup never creates a binding |
+| `Execution.WriteScalarGlobal(name, value)` | Assigns through the current global cell; invalid values do not allocate or replace storage |
+| `Execution.UnsetScalarGlobal(name)` | Removes the global name; imported locals may retain the old cell, and recreating the name does not reconnect them |
+| `ScalarFrame.ImportScalarGlobal(execution, name)` | Aliases the same-named global into the local frame, replacing its old local binding; a missing global becomes present null |
+| `ScalarFrame.Unset(name)` | Removes only the local binding; a later ordinary Write is independent until another import |
+| `Execution.Close()` | Idempotently closes its scalar global storage and imported frames, clears tokenizer/error state and rejects subsequent context operations |
+
+Global names are the closed ASCII form `[A-Za-z][A-Za-z0-9_]*`, excluding
+case-sensitive `this` and `GLOBALS`. Leading underscores, variable variables,
+superglobals, Unicode names and whole-table access are not admitted by this
+ABI. This is an implementation boundary, not PHP's full identifier domain.
+
+Imports retain no exported Slot/address handles. A frame attaches to one
+Execution for its remaining lifetime, including after local Unset or Close;
+it cannot be rebound to a second request. Closed/nil frames and invalid
+inputs reject before a missing global is created. A frame's Close releases
+its local bindings without closing the request namespace. Conversely,
+Execution.Close releases all still-imported frames, so stale accesses fail.
+Closing a frame after its Execution remains safe and idempotent. Ordinary
+nonimported frames keep their existing independent lifetime.
+
+The host must use a fresh Execution per logical request, share it through
+synchronous sibling/nested calls and defer its Close. Execution and frames
+remain pointer-only, noncopyable and nonconcurrent. Generated convenience
+wrappers are unchanged; no automatic source-global initialization or request
+entry/exit adapter is present. General host objects/callbacks remain outside
+this ownership guard, and no PHP destructor/exception ordering is promised.
+
+`gohp.tooling.scalar-request-globals` records Go unit contracts for scalar
+alias/copy/unset behavior, request A/B interleaving, teardown and guard failure
+atomicity. They are not native-PHP differential evidence or full request
+isolation. The PHP-only reference specification and original native hook
+baseline are unchanged and are not relabeled by these tests.
+
+No new CLI operation, resource route or capability is exposed. These are
+developer runtime primitives, excluded from WebMCP; the existing local
+`gohp.cli.generate` exclusion continues to apply without input changes.
 
 ### Copy timing is part of correctness
 
@@ -275,8 +327,10 @@ substitute a custom Go hook engine for untested original `WP_Hook` behavior.
 | R5 | Generic dynamic callable forms and original application acceptance (full block parser, then hooks) | Generic callables/hooks not implemented. The separate complete-parser case-limited Gossip evidence does not establish general references or whole-application acceptance |
 
 Next bounded implementation is selected from the original hook/state blockers:
-specify request-global binding ownership and operation-specific locations across
-calls before enabling source `global`/references. Array/untyped parameter entry
+connect the guarded scalar request bindings to an explicitly checked source
+entry/global-import contract, with native PHP8.3 comparison, before enabling
+source `global`/references. Top-level initialization, scope/effect discovery and
+all storage lanes must retain the same request owner. Array/untyped parameter entry
 domains or broader loop invariants are justified only where that selected slice
 needs them, not as a parallel storage-expansion queue. Build on
 the first expression-scoped lowering, shared scalar containers, value temporaries,

@@ -2540,6 +2540,21 @@
       "limitations": ["Only globals with no parameters or all exact int/string/bool parameters; no array/callable/untyped/mixed non-scalar signatures, typed defaults, methods, foreach or general frame ownership", "While requires each loop-entry domain to bound every write, even before a restore or in dead code; no general widening/fixed-point inference or branch-only definite-assignment promotion", "Only scalar elements, exact-flat mutation roots, listed pure scalar calls plus count; no nested arrays, array-producing/user/stateful calls, coalesce/path operations or interprocedural inference", "No PHP reference syntax, persistent locations, general destructor/exception semantics, performance or application acceptance claim", "Legacy operand exports/literal construction and guarded returns still copy; this is not a whole-runtime COW migration", "IR and PHP admission unchanged; generated consumers need matching ValueSlot/ValueTemporary runtime APIs"]
     },
     {
+      "id": "gohp.tooling.scalar-request-globals",
+      "kind": "tooling",
+      "name": "Guarded scalar request-global host bindings",
+      "implementation": "partial",
+      "contract": "Explicit host Execution owns a canonical scalar global Frame. Noncreating lookup distinguishes absence from null; guarded same-named ScalarFrame imports share cells, ordinary writes copy values, and local/global unset followed by recreation preserves distinct bindings. One imported frame belongs to one Execution for its lifetime. Explicit Close releases owned scalar globals/imported frames, clears tokenizer/error state and rejects stale context use.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id": "unit.scalar_request.binding", "test": "TestScalarRequestGlobalBinding", "file": "runtime/scalar_request_globals_test.go", "kind": "unit", "assertions": ["missing versus null, sibling/nested same-request alias writes, local shadowing, ordinary scalar copies, repeated import and frame-close/global survival"]},
+        {"case_id": "unit.scalar_request.unset", "test": "TestScalarRequestGlobalUnsetAndRecreate", "file": "runtime/scalar_request_globals_test.go", "kind": "unit", "assertions": ["local unset detaches only local; global unset preserves old imported cell; recreated global is independent until reimport"]},
+        {"case_id": "unit.scalar_request.isolation", "test": "TestScalarRequestIsolationAndClose", "file": "runtime/scalar_request_globals_test.go", "kind": "unit", "assertions": ["interleaved A/B scalar contexts, closing A leaves B intact, fresh C empty, stale A context/imported frame use rejects, cleanup idempotence and unimported frame independence"]},
+        {"case_id": "unit.scalar_request.guards", "test": "TestScalarRequestGlobalGuards", "file": "runtime/scalar_request_globals_test.go", "kind": "unit", "assertions": ["exact scalar and closed ASCII-name boundaries, nil/closed contexts and frames, cross-request frame imports reject without creating names or mutating existing bindings"]}
+      ],
+      "limitations": ["Host runtime ABI and Go unit evidence only: no PHP global/$GLOBALS/reference/static syntax, IR, codegen or entry-adapter support and no native-PHP differential claim", "Only null, bool, int64 and byte strings; ordinary ASCII names exclude leading underscores, this and GLOBALS. No arrays, objects, callables, superglobals, Unicode/dynamic names or whole symbol-table operations", "Execution and frames are pointer-only, noncopyable and nonconcurrent. Host owns explicit Close; existing generated convenience wrappers and effect discovery are unchanged", "Scalar Close guards are not general object/callback ownership enforcement, HTTP isolation, PHP destructors/exceptions, WordPress hooks or application acceptance", "Developer primitives have no user operation/route/capability or WebMCP exposure; existing local generation exclusion applies"]
+    },
+    {
       "id": "gohp.tooling.generated-scalar-frames",
       "kind": "tooling",
       "name": "Owned local frames for closed scalar functions",
@@ -2560,7 +2575,7 @@
         {"case_id": "unit.runtime.scalar_frame.values", "test": "TestScalarFrameValuesAndMissing", "file": "runtime/scalar_frame_test.go", "kind": "unit", "assertions": ["runtime facade preserves scalar values, missing versus null and independent value copies"]},
         {"case_id": "unit.runtime.scalar_frame.boundary", "test": "TestScalarFrameRejectsInvalidAndClosedUse", "file": "runtime/scalar_frame_test.go", "kind": "unit", "assertions": ["unsupported payloads reject without mutation; nil/closed use rejects and Close is idempotent"]}
       ],
-      "limitations": ["No PHP reference syntax, reference arguments/returns or exported alias operations", "Unlisted/user/stateful calls, untyped/mixed parameters, methods, arrows, objects, foreach and main retain legacy maps; arrays require the separate proved flat lane or legacy storage, and listed ScalarFrame predicates require scalar operands", "No general temporary/shared-array ownership, PHP destructor/exception equivalence or performance claim", "New generated outputs require a matching GoHP runtime revision; IR schema and CLI options are unchanged"]
+      "limitations": ["No PHP reference syntax or reference arguments/returns. A separate host-only scalar request import does not change generated admission or expose raw Slot/reference handles", "Unlisted/user/stateful calls, untyped/mixed parameters, methods, arrows, objects, foreach and main retain legacy maps; arrays require the separate proved flat lane or legacy storage, and listed ScalarFrame predicates require scalar operands", "No general temporary/shared-array ownership, PHP destructor/exception equivalence or performance claim", "New generated outputs require a matching GoHP runtime revision; IR schema and CLI options are unchanged"]
     },
     {
       "id": "gohp.tooling.cli-generate",

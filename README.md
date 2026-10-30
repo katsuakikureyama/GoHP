@@ -25,6 +25,8 @@ PHP reference syntax, general include/autoload, PHP-compatible exceptions and ex
 APIs remain unsupported. Internal shared-array/ownership primitives exist, but
 **are not generated-array COW or PHP-reference support**.
 See [implementation stages](docs/reference-value-model.md#delivery-gates-and-status).
+The [scalar request-global host ABI](docs/reference-value-model.md#scalar-request-global-host-abi)
+has separate Go unit checks; PHP `global`/`$GLOBALS` source remains unsupported.
 
 ## Active PHP targets
 

@@ -1,19 +1,29 @@
 package runtime
 
+import "github.com/katsuakikureyama/GoHP/internal/storage"
+
 // Execution owns mutable PHP state for one logical execution. Use a fresh
 // instance for each request; share its pointer through synchronous nested calls.
 // It must not be copied or used concurrently. No process-global PHP state exists.
+// The host owns Close. Scalar imports are guarded by this lifetime; general
+// objects, captured environments and PHP source globals are not integrated.
 type Execution struct {
-	strtokText  string
-	strtokPos   int
-	strtokReady bool
-	preg83Error int64
-	jsonError   int64
+	strtokText    string
+	strtokPos     int
+	strtokReady   bool
+	preg83Error   int64
+	jsonError     int64
+	closed        bool
+	scalarGlobals storage.Frame
+	scalarFrames  map[*ScalarFrame]struct{}
 }
 
 func RequireExecution(execution *Execution) {
 	if execution == nil {
 		panic("execution context is required")
+	}
+	if execution.closed {
+		panic("execution context is closed")
 	}
 }
 

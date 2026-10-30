@@ -76,8 +76,13 @@ context threading. The [request/location design](reference-value-model.md#reques
 keeps mutable PHP bindings, static values and future callback state within one
 logical-request Execution, sharing only immutable declarations across requests.
 It reuses Slot/Frame ownership with distinct read/write/bind/unset operations
-and per-operation evaluation/lifetime rules. This remains a design contract;
-no global table, request teardown API or new IR/syntax is admitted here.
+and per-operation evaluation/lifetime rules. The first
+[scalar host ABI](reference-value-model.md#scalar-request-global-host-abi) now
+reuses Frame/Slot for request-global scalars and guarded local imports.
+Execution.Close releases those bindings/imported frames and invalidates
+context operations. It is not a general symbol table, object/callback ownership
+guard, HTTP lifecycle or source globals/statics/reference implementation.
+Compiler lowering, entry wrappers and IR remain unchanged.
 
 Associative JSON decode uses ordinary call IR and returns a mixed legacy value,
 not an array guarantee or a widened storage proof. Ordered arrays, int64-only
