@@ -41,6 +41,26 @@ publication, closure metadata and fail-closed runtime inputs/unavailability.
 The enabled runtime test uses an owned tiny regex, not copied GPL WordPress
 source, and separately observes fixed-budget/error-state behavior.
 
+Corrected enabled test at clean `6f8f954007342a3aef8c067c1acd815c840e6a6a`,
+tree `5af142e77efdf752d6c54f6c3ec7c0e26372c097`, PASS0.202s. Command:
+
+```sh
+CGO_ENABLED=1 go test -count=1 -tags gohp_pcre2 ./runtime -run '^TestPreg83LocalMatch1UsesProfileLimitAndResetsState$'
+```
+
+Environment: cached Go1.23.0Darwinarm64, GOTOOLCHAIN=local, GOPROXY/GOSUMDB=off,
+GOWORK=off, existing shared GOCACHE, verified clang/SDK15.5,
+CGO_CFLAGS=`-I<PCRE2_PREFIX>/include -O2 -Wall -Wextra -Werror`,
+CGO_LDFLAGS=`<PCRE2_PREFIX>/lib/libpcre2-8.a`, existing PCRE10.47_1.
+Match1 false/error2, completed no-match0/error0 reset, and unchanged default
+no-match0/error0 are measured separately. Duplicate archive linker warning is
+not runtime stderr or native-PHP evidence. The corrected file is build-tagged
+out of CGO0, whose earlier PASS is reused. No production code changed after
+the first local pass. The merge of reviewed139/mainc8d21776 into this branch
+preserves the exact same5af142e tree; no test rerun for that ancestry change.
+Required remote CI and generated-original comparison remain separate pending
+results, not inferred from these local checks.
+
 Use cached Go1.23.0/offline/shared GOCACHE for affected packages. The enabled
 test uses existing verified clang/SDK15.5/staticPCRE10.47_1 and `gohp_pcre2`;
 no daemon/image/install/pull/new CI resource or persistent binary. Existing
