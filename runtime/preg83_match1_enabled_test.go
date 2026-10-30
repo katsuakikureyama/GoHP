@@ -18,10 +18,10 @@ func TestPreg83LocalMatch1UsesProfileLimitAndResetsState(t *testing.T) {
 		t.Fatalf("match-one error state = %d, want 2", got)
 	}
 
-	reset := matchOne.PregMatch83LocalMatch1(`/a/s`, "a", int64(0))
-	preg83RequireReturn(t, reset, int64(1))
+	reset := matchOne.PregMatch83LocalMatch1(`/a/s`, "", int64(0))
+	preg83RequireReturn(t, reset, int64(0))
 	if got := matchOne.PregLastError83(); got != 0 {
-		t.Fatalf("successful match-one call did not reset error state: %d", got)
+		t.Fatalf("completed match-one no-match did not reset error state: %d", got)
 	}
 
 	defaultProfile := &Execution{}

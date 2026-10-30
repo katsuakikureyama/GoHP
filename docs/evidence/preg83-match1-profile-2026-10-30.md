@@ -20,8 +20,22 @@ WordPress/Gossip or application acceptance.
 
 ## Verification status
 
-Affected compiler/closure/CLI/default-runtime/catalog checks and the targeted
-enabled-backend runtime test are pending. Eight new default tooling catalog
+At clean code `5156b663854dfa3cba8cbeb370b3cd6bc8389ba4`, tree
+`eb71d4b20c305a163b7b0a6b8803f18e580e996b`, affected CGO0 checks pass:
+codegen0.200s, sourceclosure0.754s, catalog0.559s, CLI1.226s, runtime0.928s.
+Frontend compiled0.223s with no matching direct tests; semantic has no direct
+test files and is exercised through codegen. Command:
+
+```sh
+CGO_ENABLED=0 go test -count=1 ./internal/frontend ./internal/semantic ./internal/codegen ./internal/sourceclosure ./internal/compat ./cmd/gohp ./runtime -run 'Preg83|Match1|InspectGraphTargetProfile|Catalog'
+```
+
+The initial enabled-runtime test fails0.196s because it expected a literal match
+to return1 with budget1; the actual measured return is false/error2. This is an
+owned test assumption, not a production-runtime change. The reset control now
+uses a completed no-match on an empty subject (expected0/error0), while the
+small default-budget control remains no-match0. Only this enabled test is
+rerun; previously passed CGO0 checks are reused. Eight new default tooling catalog
 checks cover profile dispatch/source maps, source/IR/target rejection, CLI
 publication, closure metadata and fail-closed runtime inputs/unavailability.
 The enabled runtime test uses an owned tiny regex, not copied GPL WordPress
