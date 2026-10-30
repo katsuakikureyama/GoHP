@@ -7,7 +7,7 @@ import "github.com/katsuakikureyama/GoHP/internal/ir"
 func usesExecution(p ir.Program) bool {
 	var expression func(ir.Expr) bool
 	expression = func(e ir.Expr) bool {
-		if e.Kind == "call" && (name(e.Text) == "strtok" || name(e.Text) == "preg_last_error") {
+		if e.Kind == "call" && (name(e.Text) == "strtok" || name(e.Text) == "preg_last_error" || name(e.Text) == "json_decode" || name(e.Text) == "json_last_error" || name(e.Text) == "json_last_error_msg") {
 			return true
 		}
 		for _, arg := range e.Args {

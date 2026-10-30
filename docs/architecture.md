@@ -55,12 +55,19 @@ load section. Explicit bundle CLI mode writes v0.2 source/build provenance using
 the existing fresh publication contract. Inspect still returns metadata only;
 legacy single-file behavior and general include/autoload exclusions remain.
 
-Programs using [strtok](strtok-boundary.md) explicitly thread `rt.Execution`
+Programs using [strtok](strtok-boundary.md) or
+[associative JSON/error state](json-associative-decode.md) explicitly thread `rt.Execution`
 through generated functions, constructors, methods and callback calls. Existing
 host entry wrappers create fresh contexts; additive context-aware entries allow
 deliberate same-execution sharing. Contextual arrows use the invoking context,
 not captured mutable execution state. No process-global tokenizer or implicit
 request manager is introduced. Stateless programs retain existing lowering.
+
+Associative JSON decode uses ordinary call IR and returns a mixed legacy value,
+not an array guarantee or a widened storage proof. Ordered arrays, int64-only
+numeric tokens, Unicode and per-Execution null/error results are a closed profile;
+general floating point, flags/object mode and arbitrary serialization are not
+implied. Error readers share caller state without resetting the strtok/PCRE state.
 
 The optional `Function.ReturnType` admits canonical empty/untyped, `array` or
 `bool` on named global functions. Validation propagates that context through

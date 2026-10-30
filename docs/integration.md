@@ -4,6 +4,14 @@ For the current compiler scope and next application acceptance criteria, see the
 [compatibility tables](compatibility.md) and [roadmap](roadmap.md). Consumer runs
 below are historical, pin-specific observations, not current-main certification.
 
+[Associative JSON decoding](json-associative-decode.md) targets the original
+parser's attribute expression without changing its source. Exact two-argument
+literal-true mode, ordered int64/string/bool/null/Array values and JSON-error
+readers use the existing Execution threading; float forms/overflow and flags
+remain excluded. This remains local `gohp.cli.generate`, WebMCP **excluded**:
+no browser/server/MCP route, input/publication schema or authentication change,
+new storage lane, deployment destination or silent consumer repin.
+
 [Standalone call statements](call-statement-boundary.md) now express the
 render caller's discarded-result method call without a dummy assignment.
 The [source dependency audit](render-dependencies.md) records resolved
