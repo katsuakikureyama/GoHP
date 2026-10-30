@@ -55,8 +55,11 @@ not attributed to a PHP source statement.
 `ScalarFrame` is a thin pointer-only, non-copyable, non-concurrent facade over
 canonical storage. Read of an absent local panics; present null remains nil.
 Write retains storage's exact scalar guard. Close is idempotent and closed
-reads/writes reject. No Bind, Reference, Slot or other alias operation is exposed
-to generated code. No finalizers or GC-timed releases are introduced.
+reads/writes reject. No raw Bind, Reference or Slot handle is exposed.
+The separate [scalar request-global host ABI](reference-value-model.md#scalar-request-global-host-abi)
+adds a guarded same-named import and local Unset, with one Execution owner and
+request-close invalidation; generated code does not use these operations yet.
+No finalizers or GC-timed releases are introduced.
 
 Existing untyped/array/callable/object parameter behavior is untouched. This deliberately
 does not solve array ownership by smuggling an eager-cloned array into scalar

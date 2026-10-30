@@ -8,11 +8,12 @@ import "github.com/katsuakikureyama/GoHP/internal/storage"
 //
 // Generated scope functions create one frame and defer Close on every exit
 // path. Close releases only the frame's local bindings; it has no finalizer or
-// garbage-collection semantics. The frame deliberately exposes no reference,
-// slot, array, object, or callable API: those ownership rules remain internal
-// to storage until the generated ABI needs a separately specified operation.
+// garbage-collection semantics. ImportScalarGlobal is a guarded scalar-only
+// host operation; generated PHP does not use it yet. No raw reference, slot,
+// array, object or callable API is exposed.
 type ScalarFrame struct {
-	frame storage.Frame
+	frame     storage.Frame
+	execution *Execution
 }
 
 // NewScalarFrame returns an open frame for generated scalar local bindings.
@@ -23,6 +24,9 @@ func NewScalarFrame() *ScalarFrame {
 func (frame *ScalarFrame) storageFrame() *storage.Frame {
 	if frame == nil {
 		panic("runtime scalar frame requires a frame")
+	}
+	if frame.execution != nil {
+		RequireExecution(frame.execution)
 	}
 	return &frame.frame
 }
@@ -47,5 +51,11 @@ func (frame *ScalarFrame) Write(name string, value any) {
 // Close releases local bindings. It is idempotent; later reads and writes are
 // rejected by the canonical frame.
 func (frame *ScalarFrame) Close() {
-	frame.storageFrame().Close()
+	if frame == nil {
+		panic("runtime scalar frame requires a frame")
+	}
+	frame.frame.Close()
+	if frame.execution != nil {
+		delete(frame.execution.scalarFrames, frame)
+	}
 }
