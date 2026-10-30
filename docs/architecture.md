@@ -37,6 +37,11 @@ chains as subject/offset values. All nodes and bare-local roots are validated;
 codegen snapshots subject then offset before runtime type guards and detached
 capture publication. No address/reference IR or storage lane is added; see the
 [local-output experiment](preg83-local-output.md).
+Its compile-time profile chooses only two named fixed entries: unchanged
+`pcre2-php83-v1`/match100000 or explicit `pcre2-php83-match1-v1`/match1.
+No per-Execution/global mutable budget, arbitrary limit, new storage/address
+lane or IR/report schema version is introduced. Source/IR/CLI provenance must
+preserve that distinction; default and low-budget evidence are not interchangeable.
 `internal/semantic` validates IR shape and rejects statically known type/operation
 mismatches before generation. `internal/codegen` performs the remaining
 name/arity/scope checks and lowers IR into direct Go calls, loops and structs.

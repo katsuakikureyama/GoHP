@@ -23,6 +23,7 @@ func main() {
 	out := flag.String("out", "", "Go output file (stdout if omitted)")
 	version := flag.String("php-version", phpversion.DefaultTarget, "PHP language target: "+phpversion.TargetHelp())
 	experimentalPCRE2 := flag.Bool("experimental-pcre2", false, "admit the experimental PHP 8.3 preg_match local-output syntax (does not enable a PCRE2 backend)")
+	experimentalPCRE2Profile := flag.String("experimental-pcre2-profile", "", "explicit experimental regex profile: pcre2-php83-v1 (default) or pcre2-php83-match1-v1; requires -experimental-pcre2")
 	report := flag.String("report", "", "optional provenance JSON path")
 	flag.Parse()
 	bundleMode := *manifest != "" || *sourceRoot != "" || *entry != ""
@@ -37,7 +38,9 @@ func main() {
 	var p ir.Program
 	var graph sourceclosure.Report
 	var e error
-	options := frontend.Options{ExperimentalPCRE2: *experimentalPCRE2}
+	options := frontend.Options{ExperimentalPCRE2: *experimentalPCRE2, PCRE2Profile: *experimentalPCRE2Profile}
+	_, e = options.RegexProfile(*version)
+	check(e)
 	if bundleMode {
 		p, graph, e = sourceclosure.Assemble(*manifest, *sourceRoot, *entry, *version, options)
 	} else {

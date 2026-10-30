@@ -64,8 +64,8 @@ func resolve(manifestPath, sourceRoot, entry, version string, options frontend.O
 	if err := phpversion.ValidateTarget(version); err != nil {
 		return Report{}, ir.Program{}, err
 	}
-	if options.ExperimentalPCRE2 && version != "8.3" {
-		return Report{}, ir.Program{}, fmt.Errorf("experimental regex profile requires PHP 8.3")
+	if _, err := options.RegexProfile(version); err != nil {
+		return Report{}, ir.Program{}, err
 	}
 	verified, sources, err := corpus.LoadSourcesNoAliases(manifestPath, sourceRoot)
 	if err != nil {

@@ -28,6 +28,29 @@ type parser struct {
 // enables a PCRE2 backend for a generated Go build.
 type Options struct {
 	ExperimentalPCRE2 bool
+	PCRE2Profile      string
+}
+
+// RegexProfile resolves explicit source admission before parsing/loading files.
+// It selects only named fixed budgets and never enables a native backend.
+func (options Options) RegexProfile(version string) (string, error) {
+	if !options.ExperimentalPCRE2 {
+		if options.PCRE2Profile != "" {
+			return "", fmt.Errorf("PHP003: explicit regex profile requires -experimental-pcre2")
+		}
+		return "", nil
+	}
+	profile := options.PCRE2Profile
+	if profile == "" {
+		profile = ir.Preg83Profile
+	}
+	if !ir.IsPreg83Profile(profile) {
+		return "", fmt.Errorf("PHP003: unknown experimental regex profile %q", profile)
+	}
+	if version != "8.3" {
+		return "", fmt.Errorf("PHP003: experimental regex profile requires PHP 8.3")
+	}
+	return profile, nil
 }
 
 func lex(s string) ([]token, error) {
@@ -235,6 +258,10 @@ func ParseWithOptions(src, version string, options Options) (out ir.Program, err
 	if err := phpversion.ValidateTarget(version); err != nil {
 		return out, fmt.Errorf("PHP003: %w", err)
 	}
+	profile, e := options.RegexProfile(version)
+	if e != nil {
+		return out, e
+	}
 	ts, e := lex(src)
 	if e != nil {
 		return out, e
@@ -242,9 +269,7 @@ func ParseWithOptions(src, version string, options Options) (out ir.Program, err
 	p := &parser{ts: ts, version: version, experimentalPCRE2: options.ExperimentalPCRE2}
 	out.Version = ir.Version
 	out.PHPVersion = version
-	if options.ExperimentalPCRE2 {
-		out.RegexProfile = ir.Preg83Profile
-	}
+	out.RegexProfile = profile
 	for p.peek().kind != "eof" {
 		switch {
 		case p.accept("function"):

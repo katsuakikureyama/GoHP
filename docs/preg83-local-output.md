@@ -12,6 +12,17 @@ The resulting IR records `RegexProfile: "pcre2-php83-v1"`; generated source and
 CLI provenance identify that profile. Empty/default profiles reject regex calls;
 unknown profiles and the experiment on PHP 8.4 fail before artifact publication.
 
+The separate low-budget profile is selected explicitly with
+`-php-version 8.3 -experimental-pcre2 -experimental-pcre2-profile pcre2-php83-match1-v1`.
+It records that exact `RegexProfile` in single-file and static-closure IR,
+generated-source comments and CLI provenance. Programmatic callers use
+`frontend.Options{ExperimentalPCRE2: true, PCRE2Profile: "pcre2-php83-match1-v1"}`.
+The profile option alone does not enable the experiment; unknown IDs and PHP8.4
+reject before loading/parsing or publishing artifacts. Selecting the explicit
+default `pcre2-php83-v1`, or omitting the extra option, retains the old entry
+and fixed budget. There is no arbitrary budget, mutable Execution/global
+setting, PHP `ini_set`, backend fallback or new IR/report schema version.
+
 ```php
 <?php
 function match_word(string $subject, int $offset): array {
@@ -65,6 +76,8 @@ then deep-clones completed captures into the output local before assigning the
 distinct scalar result. B2 completes the result and updates execution error
 state before either local is published. No user code can observe the intervening
 steps in this closed subset; this does not establish general PHP evaluation order.
+Under the explicit match1 profile only, the call is
+`Execution.PregMatch83LocalMatch1` with the same publication/state contract.
 Property reads reuse the generated public getter protocol; arbitrary host-supplied
 getters with user side effects are outside this PHP-source contract. Inputs are
 values, never output addresses. Guards or getter failures do not publish captures
@@ -86,7 +99,7 @@ Admission does not enable native linking. Build generated code with the explicit
 documented for [B1](optional-pcre2-bridge.md). CGO0 still builds but executing a
 match fails explicitly as unavailable. It never fabricates PHP false/no-match.
 
-Limits are fixed per match: 100000 match, 10000 depth, 131072 KiB heap; B1 pattern
+Default limits are fixed per match: 100000 match, 10000 depth, 131072 KiB heap; B1 pattern
 body/subject bounds remain 4096 bytes. Offset must be in the signed byte range
 `[-len(subject), len(subject)]`. Runtime checks still apply to typed parameters;
 compilation does not prove pattern validity, backend availability or input bounds.
@@ -95,6 +108,15 @@ Other inputs/compile/engine errors panic explicitly and preserve the previous
 error state; warning/exception text is not PHP-equivalent. No JIT, UTF/UCP,
 locale folding, all-PCRE syntax equivalence, ini-setting compiler support, or
 PHP 8.4 compatibility is claimed.
+
+The separate `pcre2-php83-match1-v1` entry fixes Match1 with the same depth10000,
+heap131072KiB and subject/pattern4096 bounds. It exists to compare an explicit
+low-budget original-parser reference, not to reinterpret default-profile
+evidence. The existing B2 outcome mapping is unchanged: match-limit false/error2,
+normal match/no-match error0; other engine/guard errors remain explicit. PHP
+process memory and PCRE heap are different budgets, and matching nominal limits
+does not prove equivalent failure points across engine versions/platforms.
+Tooling tests alone do not establish native PHP or whole-application acceptance.
 
 ## Verification and capability boundary
 

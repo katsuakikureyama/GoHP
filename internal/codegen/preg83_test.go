@@ -187,8 +187,8 @@ func TestPreg83CompilerProfileGate(t *testing.T) {
 		if generateErr == nil || len(output) != 0 || !strings.Contains(generateErr.Error(), "PHP004") {
 			t.Fatalf("PHP 8.4 profile generated %q: %v", output, generateErr)
 		}
-	} else if !strings.Contains(err.Error(), "PHP002") {
-		t.Fatalf("PHP 8.4 profile parse error = %v, want PHP002 or PHP004 rejection", err)
+	} else if !strings.Contains(err.Error(), "PHP002") && !strings.Contains(err.Error(), "PHP003: experimental regex profile requires PHP 8.3") {
+		t.Fatalf("PHP 8.4 profile parse error = %v, want explicit source/profile rejection", err)
 	}
 	program, err = frontend.Parse(`<?php echo preg_last_error();`, "8.3")
 	if err != nil {
