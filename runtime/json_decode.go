@@ -300,7 +300,7 @@ func (parser *jsonAssociativeParser) parseString() (any, jsonDecodeFailure) {
 					if low < 0xdc00 || low > 0xdfff {
 						return nil, parser.fail(jsonErrorUTF16)
 					}
-					decoded.WriteRune(rune(0x10000 + ((unit - 0xd800) << 10) + (low - 0xdc00)))
+					decoded.WriteRune(0x10000 + (rune(unit-0xd800) << 10) + rune(low-0xdc00))
 				} else if unit >= 0xdc00 && unit <= 0xdfff {
 					return nil, parser.fail(jsonErrorUTF16)
 				} else {
