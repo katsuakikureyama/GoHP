@@ -1150,6 +1150,25 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			// string|false: preserve runtime guards instead of promising a string.
 			return valueType{kind: unknownKind}, nil
 		}
+		if strings.EqualFold(expr.Text, "json_decode") {
+			if len(args) != 2 || expr.Args[1].Kind != "bool" || expr.Args[1].Text != "true" {
+				return valueType{}, unsupported(expr.Line, "json_decode requires two arguments with literal true associative mode")
+			}
+			if args[0].kind != stringKind && args[0].kind != unknownKind {
+				return valueType{}, unsupported(expr.Line, "json_decode requires actual string")
+			}
+			// Mixed arrays/scalars/null, not an inferred-array or string promise.
+			return valueType{kind: unknownKind}, nil
+		}
+		if strings.EqualFold(expr.Text, "json_last_error") || strings.EqualFold(expr.Text, "json_last_error_msg") {
+			if len(args) != 0 {
+				return valueType{}, unsupported(expr.Line, "JSON error readers expect no arguments")
+			}
+			if strings.EqualFold(expr.Text, "json_last_error_msg") {
+				return valueType{kind: stringKind}, nil
+			}
+			return valueType{kind: intKind}, nil
+		}
 		if strings.EqualFold(expr.Text, "in_array") {
 			if len(args) != 3 || expr.Args[2].Kind != "bool" || expr.Args[2].Text != "true" {
 				return valueType{}, unsupported(expr.Line, "in_array expects three arguments with literal true strictness")

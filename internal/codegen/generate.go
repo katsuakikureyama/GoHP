@@ -78,6 +78,9 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 		if n == "str_contains" || n == "str_starts_with" || n == "strtok" {
 			g.fail(f.Line, "reserved function "+n)
 		}
+		if n == "json_decode" || n == "json_last_error" || n == "json_last_error_msg" {
+			g.fail(f.Line, "reserved function "+n)
+		}
 		if _, ok := g.funcs[n]; ok || n == "in_array" || n == "isset" || n == "count" || n == "strlen" || n == "array_keys" || n == "array_values" || n == "array_key_exists" || n == "array_is_list" || n == "rtrim" || n == "is_bool" || n == "is_string" || n == "is_null" || n == "is_int" || n == "is_array" || n == "is_object" || n == "strtolower" || n == "strcasecmp" || n == "sprintf" || n == "str_replace" || n == "stripslashes" || n == "array_map" || n == "addslashes" {
 			g.fail(f.Line, "duplicate or reserved function "+n)
 		}
@@ -619,6 +622,15 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 		}
 		if n == "strtok" {
 			return "execution.Strtok(" + args(e.Args) + ")"
+		}
+		if n == "json_decode" {
+			return "execution.JSONDecodeAssociative(" + g.expr(e.Args[0], scope) + ")"
+		}
+		if n == "json_last_error" {
+			return "execution.JSONLastError()"
+		}
+		if n == "json_last_error_msg" {
+			return "execution.JSONLastErrorMessage()"
 		}
 		if (n == "array_any" || n == "array_all") && g.p.PHPVersion == "8.4" {
 			// Validate has already proved a two-value, untyped named callback

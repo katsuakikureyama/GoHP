@@ -1,5 +1,5 @@
 // Package runtime implements the explicitly supported PHP value operations.
-// It contains no parser, opcodes, evaluator, or PHP interpreter.
+// It contains no PHP parser, opcodes, evaluator, or embedded PHP interpreter.
 package runtime
 
 import (

@@ -30,6 +30,12 @@ current contracts and their evidence boundaries.
 
 ## Built-in functions
 
+[Associative JSON](json-associative-decode.md) admits only `json_decode(text, true)`
+with actual strings, int64-form numbers, ordered nested arrays and JSON last-error
+code/message readers on the invoking Execution. Default depth512 only; general
+floats, object/flag/custom-depth modes, weak input coercion and JSON encoding are
+excluded. This feature has its own partial contract and per-target evidence.
+
 [Nonnumeric string switch](string-switch.md) supports literal labels, optional
 default, first matching duplicate, fallthrough and nearest break. Numeric values,
 dynamic labels and switch-target continue are outside its admitted domain.

@@ -2063,6 +2063,27 @@
       "limitations": ["Actual string only, no weak coercion", "Not SQL/HTML/shell escaping", "No PHP warning or TypeError equivalence"]
     },
     {
+      "id": "php.builtin.json-decode-associative",
+      "kind": "builtin",
+      "name": "Bounded associative json_decode and execution-local error readers",
+      "implementation": "partial",
+      "contract": "Exactly json_decode(actual string, literal true), default depth512/no flags; ordered nested arrays/objects-as-arrays, UTF8/escaped strings, bool/null and int64 numeric tokens. Duplicate normalized keys replace values at first insertion position. Valid supported input clears Execution-local JSON error; parse failure returns null with bounded code/message; json_last_error and json_last_error_msg read the same Execution.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.json_associative","test":"TestDifferential/json_associative","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/json_associative.php","assertions":["stdout","exit","typed scalar/nested attrs, key order/duplicates/copies, Unicode/errors/depth, valid-invalid reset and shared execution across functions/methods/arrows/callbacks"]},
+        {"case_id":"compiler.json_associative","test":"TestJSONAssociativeLoweringAndSourceMap","file":"internal/codegen/json_associative_test.go","kind":"compiler","assertions":["ordinary call IR and one direct decode/error read, statement maps and invoking Execution through functions/methods/arrows/array_map, isolated legacy entries and unchanged legacy storage"]},
+        {"case_id":"negative.json_associative.source","test":"TestJSONAssociativeUnsupportedSource","file":"internal/codegen/json_associative_test.go","kind":"negative","assertions":["arity/nonliteral true/depth/flags/known wrong text/undefined/dead operands/redeclaration/named/unpacked/builtin-callback forms reject"]},
+        {"case_id":"negative.json_associative.ir","test":"TestJSONAssociativeMalformedIR","file":"internal/codegen/json_associative_test.go","kind":"negative","assertions":["hidden call/literal metadata and malformed associative bool reject before output"]},
+        {"case_id":"unit.json_associative.values","test":"TestJSONAssociativeValuesOrderAndCopies","file":"runtime/json_decode_test.go","kind":"unit","assertions":["mixed values, order/duplicate normalized keys/null and nested-array copies"]},
+        {"case_id":"unit.json_associative.unicode_errors","test":"TestJSONAssociativeUnicodeAndParseErrors","file":"runtime/json_decode_test.go","kind":"unit","assertions":["UTF8/escaped UTF16 and NUL preservation, syntax/mismatch/control/encoding error null without partial publication"]},
+        {"case_id":"unit.json_associative.depth_numbers","test":"TestJSONAssociativeDepthAndNumericProfile","file":"runtime/json_decode_test.go","kind":"unit","assertions":["default511/512 container boundary, int64 extrema, explicit float-form/overflow rejection and invalid syntax precedence"]},
+        {"case_id":"negative.json_associative.execution","test":"TestJSONAssociativeExecutionIsolationAndGuards","file":"runtime/json_decode_test.go","kind":"negative","assertions":["fresh/reset/independent JSON error states and nonmutating readers, nil/nonstring/unsupported numeric guard before state publication"]},
+        {"case_id":"compiler.json_associative.fixture","test":"TestJSONAssociativeFixture","file":"tests/json_associative_runtime_test.go","kind":"compiler","assertions":["committed owned fixture lowers; local lowering is not independent native equivalence"]},
+        {"case_id":"compiler.json_associative.host","test":"TestJSONAssociativeHostEntry","file":"tests/json_associative_runtime_test.go","kind":"compiler","assertions":["external generated entries share explicit caller Execution, legacy entries isolate, actual wrong/unsupported values preserve prior error state"]}
+      ],
+      "limitations": ["Literal true two-argument mode only; no object/dynamic associative/custom-depth/flags, weak input coercion, JSON constants/encoding/validation or general PHP exceptions", "Valid documents containing any fraction/exponent numeric token or out-of-int64 integer token explicitly reject, even if duplicate keys overwrite them; no float rounding/stringification or silent null", "Bounded parser errors/depth/UTF8/UTF16 state only; arbitrary malformed-input/resource-exhaustion/diagnostic/exception/side-effect equivalence requires separate evidence", "Existing Execution must be fresh per logical request, never copied/concurrently shared; no process-global JSON state or new request lifecycle", "Original full-parser/application acceptance remains separate; developer-local gohp.cli.generate stays WebMCP excluded"]
+    },
+    {
       "id": "php.builtin.json_encode",
       "kind": "builtin",
       "name": "json_encode",

@@ -71,6 +71,10 @@ and verify hashes before using artifacts. See the [publication contract](docs/in
 
 ## Progress and next milestones
 
+[Associative JSON decoding](docs/json-associative-decode.md) now has a closed
+two-argument/int64-only profile with ordered arrays and execution-local last-error
+readers. It is not general JSON/float support or original-parser acceptance.
+
 [Static declaration closures](docs/static-source-loading.md) now connect checked
 files and once-only edges to file-aware IR, diagnostics and Go generation.
 Explicit manifest/root/entry mode is required; ordinary `-in` retains its subset.
