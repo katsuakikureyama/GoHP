@@ -1,7 +1,9 @@
 # Reference, value and assignment foundation
 
 Status: **design + native-oracle specification; scalar frames, shared scalar containers, owned Slots/temporaries, runtime adapter and bounded scalar-entry generated array scopes (including if/while) implemented**.
-Baseline: main `565e65e6c9d8e211b06779739bfba76b07c4d92d` (#81).
+Original design baseline: main `565e65e6c9d8e211b06779739bfba76b07c4d92d` (#81).
+Request/location design review: main `c8d21776d0ca46ed9b42fb66363d10765d9721d2`
+(#139), with no new runtime or source admission in this documentation change.
 Target: PHP 8.3, oracle floor 8.3.36. Later series need separate policy and
 evidence; they must not inherit these results. No compiler/runtime/IR changes
 were introduced by the original design or its PHP-only specification. The first
@@ -21,6 +23,11 @@ without exposing storage types. Nullary/all-exact-scalar-parameter scopes with p
 and domain-invariant while loops use operation-scoped temporaries, selected-arm snapshots and detached returns;
 the [ownership plan](owned-array-slot-values.md#first-generated-scope-and-expression-ownership)
 defines its proof and exclusions. This is not general generated-array migration.
+
+The 2026-10-30 request/location design below does not implement `global`,
+`$GLOBALS`, static storage, PHP references, interfaces or visibility. Current
+`Execution` owns strtok/JSON/PCRE state, not a PHP symbol table or HTTP request
+manager. Existing object-pointer identity is distinct from variable aliasing.
 
 ## Decision
 
@@ -90,6 +97,114 @@ These contracts follow the official explanations of
 and [object identifiers](https://www.php.net/manual/en/language.oop5.references.php).
 They do not make every address form or operation supported at once.
 
+### Request ownership and common writable locations (design)
+
+The next foundation is driven by original hooks, not an independent storage
+rewrite. [Gossip75's immutable native baseline](https://github.com/katsuakikureyama/Gossip/blob/753c5cfbdb253d3657cc052234aedaa6e0d76971/docs/evidence/hooks-original-baseline-2026-10-30.md)
+records eight actual PHP workflows: priority/insertion order, accepted arguments,
+callback identity/removal, actions, reentry, mutation during iteration and
+sentinel identity. Its GoHP probe rejects original `plugin.php:25` (`require`);
+generated hook execution/comparison remains **not-run**. That native driver
+clears globals between workflows; it does not prove request isolation.
+
+Use the existing Slot/Frame foundation. The following owner roles and location
+operations are a design contract, not new public Go types or admitted syntax.
+Internal Frame aliases can outlive their frame through separately owned scalar
+cells; this is not a request-lifetime guard. Slot unset permits reuse, Frame
+close rejects later frame operations, and the value-only runtime adapters have
+their own narrower domain/lifecycle. Neither the scalar-only Frame ABI nor the
+flat-value adapter exposes general PHP aliases or a persistent Location.
+
+| State | Planned owner and lifetime |
+|---|---|
+| Generated functions, immutable class/declaration metadata and validated source identities | May be shared by the host process; no request-mutated PHP values stored here |
+| PHP global bindings, function-static values, class-static values and evaluated-file bookkeeping | One logical PHP request's `Execution`; repeated/nested calls share it, a new request starts fresh |
+| Local variable bindings and expression temporaries | Their explicit Frame/operation; retained aliases may keep a cell alive after a frame ends |
+| Mutable objects, property storage and captured environments | The request's reachable value graph, not only the creating frame; no implicit retention in process-wide callback registries or pools |
+
+This targets a traditional PHP request boundary. A long-running worker's
+deliberately persistent PHP state would need a separate contract. Go HTTP
+handlers must receive/create their own Execution and thread it through calls,
+methods and callbacks; a package variable, thread-local or goroutine-local
+"current request" is not the ownership mechanism. HTTP hosting is still
+unimplemented. Existing comments asking hosts to use fresh contexts are not
+proof that globals/statics/callbacks are isolated.
+
+Fresh convenience wrappers represent separate logical executions. An eventual
+request adapter must instead initialize its checked entry under the chosen
+loading contract, invoke context-aware entries with the same Execution for
+sibling/nested calls, and own final teardown. Allocating a fresh context for
+each PHP function would incorrectly reset shared state. The global namespace
+needs a request owner separate from any one callee's local Frame.
+
+Required location semantics:
+
+- Ordinary assignment copies a value according to its domain; it does not bind
+  the destination variable to the source variable. An object identifier may be
+  shared while either variable can still be rebound independently.
+- `global $x` imports the request-global binding into the local frame by
+  reference, not by copying its current value. Missing globals acquire null
+  through this explicit import. Ordinary lookup/probe must not acquire that
+  creating behavior. These rules follow PHP's
+  [global binding contract](https://www.php.net/manual/en/language.variables.scope.php#language.variables.scope.global).
+- A reference to existing contents and a location identified by owner/name/key
+  are different handles. Unsetting a name removes that binding; an alias may
+  still retain its old cell. Recreating the name must not reconnect old aliases
+  accidentally. Do not retain pointers into an array's movable `[]Entry`.
+- Direct `$GLOBALS['x']` access, when admitted, must reach the same global
+  binding. It is not permission to expose the backing Go map as an ordinary
+  mutable PHP array. PHP8.1+ has special whole-array write/reference restrictions
+  and value-copy behavior; see the
+  [official `$GLOBALS` contract](https://www.php.net/manual/en/reserved.variables.globals.php).
+  Whole-table snapshots/mutations and dynamic names remain unsupported until
+  separately specified and measured.
+- Array-element and declared-property locations reuse read/write/bind/probe/
+  unset responsibilities, while retaining their own owner, existence and
+  evaluation rules. Sharing a protocol does not make every domain supported.
+  Keep property visibility, typed/magic/dynamic access and interface dispatch
+  explicit; do not treat every object as an unrestricted map.
+
+Function/class-static storage needs stable declaration identities and separate
+initialization state, not a local variable name or nil-as-uninitialized test.
+Closure instances, inheritance/redeclaration, repeated calls and failed or
+recursive initialization require PHP8.3 native contracts before admission;
+this document does not settle those cases by choosing a Go map key.
+
+Borrowed operation addresses are not persistent reference bindings. Each new
+location must define owner retention, alias rebinding, unset/recreation and
+release/invalidation. Request teardown must release owned roots and make stale
+request-bound access fail without clearing another Execution. Existing host
+property protocols do not establish request ownership: the future adapter must
+define a checked transfer/ownership boundary before accepting cross-context
+objects or callbacks. There is no such runtime guarantee today. Pooling,
+cross-request closures, cycles and PHP destructor order remain separate gates.
+
+Keep operation-specific evaluation order from the existing property-append
+regression: an RHS can replace the property before the append. A common Location
+must not silently impose a universal "resolve the entire LHS, then evaluate
+the RHS" rule. Loading also needs an explicit caller scope/Execution and entry
+effects; accepting bare `require` by changing it to `require_once` is not a
+bootstrap implementation.
+
+Before source admission, require these observable checks within R2–R5:
+
+| Check family | Required evidence | Current status |
+|---|---|---|
+| Global import versus value copy | Cross-call writes, missing import/null, local shadowing, alias rebinding and unset/recreated names agree with fixed PHP8.3 | Planned; no global syntax/runtime-table support |
+| Two request contexts | Interleave A/B with the same global/static/hook names; closing A cannot change B, and stale A-bound access cannot become B access | Planned; Go isolation tests plus explicit PHP request-boundary reference still required |
+| Arrays and properties | Value-copy isolation, shared object identity, alias-bearing array separation timing and RHS replacement stay correct at admitted locations | Existing bounded value behavior only; persistent mixed-domain references not implemented |
+| Original hooks | Reuse the immutable eight-workflow native record, then compare generated events, results, counters and private/public state at matching pins | Native reference recorded; generated comparison not-run |
+| Request lifecycle | Define initialization, errors/cleanup and host entry/exit ownership before an HTTP acceptance claim | Planned; HTTP/bootstrap acceptance not established |
+
+Do not add globals or generic references by bypassing the current domain
+guards. A scalar-only first global/reference slice must reject array/object or
+unknown-location cases explicitly; the actual array-valued WordPress hook table
+would still be unsupported. Conversely, a hook-table implementation needs its
+array/reference/callable contracts measured before being called compatible.
+The existing eager-copy lane remains until that migration is proven. These
+design rows do not add tests, change catalog implementation statuses or borrow
+the PHP-only reference as generated-Go evidence.
+
 ### Copy timing is part of correctness
 
 The native specification distinguishes these sequences, starting with
@@ -142,7 +257,7 @@ all arguments into `[]any` first loses it. Builtins with reference parameters an
 “pass every argument by reference” fallback.
 
 Keep `Execution` explicitly owned by the logical invocation/request. Its current
-conditional `strtok` propagation is not a complete request-state design. When
+effect-based strtok/JSON/PCRE propagation is not a complete request-state design. When
 callbacks or other stateful operations are enabled, propagate context by their
 actual effects/signatures; no process-global PHP variables, static state or
 tokenizer. A generic callable registry may follow this foundation. Do not
@@ -157,10 +272,13 @@ substitute a custom Go hook engine for untested original `WP_Hook` behavior.
 | R2 | Bounded variable reference assignment/unset, explicit address IR and binding lifetime; source + malformed-IR negatives and PHP/Go comparisons | Not implemented |
 | R3 | Reference-bearing arrays, element/declared-property locations, copy-timing and lifetime cases; key order/next-index and existing copy isolation retained | Not implemented |
 | R4 | By-reference parameters/returns, reference foreach and closure captures, each with explicit bounded contracts and call-path evidence | Not implemented |
-| R5 | Generic dynamic callable forms and original application acceptance (full block parser, then hooks) | Not implemented; not implied by R0–R4 |
+| R5 | Generic dynamic callable forms and original application acceptance (full block parser, then hooks) | Generic callables/hooks not implemented. The separate complete-parser case-limited Gossip evidence does not establish general references or whole-application acceptance |
 
-Next bounded implementation: array/untyped parameter entry domains and broader loop
-invariants, then operation-specific locations across calls. Build on
+Next bounded implementation is selected from the original hook/state blockers:
+specify request-global binding ownership and operation-specific locations across
+calls before enabling source `global`/references. Array/untyped parameter entry
+domains or broader loop invariants are justified only where that selected slice
+needs them, not as a parallel storage-expansion queue. Build on
 the first expression-scoped lowering, shared scalar containers, value temporaries,
 synchronous Slot-rooted mutations and explicit Frame release. The synchronous
 borrow is not a persistent address or a compiler evaluation-order policy. Keep parser acceptance unchanged;

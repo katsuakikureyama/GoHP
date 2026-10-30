@@ -66,6 +66,14 @@ deliberate same-execution sharing. Contextual arrows use the invoking context,
 not captured mutable execution state. No process-global tokenizer or implicit
 request manager is introduced. Stateless programs retain existing lowering.
 
+Globals/statics and generic reference locations are not implemented by that
+context threading. The [request/location design](reference-value-model.md#request-ownership-and-common-writable-locations-design)
+keeps mutable PHP bindings, static values and future callback state within one
+logical-request Execution, sharing only immutable declarations across requests.
+It reuses Slot/Frame ownership with distinct read/write/bind/unset operations
+and per-operation evaluation/lifetime rules. This remains a design contract;
+no global table, request teardown API or new IR/syntax is admitted here.
+
 Associative JSON decode uses ordinary call IR and returns a mixed legacy value,
 not an array guarantee or a widened storage proof. Ordered arrays, int64-only
 numeric tokens, Unicode and per-Execution null/error results are a closed profile;

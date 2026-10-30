@@ -19,6 +19,10 @@ evidence. This roadmap does not add catalog statuses or a new CLI operation.
 - [Gossip's earlier original-source comparisons](integration.md) are useful
   historical evidence at their recorded compiler/source pins. They are neither
   a current-main application result nor a combined WordPress percentage.
+- Separate [complete-original parser evidence](https://github.com/katsuakikureyama/Gossip/blob/753c5cfbdb253d3657cc052234aedaa6e0d76971/docs/php83-application-acceptance.md)
+  now records generated execution and case-limited comparisons. Resource gates
+  and application acceptance remain open. The original-hook eight-workflow
+  record is native-only; generated hooks/bootstrap remain blocked.
 - The first whole-file [source manifest](application-corpus.md) is frozen and
   byte-verifiable, with a bounded native-token [lexical inventory](application-corpus.md#lexical-inventory).
   Candidate names now retain native-environment and selected-declaration name
@@ -37,11 +41,11 @@ semantics, not WordPress-specific branches in GoHP.
 
 | Workstream | Current state | Next observable result / completion criterion |
 |---|---|---|
-| PHP 8.3 Gossip acceptance (first) | Full original parser not translated; selected-method results remain separate | G83-PARSER: all seven original methods plus Block/Frame and loading closure, native/generated behavior at exact pins; then bootstrap/hooks, DB, HTTP and standard user flows |
-| Static source closure | [Loading contract](static-source-loading.md) now connects checked declarations to located IR/Go and explicit CLI/v0.2 reports; real multi-file native fixture registered | Record independent native fixture results and probe the unchanged original three-file closure for its next real blocker; no concatenation or general include/autoload claim |
+| PHP 8.3 Gossip acceptance (first) | Complete original parser generated/executed in bounded Gossip series; G83-PARSER still open. Native original-hook baseline exists; generated hooks not-run | Preserve parser/resource gate boundaries, then reproduce original hook events/global/reference state before bootstrap, DB, HTTP and site-flow acceptance |
+| Static source closure | [Declaration-only loading](static-source-loading.md) supports the parser's explicit closure; original plugin.php bare require25 remains a measured rejection | Specify actual entry effects, caller scope and request state for hooks; no source concatenation, require-to-require_once rewrite or general loading claim |
 | Documentation | README and compatibility tables reorganized; historical target claims distinguished | Keep the entry point, implementation limits and evidence links aligned in each affected change |
 | Application inventory | Earlier functions.php lexical/name evidence retained; no semantic coverage percentage | Work from the complete parser's actual calls and state mutations first; inventory bootstrap dependencies when that gate is next |
-| PHP values/references | R1 partial; existing ownership/runtime adapter and exact-scalar-entry scopes retained | Implement only locations, aliasing and mutation contracts needed by the selected application gate; no independent array/untyped-parameter or COW expansion queue |
+| PHP values/references | R1 partial; existing ownership/runtime adapter retained; global/statics/request tables and persistent mixed-domain locations not implemented | Use the [request/location design](reference-value-model.md#request-ownership-and-common-writable-locations-design): Execution-owned globals/static values, binding-versus-copy/unset semantics, A/B isolation and original hook8 comparison gates; no independent storage-expansion queue |
 | Performance baseline | Deferred; no PHP/Go benchmark | After the first executable application unit, measure a reproducible output-checked workload; performance is not a substitute for correct application behavior |
 | Frontend adapter | Assessment only; no candidate installed | Revisit if removing measured parser/application syntax blockers justifies migration; preserve target-aware diagnostics and fail-closed semantics |
 | PHP versions | Existing 8.3/8.4 differential CI retained | Fix regressions in both; defer new minors and unrelated 8.4 feature expansion until the PHP 8.3 application gate advances |
@@ -56,13 +60,14 @@ original-source callsite it enables and re-probe the complete unit after the
 affected boundary changes. Do not re-run unchanged successful configurations.
 Expected compiler rejection is a recorded blocker, never application PASS.
 
-The next loading slice is limited to the complete original parser's two static
-`require_once __DIR__ ...` edges and declaration-only dependencies. Its
+The parser loading slice admitted its two static `require_once __DIR__ ...`
+edges and declaration-only dependencies at the separate recorded pins. Its
 [L0–L2 delivery gates](static-source-loading.md#delivery-gates)
-separate graph/provenance infrastructure, measured closure behavior and original
-source admission. L0 is connected; L1 results remain candidate/target-specific and
-L2 original admission is separate. Loading does not complete the parser's
-remaining stack/object/tokenizer/JSON requirements.
+still separate provenance, measured closure behavior and original admission;
+successful generation alone is not application acceptance. Next hook loading
+requires request-global ownership and actual entry evaluation, not simply
+accepting the original `require` token. That change cannot silently extend the
+existing declaration-only profile or bypass its fail-closed checks.
 
 ## First application inventory
 
@@ -130,6 +135,15 @@ real HTML processor. Gossip owns source bundles, drivers and consumer repins;
 this document changes none of them.
 
 ## Reference milestone
+
+Owner concern about class/global mutation makes the existing common model the
+next hook-design constraint. Keep immutable declarations separate from mutable
+Execution-owned PHP values. Global import binds a location rather than cloning
+its current value; object identity is not variable aliasing. The native hook8
+record is an oracle for future comparison, not already-implemented Go hooks or
+a multi-request isolation test. A common location protocol must retain domain,
+evaluation-order and lifetime guards; it does not mean every reference form is
+ready for syntax admission.
 
 The R0–R5 model remains the design constraint. Its next implementation slice is
 conditional on a demonstrated Gossip blocker, not an obligation to finish every
