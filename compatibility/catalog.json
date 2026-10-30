@@ -3,6 +3,20 @@
   "maturity": "experimental",
   "entries": [
     {
+      "id": "php.syntax.attributes",
+      "kind": "syntax",
+      "name": "PHP attributes remain unsupported and fail closed",
+      "implementation": "unsupported",
+      "contract": "PHP8 attribute opener #[ outside strings/comments rejects with PHP002 at its original line before any attributed declaration can enter IR. Ordinary hash comments and literal/comment text containing the marker retain their existing meaning.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"negative.attributes.source","test":"TestPHPAttributesRejected","file":"internal/frontend/attributes_test.go","kind":"negative","assertions":["otherwise-supported attributed declarations reject instead of silently losing attributes; exact original line retained"]},
+        {"case_id":"negative.attributes.module","test":"TestPHPAttributesModuleDiagnostics","file":"internal/frontend/attributes_test.go","kind":"negative","assertions":["static-module rejection preserves original source file and line"]},
+        {"case_id":"unit.hash_comments.attribute_literals","test":"TestHashCommentsAndAttributeLiterals","file":"internal/frontend/attributes_test.go","kind":"unit","assertions":["ordinary hash comments, spaced hash-bracket comments, marker inside comments/quoted strings and following source locations remain intact"]}
+      ],
+      "limitations": ["Attribute syntax, metadata, reflection and attribute-dependent behavior are not implemented", "Rejection is a transpiler boundary, not PHP diagnostic/exception equivalence or WP_Hook acceptance", "No runtime/IR/loading/profile/version or browser/auth/deployment change; existing local generation remains WebMCP-excluded"]
+    },
+    {
       "id": "php.builtin.array-pop",
       "kind": "builtin",
       "name": "Bounded array_pop on an existing local or direct public property",

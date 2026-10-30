@@ -13,6 +13,9 @@ PHP bytes -> frontend lexer/parser -> versioned semantic subset IR
 ```
 
 `internal/frontend` owns tokens, source lines and PHP-version precedence.
+PHP8 attributes are outside the closed subset: `#[` outside a string/comment
+fails with located PHP002 instead of being discarded as a hash comment. Ordinary
+hash comments and marker text inside strings/comments keep their existing meaning.
 `internal/ir` is independent of syntax tokens and contains expressions, statements,
 functions and classes. IR version is `0.1`; reject incompatible IR versions.
 Defined-local `empty` emits additive `empty_var` for actual array/string domains,

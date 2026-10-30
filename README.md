@@ -71,6 +71,10 @@ and verify hashes before using artifacts. See the [publication contract](docs/in
 
 ## Progress and next milestones
 
+PHP8 attribute syntax now fails explicitly at `#[`; attributed declarations
+cannot silently lose metadata as hash comments. Attributes remain unsupported,
+with source/module rejection and comment/literal preservation tracked in the catalog.
+
 [Associative JSON decoding](docs/json-associative-decode.md) now has a closed
 two-argument/int64-only profile with ordered arrays and execution-local last-error
 readers. It is not general JSON/float support or original-parser acceptance.

@@ -48,6 +48,9 @@ func lex(s string) ([]token, error) {
 			i++
 			continue
 		}
+		if strings.HasPrefix(s[i:], "#[") {
+			return nil, fmt.Errorf("PHP002 line %d: PHP attributes unsupported", line)
+		}
 		if strings.HasPrefix(s[i:], "//") || c == '#' {
 			for i < len(s) && s[i] != '\n' {
 				i++
