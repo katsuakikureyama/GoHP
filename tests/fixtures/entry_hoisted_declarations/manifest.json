@@ -1,0 +1,41 @@
+{
+  "schema": "gohp.corpus.manifest/v0.1",
+  "id": "fixture-entry-hoisted-declarations",
+  "upstream": {
+    "repository": "gohp/fixtures",
+    "revision": "0000000000000000000000000000000000000000",
+    "version": "entry-hoisted-declarations-v1"
+  },
+  "selection": {
+    "unit": "whole-file",
+    "exclusions": "fixture-only corpus; dynamic loading, autoloading, and executable dependency modules are excluded",
+    "dependencies": "unresolved"
+  },
+  "php_targets": ["8.3", "8.4"],
+  "files": [
+    {
+      "path": "entry.php",
+      "role": "source",
+      "bytes": 450,
+      "sha256": "139bd1f118f9cae7c0f6c3f3c6a69cece4e8d5c474ce4ff60b2b39a341fa98bb"
+    },
+    {
+      "path": "lib/dep.php",
+      "role": "source",
+      "bytes": 65,
+      "sha256": "3a5f6c8fdecc3c04bfe661134fc547aa10f56581a581c1d9a2778bfb1f682dea"
+    },
+    {
+      "path": "NOTICE",
+      "role": "notice",
+      "bytes": 135,
+      "sha256": "9b3e572d1a8f5b5c7c538f72fc66d05c366cedab51f6927d249d4857d9590f9c"
+    },
+    {
+      "path": "PROVENANCE",
+      "role": "provenance",
+      "bytes": 101,
+      "sha256": "3fd6199151afacccf645e43dffcea37e260a73a5cf11cde7851a984f14ae70ca"
+    }
+  ]
+}

@@ -122,6 +122,96 @@ func TestInspectModuleBareRequireRejects(t *testing.T) {
 	}
 }
 
+func TestParseStaticModuleEntryHoistedDeclarations(t *testing.T) {
+	// Entry: load -> body -> function (admitted)
+	src1 := "<?php\n" +
+		"require __DIR__ . '/lib/dep.php';\n" +
+		"$x = late_func();\n" +
+		"echo $x;\n" +
+		"function late_func() { return 42; }\n"
+	pm, err := ParseStaticModule("entry.php", src1, "8.3", Options{}, true)
+	if err != nil {
+		t.Fatalf("entry load->body->function must be admitted: %v", err)
+	}
+	if len(pm.Program.Functions) != 1 || pm.Program.Functions[0].Name != "late_func" {
+		t.Fatalf("expected late_func in program.Functions: %+v", pm.Program.Functions)
+	}
+	if len(pm.Inspection.Declarations) != 1 || pm.Inspection.Declarations[0].Name != "late_func" {
+		t.Fatalf("expected late_func in declarations: %+v", pm.Inspection.Declarations)
+	}
+
+	// Entry: load -> function -> body -> class (admitted)
+	src2 := "<?php\n" +
+		"require __DIR__ . '/lib/dep.php';\n" +
+		"function early_fn() { return 1; }\n" +
+		"$o = new LateClass();\n" +
+		"echo $o->v;\n" +
+		"class LateClass { public $v = 'ok'; }\n"
+	pm2, err := ParseStaticModule("entry.php", src2, "8.3", Options{}, true)
+	if err != nil {
+		t.Fatalf("entry load->function->body->class must be admitted: %v", err)
+	}
+	if len(pm2.Program.Functions) != 1 || pm2.Program.Functions[0].Name != "early_fn" {
+		t.Fatalf("expected early_fn: %+v", pm2.Program.Functions)
+	}
+	if len(pm2.Program.Classes) != 1 || pm2.Program.Classes[0].Name != "LateClass" {
+		t.Fatalf("expected LateClass: %+v", pm2.Program.Classes)
+	}
+
+	// Entry: body -> load (still rejected)
+	src3 := "<?php\n" +
+		"$x = 1;\n" +
+		"require __DIR__ . '/lib/dep.php';\n"
+	_, err = ParseStaticModule("entry.php", src3, "8.3", Options{}, true)
+	if err == nil {
+		t.Fatal("entry body->load must still be rejected")
+	}
+
+	// Dependency: function after load (still rejected)
+	src4 := "<?php\n" +
+		"require __DIR__ . '/other.php';\n" +
+		"function late() { return null; }\n"
+	_, err = ParseStaticModule("dep.php", src4, "8.3", Options{}, false)
+	if err == nil {
+		t.Fatal("dependency function after load must still be rejected")
+	}
+	if !strings.Contains(err.Error(), "module declarations must precede") {
+		t.Fatalf("expected old error message, got: %v", err)
+	}
+
+	// Dependency: class after load (still rejected)
+	src5 := "<?php\n" +
+		"require __DIR__ . '/other.php';\n" +
+		"class Late {}"
+	_, err = ParseStaticModule("dep.php", src5, "8.3", Options{}, false)
+	if err == nil {
+		t.Fatal("dependency class after load must still be rejected")
+	}
+
+	// Dependency: final class after load (still rejected)
+	src6 := "<?php\n" +
+		"require __DIR__ . '/other.php';\n" +
+		"final class Late {}"
+	_, err = ParseStaticModule("dep.php", src6, "8.3", Options{}, false)
+	if err == nil {
+		t.Fatal("dependency final class after load must still be rejected")
+	}
+
+	// Entry: final class after body (admitted)
+	src7 := "<?php\n" +
+		"require __DIR__ . '/lib/dep.php';\n" +
+		"$o = new FinalLate();\n" +
+		"echo $o->v;\n" +
+		"final class FinalLate { public $v = 'final'; }\n"
+	pm7, err := ParseStaticModule("entry.php", src7, "8.3", Options{}, true)
+	if err != nil {
+		t.Fatalf("entry body->final class must be admitted: %v", err)
+	}
+	if len(pm7.Program.Classes) != 1 || pm7.Program.Classes[0].Name != "FinalLate" {
+		t.Fatalf("expected FinalLate: %+v", pm7.Program.Classes)
+	}
+}
+
 func TestInspectModuleLocationsAndIsolation(t *testing.T) {
 	for _, id := range []string{"a.php", "sub/b.php"} {
 		module, err := InspectModule(id, "<?php\nfunction broken() { throw 1; }", "8.3", Options{})
