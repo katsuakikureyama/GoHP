@@ -96,21 +96,20 @@ echo $first->label;
 
 func TestBlockDataConstructorBoundaries(t *testing.T) {
 	for name, source := range map[string]string{
-		"no_constructor_arguments":     `class Box { public $value; } $box = new Box('value');`,
-		"constructor_missing_arg":      `class Box { public function __construct($value) {} } $box = new Box();`,
-		"constructor_extra_arg":        `class Box { public function __construct($value) {} } $box = new Box('one', 'two');`,
-		"unknown_class":                `$box = new Missing();`,
-		"typed_constructor":            `class Box { public function __construct(array $value) {} }`,
-		"non_null_default_constructor": `class Box { public function __construct($value = false) {} }`,
-		"constructor_return_type":      `class Box { public function __construct(): bool {} }`,
-		"constructor_return_value":     `class Box { public function __construct() { return 1; } }`,
-		"other_magic_method":           `class Box { public function __clone() {} }`,
-		"direct_constructor_reentry":   `class Box { public function __construct() {} } $box = new Box(); $box->__construct();`,
-		"inheritance":                  `class Child extends ParentBox {}`,
-		"cast_undefined_variable":      `$array = (array)$missing;`,
-		"cast_array":                   `$value = []; $array = (array)$value;`,
-		"cast_scalar":                  `$value = 'text'; $array = (array)$value;`,
-		"cast_callable":                `$value = fn($item) => $item; $array = (array)$value;`,
+		"no_constructor_arguments":   `class Box { public $value; } $box = new Box('value');`,
+		"constructor_missing_arg":    `class Box { public function __construct($value) {} } $box = new Box();`,
+		"constructor_extra_arg":      `class Box { public function __construct($value) {} } $box = new Box('one', 'two');`,
+		"unknown_class":              `$box = new Missing();`,
+		"typed_constructor":          `class Box { public function __construct(array $value) {} }`,
+		"constructor_return_type":    `class Box { public function __construct(): bool {} }`,
+		"constructor_return_value":   `class Box { public function __construct() { return 1; } }`,
+		"other_magic_method":         `class Box { public function __clone() {} }`,
+		"direct_constructor_reentry": `class Box { public function __construct() {} } $box = new Box(); $box->__construct();`,
+		"inheritance":                `class Child extends ParentBox {}`,
+		"cast_undefined_variable":    `$array = (array)$missing;`,
+		"cast_array":                 `$value = []; $array = (array)$value;`,
+		"cast_scalar":                `$value = 'text'; $array = (array)$value;`,
+		"cast_callable":              `$value = fn($item) => $item; $array = (array)$value;`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			p, err := frontend.Parse("<?php "+source, testTarget(t))

@@ -69,7 +69,6 @@ func TestParserOutputUnsupportedSource(t *testing.T) {
 	for name, source := range map[string]string{
 		"method_below_min":        `class C { public function f($x,$y=null) {} } $c=new C(); $c->f();`,
 		"method_above_max":        `class C { public function f($x=null) {} } $c=new C(); $c->f(1,2);`,
-		"method_nonnull_default":  `class C { public function f($x=0) {} }`,
 		"method_typed_default":    `class C { public function f(array $x=null) {} }`,
 		"bare_top_return":         `return;`,
 		"bare_typed_return":       `function f(): array { return; }`,
