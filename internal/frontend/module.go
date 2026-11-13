@@ -23,6 +23,7 @@ type ModuleDeclaration struct {
 type ModuleRequire struct {
 	Line   int    `json:"line"`
 	Suffix string `json:"suffix"`
+	Kind   string `json:"kind,omitempty"` // "" means require_once; "require" means bare require
 }
 
 // ModuleInspection deliberately exposes no ir.Program: load directives cannot
@@ -48,6 +49,10 @@ func InspectModule(sourceID, src, version string, options Options) (out ModuleIn
 // admission deliberately rejects it. Only the checked closure resolver may
 // replace these top-level edges after verifying the complete source graph.
 const StaticRequireOnce = "static_require_once"
+
+// StaticRequire is the unresolved bare-require variant. It is rejected by
+// semantic/codegen exactly like StaticRequireOnce when left unresolved.
+const StaticRequire = "static_require"
 
 type ParsedModule struct {
 	Inspection ModuleInspection
@@ -119,6 +124,20 @@ func parseStaticModule(sourceID, src, version string, options Options, entry boo
 			p.need(";")
 			out.Requires = append(out.Requires, ModuleRequire{Line: line, Suffix: suffix.text})
 			program.Body = append(program.Body, ir.Stmt{Kind: StaticRequireOnce, Name: suffix.text, Line: line, SourceID: sourceID})
+		case p.accept("require"):
+			if bodyStarted {
+				p.fail("static require must precede executable entry statements")
+			}
+			loadsStarted = true
+			p.need("__DIR__")
+			p.need(".")
+			suffix := p.pop()
+			if suffix.kind != "string" || !strings.HasPrefix(suffix.text, "/") || !modulePath(strings.TrimPrefix(suffix.text, "/")) {
+				p.fail("require needs one canonical /literal/path suffix")
+			}
+			p.need(";")
+			out.Requires = append(out.Requires, ModuleRequire{Line: line, Suffix: suffix.text, Kind: "require"})
+			program.Body = append(program.Body, ir.Stmt{Kind: StaticRequire, Name: suffix.text, Line: line, SourceID: sourceID})
 		case p.accept("function"):
 			if loadsStarted || bodyStarted {
 				p.fail("module declarations must precede trailing require_once directives")

@@ -25,6 +25,7 @@ type Edge struct {
 	Line   int    `json:"line"`
 	Suffix string `json:"suffix"`
 	To     string `json:"to"`
+	Kind   string `json:"kind,omitempty"` // "" means require_once; "require" means bare require
 	Reused bool   `json:"reused"`
 }
 
@@ -116,7 +117,7 @@ func resolve(manifestPath, sourceRoot, entry, version string, options frontend.O
 			program.RegexProfile = parsed.Program.RegexProfile
 			if id == entry {
 				for _, statement := range parsed.Program.Body {
-					if statement.Kind != frontend.StaticRequireOnce {
+					if statement.Kind != frontend.StaticRequireOnce && statement.Kind != frontend.StaticRequire {
 						program.Body = append(program.Body, statement)
 					}
 				}
@@ -139,17 +140,26 @@ func resolve(manifestPath, sourceRoot, entry, version string, options frontend.O
 			// InspectModule validates the suffix before path.Join: normalization
 			// must never turn traversal/aliases into accepted source identities.
 			destination := path.Join(path.Dir(id), strings.TrimPrefix(require.Suffix, "/"))
+			loadKind := "require_once"
+			if require.Kind == "require" {
+				loadKind = "require"
+			}
 			if _, exists := byID[destination]; !exists {
-				return fmt.Errorf("%s:%d: require_once target %q is not a selected source", id, require.Line, destination)
+				return fmt.Errorf("%s:%d: %s target %q is not a selected source", id, require.Line, loadKind, destination)
 			}
 			if states[destination] == 1 {
-				return fmt.Errorf("%s:%d: require_once cycle to %q is outside the static profile", id, require.Line, destination)
+				return fmt.Errorf("%s:%d: %s cycle to %q is outside the static profile", id, require.Line, loadKind, destination)
+			}
+			// A bare require of an already-loaded destination would re-execute the
+			// file in PHP and fatal on redeclaration — outside the static profile.
+			if require.Kind == "require" && states[destination] == 2 {
+				return fmt.Errorf("%s:%d: bare require of %q would load it a second time (PHP redeclaration); outside the static profile", id, require.Line, destination)
 			}
 			report.Edges = append(report.Edges, Edge{From: id, Line: require.Line,
-				Suffix: require.Suffix, To: destination, Reused: states[destination] == 2})
+				Suffix: require.Suffix, To: destination, Kind: require.Kind, Reused: states[destination] == 2})
 			if states[destination] == 0 {
 				if err := visit(destination); err != nil {
-					return fmt.Errorf("%s:%d: require_once %q: %w", id, require.Line, require.Suffix, err)
+					return fmt.Errorf("%s:%d: %s %q: %w", id, require.Line, loadKind, require.Suffix, err)
 				}
 			}
 		}

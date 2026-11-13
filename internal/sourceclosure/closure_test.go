@@ -186,6 +186,75 @@ func TestInspectGraphRejectsCollisions(t *testing.T) {
 	})
 }
 
+func TestInspectGraphBareRequire(t *testing.T) {
+	// (a) Entry with bare require of a declaration-only dependency assembles;
+	// the edge has kind "require".
+	t.Run("bare require assembles", func(t *testing.T) {
+		files := map[string]string{
+			"entry.php": "<?php\nrequire __DIR__ . '/dep.php';\n",
+			"dep.php":   "<?php\nclass Dep {}\n",
+		}
+		root, manifest := writeFixture(t, files, []string{"8.3"})
+		report, err := Inspect(manifest, root, "entry.php", "8.3", frontend.Options{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(report.Edges) != 1 || report.Edges[0].Kind != "require" || report.Edges[0].To != "dep.php" {
+			t.Fatalf("edge kind not recorded: %#v", report.Edges)
+		}
+	})
+
+	// (b) Two bare requires of the same file -> error.
+	t.Run("two bare requires error", func(t *testing.T) {
+		files := map[string]string{
+			"entry.php": "<?php\nrequire __DIR__ . '/dep.php';\nrequire __DIR__ . '/dep.php';\n",
+			"dep.php":   "<?php\nclass Dep {}\n",
+		}
+		root, manifest := writeFixture(t, files, []string{"8.3"})
+		report, err := Inspect(manifest, root, "entry.php", "8.3", frontend.Options{})
+		if err == nil || !strings.Contains(err.Error(), "bare require") || !strings.Contains(err.Error(), "second time") {
+			t.Fatalf("must reject double bare require: %v", err)
+		}
+		assertZeroReport(t, report)
+	})
+
+	// (c) require_once then bare require of same file -> error.
+	t.Run("require_once then bare require error", func(t *testing.T) {
+		files := map[string]string{
+			"entry.php": "<?php\nrequire_once __DIR__ . '/dep.php';\nrequire __DIR__ . '/dep.php';\n",
+			"dep.php":   "<?php\nclass Dep {}\n",
+		}
+		root, manifest := writeFixture(t, files, []string{"8.3"})
+		report, err := Inspect(manifest, root, "entry.php", "8.3", frontend.Options{})
+		if err == nil || !strings.Contains(err.Error(), "bare require") || !strings.Contains(err.Error(), "second time") {
+			t.Fatalf("must reject bare require after require_once: %v", err)
+		}
+		assertZeroReport(t, report)
+	})
+
+	// (d) bare require then require_once of same file -> OK, second edge Reused=true.
+	t.Run("bare require then require_once reused", func(t *testing.T) {
+		files := map[string]string{
+			"entry.php": "<?php\nrequire __DIR__ . '/dep.php';\nrequire_once __DIR__ . '/dep.php';\n",
+			"dep.php":   "<?php\nclass Dep {}\n",
+		}
+		root, manifest := writeFixture(t, files, []string{"8.3"})
+		report, err := Inspect(manifest, root, "entry.php", "8.3", frontend.Options{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(report.Edges) != 2 {
+			t.Fatalf("expected 2 edges: %#v", report.Edges)
+		}
+		if report.Edges[0].Kind != "require" || report.Edges[0].Reused {
+			t.Fatalf("first edge should be bare require, not reused: %#v", report.Edges[0])
+		}
+		if report.Edges[1].Kind != "" || !report.Edges[1].Reused {
+			t.Fatalf("second edge should be require_once, reused: %#v", report.Edges[1])
+		}
+	})
+}
+
 func TestInspectGraphRejectsManifestDrift(t *testing.T) {
 	files := map[string]string{
 		"entry.php": "<?php\n",
