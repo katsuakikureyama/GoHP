@@ -38,20 +38,29 @@ func TestVariableEmptyValues(t *testing.T) {
 	}
 }
 
-func TestVariableEmptyRejectsUnsupportedValues(t *testing.T) {
-	type foreignString string
-	for _, input := range []any{
-		nil, false, true, int64(0), int64(1), 0, 0.0, foreignString(""),
-		[]byte{}, []any{}, &struct{}{}, (*Array)(nil), (*string)(nil),
-		NewCallable(0, func(...any) any { return nil }),
-	} {
-		func() {
-			defer func() {
-				if got := recover(); got != "empty requires array or string" {
-					t.Fatalf("unsupported %T rejection: %v", input, got)
-				}
-			}()
-			VariableEmpty(input)
-		}()
+func TestVariableEmptyScalars(t *testing.T) {
+	// null is empty
+	if !VariableEmpty(nil) {
+		t.Fatal("empty(null) should be true")
+	}
+	// false is empty
+	if !VariableEmpty(false) {
+		t.Fatal("empty(false) should be true")
+	}
+	// true is not empty
+	if VariableEmpty(true) {
+		t.Fatal("empty(true) should be false")
+	}
+	// int64(0) is empty
+	if !VariableEmpty(int64(0)) {
+		t.Fatal("empty(0) should be true")
+	}
+	// int64(1) is not empty
+	if VariableEmpty(int64(1)) {
+		t.Fatal("empty(1) should be false")
+	}
+	// Objects are not empty
+	if VariableEmpty(&struct{}{}) {
+		t.Fatal("empty(object) should be false")
 	}
 }

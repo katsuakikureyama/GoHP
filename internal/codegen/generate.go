@@ -456,12 +456,19 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			if root == "this" || root == "GLOBALS" || strings.HasPrefix(root, "_") {
 				g.fail(s.Line, "reserved/global variable unsupported")
 			}
-			base := g.expr(s.Target.Args[0], scope)
-			key := g.expr(s.Target.Args[1], scope)
-			value := g.expr(s.Expr, scope)
-			if g.ownedValues {
+			if g.globalNames != nil && g.globalNames[root] {
+				// Global-bound array: key evaluated before RHS, both before container fetch.
+				key := g.expr(s.Target.Args[1], scope)
+				value := g.expr(s.Expr, scope)
+				g.emit("rt.GlobalArraySet(execution,%s,%s,rt.Clone(%s))\n", strconv.Quote(root), key, value)
+			} else if g.ownedValues {
+				key := g.expr(s.Target.Args[1], scope)
+				value := g.expr(s.Expr, scope)
 				g.emit("{ key := any(%s); value := any(%s); v[%q].ArrayWrite(key,value) }\n", key, value, root)
 			} else {
+				base := g.expr(s.Target.Args[0], scope)
+				key := g.expr(s.Target.Args[1], scope)
+				value := g.expr(s.Expr, scope)
 				g.emit("v[%q]=rt.ArraySet(%s,%s,%s)\n", root, base, key, value)
 			}
 		case "assign_append":
@@ -469,11 +476,16 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			if root == "this" || root == "GLOBALS" || strings.HasPrefix(root, "_") {
 				g.fail(s.Line, "reserved/global variable unsupported")
 			}
-			base := g.expr(s.Target, scope)
-			value := g.expr(s.Expr, scope)
-			if g.ownedValues {
+			if g.globalNames != nil && g.globalNames[root] {
+				// Global-bound array append.
+				value := g.expr(s.Expr, scope)
+				g.emit("rt.GlobalArrayAppend(execution,%s,rt.Clone(%s))\n", strconv.Quote(root), value)
+			} else if g.ownedValues {
+				value := g.expr(s.Expr, scope)
 				g.emit("{ value := any(%s); v[%q].ArrayAppend(value) }\n", value, root)
 			} else {
+				base := g.expr(s.Target, scope)
+				value := g.expr(s.Expr, scope)
 				g.emit("v[%q]=rt.ArrayAppend(%s,%s)\n", root, base, value)
 			}
 		case "echo":
