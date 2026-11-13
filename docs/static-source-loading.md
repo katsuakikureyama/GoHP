@@ -33,8 +33,11 @@ A bare `require` must reach its target exactly once — a second bare `require`
 of the same file rejects (PHP would re-execute and fatal on redeclaration).
 A `require_once` to a file already loaded by bare `require` is treated as
 reused (PHP skips it). Dependencies remain declaration-only;
-the entry may execute after its load section. Declarations must precede loads;
-later, conditional and local loads reject.
+the entry may execute after its load section. In an entry module, unconditional
+top-level `function`, `class` and `final class` declarations are hoisted
+(PHP compile-time behavior) and may appear at any top-level position, including
+after body statements; dependency modules still require declarations before
+trailing loads. Conditional and local loads reject.
 
 Bundle `gohp.build/v0.2` reports contain exact manifest SHA, entry, closure profile,
 source IDs/hashes/sizes, ordered graph edges/unreached files, generated hash,

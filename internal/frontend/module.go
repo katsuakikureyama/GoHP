@@ -116,7 +116,7 @@ func parseStaticModule(sourceID, src, version string, options Options, entry boo
 		case p.peek().kind == "id" && p.peek().text == "declare":
 			p.fail("declare(strict_types=1) is only supported as the first statement")
 		case p.peek().kind == "id" && p.peek().text == "final":
-			if loadsStarted || bodyStarted {
+			if !entry && (loadsStarted || bodyStarted) {
 				p.fail("module declarations must precede trailing require_once directives")
 			}
 			p.pop()
@@ -159,7 +159,7 @@ func parseStaticModule(sourceID, src, version string, options Options, entry boo
 			out.Requires = append(out.Requires, ModuleRequire{Line: line, Suffix: suffix.text, Kind: "require"})
 			program.Body = append(program.Body, ir.Stmt{Kind: StaticRequire, Name: suffix.text, Line: line, SourceID: sourceID})
 		case p.accept("function"):
-			if loadsStarted || bodyStarted {
+			if !entry && (loadsStarted || bodyStarted) {
 				p.fail("module declarations must precede trailing require_once directives")
 			}
 			f := p.function(false, false)
@@ -170,7 +170,7 @@ func parseStaticModule(sourceID, src, version string, options Options, entry boo
 			program.Functions = append(program.Functions, f)
 			out.Declarations = append(out.Declarations, ModuleDeclaration{Kind: "function", Name: f.Name, Line: line})
 		case p.accept("class"):
-			if loadsStarted || bodyStarted {
+			if !entry && (loadsStarted || bodyStarted) {
 				p.fail("module declarations must precede trailing require_once directives")
 			}
 			c := p.class()
