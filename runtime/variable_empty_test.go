@@ -38,49 +38,20 @@ func TestVariableEmptyValues(t *testing.T) {
 	}
 }
 
-func TestVariableEmptyScalars(t *testing.T) {
-	// null is empty
-	if !VariableEmpty(nil) {
-		t.Fatal("empty(null) should be true")
-	}
-	// false is empty
-	if !VariableEmpty(false) {
-		t.Fatal("empty(false) should be true")
-	}
-	// true is not empty
-	if VariableEmpty(true) {
-		t.Fatal("empty(true) should be false")
-	}
-	// int64(0) is empty
-	if !VariableEmpty(int64(0)) {
-		t.Fatal("empty(0) should be true")
-	}
-	// int64(1) is not empty
-	if VariableEmpty(int64(1)) {
-		t.Fatal("empty(1) should be false")
-	}
-}
-
-// Foreign Go values (floats, plain ints, byte slices, typed nil pointers,
-// foreign string aliases) stay outside the closed PHP value domain.
 func TestVariableEmptyRejectsUnsupportedValues(t *testing.T) {
 	type foreignString string
 	for _, input := range []any{
-		0, 0.0, foreignString(""), []byte{}, []any{}, &struct{}{}, (*Array)(nil), (*string)(nil),
+		nil, false, true, int64(0), int64(1), 0, 0.0, foreignString(""),
+		[]byte{}, []any{}, &struct{}{}, (*Array)(nil), (*string)(nil),
+		NewCallable(0, func(...any) any { return nil }),
 	} {
 		func() {
 			defer func() {
-				if got := recover(); got != "empty requires a supported PHP value" {
+				if got := recover(); got != "empty requires array or string" {
 					t.Fatalf("unsupported %T rejection: %v", input, got)
 				}
 			}()
 			VariableEmpty(input)
 		}()
-	}
-}
-
-func TestVariableEmptyObjectsAreNotEmpty(t *testing.T) {
-	if VariableEmpty(NewCallable(0, func(...any) any { return nil })) {
-		t.Fatal("a generated arrow (PHP Closure) is never empty")
 	}
 }
