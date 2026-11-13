@@ -19,6 +19,7 @@ type generator struct {
 	minimum       map[string]int
 	classes       map[string]bool
 	methods       map[string]bool
+	staticMethods map[string]bool
 	serial        int
 	sourceID      string
 	sourceIndices map[string]int
@@ -52,7 +53,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 			}
 		}
 	}()
-	g := &generator{p: p, funcs: map[string]int{}, classes: map[string]bool{}, methods: map[string]bool{}}
+	g := &generator{p: p, funcs: map[string]int{}, classes: map[string]bool{}, methods: map[string]bool{}, staticMethods: map[string]bool{}}
 	g.minimum = map[string]int{}
 	if p.Version != ir.Version {
 		return nil, SourceMap{}, fmt.Errorf("IR001: unsupported IR version %q", p.Version)
@@ -113,6 +114,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 			if m != "__construct" {
 				g.methods[m] = true
 			}
+			g.staticMethods[n+"::"+m] = f.Static
 		}
 		props := map[string]bool{}
 		for _, v := range c.Properties {
@@ -246,15 +248,22 @@ func (g *generator) function(f ir.Function, c string) {
 	g.ownedValues = c == "" && !g.scalarFrame && !hasGlobals && owned
 	g.globalNames = globalNamesInScope(f.Body, true)
 	defer func() { g.scalarFrame, g.ownedValues, g.globalNames = previousFrame, previousOwned, previousGlobals }()
-	if g.execution && c == "" {
+	static := c != "" && f.Static
+	switch {
+	case g.execution && static:
+		g.emit("func S_%s_%s(args ...any) any { return SContext_%s_%s(&rt.Execution{}, args...) }\n", name(c), name(f.Name), name(c), name(f.Name))
+		g.emit("func SContext_%s_%s(execution *rt.Execution, args ...any) any { rt.RequireExecution(execution)\n", name(c), name(f.Name))
+	case g.execution && c == "":
 		g.emit("func F_%s(args ...any) any { return FContext_%s(&rt.Execution{}, args...) }\n", name(f.Name), name(f.Name))
 		g.emit("func FContext_%s(execution *rt.Execution, args ...any) any { rt.RequireExecution(execution)\n", name(f.Name))
-	} else if g.execution {
+	case g.execution:
 		g.emit("func (self *C_%s) M_%s(args ...any) any { return self.MContext_%s(&rt.Execution{}, args...) }\n", name(c), name(f.Name), name(f.Name))
 		g.emit("func (self *C_%s) MContext_%s(execution *rt.Execution, args ...any) any { rt.RequireExecution(execution)\n", name(c), name(f.Name))
-	} else if c == "" {
+	case static:
+		g.emit("func S_%s_%s(args ...any) any {\n", name(c), name(f.Name))
+	case c == "":
 		g.emit("func F_%s(args ...any) any {\n", name(f.Name))
-	} else {
+	default:
 		g.emit("func (self *C_%s) M_%s(args ...any) any {\n", name(c), name(f.Name))
 	}
 	if f.OptionalNullParams != 0 {
@@ -273,7 +282,7 @@ func (g *generator) function(f ir.Function, c string) {
 		g.emit("v:=map[string]any{}; _=v\n")
 	}
 	scope := map[string]bool{}
-	if c != "" {
+	if c != "" && !static {
 		scope["this"] = true
 		g.emit("v[\"this\"]=self\n")
 	}
@@ -862,6 +871,22 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 			return "FContext_" + n + "(execution," + args(e.Args) + ")"
 		}
 		return "F_" + n + "(" + args(e.Args) + ")"
+	case "static_call":
+		if len(e.Args) == 0 || e.Args[0].Kind != "class_ref" {
+			g.fail(e.Line, "static call requires a named class reference")
+		}
+		class := name(e.Args[0].Text)
+		method := name(e.Text)
+		if !g.classes[class] {
+			g.fail(e.Line, "unknown class "+e.Args[0].Text)
+		}
+		if !g.staticMethods[class+"::"+method] {
+			g.fail(e.Line, "unknown static method "+class+"::"+method)
+		}
+		if g.execution {
+			return "SContext_" + class + "_" + method + "(execution," + args(e.Args[1:]) + ")"
+		}
+		return "S_" + class + "_" + method + "(" + args(e.Args[1:]) + ")"
 	case "new":
 		if !g.classes[name(e.Text)] {
 			g.fail(e.Line, "unknown class "+e.Text)

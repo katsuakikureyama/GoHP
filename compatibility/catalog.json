@@ -2745,6 +2745,55 @@
         {"case_id": "unit.inventory.invalid", "test": "TestReadRejectsAmbiguousAndUnsafeMetadata", "file": "internal/inventory/read_test.go", "kind": "unit", "assertions": ["duplicate JSON keys, malformed selected fields, unsafe files and oversized inputs are rejected"]}
       ],
       "limitations": ["No PHP callsite inventory, dependency solver or package/extension support verdict", "No vendor/source inspection, lock freshness validation, license decision or full Composer schema validation", "Scripts/autoload recorded only by event/mode name; no hooks or plugins execute"]
+    },
+    {
+      "id": "php.syntax.strict-types-declare",
+      "kind": "syntax",
+      "name": "No-op declare(strict_types=1) file prologue",
+      "implementation": "partial",
+      "contract": "Exactly declare ( strict_types = 1 ) ; is admitted as the first statement after <?php in ordinary single-file parsing and in entry/dependency static modules. Generation is a no-op because the closed subset never performs weak scalar coercion on typed parameters. Other directives, strict_types=0, block forms, late positions and repeated declare statements reject with located PHP002.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"unit.declare_strict.admission","test":"TestParseStrictTypesDeclareAndFinal","file":"internal/frontend/static_method_test.go","kind":"unit","assertions":["exact first-position directive admitted for both targets with the following final class preserved"]},
+        {"case_id":"negative.declare_strict.source","test":"TestParseStrictTypesDeclareRejections","file":"internal/frontend/static_method_test.go","kind":"negative","assertions":["ticks/encoding, strict_types=0, block form, late, repeated and function-local directives fail with PHP002"]},
+        {"case_id":"unit.declare_strict.module","test":"TestParseStaticModuleDeclareAndFinal","file":"internal/frontend/static_method_test.go","kind":"unit","assertions":["dependency module accepts the leading directive; a late directive rejects with source identity"]}
+      ],
+      "limitations": ["Only the strict_types directive with literal 1; every other declare form rejects", "No-op admission does not add PHP weak/strict coercion modeling or TypeError equivalence", "Builtin argument typing remains unchanged; existing scalar parameter guards still apply", "Ordinary single-file and static-module parsing only; no executable dependency initialization"]
+    },
+    {
+      "id": "php.syntax.final-class",
+      "kind": "syntax",
+      "name": "No-op final class declarations",
+      "implementation": "partial",
+      "contract": "A leading final modifier is admitted on a class declaration in ordinary parsing and static modules. Declarations keep kind class and their name; finality is unobservable because inheritance is unsupported. final on methods/properties/constants, abstract/readonly classes and extends/implements remain rejected with located PHP002.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"unit.final_class.admission","test":"TestParseStrictTypesDeclareAndFinal","file":"internal/frontend/static_method_test.go","kind":"unit","assertions":["final class declaration keeps class kind, name, methods and static metadata"]},
+        {"case_id":"negative.final_class.modifiers","test":"TestParseStaticModifierRejections","file":"internal/frontend/static_method_test.go","kind":"negative","assertions":["final methods, abstract/readonly classes and extends/implements forms fail with PHP002"]},
+        {"case_id":"unit.final_class.module","test":"TestParseStaticModuleDeclareAndFinal","file":"internal/frontend/static_method_test.go","kind":"unit","assertions":["dependency module accepts final class as a class declaration without changing identity"]}
+      ],
+      "limitations": ["No inheritance, abstract/readonly classes, interfaces, traits or final members", "Finality is semantically unobservable; no reflection or class-hierarchy contract", "Static modules remain declaration-only with trailing literal load edges"]
+    },
+    {
+      "id": "php.syntax.static-methods",
+      "kind": "syntax",
+      "name": "Public static methods and ClassName::method() calls",
+      "implementation": "partial",
+      "contract": "Inside a class, exactly public static function name(...) declares a receiverless method. ClassName::method(args) is admitted as an expression and statement; class and method matching is case-insensitive and forward declarations are allowed. Arity, class parameters and trailing null defaults follow existing method calls, and a sole return-new factory keeps its object type. Static methods are lowered as package-level S_<class>_<method> functions (SContext_ when Execution state is present) and never create a fresh execution for internal calls. self/static/parent, $var::, static properties/constants/class, cross-kind calls, unknown members and $this inside static bodies reject.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.static_method_call","test":"TestDifferential/static_method_call","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/static_method_call.php","assertions":["stdout","exit","scalar params/returns, factory then instance call, same-class static call, global/instance/main callers, case-insensitive names and array argument copy"]},
+        {"case_id":"compiler.static_method.lowering","test":"TestStaticMethodLowering","file":"internal/codegen/static_method_test.go","kind":"compiler","assertions":["receiverless S_ functions, instance methods unchanged and static call sites lowered by class/method name"]},
+        {"case_id":"compiler.static_method.execution","test":"TestStaticMethodExecutionLane","file":"internal/codegen/static_method_test.go","kind":"compiler","assertions":["SContext_ wrappers mirror FContext_ and internal static calls thread the same execution"]},
+        {"case_id":"negative.static_method.source","test":"TestStaticMethodCodegenRejections","file":"internal/codegen/static_method_test.go","kind":"negative","assertions":["$this in static bodies, static constructors, non-static :: calls and static instance calls reject without output"]},
+        {"case_id":"negative.static_method.ir","test":"TestStaticMethodMalformedIR","file":"internal/codegen/static_method_test.go","kind":"negative","assertions":["crafted IR that drops the static flag cannot lower a Class::method call"]},
+        {"case_id":"unit.static_method.semantic","test":"TestStaticMethodValidation","file":"internal/semantic/static_method_test.go","kind":"unit","assertions":["static scalar params, same-class calls, factory object return and calls from global/instance/main validate"]},
+        {"case_id":"negative.static_method.semantic","test":"TestStaticMethodRejections","file":"internal/semantic/static_method_test.go","kind":"negative","assertions":["$this, static constructors, unknown class/method, cross-kind calls and wrong arity reject"]},
+        {"case_id":"negative.static_method.ir_shape","test":"TestStaticCallMalformedIR","file":"internal/semantic/static_method_test.go","kind":"negative","assertions":["missing/non-class_ref receivers, invalid names and self/static/parent class references reject before output"]},
+        {"case_id":"unit.static_method.frontend_statement","test":"TestParseStaticCallStatement","file":"internal/frontend/static_method_test.go","kind":"unit","assertions":["standalone Class::method(...) parses as a call statement carrying a class_ref receiver"]},
+        {"case_id":"negative.static_method.frontend_members","test":"TestParseStaticMemberRejections","file":"internal/frontend/static_method_test.go","kind":"negative","assertions":["self/static/parent, $var::, static property/constant/class accesses fail with PHP002"]}
+      ],
+      "limitations": ["No self/static/parent, inheritance, interfaces, traits, static properties/constants, Class::class or variable/dynamic static receivers", "Static methods follow the bounded function path: no typed method returns, no global statements, no $this and no automatic static dispatch", "No private/protected methods, method overloading or late static binding; class and method lookup stays case-insensitive only", "Differential fixture executes native PHP in CI; local acceptance verifies lowering and generated output without PHP"]
     }
   ]
 }

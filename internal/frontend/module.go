@@ -105,11 +105,31 @@ func parseStaticModule(sourceID, src, version string, options Options, entry boo
 	out.RegexProfile = profile
 	program = ir.Program{Version: ir.Version, PHPVersion: version, RegexProfile: out.RegexProfile,
 		Sources: []ir.SourceFile{{ID: sourceID, Bytes: int64(len(src)), SHA256: fmt.Sprintf("%x", sha256.Sum256([]byte(src)))}}}
+	if p.peek().kind == "id" && p.peek().text == "declare" {
+		p.declareStrictTypes()
+	}
 	loadsStarted := false
 	bodyStarted := false
 	for p.peek().kind != "eof" {
 		line := p.peek().line
 		switch {
+		case p.peek().kind == "id" && p.peek().text == "declare":
+			p.fail("declare(strict_types=1) is only supported as the first statement")
+		case p.peek().kind == "id" && p.peek().text == "final":
+			if loadsStarted || bodyStarted {
+				p.fail("module declarations must precede trailing require_once directives")
+			}
+			p.pop()
+			p.need("class")
+			c := p.class()
+			for _, method := range c.Methods {
+				if err := rejectLocalModuleLoads(method.Body); err != nil {
+					return out, program, err
+				}
+			}
+			c.SourceID = sourceID
+			program.Classes = append(program.Classes, c)
+			out.Declarations = append(out.Declarations, ModuleDeclaration{Kind: "class", Name: c.Name, Line: line})
 		case p.accept("require_once"):
 			if bodyStarted {
 				p.fail("static require_once must precede executable entry statements")
@@ -142,7 +162,7 @@ func parseStaticModule(sourceID, src, version string, options Options, entry boo
 			if loadsStarted || bodyStarted {
 				p.fail("module declarations must precede trailing require_once directives")
 			}
-			f := p.function(false)
+			f := p.function(false, false)
 			if err := rejectLocalModuleLoads(f.Body); err != nil {
 				return out, program, err
 			}

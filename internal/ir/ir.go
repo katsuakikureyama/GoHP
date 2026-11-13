@@ -23,6 +23,9 @@ type Expr struct {
 	// more literal identifier strings, not ordinary eager property-read nodes.
 	// version_constant retains the exact predefined name in Text, no Args or
 	// Params; its integer value is resolved against Program.PHPVersion.
+	// static_call mirrors method-call shape: Text is the method name and
+	// Args[0] is a class_ref node carrying the spelled class name; remaining
+	// Args are the call arguments.
 	Kind, Text string
 	Line       int
 	Args       []Expr
@@ -68,6 +71,7 @@ type Function struct {
 	Body               []Stmt
 	Line               int
 	ReturnType         string // Empty (untyped), "array" or "bool" on a named global function.
+	Static             bool   // Public static class method; lowered without a receiver.
 }
 type Property struct {
 	Name  string
