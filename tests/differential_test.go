@@ -774,9 +774,9 @@ func TestArrayIsListRuntimeTypeGuard(t *testing.T) {
 	}
 }
 
-// TestScalarGlobalRuntimeGuard covers the scalar-only global boundary: an
-// array assigned to a global-bound variable must fail explicitly instead of
-// being copied. This has no native-PHP invocation or PHP error-equivalence claim.
+// TestScalarGlobalRuntimeGuard covers the global element-write boundary: a
+// global-bound variable holding an integer must fail explicitly when written as
+// an array instead of being silently converted. This has no native-PHP invocation or PHP error-equivalence claim.
 func TestScalarGlobalRuntimeGuard(t *testing.T) {
 	target := phpTarget(t)
 	src, err := os.ReadFile("fixtures/scalar_global_runtime_failure.php")
@@ -803,7 +803,7 @@ func TestScalarGlobalRuntimeGuard(t *testing.T) {
 	run := exec.Command(binary)
 	run.Env = []string{"PATH="}
 	output, err := run.CombinedOutput()
-	if err == nil || !bytes.Contains(output, []byte("storage slot requires null, bool, int64 or string")) {
+	if err == nil || !bytes.Contains(output, []byte("array assignment requires array")) {
 		t.Fatalf("expected explicit scalar global runtime failure, got %v\n%s", err, output)
 	}
 }
