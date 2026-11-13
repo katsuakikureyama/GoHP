@@ -2754,7 +2754,7 @@
       "contract": "Exactly declare ( strict_types = 1 ) ; is admitted as the first statement after <?php in ordinary single-file parsing and in entry/dependency static modules. Generation is a no-op because the closed subset never performs weak scalar coercion on typed parameters. Other directives, strict_types=0, block forms, late positions and repeated declare statements reject with located PHP002.",
       "php_targets": ["8.3", "8.4"],
       "checks": [
-        {"case_id":"unit.declare_strict.admission","test":"TestParseStrictTypesDeclareAndFinal","file":"internal/frontend/static_method_test.go","kind":"unit","assertions":["exact first-position directive admitted for both targets with the following final class preserved"]},
+        {"case_id":"unit.declare_strict.admission","test":"TestParseStrictTypesDeclareAndFinalClass","file":"internal/frontend/static_method_test.go","kind":"unit","assertions":["exact first-position directive admitted for both targets with the following final class preserved"]},
         {"case_id":"negative.declare_strict.source","test":"TestParseStrictTypesDeclareRejections","file":"internal/frontend/static_method_test.go","kind":"negative","assertions":["ticks/encoding, strict_types=0, block form, late, repeated and function-local directives fail with PHP002"]},
         {"case_id":"unit.declare_strict.module","test":"TestParseStaticModuleDeclareAndFinal","file":"internal/frontend/static_method_test.go","kind":"unit","assertions":["dependency module accepts the leading directive; a late directive rejects with source identity"]}
       ],
@@ -2768,7 +2768,7 @@
       "contract": "A leading final modifier is admitted on a class declaration in ordinary parsing and static modules. Declarations keep kind class and their name; finality is unobservable because inheritance is unsupported. final on methods/properties/constants, abstract/readonly classes and extends/implements remain rejected with located PHP002.",
       "php_targets": ["8.3", "8.4"],
       "checks": [
-        {"case_id":"unit.final_class.admission","test":"TestParseStrictTypesDeclareAndFinal","file":"internal/frontend/static_method_test.go","kind":"unit","assertions":["final class declaration keeps class kind, name, methods and static metadata"]},
+        {"case_id":"unit.final_class.admission","test":"TestParseStrictTypesDeclareAndFinalClass","file":"internal/frontend/static_method_test.go","kind":"unit","assertions":["final class declaration keeps class kind, name, methods and static metadata"]},
         {"case_id":"negative.final_class.modifiers","test":"TestParseStaticModifierRejections","file":"internal/frontend/static_method_test.go","kind":"negative","assertions":["final methods, abstract/readonly classes and extends/implements forms fail with PHP002"]},
         {"case_id":"unit.final_class.module","test":"TestParseStaticModuleDeclareAndFinal","file":"internal/frontend/static_method_test.go","kind":"unit","assertions":["dependency module accepts final class as a class declaration without changing identity"]}
       ],
