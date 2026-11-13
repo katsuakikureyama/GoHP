@@ -36,6 +36,7 @@ type classInfo struct {
 	methods          map[string]int
 	methodMinimum    map[string]int
 	methodParameters map[string][]string
+	methodStatic     map[string]bool
 	methodNewReturn  map[string]string // Only a sole "return new DeclaredClass(...)" body.
 	constructorArity int               // Zero also describes a class without a constructor.
 	constructorMin   int
@@ -100,7 +101,7 @@ func Validate(p ir.Program) (err error) {
 		if !validName(c.Name) {
 			return malformed(classLine, "invalid class name")
 		}
-		info := classInfo{properties: map[string]valueType{}, methods: map[string]int{}, methodMinimum: map[string]int{}, methodParameters: map[string][]string{}, methodNewReturn: map[string]string{}}
+		info := classInfo{properties: map[string]valueType{}, methods: map[string]int{}, methodMinimum: map[string]int{}, methodParameters: map[string][]string{}, methodStatic: map[string]bool{}, methodNewReturn: map[string]string{}}
 		for _, property := range c.Properties {
 			if !validName(property.Name) {
 				return malformed(property.Value.Line, "invalid property name")
@@ -108,6 +109,12 @@ func Validate(p ir.Program) (err error) {
 			info.properties[property.Name] = literalType(property.Value)
 		}
 		for _, method := range c.Methods {
+			if method.Static && strings.EqualFold(method.Name, "__construct") {
+				return unsupported(method.Line, "constructors cannot be static")
+			}
+			if method.Static && usesThis(method.Body) {
+				return unsupported(method.Line, "static methods cannot use $this")
+			}
 			if err := validateParameterTypes(method, true); err != nil {
 				return err
 			}
@@ -117,6 +124,7 @@ func Validate(p ir.Program) (err error) {
 			info.methods[strings.ToLower(method.Name)] = len(method.Params)
 			info.methodMinimum[strings.ToLower(method.Name)] = len(method.Params) - method.OptionalNullParams
 			info.methodParameters[strings.ToLower(method.Name)] = method.ParamTypes
+			info.methodStatic[strings.ToLower(method.Name)] = method.Static
 			if len(method.Body) == 1 && method.Body[0].Kind == "return" && method.Body[0].Expr.Kind == "new" {
 				info.methodNewReturn[strings.ToLower(method.Name)] = strings.ToLower(method.Body[0].Expr.Text)
 			}
@@ -236,7 +244,10 @@ func validateParameterTypes(f ir.Function, method bool) error {
 		if annotation != "" && annotation != "array" && annotation != "callable" && !scalar && !classType {
 			return malformed(f.Line, "unsupported IR parameter type")
 		}
-		if annotation != "" && method && !classType && !(constructor && scalar) {
+		// Static methods are lowered like ordinary functions, so they admit the
+		// same exact scalar entry annotations. Instance methods still reserve
+		// scalar parameters for constructors.
+		if annotation != "" && method && !classType && !(constructor && scalar) && !(f.Static && scalar) {
 			return unsupported(f.Line, "scalar parameter types require a public constructor; other typed methods are unsupported")
 		}
 	}
@@ -249,6 +260,15 @@ func validateParameterTypes(f ir.Function, method bool) error {
 }
 
 func (v validator) function(f ir.Function, class string) error {
+	if f.Static && class == "" {
+		return unsupported(f.Line, "static modifier requires a class method")
+	}
+	if f.Static && strings.EqualFold(f.Name, "__construct") {
+		return unsupported(f.Line, "constructors cannot be static")
+	}
+	if f.Static && usesThis(f.Body) {
+		return unsupported(f.Line, "static methods cannot use $this")
+	}
 	if class != "" && strings.EqualFold(f.Name, "__construct") && constructorHasReturn(f.Body) {
 		return unsupported(f.Line, "constructor return statements are unsupported")
 	}
@@ -271,7 +291,7 @@ func (v validator) function(f ir.Function, class string) error {
 		return malformed(f.Line, "invalid function name")
 	}
 	scope := map[string]valueType{}
-	if class != "" {
+	if class != "" && !f.Static {
 		scope["this"] = valueType{kind: objectKind, class: class}
 	}
 	for i, param := range f.Params {
@@ -419,7 +439,7 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 				return malformed(stmt.Line, "call statement requires only a call expression")
 			}
 			switch stmt.Expr.Kind {
-			case "call":
+			case "call", "static_call":
 			case "method", "invoke":
 				if len(stmt.Expr.Args) == 0 {
 					return malformed(stmt.Line, "standalone method/callable requires a bare variable receiver")
@@ -780,6 +800,39 @@ func preg83InputForm(expr ir.Expr, kind string) bool {
 
 func emptyExpr(e ir.Expr) bool {
 	return e.Kind == "" && e.Text == "" && e.Line == 0 && e.Args == nil && e.Params == nil
+}
+
+// usesThis reports any use of $this, including receivers and assignment
+// targets. Static methods have no receiver at all.
+func usesThis(body []ir.Stmt) bool {
+	var expression func(ir.Expr) bool
+	expression = func(e ir.Expr) bool {
+		if e.Kind == "var" && e.Text == "this" {
+			return true
+		}
+		for _, arg := range e.Args {
+			if expression(arg) {
+				return true
+			}
+		}
+		return false
+	}
+	var statements func([]ir.Stmt) bool
+	statements = func(stmts []ir.Stmt) bool {
+		for _, stmt := range stmts {
+			if stmt.Name == "this" || stmt.Key == "this" || stmt.Value == "this" {
+				return true
+			}
+			if expression(stmt.Expr) || expression(stmt.Target) {
+				return true
+			}
+			if statements(stmt.Body) || statements(stmt.ElseBody) {
+				return true
+			}
+		}
+		return false
+	}
+	return statements(body)
 }
 
 func constructorHasReturn(body []ir.Stmt) bool {
@@ -1531,6 +1584,61 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 			}
 		}
 		return valueType{kind: unknownKind}, nil
+	case "static_call":
+		if len(expr.Args) == 0 {
+			return valueType{}, malformed(expr.Line, "static call requires a class reference")
+		}
+		reference := expr.Args[0]
+		if reference.Kind != "class_ref" || reference.Args != nil || reference.Params != nil || !validName(reference.Text) {
+			return valueType{}, malformed(expr.Line, "static call requires a named class reference")
+		}
+		if !validName(expr.Text) {
+			return valueType{}, malformed(expr.Line, "invalid static method name")
+		}
+		class := strings.ToLower(reference.Text)
+		switch class {
+		case "self", "static", "parent":
+			return valueType{}, unsupported(expr.Line, "self/static/parent static calls are unsupported")
+		}
+		info, exists := v.classes[class]
+		if !exists {
+			return valueType{}, unsupported(expr.Line, "unknown class "+reference.Text)
+		}
+		method := strings.ToLower(expr.Text)
+		if method == "__construct" {
+			return valueType{}, unsupported(expr.Line, "direct constructor calls are unsupported")
+		}
+		arity, exists := info.methods[method]
+		if !exists {
+			return valueType{}, unsupported(expr.Line, "unknown method "+class+"::"+expr.Text)
+		}
+		if !info.methodStatic[method] {
+			return valueType{}, unsupported(expr.Line, "non-static method "+class+"::"+expr.Text+" cannot be called statically")
+		}
+		args, err := v.exprs(expr.Args[1:], scope)
+		if err != nil {
+			return valueType{}, err
+		}
+		if len(expr.Args)-1 > arity || len(expr.Args)-1 < info.methodMinimum[method] {
+			return valueType{}, unsupported(expr.Line, "unsupported argument count for "+class+"::"+expr.Text)
+		}
+		for i, annotation := range info.methodParameters[method] {
+			if i >= len(args) {
+				break
+			}
+			if name, classType := classParameterType(annotation); classType && !classArgumentMatches(args[i], name) {
+				return valueType{}, unsupported(expr.Line, "class parameter requires "+name+" object")
+			}
+			if want, scalar := (map[string]kind{"int": intKind, "string": stringKind, "bool": boolKind})[annotation]; scalar && args[i].kind != unknownKind && args[i].kind != want {
+				return valueType{}, unsupported(expr.Line, annotation+" parameter requires exact matching argument type")
+			}
+		}
+		if factory, ok := info.methodNewReturn[method]; ok {
+			if _, declared := v.classes[factory]; declared {
+				return valueType{kind: objectKind, class: factory}, nil
+			}
+		}
+		return valueType{kind: unknownKind}, nil
 	case "new":
 		if !validName(expr.Text) {
 			return valueType{}, malformed(expr.Line, "invalid class name")
@@ -1634,6 +1742,9 @@ func (v validator) expr(expr ir.Expr, scope map[string]valueType) (valueType, er
 				arity, ok := info.methods[strings.ToLower(expr.Text)]
 				if !ok {
 					return valueType{}, unsupported(expr.Line, "unknown method "+receiver.class+"::"+expr.Text)
+				}
+				if info.methodStatic[strings.ToLower(expr.Text)] {
+					return valueType{}, unsupported(expr.Line, "static method "+receiver.class+"::"+expr.Text+" must be called with ::")
 				}
 				if len(expr.Args)-1 > arity || len(expr.Args)-1 < info.methodMinimum[strings.ToLower(expr.Text)] {
 					return valueType{}, unsupported(expr.Line, "unsupported argument count for "+receiver.class+"::"+expr.Text)

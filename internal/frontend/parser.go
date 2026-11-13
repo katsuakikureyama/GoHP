@@ -186,7 +186,7 @@ func lex(s string) ([]token, error) {
 		matched := false
 		// Keep multi-character operators longest-first so === is never split
 		// into the unsupported = token followed by ==.
-		for _, op := range []string{"===", "!==", "&&", "||", "??", "=>", "->", "--", ".="} {
+		for _, op := range []string{"===", "!==", "&&", "||", "??", "=>", "->", "::", "--", ".="} {
 			if strings.HasPrefix(s[i:], op) {
 				ts = append(ts, token{op, ln, "sym"})
 				i += len(op)
@@ -270,10 +270,19 @@ func ParseWithOptions(src, version string, options Options) (out ir.Program, err
 	out.Version = ir.Version
 	out.PHPVersion = version
 	out.RegexProfile = profile
+	if p.peek().kind == "id" && p.peek().text == "declare" {
+		p.declareStrictTypes()
+	}
 	for p.peek().kind != "eof" {
 		switch {
+		case p.peek().kind == "id" && p.peek().text == "declare":
+			p.fail("declare(strict_types=1) is only supported as the first statement")
+		case p.peek().kind == "id" && p.peek().text == "final":
+			p.pop()
+			p.need("class")
+			out.Classes = append(out.Classes, p.class())
 		case p.accept("function"):
-			out.Functions = append(out.Functions, p.function(false))
+			out.Functions = append(out.Functions, p.function(false, false))
 		case p.accept("class"):
 			out.Classes = append(out.Classes, p.class())
 		default:
@@ -282,7 +291,26 @@ func ParseWithOptions(src, version string, options Options) (out ir.Program, err
 	}
 	return out, nil
 }
-func (p *parser) function(method bool) ir.Function {
+
+// declareStrictTypes admits exactly `declare(strict_types=1);` as a no-op
+// prologue. It is the only directive in the closed subset and must lead the
+// file; every other spelling, position or repetition fails closed with PHP002.
+func (p *parser) declareStrictTypes() {
+	p.need("declare")
+	p.need("(")
+	directive := p.name("id")
+	if directive != "strict_types" {
+		p.fail("only declare(strict_types=1) is supported")
+	}
+	p.need("=")
+	value := p.pop()
+	if value.kind != "int" || value.text != "1" {
+		p.fail("strict_types requires literal 1")
+	}
+	p.need(")")
+	p.need(";")
+}
+func (p *parser) function(method, static bool) ir.Function {
 	f := ir.Function{Name: p.name("id"), Line: p.peek().line}
 	p.need("(")
 	var paramTypes []string
@@ -296,8 +324,8 @@ func (p *parser) function(method bool) ir.Function {
 				switch paramType {
 				case "array", "callable":
 				case "int", "string", "bool":
-					if method && !strings.EqualFold(f.Name, "__construct") {
-						p.fail("scalar parameter declarations require a global function or public constructor")
+					if method && !static && !strings.EqualFold(f.Name, "__construct") {
+						p.fail("scalar parameter declarations require a global function, public constructor or static method")
 					}
 				case "float", "object", "mixed", "iterable", "void", "never", "null", "false", "true", "self", "parent", "static", "boolean", "integer", "double", "real", "resource":
 					p.fail("unsupported parameter declaration")
@@ -343,9 +371,22 @@ func (p *parser) class() ir.Class {
 	p.need("{")
 	for !p.accept("}") {
 		p.need("public")
+		if p.peek().kind == "id" && (p.peek().text == "final" || p.peek().text == "abstract" || p.peek().text == "readonly") {
+			p.fail("class member modifiers are unsupported")
+		}
+		static := false
+		if p.peek().kind == "id" && p.peek().text == "static" {
+			p.pop()
+			static = true
+		}
 		if p.accept("function") {
-			c.Methods = append(c.Methods, p.function(true))
+			method := p.function(true, static)
+			method.Static = static
+			c.Methods = append(c.Methods, method)
 		} else {
+			if static {
+				p.fail("static modifier requires a method")
+			}
 			propertyLine := p.peek().line
 			n := p.name("var")
 			if p.accept(";") {
@@ -648,8 +689,37 @@ func (p *parser) startsCallStatement() bool {
 	if p.pos+1 < len(p.ts) && p.ts[p.pos+1].kind == "sym" && p.ts[p.pos+1].text == "(" {
 		return true
 	}
+	if t.kind == "id" && p.pos+3 < len(p.ts) &&
+		p.ts[p.pos+1].text == "::" && p.ts[p.pos+2].kind == "id" && p.ts[p.pos+3].text == "(" {
+		return true
+	}
 	return t.kind == "var" && p.pos+3 < len(p.ts) &&
 		p.ts[p.pos+1].text == "->" && p.ts[p.pos+2].kind == "id" && p.ts[p.pos+3].text == "("
+}
+
+// staticCall admits only the bounded `ClassName::method(args)` form. The
+// receiver remains a named class reference, never a value or static member.
+func (p *parser) staticCall(class token) ir.Expr {
+	p.pop() // ::
+	switch strings.ToLower(class.text) {
+	case "self", "static", "parent":
+		p.fail("self/static/parent static calls are unsupported")
+	}
+	method := p.pop()
+	if method.kind != "id" {
+		p.fail("static member access is unsupported; only Class::method(...) calls are admitted")
+	}
+	if p.peek().kind != "sym" || p.peek().text != "(" {
+		p.fail("static member access is unsupported; only Class::method(...) calls are admitted")
+	}
+	p.need("(")
+	args := p.args(")")
+	return ir.Expr{
+		Kind: "static_call",
+		Text: method.text,
+		Line: class.line,
+		Args: append([]ir.Expr{{Kind: "class_ref", Text: class.text, Line: class.line}}, args...),
+	}
 }
 
 // The leading if/elseif token has already been consumed. Normalize chains to
@@ -722,6 +792,10 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 	case "int", "string", "var":
 		e.Kind = t.kind
 	case "id":
+		if p.peek().kind == "sym" && p.peek().text == "::" {
+			e = p.staticCall(t)
+			break
+		}
 		// Constants are case-sensitive and have a separate namespace from
 		// functions. Keep the name symbolic until target-aware generation.
 		if (t.text == "PHP_MAJOR_VERSION" || t.text == "PHP_MINOR_VERSION") && p.peek().text != "(" {
@@ -876,6 +950,9 @@ func (p *parser) exprMode(min int, allowTernary bool) ir.Expr {
 			p.need("]")
 			e = ir.Expr{Kind: "index", Args: []ir.Expr{e, idx}, Line: t.line}
 			continue
+		}
+		if p.accept("::") {
+			p.fail("static member access requires a class name and method call")
 		}
 		if p.accept("->") {
 			n := p.name("id")
