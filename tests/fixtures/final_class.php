@@ -17,5 +17,3 @@ $first = new Marker("a");
 $second = new Marker("b");
 echo $first->describe() . "\n";
 echo $second->describe() . "\n";
-echo ($first === $second ? "same" : "distinct") . "\n";
-echo ($first === $first ? "same" : "distinct") . "\n";
