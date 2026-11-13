@@ -1,7 +1,8 @@
 package runtime
 
 // VariableEmpty implements PHP empty() for the closed value domain.
-// It covers null, bool, int64, string, and Array. Objects are not empty.
+// It covers null, bool, int64, string, Array and generated objects/arrows;
+// foreign Go values reject explicitly.
 // The legacy ArrayEmpty entry remains strictly array-only.
 func VariableEmpty(value any) bool {
 	switch input := value.(type) {
@@ -16,7 +17,12 @@ func VariableEmpty(value any) bool {
 	case Array:
 		return ArrayEmpty(input)
 	default:
-		// Objects and other runtime values are not empty.
-		return false
+		// Generated objects and arrows (PHP Closures) are never empty. Any other
+		// Go value is outside the PHP value domain and must not be classified
+		// silently.
+		if IsObject(value) {
+			return false
+		}
+		panic("empty requires a supported PHP value")
 	}
 }
