@@ -26,8 +26,13 @@ and v0.1 report. No PHP is rewritten, extracted or concatenated.
 `sourceclosure.Assemble` consumes checked buffers once and resolves every edge
 before returning located declarations plus the entry body. Source hashes cover
 complete original files, including load directives. `frontend.ParseStaticModule`
-retains unresolved `static_require_once` nodes, which semantic/codegen admission
-rejects if resolution has not occurred. Dependencies remain declaration-only;
+retains unresolved `static_require_once` and `static_require` nodes, which semantic/codegen admission
+rejects if resolution has not occurred. Both `require_once` and bare `require`
+are admitted as fixed top-level directives with literal `__DIR__` suffixes.
+A bare `require` must reach its target exactly once — a second bare `require`
+of the same file rejects (PHP would re-execute and fatal on redeclaration).
+A `require_once` to a file already loaded by bare `require` is treated as
+reused (PHP skips it). Dependencies remain declaration-only;
 the entry may execute after its load section. Declarations must precede loads;
 later, conditional and local loads reject.
 

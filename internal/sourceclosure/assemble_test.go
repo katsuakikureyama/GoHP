@@ -27,7 +27,7 @@ func TestAssembleClosure(t *testing.T) {
 			t.Fatalf("unexpected resolved closure: %+v / %+v", program, graph)
 		}
 		for _, statement := range program.Body {
-			if statement.Kind == frontend.StaticRequireOnce || statement.SourceID != "main.php" {
+			if statement.Kind == frontend.StaticRequireOnce || statement.Kind == frontend.StaticRequire || statement.SourceID != "main.php" {
 				t.Fatalf("unresolved or unlocated entry: %+v", statement)
 			}
 		}
@@ -59,6 +59,18 @@ func TestUnresolvedModuleRejectsCodegen(t *testing.T) {
 	generated, sourceMap, err := codegen.GenerateWithMap(module.Program)
 	if err == nil || !strings.Contains(err.Error(), "main.php") || len(generated) != 0 || !reflect.DeepEqual(sourceMap, codegen.SourceMap{}) {
 		t.Fatalf("unresolved loads must not be silently dropped: %s / %+v / %v", generated, sourceMap, err)
+	}
+}
+
+func TestUnresolvedBareRequireRejectsCodegen(t *testing.T) {
+	// (e) unresolved static_require reaching semantic/codegen is rejected.
+	module, err := frontend.ParseStaticModule("main.php", "<?php\nrequire __DIR__ . '/child.php';", "8.3", frontend.Options{}, false)
+	if err != nil || len(module.Program.Body) != 1 || module.Program.Body[0].Kind != frontend.StaticRequire {
+		t.Fatalf("bare require must remain explicit before resolution: %+v / %v", module, err)
+	}
+	generated, sourceMap, err := codegen.GenerateWithMap(module.Program)
+	if err == nil || !strings.Contains(err.Error(), "main.php") || len(generated) != 0 || !reflect.DeepEqual(sourceMap, codegen.SourceMap{}) {
+		t.Fatalf("unresolved bare require must not be silently dropped: %s / %+v / %v", generated, sourceMap, err)
 	}
 }
 

@@ -22,7 +22,7 @@ func TestInspectModule(t *testing.T) {
 			t.Fatalf("unexpected module identity: %+v", module)
 		}
 		if !reflect.DeepEqual(module.Declarations, []ModuleDeclaration{{"class", "Box", 2}, {"function", "helper", 3}}) ||
-			!reflect.DeepEqual(module.Requires, []ModuleRequire{{5, "/nested/child.php"}, {6, "/nested/child.php"}}) {
+			!reflect.DeepEqual(module.Requires, []ModuleRequire{{5, "/nested/child.php", ""}, {6, "/nested/child.php", ""}}) {
 			t.Fatalf("lost source order or lines: %+v", module)
 		}
 	}
@@ -56,6 +56,61 @@ func TestInspectModuleRejectsUnsupported(t *testing.T) {
 	}
 	for _, suffix := range []string{"", "/", "child.php", "//child.php", "/./child.php", "/../child.php", "/x//child.php", "/x/../child.php", "/x/", "/x\\y.php", "/http:child.php", "/bad\x00.php", "/bad\n.php", "/bad\xff.php"} {
 		cases = append(cases, "require_once __DIR__ . '"+suffix+"';")
+	}
+	for _, body := range cases {
+		t.Run(body, func(t *testing.T) {
+			module, err := InspectModule("src/bad.php", "<?php\n"+body, "8.3", Options{})
+			if err == nil || !strings.Contains(err.Error(), "src/bad.php:") || !reflect.DeepEqual(module, ModuleInspection{}) {
+				t.Fatalf("must reject with file identity and no partial module: %+v / %v", module, err)
+			}
+		})
+	}
+}
+
+func TestInspectModuleBareRequire(t *testing.T) {
+	// Bare require parses into Requires with Kind "require".
+	src := "<?php\n" +
+		"require __DIR__ . '/dep.php';\n" +
+		"require_once __DIR__ . '/other.php';\n"
+	module, err := InspectModule("src/main.php", src, "8.3", Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(module.Requires, []ModuleRequire{
+		{Line: 2, Suffix: "/dep.php", Kind: "require"},
+		{Line: 3, Suffix: "/other.php", Kind: ""},
+	}) {
+		t.Fatalf("bare require kind not recorded: %+v", module.Requires)
+	}
+}
+
+func TestInspectModuleRequireOnceKind(t *testing.T) {
+	// require_once keeps Kind "" (empty).
+	src := "<?php\nrequire_once __DIR__ . '/child.php';\n"
+	module, err := InspectModule("src/main.php", src, "8.3", Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(module.Requires, []ModuleRequire{{Line: 2, Suffix: "/child.php", Kind: ""}}) {
+		t.Fatalf("require_once kind should be empty: %+v", module.Requires)
+	}
+}
+
+func TestInspectModuleBareRequireRejects(t *testing.T) {
+	cases := []string{
+		`require $path;`,
+		`require (__DIR__ . '/child.php');`,
+		`require __DIR__ . '/child.php' . '/other.php';`,
+		`require __DIR__ . '/child.php'; class Late {}`,
+		`require __DIR__ . '/child.php'; function late() { return null; }`,
+		`if (true) { require __DIR__ . '/child.php'; }`,
+		`function load() { require __DIR__ . '/child.php'; }`,
+		`require "__DIR__" . '/child.php';`,
+		`require __DIR__ "." '/child.php';`,
+		`require __DIR__ . '/child.php' ";"`,
+	}
+	for _, suffix := range []string{"", "/", "child.php", "//child.php", "/./child.php", "/../child.php", "/x//child.php", "/x/../child.php", "/x/", "/x\\y.php", "/http:child.php", "/bad\x00.php", "/bad\n.php", "/bad\xff.php"} {
+		cases = append(cases, "require __DIR__ . '"+suffix+"';")
 	}
 	for _, body := range cases {
 		t.Run(body, func(t *testing.T) {
