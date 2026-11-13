@@ -16,6 +16,7 @@ type Execution struct {
 	closed        bool
 	scalarGlobals storage.Frame
 	scalarFrames  map[*ScalarFrame]struct{}
+	sourceGlobals map[string]any // PHP source globals (global $x): holds null/bool/int64/string/Array/objects
 }
 
 func RequireExecution(execution *Execution) {

@@ -484,8 +484,14 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 				if len(stmt.Expr.Args) == 0 {
 					return malformed(stmt.Line, "standalone method/callable requires a bare variable receiver")
 				}
-				if stmt.Expr.Args[0].Kind != "var" {
-					return unsupported(stmt.Line, "standalone method/callable requires a bare variable receiver")
+				receiver := stmt.Expr.Args[0]
+				// A one-level element receiver (`$a[$k]->m()`) is the same
+				// value read the expression form already admits; objects keep
+				// identity, so no write-back is involved.
+				elementReceiver := stmt.Expr.Kind == "method" && receiver.Kind == "index" &&
+					len(receiver.Args) == 2 && receiver.Args[0].Kind == "var"
+				if receiver.Kind != "var" && !elementReceiver {
+					return unsupported(stmt.Line, "standalone method/callable requires a bare variable or one-level element receiver")
 				}
 			default:
 				return unsupported(stmt.Line, "standalone expression must be a supported call")

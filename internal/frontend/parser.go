@@ -747,8 +747,33 @@ func (p *parser) startsCallStatement() bool {
 		p.ts[p.pos+1].text == "::" && p.ts[p.pos+2].kind == "id" && p.ts[p.pos+3].text == "(" {
 		return true
 	}
-	return t.kind == "var" && p.pos+3 < len(p.ts) &&
-		p.ts[p.pos+1].text == "->" && p.ts[p.pos+2].kind == "id" && p.ts[p.pos+3].text == "("
+	if t.kind == "var" && p.pos+3 < len(p.ts) &&
+		p.ts[p.pos+1].text == "->" && p.ts[p.pos+2].kind == "id" && p.ts[p.pos+3].text == "(" {
+		return true
+	}
+	// One-level element receiver: `$a[key]->method(...)`. The bracket scan only
+	// classifies the statement; the ordinary expression parser still owns
+	// the receiver and argument grammar.
+	if t.kind == "var" && p.pos+1 < len(p.ts) && p.ts[p.pos+1].kind == "sym" && p.ts[p.pos+1].text == "[" {
+		depth := 0
+		for i := p.pos + 1; i < len(p.ts); i++ {
+			if p.ts[i].kind != "sym" {
+				continue
+			}
+			switch p.ts[i].text {
+			case "[":
+				depth++
+			case "]":
+				depth--
+				if depth == 0 {
+					return i+3 < len(p.ts) && p.ts[i+1].text == "->" && p.ts[i+2].kind == "id" && p.ts[i+3].text == "("
+				}
+			case ";":
+				return false
+			}
+		}
+	}
+	return false
 }
 
 // staticCall admits only the bounded `ClassName::method(args)` form. The

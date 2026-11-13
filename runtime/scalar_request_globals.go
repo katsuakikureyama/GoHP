@@ -88,6 +88,7 @@ func (execution *Execution) Close() {
 		frame.Close()
 	}
 	execution.scalarFrames = nil
+	execution.sourceGlobals = nil
 	execution.strtokText = ""
 	execution.strtokPos = 0
 	execution.strtokReady = false

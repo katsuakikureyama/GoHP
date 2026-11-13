@@ -193,7 +193,7 @@ Before source admission, require these observable checks within R2–R5:
 
 | Check family | Required evidence | Current status |
 |---|---|---|
-| Global import versus value copy | Cross-call writes, missing import/null, local shadowing, alias rebinding and unset/recreated names agree with fixed PHP8.3 | Scalar source admission implemented via `global` statement; differential fixture exercises cross-call writes, missing import/null, local shadowing and type coverage; native PHP/Go comparison runs in CI. Unset, references and alias rebinding of global-bound names are rejected at compile time, not compared |
+| Global import versus value copy | Cross-call writes, missing import/null, local shadowing, alias rebinding and unset/recreated names agree with fixed PHP8.3 | Source globals now hold arrays and objects via `Execution.sourceGlobals` value table; `ReadGlobal` clones arrays and preserves object identity; `WriteGlobal` stores clones. One-level element access (`$g[k] = v`, `$g[] = v`) uses `GlobalArraySet`/`GlobalArrayAppend`. Value reads (`$g[k]`, `isset($g[k])`, `isset($g)`, `count($g)`, `empty($g)`, `if ($g)`, `$g[k]->m()`) route through `ReadGlobal`. Nested index, property writes, unset, references and alias rebinding of global-bound names are rejected at compile time. Differential fixture `array_global.php` exercises registry pattern, counter arrays, append, isset/count/empty, copy semantics and cross-function writes. |
 | Two request contexts | Interleave A/B with the same global/static/hook names; closing A cannot change B, and stale A-bound access cannot become B access | Scalar host globals/imports/Close have Go unit checks; static/hook ownership, explicit PHP request-boundary reference and application isolation still planned |
 | Arrays and properties | Value-copy isolation, shared object identity, alias-bearing array separation timing and RHS replacement stay correct at admitted locations | Existing bounded value behavior only; persistent mixed-domain references not implemented |
 | Original hooks | Reuse the immutable eight-workflow native record, then compare generated events, results, counters and private/public state at matching pins | Native reference recorded; generated comparison not-run |
@@ -210,12 +210,15 @@ the PHP-only reference as generated-Go evidence.
 
 ### Scalar request-global host ABI
 
-This first request-state implementation reuses `storage.Frame` and `Slot`.
-It adds no source syntax, IR, compiler selection or generated entry behavior.
-`global`, `$GLOBALS`, statics and general PHP references remain unsupported.
-Only null, bool, int64 and byte strings are accepted; arrays, objects, callables
-and foreign Go values reject before storage changes. This cannot hold the
-array-valued WordPress hook table.
+This host ABI reuses `storage.Frame` and `Slot` for guarded scalar bindings.
+It is a separate primitive from PHP source globals: the `global` statement now
+lowers to `Execution.sourceGlobals` (a `map[string]any` value table) that holds
+null, bool, int64, string, `rt.Array` and generated objects. The host scalar ABI
+(`storage.Frame`) is not used by generated source-global code and remains for
+explicit host-only scalar bindings. `$GLOBALS`, statics and general PHP references
+remain unsupported. Only null, bool, int64 and byte strings are accepted by the
+host ABI; arrays, objects, callables and foreign Go values reject before storage
+changes.
 
 | Host operation | Contract |
 |---|---|

@@ -214,15 +214,25 @@ func validateGlobalUsage(stmts []ir.Stmt, globals map[string]bool) error {
 					}
 				}
 			case "assign_index":
-				// Array index on a global-bound variable is rejected.
+				// Array index on a global-bound variable is admitted (one level).
 				if len(s.Target.Args) > 0 && s.Target.Args[0].Kind == "var" {
 					if globals[s.Target.Args[0].Text] {
-						return unsupported(s.Line, "array index on global-bound variable is unsupported")
+						// Check RHS doesn't use the global in a disallowed way.
+						if err := validateGlobalExpr(s.Expr, globals); err != nil {
+							return err
+						}
+						// Check key expression is valid.
+						if err := validateGlobalExpr(s.Target.Args[1], globals); err != nil {
+							return err
+						}
 					}
 				}
 			case "assign_append":
 				if s.Target.Kind == "var" && globals[s.Target.Text] {
-					return unsupported(s.Line, "array append on global-bound variable is unsupported")
+					// Array append on a global-bound variable is admitted.
+					if err := validateGlobalExpr(s.Expr, globals); err != nil {
+						return err
+					}
 				}
 			case "assign_property", "assign_property_append":
 				if s.Target.Kind == "property" && len(s.Target.Args) > 0 && s.Target.Args[0].Kind == "var" {
@@ -324,37 +334,76 @@ func validateGlobalUsage(stmts []ir.Stmt, globals map[string]bool) error {
 }
 
 // validateGlobalExpr checks that an expression only uses global-bound names
-// as plain variable reads (var kind), not in disallowed contexts.
+// in admitted contexts: plain variable reads, one-level index reads,
+// isset_var/isset_index (one level), empty_var, and count.
+// It rejects nested index, property access on globals, isset_path,
+// isset_property, and isset_multi containing disallowed forms.
 func validateGlobalExpr(e ir.Expr, globals map[string]bool) error {
 	switch e.Kind {
 	case "var":
 		// Plain variable read of a global name is fine.
 		return nil
-	case "isset_var", "isset_index", "isset_path", "isset_property", "isset_multi":
-		// isset on a global-bound variable is rejected.
-		if e.Kind == "isset_var" && len(e.Args) > 0 && e.Args[0].Kind == "var" {
-			if globals[e.Args[0].Text] {
-				return unsupported(e.Line, "isset on global-bound variable is unsupported")
-			}
-		}
-		if e.Kind == "isset_multi" {
-			for _, arg := range e.Args {
-				if err := validateGlobalExpr(arg, globals); err != nil {
-					return err
-				}
-			}
-		}
-	case "empty_var":
+	case "isset_var":
+		// isset($g) on a global-bound variable is admitted.
 		if len(e.Args) > 0 && e.Args[0].Kind == "var" {
 			if globals[e.Args[0].Text] {
-				return unsupported(e.Line, "empty on global-bound variable is unsupported")
+				return nil
+			}
+		}
+	case "isset_index":
+		// isset($g[k]) on a global-bound variable is admitted (one level).
+		if len(e.Args) > 0 && e.Args[0].Kind == "var" {
+			if globals[e.Args[0].Text] {
+				// Check the key argument is valid.
+				if len(e.Args) > 1 {
+					if err := validateGlobalExpr(e.Args[1], globals); err != nil {
+						return err
+					}
+				}
+				return nil
+			}
+		}
+	case "isset_path", "isset_property":
+		// Multi-level isset paths and property isset on globals are rejected.
+		if len(e.Args) > 0 && e.Args[0].Kind == "var" {
+			if globals[e.Args[0].Text] {
+				return unsupported(e.Line, "nested isset path on global-bound variable is unsupported")
+			}
+		}
+	case "isset_multi":
+		for _, arg := range e.Args {
+			if err := validateGlobalExpr(arg, globals); err != nil {
+				return err
+			}
+		}
+		return nil
+	case "empty_var":
+		// empty($g) on a global-bound variable is admitted.
+		if len(e.Args) > 0 && e.Args[0].Kind == "var" {
+			if globals[e.Args[0].Text] {
+				return nil
 			}
 		}
 	case "index":
-		// Array index read — check if root is a global-bound variable.
+		// Array index read — one level on a global-bound variable is admitted.
+		// Nested index (index of index) on a global is rejected.
 		if len(e.Args) > 0 && e.Args[0].Kind == "var" {
 			if globals[e.Args[0].Text] {
-				return unsupported(e.Line, "array index on global-bound variable is unsupported")
+				// Check the key argument is valid.
+				if len(e.Args) > 1 {
+					if err := validateGlobalExpr(e.Args[1], globals); err != nil {
+						return err
+					}
+				}
+				return nil
+			}
+		}
+		// If the base is itself an index rooted in a global, reject nested access.
+		if len(e.Args) > 0 && e.Args[0].Kind == "index" {
+			if len(e.Args[0].Args) > 0 && e.Args[0].Args[0].Kind == "var" {
+				if globals[e.Args[0].Args[0].Text] {
+					return unsupported(e.Line, "nested array index on global-bound variable is unsupported")
+				}
 			}
 		}
 	case "property":

@@ -147,8 +147,8 @@ func TestGlobalReservedName(t *testing.T) {
 	}
 }
 
-func TestGlobalArrayIndexRejected(t *testing.T) {
-	// Array index on a global-bound variable is rejected.
+func TestGlobalArrayIndexAdmitted(t *testing.T) {
+	// Array index on a global-bound variable is admitted (one level).
 	p := makeProgram(nil, []ir.Function{
 		{Name: "f", Body: []ir.Stmt{
 			{Kind: "global", Expr: ir.Expr{Args: []ir.Expr{{Kind: "var", Text: "x"}}}},
@@ -159,13 +159,27 @@ func TestGlobalArrayIndexRejected(t *testing.T) {
 			{Kind: "return", Expr: ir.Expr{Kind: "null", Text: "null"}},
 		}},
 	})
-	if err := Validate(p); err == nil {
-		t.Fatal("array index on global-bound variable should be rejected")
+	if err := Validate(p); err != nil {
+		t.Fatalf("array index on global-bound variable should be admitted: %v", err)
 	}
 }
 
-func TestGlobalIssetRejected(t *testing.T) {
-	// isset on a global-bound variable is rejected.
+func TestGlobalArrayAppendAdmitted(t *testing.T) {
+	// Array append on a global-bound variable is admitted.
+	p := makeProgram(nil, []ir.Function{
+		{Name: "f", Body: []ir.Stmt{
+			{Kind: "global", Expr: ir.Expr{Args: []ir.Expr{{Kind: "var", Text: "x"}}}},
+			{Kind: "assign_append", Target: ir.Expr{Kind: "var", Text: "x"}, Expr: ir.Expr{Kind: "int", Text: "1"}},
+			{Kind: "return", Expr: ir.Expr{Kind: "null", Text: "null"}},
+		}},
+	})
+	if err := Validate(p); err != nil {
+		t.Fatalf("array append on global-bound variable should be admitted: %v", err)
+	}
+}
+
+func TestGlobalIssetAdmitted(t *testing.T) {
+	// isset on a global-bound variable is admitted.
 	p := makeProgram(nil, []ir.Function{
 		{Name: "f", Body: []ir.Stmt{
 			{Kind: "global", Expr: ir.Expr{Args: []ir.Expr{{Kind: "var", Text: "x"}}}},
@@ -173,8 +187,92 @@ func TestGlobalIssetRejected(t *testing.T) {
 			{Kind: "return", Expr: ir.Expr{Kind: "null", Text: "null"}},
 		}},
 	})
+	if err := Validate(p); err != nil {
+		t.Fatalf("isset on global-bound variable should be admitted: %v", err)
+	}
+}
+
+func TestGlobalIssetIndexAdmitted(t *testing.T) {
+	// isset($g[k]) on a global-bound variable is admitted.
+	p := makeProgram(nil, []ir.Function{
+		{Name: "f", Body: []ir.Stmt{
+			{Kind: "global", Expr: ir.Expr{Args: []ir.Expr{{Kind: "var", Text: "x"}}}},
+			{Kind: "if", Expr: ir.Expr{Kind: "isset_index", Args: []ir.Expr{
+				{Kind: "var", Text: "x"},
+				{Kind: "string", Text: "k"},
+			}}, Body: []ir.Stmt{}},
+			{Kind: "return", Expr: ir.Expr{Kind: "null", Text: "null"}},
+		}},
+	})
+	if err := Validate(p); err != nil {
+		t.Fatalf("isset_index on global-bound variable should be admitted: %v", err)
+	}
+}
+
+func TestGlobalEmptyAdmitted(t *testing.T) {
+	// empty($g) on a global-bound variable is admitted.
+	p := makeProgram(nil, []ir.Function{
+		{Name: "f", Body: []ir.Stmt{
+			{Kind: "global", Expr: ir.Expr{Args: []ir.Expr{{Kind: "var", Text: "x"}}}},
+			{Kind: "if", Expr: ir.Expr{Kind: "empty_var", Args: []ir.Expr{{Kind: "var", Text: "x"}}}, Body: []ir.Stmt{}},
+			{Kind: "return", Expr: ir.Expr{Kind: "null", Text: "null"}},
+		}},
+	})
+	if err := Validate(p); err != nil {
+		t.Fatalf("empty on global-bound variable should be admitted: %v", err)
+	}
+}
+
+func TestGlobalIndexReadAdmitted(t *testing.T) {
+	// $g[k] read on a global-bound variable is admitted.
+	p := makeProgram(nil, []ir.Function{
+		{Name: "f", Body: []ir.Stmt{
+			{Kind: "global", Expr: ir.Expr{Args: []ir.Expr{{Kind: "var", Text: "x"}}}},
+			{Kind: "echo", Expr: ir.Expr{Kind: "index", Args: []ir.Expr{
+				{Kind: "var", Text: "x"},
+				{Kind: "string", Text: "k"},
+			}}},
+			{Kind: "return", Expr: ir.Expr{Kind: "null", Text: "null"}},
+		}},
+	})
+	if err := Validate(p); err != nil {
+		t.Fatalf("index read on global-bound variable should be admitted: %v", err)
+	}
+}
+
+func TestGlobalNestedIndexRejected(t *testing.T) {
+	// Nested index $g[a][b] on a global-bound variable is rejected.
+	p := makeProgram(nil, []ir.Function{
+		{Name: "f", Body: []ir.Stmt{
+			{Kind: "global", Expr: ir.Expr{Args: []ir.Expr{{Kind: "var", Text: "x"}}}},
+			{Kind: "echo", Expr: ir.Expr{Kind: "index", Args: []ir.Expr{
+				ir.Expr{Kind: "index", Args: []ir.Expr{
+					{Kind: "var", Text: "x"},
+					{Kind: "string", Text: "a"},
+				}},
+				{Kind: "string", Text: "b"},
+			}}},
+			{Kind: "return", Expr: ir.Expr{Kind: "null", Text: "null"}},
+		}},
+	})
 	if err := Validate(p); err == nil {
-		t.Fatal("isset on global-bound variable should be rejected")
+		t.Fatal("nested index on global-bound variable should be rejected")
+	}
+}
+
+func TestGlobalPropertyAccessRejected(t *testing.T) {
+	// Property access on a global-bound variable is rejected.
+	p := makeProgram(nil, []ir.Function{
+		{Name: "f", Body: []ir.Stmt{
+			{Kind: "global", Expr: ir.Expr{Args: []ir.Expr{{Kind: "var", Text: "x"}}}},
+			{Kind: "echo", Expr: ir.Expr{Kind: "property", Args: []ir.Expr{
+				{Kind: "var", Text: "x"},
+			}, Text: "prop"}},
+			{Kind: "return", Expr: ir.Expr{Kind: "null", Text: "null"}},
+		}},
+	})
+	if err := Validate(p); err == nil {
+		t.Fatal("property access on global-bound variable should be rejected")
 	}
 }
 
