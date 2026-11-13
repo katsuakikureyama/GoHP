@@ -191,8 +191,8 @@ func TestInspectGraphBareRequire(t *testing.T) {
 	// the edge has kind "require".
 	t.Run("bare require assembles", func(t *testing.T) {
 		files := map[string]string{
-			"entry.php":   "<?php\nrequire __DIR__ . '/dep.php';\n",
-			"dep.php":     "<?php\nclass Dep {}\n",
+			"entry.php": "<?php\nrequire __DIR__ . '/dep.php';\n",
+			"dep.php":   "<?php\nclass Dep {}\n",
 		}
 		root, manifest := writeFixture(t, files, []string{"8.3"})
 		report, err := Inspect(manifest, root, "entry.php", "8.3", frontend.Options{})
