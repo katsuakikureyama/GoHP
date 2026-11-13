@@ -30,6 +30,8 @@ type generator struct {
 	scalarFrame bool
 	// Shared-value lane: scalar-guarded flat-array scopes and bounded control flow.
 	ownedValues bool
+	// Current scope's global-bound names (empty when no globals in this scope).
+	globalNames map[string]bool
 }
 
 func name(s string) string { return strings.ToLower(s) }
@@ -62,7 +64,7 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	for i, source := range p.Sources {
 		g.sourceIndices[source.ID] = i + 1
 	}
-	g.execution = usesExecution(p)
+	g.execution = usesExecution(p) || hasGlobalStmts(p)
 	for _, f := range p.Functions {
 		g.sourceID = f.SourceID
 		n := name(f.Name)
@@ -197,7 +199,18 @@ func GenerateWithMap(p ir.Program) (out []byte, sourceMap SourceMap, err error) 
 	if g.execution {
 		g.emit("execution := &rt.Execution{}; _=execution\n")
 	}
+	// Set global names for main body (includes all function globals + main globals).
+	mainGlobals := globalNamesInScope(p.Body, false)
+	// Also add all function global names (main shares the same cells).
+	for _, f := range p.Functions {
+		for n := range globalNamesInScope(f.Body, true) {
+			mainGlobals[n] = true
+		}
+	}
+	previousGlobals := g.globalNames
+	g.globalNames = mainGlobals
 	g.stmts(p.Body, map[string]bool{}, false, "")
+	g.globalNames = previousGlobals
 	g.emit("}\n")
 	out, err = format.Source([]byte(g.b.String()))
 	if err != nil {
@@ -225,10 +238,14 @@ func (g *generator) function(f ir.Function, c string) {
 	defer func() { g.sourceID = previousSource }()
 	previousFrame := g.scalarFrame
 	previousOwned := g.ownedValues
-	g.scalarFrame = c == "" && scalarFrameParameters(f) && f.ReturnType != "array" && scalarFrameBody(f.Body)
+	previousGlobals := g.globalNames
+	// Globals exclude scalarFrame and ownedValues lanes.
+	hasGlobals := len(globalNamesInScope(f.Body, true)) > 0
+	g.scalarFrame = c == "" && !hasGlobals && scalarFrameParameters(f) && f.ReturnType != "array" && scalarFrameBody(f.Body)
 	ownedLocals, owned := ownedValueLocals(f)
-	g.ownedValues = c == "" && !g.scalarFrame && owned
-	defer func() { g.scalarFrame, g.ownedValues = previousFrame, previousOwned }()
+	g.ownedValues = c == "" && !g.scalarFrame && !hasGlobals && owned
+	g.globalNames = globalNamesInScope(f.Body, true)
+	defer func() { g.scalarFrame, g.ownedValues, g.globalNames = previousFrame, previousOwned, previousGlobals }()
 	if g.execution && c == "" {
 		g.emit("func F_%s(args ...any) any { return FContext_%s(&rt.Execution{}, args...) }\n", name(f.Name), name(f.Name))
 		g.emit("func FContext_%s(execution *rt.Execution, args ...any) any { rt.RequireExecution(execution)\n", name(f.Name))
@@ -323,6 +340,12 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			g.nestedProperty(s, scope)
 		case "switch":
 			g.stringSwitch(s, scope, inFunc, returnType)
+		case "global":
+			// Emit ImportGlobal for each name.
+			for _, arg := range s.Expr.Args {
+				g.emit("rt.ImportGlobal(execution, %s)\n", strconv.Quote(arg.Text))
+				scope[arg.Text] = true
+			}
 		case "list_assign":
 			// ListValues evaluates/validates the entire positional snapshot
 			// before replacing any local, including an alias of the RHS.
@@ -362,7 +385,11 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 			if s.Name == "this" || s.Name == "GLOBALS" || strings.HasPrefix(s.Name, "_") {
 				g.fail(s.Line, "reserved/global variable unsupported")
 			}
-			if g.ownedValues {
+			if g.globalNames != nil && g.globalNames[s.Name] {
+				// Global-bound variable: write through execution context.
+				e := g.expr(s.Expr, scope)
+				g.emit("rt.WriteGlobal(execution, %s, rt.Clone(%s))\n", strconv.Quote(s.Name), e)
+			} else if g.ownedValues {
 				g.ownedValueAssignment(s.Name, s.Expr, scope)
 			} else if g.scalarFrame {
 				e := g.expr(s.Expr, scope)
@@ -524,6 +551,10 @@ func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 	case "var":
 		if !scope[e.Text] {
 			g.fail(e.Line, "undefined or conditionally assigned variable $"+e.Text)
+		}
+		if g.globalNames != nil && g.globalNames[e.Text] {
+			// Global-bound variable: read through execution context.
+			return "rt.ReadGlobal(execution," + strconv.Quote(e.Text) + ")"
 		}
 		if g.scalarFrame {
 			return "v.Read(" + strconv.Quote(e.Text) + ")"

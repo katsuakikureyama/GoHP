@@ -154,6 +154,30 @@ func Validate(p ir.Program) (err error) {
 			}
 		}
 	}
+	// Validate global statements in main body.
+	mainGlobals, err := validateGlobalPlacement(p.Body, false, false)
+	if err != nil {
+		return err
+	}
+	if err := validateGlobalNested(p.Body); err != nil {
+		return err
+	}
+	// Codegen routes main's same-named variables to the shared cell for every
+	// name any function imports, so main's usage restrictions must cover them
+	// too; otherwise e.g. a main foreach binding would write a separate local.
+	for _, f := range p.Functions {
+		for _, stmt := range f.Body {
+			if stmt.Kind != "global" {
+				break
+			}
+			for _, arg := range stmt.Expr.Args {
+				mainGlobals[arg.Text] = true
+			}
+		}
+	}
+	if err := validateGlobalUsage(p.Body, mainGlobals); err != nil {
+		return err
+	}
 	sourceID = ""
 	return v.stmts(p.Body, map[string]valueType{}, "", "")
 }
@@ -278,6 +302,19 @@ func (v validator) function(f ir.Function, class string) error {
 			}
 		}
 	}
+	// Validate global statement placement within this function/method.
+	globals, err := validateGlobalPlacement(f.Body, true, class != "")
+	if err != nil {
+		return err
+	}
+	// Validate no global statements in nested blocks.
+	if err := validateGlobalNested(f.Body); err != nil {
+		return err
+	}
+	// Validate global usage restrictions.
+	if err := validateGlobalUsage(f.Body, globals); err != nil {
+		return err
+	}
 	return v.stmts(f.Body, scope, f.ReturnType, "")
 }
 
@@ -345,6 +382,13 @@ func (v validator) stmts(stmts []ir.Stmt, scope map[string]valueType, returnType
 			}
 			for local := range scope {
 				scope[local] = entry[local]
+			}
+		case "global":
+			// Global statement shape already validated by validateGlobalStmt.
+			// Imported names are defined, but the shared cell may already hold
+			// any scalar written by another scope, so the static type is unknown.
+			for _, arg := range stmt.Expr.Args {
+				scope[arg.Text] = valueType{kind: unknownKind}
 			}
 		case "list_assign":
 			target := stmt.Target

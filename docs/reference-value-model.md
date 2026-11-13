@@ -193,7 +193,7 @@ Before source admission, require these observable checks within R2–R5:
 
 | Check family | Required evidence | Current status |
 |---|---|---|
-| Global import versus value copy | Cross-call writes, missing import/null, local shadowing, alias rebinding and unset/recreated names agree with fixed PHP8.3 | Scalar host binding unit checks only; source admission and PHP/Go comparison still planned |
+| Global import versus value copy | Cross-call writes, missing import/null, local shadowing, alias rebinding and unset/recreated names agree with fixed PHP8.3 | Scalar source admission implemented via `global` statement; differential fixture exercises cross-call writes, missing import/null, local shadowing and type coverage; native PHP/Go comparison runs in CI. Unset, references and alias rebinding of global-bound names are rejected at compile time, not compared |
 | Two request contexts | Interleave A/B with the same global/static/hook names; closing A cannot change B, and stale A-bound access cannot become B access | Scalar host globals/imports/Close have Go unit checks; static/hook ownership, explicit PHP request-boundary reference and application isolation still planned |
 | Arrays and properties | Value-copy isolation, shared object identity, alias-bearing array separation timing and RHS replacement stay correct at admitted locations | Existing bounded value behavior only; persistent mixed-domain references not implemented |
 | Original hooks | Reuse the immutable eight-workflow native record, then compare generated events, results, counters and private/public state at matching pins | Native reference recorded; generated comparison not-run |

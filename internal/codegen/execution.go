@@ -20,7 +20,7 @@ func usesExecution(p ir.Program) bool {
 	var statements func([]ir.Stmt) bool
 	statements = func(stmts []ir.Stmt) bool {
 		for _, s := range stmts {
-			if s.Kind == "preg_match_local" || expression(s.Expr) || expression(s.Target) || statements(s.Body) || statements(s.ElseBody) {
+			if s.Kind == "preg_match_local" || s.Kind == "global" || expression(s.Expr) || expression(s.Target) || statements(s.Body) || statements(s.ElseBody) {
 				return true
 			}
 		}
