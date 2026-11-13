@@ -267,6 +267,19 @@ func (g *generator) function(f ir.Function, c string) {
 		g.emit("func (self *C_%s) M_%s(args ...any) any {\n", name(c), name(f.Name))
 	}
 	if f.OptionalNullParams != 0 {
+		hasNonNullDefault := false
+		if len(f.ParamDefaults) == len(f.Params) {
+			for i := len(f.Params) - f.OptionalNullParams; i < len(f.Params); i++ {
+				d := f.ParamDefaults[i]
+				if d.Kind != "" && d.Kind != "null" {
+					hasNonNullDefault = true
+					break
+				}
+			}
+		}
+		if hasNonNullDefault {
+			g.emit("argsLen:=len(args)\n")
+		}
 		g.emit("args=rt.NullDefaultArgs(args,%d,%d)\n", len(f.Params)-f.OptionalNullParams, len(f.Params))
 	} else {
 		g.emit("rt.Args(args,%d)\n", len(f.Params))
@@ -313,6 +326,25 @@ func (g *generator) function(f ir.Function, c string) {
 			g.emit("v[%q]=rt.ScalarParameter(args[%d],%q)\n", n, i, f.ParamTypes[i])
 		} else {
 			g.emit("v[%q]=rt.Clone(args[%d])\n", n, i)
+		}
+	}
+	// Apply non-null literal defaults for omitted optional parameters.
+	if f.OptionalNullParams != 0 && len(f.ParamDefaults) == len(f.Params) {
+		for i := len(f.Params) - f.OptionalNullParams; i < len(f.Params); i++ {
+			d := f.ParamDefaults[i]
+			if d.Kind == "" || d.Kind == "null" {
+				continue
+			}
+			n := f.Params[i]
+			defaultGo := g.literalDefaultGo(d)
+			if g.scalarFrame {
+				// Scalar frame: use Write with the Go value
+				g.emit("if argsLen<=%d { v.Write(%q,%s) }\n", i, n, defaultGo)
+			} else if g.ownedValues {
+				g.emit("if argsLen<=%d { v[%q].Write(%s) }\n", i, n, defaultGo)
+			} else {
+				g.emit("if argsLen<=%d { v[%q]=%s }\n", i, n, defaultGo)
+			}
 		}
 	}
 	g.stmts(f.Body, scope, true, f.ReturnType)
@@ -516,6 +548,28 @@ func (g *generator) stmts(ss []ir.Stmt, scope map[string]bool, inFunc bool, retu
 		}
 	}
 }
+
+// literalDefaultGo converts a literal default Expr to its Go value representation.
+// It uses the same Go value encoding as the expr method for those literal kinds.
+func (g *generator) literalDefaultGo(e ir.Expr) string {
+	switch e.Kind {
+	case "null":
+		return "nil"
+	case "bool":
+		return e.Text // "true" or "false"
+	case "int":
+		return "int64(" + e.Text + ")"
+	case "string":
+		return strconv.Quote(e.Text)
+	case "array":
+		// Empty array: create a new empty array per call (no sharing)
+		return "rt.NewArray()"
+	default:
+		g.fail(e.Line, "unsupported literal default kind "+e.Kind)
+		return ""
+	}
+}
+
 func (g *generator) expr(e ir.Expr, scope map[string]bool) string {
 	args := func(es []ir.Expr) string {
 		var a []string

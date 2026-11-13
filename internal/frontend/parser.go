@@ -310,6 +310,60 @@ func (p *parser) declareStrictTypes() {
 	p.need(")")
 	p.need(";")
 }
+
+// paramDefault parses a literal parameter default value. Only null, true,
+// false, non-negative integers, plain strings (no interpolation), and empty
+// arrays are admitted. Everything else rejects with PHP002.
+func (p *parser) paramDefault(line int) ir.Expr {
+	t := p.peek()
+	switch t.kind {
+	case "id":
+		lit := strings.ToLower(t.text)
+		if lit == "null" || lit == "true" || lit == "false" {
+			p.pop()
+			kind := lit
+			if kind == "true" || kind == "false" {
+				kind = "bool"
+			}
+			return ir.Expr{Kind: kind, Text: lit, Line: t.line}
+		}
+		// array() — must be empty
+		if strings.EqualFold(t.text, "array") {
+			p.pop()
+			p.need("(")
+			if !p.accept(")") {
+				p.fail("only empty array() parameter defaults are supported")
+			}
+			return ir.Expr{Kind: "array", Line: line}
+		}
+		p.fail("only null, true, false, non-negative integers, plain strings and empty arrays are supported as parameter defaults")
+	case "int":
+		p.pop()
+		// Reject negative integers (handled by unary minus in expr, not here)
+		if strings.HasPrefix(t.text, "-") {
+			p.fail("negative integer parameter defaults are unsupported")
+		}
+		return ir.Expr{Kind: "int", Text: t.text, Line: t.line}
+	case "string":
+		p.pop()
+		// Reject double-quoted strings containing $ (interpolation) — the
+		// lexer already rejects this, so any string token is safe.
+		return ir.Expr{Kind: "string", Text: t.text, Line: t.line}
+	case "sym":
+		if t.text == "[" {
+			p.pop()
+			if !p.accept("]") {
+				p.fail("only empty array [] parameter defaults are supported")
+			}
+			return ir.Expr{Kind: "array", Line: line}
+		}
+		p.fail("only null, true, false, non-negative integers, plain strings and empty arrays are supported as parameter defaults")
+	default:
+		p.fail("only null, true, false, non-negative integers, plain strings and empty arrays are supported as parameter defaults")
+	}
+	return ir.Expr{}
+}
+
 func (p *parser) function(method, static bool) ir.Function {
 	f := ir.Function{Name: p.name("id"), Line: p.peek().line}
 	p.need("(")
@@ -337,13 +391,13 @@ func (p *parser) function(method, static bool) ir.Function {
 			f.Params = append(f.Params, p.name("var"))
 			paramTypes = append(paramTypes, paramType)
 			if p.accept("=") {
-				value := p.pop()
-				if value.kind != "id" || !strings.EqualFold(value.text, "null") {
-					p.fail("only null parameter defaults are supported")
-				}
+				defaultExpr := p.paramDefault(f.Line)
+				f.ParamDefaults = append(f.ParamDefaults, defaultExpr)
 				f.OptionalNullParams++
 			} else if f.OptionalNullParams != 0 {
 				p.fail("required parameters cannot follow optional parameters")
+			} else {
+				f.ParamDefaults = append(f.ParamDefaults, ir.Expr{})
 			}
 			if p.accept(")") {
 				break

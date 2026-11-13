@@ -237,6 +237,27 @@ func validateParameterTypes(f ir.Function, method bool) error {
 	if len(f.ParamTypes) != 0 && len(f.ParamTypes) != len(f.Params) {
 		return malformed(f.Line, "parameter types must align with parameter names")
 	}
+	// Validate ParamDefaults alignment and admitted literal kinds.
+	if len(f.ParamDefaults) != 0 && len(f.ParamDefaults) != len(f.Params) {
+		return malformed(f.Line, "parameter defaults must align with parameter names")
+	}
+	for i, d := range f.ParamDefaults {
+		if (d.Kind == "" || (d.Kind == "" && d.Text == "")) && i < len(f.Params)-f.OptionalNullParams {
+			// Required parameter with no default — zero Expr is fine
+			continue
+		}
+		if d.Kind != "" {
+			if !isLiteralDefault(d) {
+				return malformed(f.Line, "only null, true, false, non-negative integers, plain strings and empty arrays are supported as parameter defaults")
+			}
+		}
+	}
+	// Only trailing optional params may have non-zero defaults.
+	for i := 0; i < len(f.Params)-f.OptionalNullParams; i++ {
+		if i < len(f.ParamDefaults) && f.ParamDefaults[i].Kind != "" {
+			return malformed(f.Line, "required parameters cannot have defaults")
+		}
+	}
 	constructor := method && strings.EqualFold(f.Name, "__construct")
 	for _, annotation := range f.ParamTypes {
 		scalar := annotation == "int" || annotation == "string" || annotation == "bool"
@@ -253,10 +274,29 @@ func validateParameterTypes(f ir.Function, method bool) error {
 	}
 	for i := len(f.Params) - f.OptionalNullParams; i < len(f.Params); i++ {
 		if len(f.ParamTypes) != 0 && f.ParamTypes[i] != "" {
-			return unsupported(f.Line, "null defaults require untyped parameters")
+			return unsupported(f.Line, "literal defaults require untyped parameters")
 		}
 	}
 	return nil
+}
+
+// isLiteralDefault returns true when the Expr is one of the admitted literal
+// default kinds: null, bool, non-negative int, plain string, or empty array.
+func isLiteralDefault(e ir.Expr) bool {
+	switch e.Kind {
+	case "null", "bool":
+		return true
+	case "int":
+		// Reject negative integers (Text starts with "-")
+		return !strings.HasPrefix(e.Text, "-")
+	case "string":
+		return true
+	case "array":
+		// Empty array only
+		return len(e.Args) == 0
+	default:
+		return false
+	}
 }
 
 func (v validator) function(f ir.Function, class string) error {

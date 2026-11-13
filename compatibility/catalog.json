@@ -453,6 +453,25 @@
       "limitations": ["Only untyped trailing null defaults on public constructors; separate exact scalar required parameters are supported. Method null defaults covered separately; no non-null expressions, typed defaults, variadic/reference/named/unpacked parameters or inheritance", "Source arity is bounded even where PHP ignores surplus arguments; runtime panics do not claim PHP error equivalence", "Reuses existing NullDefaultArgs and execution dispatch; no new runtime API, request lifecycle or original WordPress parser adoption", "WebMCP excluded: local developer compiler, not a browser/service operation"]
     },
     {
+      "id": "php.syntax.literal-parameter-defaults",
+      "kind": "syntax",
+      "name": "Trailing untyped literal parameter defaults beyond null",
+      "implementation": "partial",
+      "contract": "Trailing untyped parameters on named functions, public methods, constructors and public static methods admit literal defaults: null, true, false (case-insensitive), non-negative decimal integers, single- or double-quoted strings without interpolation, and empty arrays ([] or array()). Each omitted optional parameter receives its literal default only when the caller did not pass that argument; empty-array defaults create a fresh array per call. Typed parameters with defaults remain rejected.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.literal_parameter_defaults","test":"TestDifferential/literal_parameter_defaults","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/literal_parameter_defaults.php","assertions":["stdout","exit","int/bool/string/null/empty-array defaults omitted vs passed, no array sharing, multiple trailing defaults, method/constructor/static method defaults"]},
+        {"case_id":"unit.literal_param_defaults.frontend","test":"TestLiteralParameterDefaults","file":"internal/frontend/literal_param_defaults_test.go","kind":"unit","assertions":["null/bool/int/string/empty-array parsing, case-insensitive literals, mixed defaults, constructor/method/static defaults, ParamDefaults alignment"]},
+        {"case_id":"negative.literal_param_defaults.frontend","test":"TestLiteralParameterDefaultsRejections","file":"internal/frontend/literal_param_defaults_test.go","kind":"negative","assertions":["negative int, float, constant, expression, nonempty array, new, variable default and required-after-optional reject"]},
+        {"case_id":"unit.literal_param_defaults.semantic","test":"TestLiteralParamDefaultsValidation","file":"internal/semantic/literal_param_defaults_test.go","kind":"unit","assertions":["all admitted literal kinds validate, mixed with required params, empty ParamDefaults"]},
+        {"case_id":"negative.literal_param_defaults.semantic","test":"TestLiteralParamDefaultsMalformedIR","file":"internal/semantic/literal_param_defaults_test.go","kind":"negative","assertions":["misaligned defaults, required-param defaults, negative int, nonempty array, unsupported kind, typed-param defaults, invalid optional counts reject"]},
+        {"case_id":"compiler.literal_param_defaults","test":"TestLiteralParamDefaultsLowering","file":"internal/codegen/literal_param_defaults_test.go","kind":"compiler","assertions":["argsLen capture, int/bool/string/empty-array default assignments, constructor/static method defaults"]},
+        {"case_id":"negative.literal_param_defaults.codegen","test":"TestLiteralParamDefaultsBoundaries","file":"internal/codegen/literal_param_defaults_test.go","kind":"negative","assertions":["negative int, float, nonempty array, typed-param default and required-after-optional reject before generation"]},
+        {"case_id":"negative.literal_param_defaults.ir","test":"TestLiteralParamDefaultsMalformedIR","file":"internal/codegen/literal_param_defaults_test.go","kind":"negative","assertions":["nonempty array and unsupported kind defaults in IR reject before output"]}
+      ],
+      "limitations": ["Only trailing untyped parameters; typed parameters with any default remain rejected. No negative integers, floats, constants, expressions, non-empty arrays, new, or variable defaults", "Empty-array defaults create a new array per call; no sharing between invocations", "No named/unpacked/variadic parameters, inheritance, or PHP warning/exception equivalence", "ScalarFrame/ownedValues lanes exclude functions with optional untyped params; legacy map lane only", "WebMCP excluded: local developer compiler, not a browser/service operation"]
+    },
+    {
       "id": "php.syntax.public-data-class",
       "kind": "syntax",
       "name": "Fixed public data constructors and guarded public-object array snapshots",

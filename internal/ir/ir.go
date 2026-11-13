@@ -67,7 +67,8 @@ type Function struct {
 	Name               string
 	Params             []string
 	ParamTypes         []string // Aligned: global array/callable/int/string/bool; constructor scalars; class:lowername in any function/method; "" untyped.
-	OptionalNullParams int      // Number of trailing, untyped parameters defaulting to null.
+	OptionalNullParams int      // Number of trailing optional parameters (with literal defaults).
+	ParamDefaults      []Expr   // Aligned with Params: zero Expr{} for required params; literal Expr for optional ones.
 	Body               []Stmt
 	Line               int
 	ReturnType         string // Empty (untyped), "array" or "bool" on a named global function.
