@@ -2715,6 +2715,24 @@
       "limitations": ["Lexical observations only: no AST/grammar validation, semantic function denominator, resolved calls, dependency closure or support ratio", "Name-parenthesis candidates may include attributes and first-class callable syntax; methods, dynamic expressions and unclassified parentheses remain separate", "Selected source is never executed; trusted PHP binary and tokenizer script execute with bounded output/time and no user INI", "Native tokenizer version and flags define each measurement; evidence is not transferred between PHP targets"]
     },
     {
+      "id": "php.syntax.scalar-global",
+      "kind": "syntax",
+      "name": "Scalar-only PHP global statement with cross-call sharing",
+      "implementation": "partial",
+      "contract": "global $x; in a function prologue or main top level imports a scalar global name into the shared Execution context. Missing imports create present null. Cross-call writes and reads share the same cell. Main's same-named variables share cells with all function globals. Only plain variable reads and plain assignments are admitted; isset, unset, array index, property access, foreach binding, array_push/pop and list assignment on global-bound names reject. Array/object/callable values fail at runtime via the scalar guard. Methods, nested blocks, and globals after other statements in functions reject.",
+      "php_targets": ["8.3", "8.4"],
+      "checks": [
+        {"case_id":"diff.scalar_global","test":"TestDifferential/scalar_global","file":"tests/differential_test.go","kind":"differential","fixture":"tests/fixtures/scalar_global.php","assertions":["stdout","exit","cross-call writes, main/function sharing, missing import null, two names, local shadowing, type coverage"]},
+        {"case_id":"semantic.global.placement","test":"TestGlobalInFunctionPrologue","file":"internal/semantic/global_test.go","kind":"unit","assertions":["leading prologue admitted, after statement rejected, method rejected, nested block rejected, main admitted"]},
+        {"case_id":"semantic.global.usage","test":"TestGlobalArrayIndexRejected","file":"internal/semantic/global_test.go","kind":"negative","assertions":["array index, isset, foreach binding on global-bound names reject"]},
+        {"case_id":"semantic.global.names","test":"TestGlobalValidName","file":"internal/semantic/global_test.go","kind":"unit","assertions":["ASCII identifiers admitted, this/GLOBALS/reserved rejected, underscore prefix rejected"]},
+        {"case_id":"unit.runtime.global","test":"TestSourceGlobalImportAndRead","file":"runtime/source_globals_test.go","kind":"unit","assertions":["import missing -> null, write/read int/string/bool/null, cross-call sharing, two names"]},
+        {"case_id":"negative.runtime.global","test":"TestSourceGlobalNonScalarRejection","file":"runtime/source_globals_test.go","kind":"negative","assertions":["array write to scalar global panics"]},
+        {"case_id":"negative.scalar_global_dynamic","test":"TestScalarGlobalRuntimeGuard","file":"tests/differential_test.go","kind":"negative","fixture":"tests/fixtures/scalar_global_runtime_failure.php","assertions":["generated binary rejects an array written to a global-bound variable with nonzero exit and explicit message; no PHP error equivalence claim"]}
+      ],
+      "limitations": ["Scalar-only: null, bool, int64, string. Arrays, objects, callables reject at runtime", "No $GLOBALS, static, references, variable variables, superglobals or Unicode names", "No unset/isset on globals; no array/object global support (WordPress hook table still unsupported)", "Statement-only: leading function prologue or main top level; no nested blocks or methods", "Differential fixture runs in CI with PHP; local tests verify lowering and runtime guards only"]
+    },
+    {
       "id": "gohp.tooling.composer-inventory",
       "kind": "tooling",
       "name": "Read-only Composer metadata inventory",

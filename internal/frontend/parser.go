@@ -458,6 +458,17 @@ func (p *parser) stmt() ir.Stmt {
 		}
 		p.need(")")
 		s.Body = p.block()
+	case p.peek().kind == "id" && strings.EqualFold(p.peek().text, "global"):
+		p.pop()
+		s.Kind = "global"
+		for {
+			name := p.name("var")
+			s.Expr.Args = append(s.Expr.Args, ir.Expr{Kind: "var", Text: name, Line: p.peek().line})
+			if !p.accept(",") {
+				break
+			}
+		}
+		p.need(";")
 	case p.accept("if"):
 		s = p.ifStmt(s.Line)
 	case p.startsCallStatement():
